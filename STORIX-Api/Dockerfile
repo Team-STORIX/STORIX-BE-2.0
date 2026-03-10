@@ -8,7 +8,7 @@ COPY gradlew ./gradlew
 COPY gradle ./gradle
 COPY build.gradle ./
 COPY settings.gradle ./
-COPY src ./src
+COPY src/main/resources ./src/main/resources
 
 COPY STORIX-Common/build.gradle ./STORIX-Common/build.gradle
 COPY STORIX-Domain/build.gradle ./STORIX-Domain/build.gradle
