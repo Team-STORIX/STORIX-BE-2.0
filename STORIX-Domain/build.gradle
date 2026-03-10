@@ -1,0 +1,21 @@
+apply plugin: 'org.springframework.boot'
+
+processResources {
+    from("${rootProject.projectDir}/src/main/resources")
+}
+
+bootJar { enabled = false }
+jar { enabled = true }
+
+dependencies {
+    api project(':STORIX-Common')
+
+    api 'org.springframework.boot:spring-boot-starter-data-redis'
+    api 'com.fasterxml.jackson.core:jackson-databind'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+}
