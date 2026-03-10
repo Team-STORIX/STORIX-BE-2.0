@@ -21,7 +21,7 @@ COPY . .
 RUN ./gradlew :STORIX-Api:bootJar -x test --no-daemon
 
 # Run Stage
-FROM amazoncorretto:17-jre-alpine
+FROM eclipse-temurin:17-jre-alpine
 
 ENV TZ=Asia/Seoul
 WORKDIR /app
