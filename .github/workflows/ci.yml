@@ -3,7 +3,7 @@ name: STORIX CI - Build & Push to ECR
 on:
   push:
     branches:
-      - main
+      - develop
 
 jobs:
   build-and-push:
