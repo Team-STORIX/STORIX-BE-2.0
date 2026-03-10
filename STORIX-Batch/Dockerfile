@@ -14,8 +14,6 @@ COPY STORIX-Domain/build.gradle ./STORIX-Domain/build.gradle
 COPY STORIX-Infrastructure/build.gradle ./STORIX-Infrastructure/build.gradle
 COPY STORIX-Batch/build.gradle ./STORIX-Batch/build.gradle
 
-RUN ./gradlew :STORIX-Batch:dependencies --no-daemon
-
 COPY . .
 
 RUN ./gradlew :STORIX-Batch:bootJar -x test --no-daemon
