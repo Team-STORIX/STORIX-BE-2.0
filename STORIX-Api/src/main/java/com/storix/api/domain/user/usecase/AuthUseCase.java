@@ -2,8 +2,6 @@ package com.storix.api.domain.user.usecase;
 
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
-import com.storix.api.domain.user.controller.dto.ArtistSignupRequest;
-import com.storix.api.domain.user.controller.dto.ArtistSignupResponse;
 import com.storix.api.domain.user.controller.dto.AuthorizationResponse;
 import com.storix.api.domain.user.controller.dto.LoginWithTokenResponse;
 import com.storix.api.domain.user.helper.CookieHelper;
@@ -66,10 +64,4 @@ public class AuthUseCase {
         return CustomResponse.onSuccess(SuccessCode.AUTH_NICKNAME_SUCCESS);
     }
 
-    // 작가 회원 가입
-    public CustomResponse<ArtistSignupResponse> artistSignup(ArtistSignupRequest req) {
-        Long artistUserId = authService.signUpArtistUser(req.nickName(), req.loginId(), req.password());
-        return CustomResponse.onSuccess(SuccessCode.AUTH_ARTIST_SIGNUP_SUCCESS,
-                new ArtistSignupResponse(artistUserId, req.loginId(), req.nickName()));
-    }
 }
