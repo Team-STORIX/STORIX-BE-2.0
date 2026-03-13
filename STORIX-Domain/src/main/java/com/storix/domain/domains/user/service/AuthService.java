@@ -3,7 +3,10 @@ package com.storix.domain.domains.user.service;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
-import com.storix.domain.domains.user.dto.*;
+import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
+import com.storix.domain.domains.user.dto.OnboardingPrincipal;
+import com.storix.domain.domains.user.dto.ReaderSignupRequest;
+import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
@@ -11,7 +14,6 @@ import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +26,6 @@ public class AuthService {
     private final LibraryAdaptor libraryAdaptor;
     private final TokenAdaptor tokenAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
-    private final PasswordEncoder passwordEncoder;
 
     // 독자 회원 가입 가능 여부 (토큰 검증, 계정 정보 유무)
     // - 카카오
@@ -75,25 +76,7 @@ public class AuthService {
 
     // 독자 닉네임 중복 체크
     public void validNickname(String nickName) {
-        userAdaptor.checkNicknameDuplicateWithArtists(nickName);
         userAdaptor.checkNicknameDuplicate(nickName);
-    }
-
-    // 작가 회원 가입 (일반 로그인)
-    @Transactional
-    public Long signUpArtistUser(String nickName, String loginId, String rawPassword) {
-        userAdaptor.checkLoginIdDuplicate(loginId);
-
-        CreateArtistUserCommand m = new CreateArtistUserCommand(
-                nickName,
-                loginId,
-                passwordEncoder.encode(rawPassword)
-        );
-
-        userAdaptor.saveArtistUser(m);
-        Long artistUserId = userAdaptor.findArtistUserIdByLoginId(loginId);
-
-        return artistUserId;
     }
 
     // 유저 회원 탈퇴
