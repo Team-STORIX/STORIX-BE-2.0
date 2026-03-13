@@ -1,6 +1,5 @@
 package com.storix.domain.domains.profile.service;
 
-import com.storix.domain.domains.favorite.adaptor.FavoriteArtistAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.hashtag.adaptor.HashtagAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
@@ -10,8 +9,6 @@ import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.profile.dto.FavoriteHashtagsResponse;
 import com.storix.domain.domains.profile.dto.FavoriteWorksWithReviewInfo;
 import com.storix.domain.domains.profile.dto.RatingCountResponse;
-import com.storix.domain.domains.user.dto.FavoriteArtistInfo;
-import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.dto.WorksInfo;
@@ -30,52 +27,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProfileFavoriteService {
 
-    private final FavoriteArtistAdaptor favoriteArtistAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final HashtagAdaptor hashtagAdaptor;
 
-    private final UserAdaptor userAdaptor;
-
     private final LoadWorksPort loadWorksPort;
-
-    // 관심 작가 등록수 조회
-    @Transactional(readOnly = true)
-    public int findTotalFavoriteArtistCount(Long userId) {
-        return favoriteArtistAdaptor.countFavoriteArtist(userId);
-    }
-
-    // 관심 작가 정보 조회
-    @Transactional(readOnly = true)
-    public Slice<FavoriteArtistInfo> findAllFavoriteArtistInfo(Long userId, Pageable pageable) {
-
-        // 관심 작가 등록 리스트 조회
-        Slice<Long> artistIdsSlice = favoriteArtistAdaptor.findAllFavoriteArtistsId(userId, pageable);
-        List<Long> artistIds = artistIdsSlice.getContent();
-
-        if (artistIds.isEmpty()) {
-            return new SliceImpl<>(List.of(), pageable, artistIdsSlice.hasNext());
-        }
-
-        // 관심 작가 정보 조회
-        List<FavoriteArtistInfo> artistList = userAdaptor.findAllFavoriteArtistInfoByArtistIds(artistIds);
-
-        // 관심 작가 등록 순으로 정렬
-        Map<Long, FavoriteArtistInfo> map = artistList.stream()
-                .collect(Collectors.toMap(
-                        FavoriteArtistInfo::artistId,
-                        Function.identity(),
-                        (existing, replacement) -> existing
-                ));
-
-        List<FavoriteArtistInfo> ordered = artistIds.stream()
-                .map(map::get)
-                .filter(Objects::nonNull)
-                .toList();
-
-        // 관심 작가 정보 리스트
-        return new SliceImpl<>(ordered, pageable, artistIdsSlice.hasNext());
-    }
 
     // 관심 작품 등록수 조회
     @Transactional(readOnly = true)

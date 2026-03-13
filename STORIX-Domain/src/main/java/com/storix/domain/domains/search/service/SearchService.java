@@ -1,16 +1,12 @@
 package com.storix.domain.domains.search.service;
 
 import com.storix.domain.domains.search.application.SearchUseCase;
-import com.storix.domain.domains.search.dto.ArtistSearchResponseDto;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
-import com.storix.domain.domains.user.application.port.LoadUserPort;
-import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Works;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -23,10 +19,7 @@ import java.math.RoundingMode;
 @RequiredArgsConstructor
 public class SearchService implements SearchUseCase {
 
-    @Value("AWS_S3_BASE_URL") String baseUrl;
-
     private final LoadWorksPort loadWorksPort;
-    private final LoadUserPort loadUserPort;
     private final SearchHistoryService searchHistoryService;
 
     @Override
@@ -51,26 +44,6 @@ public class SearchService implements SearchUseCase {
     }
 
     @Override
-    public SearchResponseWrapperDto<ArtistSearchResponseDto> searchArtists(String keyword, Pageable pageable) {
-
-        // User 테이블에서 ARTIST 권한을 가진 유저 검색
-        Slice<User> artistSlice = loadUserPort.searchArtists(keyword, pageable);
-
-        String fallback = null;
-        if (artistSlice.isEmpty()) {
-            fallback = searchHistoryService.getFallbackRecommendation();
-        }
-
-        // User 엔티티 -> DTO 변환
-        Slice<ArtistSearchResponseDto> resultDto = artistSlice.map(this::toArtistDto);
-
-        return SearchResponseWrapperDto.<ArtistSearchResponseDto>builder()
-                .result(resultDto)
-                .fallbackRecommendation(fallback)
-                .build();
-    }
-
-    @Override
     @Transactional
     public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(String keyword, Pageable pageable) {
 
@@ -91,14 +64,6 @@ public class SearchService implements SearchUseCase {
                 .reviewsCount(works.getReviewsCount() != null ? works.getReviewsCount() : 0L)
                 .avgRating(works.getAvgRating() != null ? roundAvgRating(works.getAvgRating()) : 0.0)
                 .worksType(works.getWorksType() != null ? works.getWorksType().getDbValue() : null)
-                .build();
-    }
-
-    private ArtistSearchResponseDto toArtistDto(User user) {
-        return ArtistSearchResponseDto.builder()
-                .artistId(user.getId())
-                .artistName(user.getNickName())
-                .profileUrl(user.getProfileImageUrl() == null ? null : baseUrl + "/" +user.getProfileImageUrl())
                 .build();
     }
 

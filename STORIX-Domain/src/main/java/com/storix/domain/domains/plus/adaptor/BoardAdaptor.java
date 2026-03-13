@@ -1,10 +1,7 @@
 package com.storix.domain.domains.plus.adaptor;
 
-import com.storix.domain.domains.plus.domain.ArtistBoard;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
-import com.storix.domain.domains.plus.dto.CreateArtistBoardCommand;
 import com.storix.domain.domains.plus.dto.CreateReaderBoardCommand;
-import com.storix.domain.domains.plus.repository.ArtistBoardRepository;
 import com.storix.domain.domains.plus.repository.ReaderBoardRepository;
 import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
 import com.storix.domain.domains.plus.exception.DuplicateBoardUploadException;
@@ -23,7 +20,6 @@ import java.util.Optional;
 public class BoardAdaptor {
 
     private final ReaderBoardRepository readerBoardRepository;
-    private final ArtistBoardRepository artistBoardRepository;
 
     /**
      * 독자
@@ -82,18 +78,6 @@ public class BoardAdaptor {
     // 홈 오늘의 토픽룸 점수 갱신
     public int updateAllPopularityScoresRecentDays(LocalDateTime threshold) {
         return readerBoardRepository.updatePopularityScoresRecentDays(threshold);
-    }
-
-    /**
-     * 작가
-     * */
-    // 작가 게시글 생성
-    public ArtistBoard saveArtistBoard(CreateArtistBoardCommand cmd) {
-        try {
-            return artistBoardRepository.save(cmd.toEntity());
-        } catch (DataIntegrityViolationException e) {
-            throw DuplicateBoardUploadException.EXCEPTION;
-        }
     }
 
 }
