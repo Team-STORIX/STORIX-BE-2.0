@@ -41,9 +41,6 @@ public class User extends BaseTimeEntity {
     @Column(name = "nick_name", nullable = false, length = 10)
     private String nickName;
 
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
-
     @ElementCollection(targetClass = Genre.class)
     @CollectionTable(
             name = "user_favorite_genre",
@@ -102,12 +99,11 @@ public class User extends BaseTimeEntity {
     /** 생성자 로직 **/
     protected User() {}
 
-    @Builder(builderMethodName = "readerBuilder")
-    public User(boolean marketingAgree, OAuthInfo oauthInfo, String nickName, Gender gender, Set<Genre> favoriteGenreList) {
+    @Builder
+    public User(boolean marketingAgree, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList) {
         this.marketingAgree = marketingAgree;
         this.oauthInfo = oauthInfo;
         this.nickName = nickName;
-        this.gender = gender;
         this.favoriteGenreList = favoriteGenreList;
     }
 
@@ -153,7 +149,6 @@ public class User extends BaseTimeEntity {
         }
         accountState = AccountState.DELETED;
         deletedSuffix = UUID.randomUUID().toString();
-        gender = null;
         favoriteGenreList = null;
         profileImageUrl = null;
         nickName = "탈퇴한 유저";
