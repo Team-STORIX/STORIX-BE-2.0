@@ -28,8 +28,8 @@ public class ProfileService {
                 .level(readerUser.getLevel())
                 .point(readerUser.getPoint())
                 .profileDescription(readerUser.getProfileDescription())
-                .profileImageUrl(readerUser.getProfileImageUrl() == null
-                        ? null : baseUrl + "/" + readerUser.getProfileImageUrl())
+                .profileImageUrl(readerUser.getProfileObjectKey() == null
+                        ? null : baseUrl + "/" + readerUser.getProfileObjectKey())
                 .build();
     }
 

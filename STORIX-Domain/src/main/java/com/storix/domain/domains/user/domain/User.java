@@ -50,8 +50,8 @@ public class User extends BaseTimeEntity {
     @Column(name = "genre")
     private Set<Genre> favoriteGenreList = new HashSet<>();
 
-    @Column(name = "profile_image_url")
-    private String profileImageUrl = null;
+    @Column(name = "profile_object_key")
+    private String profileObjectKey = null;
 
     @Column(length = 30)
     private String profileDescription;
@@ -122,7 +122,7 @@ public class User extends BaseTimeEntity {
         this.profileDescription = profileDescription;
     }
 
-    public void changeProfileImage(String objectKey) { this.profileImageUrl = objectKey; }
+    public void changeProfileImage(String objectKey) { this.profileObjectKey = objectKey; }
 
     public void changeLevel(int level) {
 //        if (level < 1 || level > 5) {
@@ -150,7 +150,7 @@ public class User extends BaseTimeEntity {
         accountState = AccountState.DELETED;
         deletedSuffix = UUID.randomUUID().toString();
         favoriteGenreList = null;
-        profileImageUrl = null;
+        profileObjectKey = null;
         nickName = "탈퇴한 유저";
         oauthInfo = oauthInfo.withDrawOauthInfo();
         marketingAgree = null;
