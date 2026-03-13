@@ -1,11 +1,8 @@
 package com.storix.domain.domains.plus.adaptor;
 
-import com.storix.domain.domains.plus.domain.ArtistBoard;
-import com.storix.domain.domains.plus.domain.ArtistBoardImage;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.plus.domain.ReaderBoardImage;
 import com.storix.domain.domains.plus.dto.ReaderBoardImageInfo;
-import com.storix.domain.domains.plus.repository.ArtistBoardImageRepository;
 import com.storix.domain.domains.plus.repository.ReaderBoardImageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +18,6 @@ public class BoardImageAdaptor {
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
     private final ReaderBoardImageRepository readerBoardImageRepository;
-    private final ArtistBoardImageRepository artistBoardImageRepository;
 
     // 게시글 이미지 저장
     public void saveReaderBoardImages(ReaderBoard readerBoard, List<String> objectKeys) {
@@ -30,14 +26,6 @@ public class BoardImageAdaptor {
         );
 
         readerBoardImageRepository.saveAll(images);
-    }
-
-    public void saveArtistBoardImages(ArtistBoard artistBoard, List<String> objectKeys) {
-        List<ArtistBoardImage> images = buildImages(objectKeys,
-                (objectKey, sortOrder) -> ArtistBoardImage.of(artistBoard, objectKey, sortOrder)
-        );
-
-        artistBoardImageRepository.saveAll(images);
     }
 
     private <T> List<T> buildImages(List<String> objectKeys, ImageFactory<T> factory) {
