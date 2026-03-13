@@ -20,7 +20,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
@@ -112,9 +111,8 @@ public class SecurityConfig {
                                 // [Auth]
                                 .requestMatchers("/api/v1/auth/oauth/**").permitAll()
                                 .requestMatchers("/api/v1/auth/nickname/valid").permitAll()
-                                .requestMatchers("/api/v1/auth/users/artist/login").permitAll()
                                 .requestMatchers("/api/v1/auth/tokens/refresh").permitAll()
-                                .requestMatchers("/api/v1/auth/developer/**").permitAll() // 추후 Admin 변경
+                                .requestMatchers("/api/v1/auth/developer/**").hasRole("ADMIN")
 
                                 // [Home]
                                 .requestMatchers("/api/v1/home/**").permitAll()
@@ -124,14 +122,10 @@ public class SecurityConfig {
           
                                 // [Profile]
                                 .requestMatchers("/api/v1/profile/reader/**").hasRole("READER")
-                                .requestMatchers("/api/v1/profile/**").hasAnyRole("READER","ARTIST")
+                                .requestMatchers("/api/v1/profile/**").hasRole("READER")
 
                                 // [Plus]
                                 .requestMatchers("/api/v1/plus/reader/**").hasRole("READER")
-                                .requestMatchers("/api/v1/plus/artist/**").hasRole("ARTIST")
-
-                                // [Image]
-                                .requestMatchers("/api/v1/image/fan-board").hasRole("ARTIST")
 
                                 // [Library]
                                 .requestMatchers("/api/v1/library/**").hasRole("READER")
@@ -152,8 +146,6 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v1/works/**").permitAll()
 
                                 // [Favorite]
-                                .requestMatchers(HttpMethod.GET, "/api/v1/favorite/**")
-                                .access(new WebExpressionAuthorizationManager("!hasRole('ARTIST')"))
                                 .requestMatchers("/api/v1/favorite/**").hasRole("READER")
 
                                 // [Hashtag]
