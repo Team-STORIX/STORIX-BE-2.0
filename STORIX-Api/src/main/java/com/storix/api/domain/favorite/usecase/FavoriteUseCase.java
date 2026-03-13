@@ -2,7 +2,6 @@ package com.storix.api.domain.favorite.usecase;
 
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.favorite.service.FavoriteService;
-import com.storix.domain.domains.favorite.dto.FavoriteArtistStatusResponse;
 import com.storix.domain.domains.favorite.dto.FavoriteWorksStatusResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
@@ -59,36 +58,4 @@ public class FavoriteUseCase {
         return CustomResponse.onSuccess(SuccessCode.FAVORITE_WORKS_DELETE_SUCCESS, result);
     }
 
-    // 관심 작가 등록 여부 조회
-    public CustomResponse<FavoriteArtistStatusResponse> getFavoriteArtistStatus(AuthUserDetails authUserDetails, Long artistId) {
-
-        Long userId = authUserDetails != null ? authUserDetails.getUserId() : null;
-
-        // 비로그인 유저인 경우
-        if (userId == null) {
-            return CustomResponse.onSuccess(SuccessCode.FAVORITE_ARTIST_LOAD_SUCCESS,
-                    new FavoriteArtistStatusResponse(null));
-        }
-
-        // 로그인 유저인 경우
-        boolean isFavoriteArtist = favoriteService.isFavoriteArtist(userId, artistId);
-        FavoriteArtistStatusResponse result = new FavoriteArtistStatusResponse(isFavoriteArtist);
-        return CustomResponse.onSuccess(SuccessCode.FAVORITE_ARTIST_LOAD_SUCCESS, result);
-    }
-
-    // 관심 작가 등록
-    public CustomResponse<FavoriteArtistStatusResponse> addArtistToFavorite(Long userId, Long artistId) {
-
-        favoriteService.saveFavoriteArtist(userId, artistId);
-        FavoriteArtistStatusResponse result = new FavoriteArtistStatusResponse(true);
-        return CustomResponse.onSuccess(SuccessCode.FAVORITE_ARTIST_ADD_SUCCESS, result);
-    }
-
-    // 관심 작가 등록 해제
-    public CustomResponse<FavoriteArtistStatusResponse> deleteFavoriteArtist(Long userId, Long artistId) {
-
-        favoriteService.deleteFavoriteArtist(userId, artistId);
-        FavoriteArtistStatusResponse result = new FavoriteArtistStatusResponse(false);
-        return CustomResponse.onSuccess(SuccessCode.FAVORITE_ARTIST_DELETE_SUCCESS, result);
-    }
 }

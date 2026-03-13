@@ -6,7 +6,6 @@ import com.storix.api.domain.profile.usecase.ProfileActivityUseCase;
 import com.storix.api.domain.profile.usecase.ProfileFavoriteUseCase;
 import com.storix.api.domain.profile.usecase.ProfileUseCase;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
-import com.storix.domain.domains.user.dto.FavoriteArtistInfo;
 import com.storix.common.payload.CustomResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -89,19 +88,6 @@ public class ProfileController {
     ) {
         return ResponseEntity.ok()
                 .body(profileUseCase.changeImage(req.objectKey(), authUserDetails.getUserId()));
-    }
-
-    // 관심 작가 조회
-    @Operation(summary = "[독자] 관심 작가 리스트 조회", description = "프로필 관심 작가 리스트를 조회하는 api 입니다. 무한스크롤 형식입니다.")
-    @GetMapping("/reader/favorite/artist")
-    public ResponseEntity<CustomResponse<ProfileFavoriteArtistWrapperDto<FavoriteArtistInfo>>> getFavoriteArtistList(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
-            @RequestParam(defaultValue = "0") @Min(0) int page
-    ) {
-        Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
-        return ResponseEntity.ok()
-                .body(profileFavoriteUseCase.getFavoriteArtistList(authUserDetails.getUserId(), pageable));
     }
 
     // 관심 작품 조회

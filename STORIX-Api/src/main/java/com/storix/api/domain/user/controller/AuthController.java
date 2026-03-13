@@ -1,6 +1,7 @@
 package com.storix.api.domain.user.controller;
 
-import com.storix.api.domain.user.controller.dto.*;
+import com.storix.api.domain.user.controller.dto.AuthorizationResponse;
+import com.storix.api.domain.user.controller.dto.ReaderSocialLoginResponse;
 import com.storix.api.domain.user.usecase.*;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.OnboardingUserDetails;
@@ -78,23 +79,6 @@ public class AuthController {
     ) {
         return ResponseEntity.ok()
                 .body(authUseCase.checkAvailableNickname(nickName));
-    }
-
-    @Operation(summary = "작가 계정 일반 로그인", description = "작가 계정에 로그인 하는 api 입니다.")
-    @PostMapping("/users/artist/login")
-    public ResponseEntity<CustomResponse<AuthorizationResponse>> artistUserLogin(
-            @Valid @RequestBody ArtistLoginRequest req
-    ) {
-        return loginUseCase.artistLoginWithLoginId(req);
-    }
-
-    @Operation(summary = "[백엔드용] 작가 계정 회원가입", description = "백엔드용 작가 계정 생성 api 입니다.")
-    @PostMapping("/developer/users/artist/signup")
-    public ResponseEntity<CustomResponse<ArtistSignupResponse>> developerArtistUserSignup(
-            @RequestBody ArtistSignupRequest req
-    ) {
-        return ResponseEntity.ok()
-                .body(authUseCase.artistSignup(req));
     }
 
     @Operation(summary = "토큰 재발급", description = "액세스 토큰을 리프레쉬 토큰 쿠키와 함께 재발급하는 api 입니다.   \n액세스 토큰 만료 시 호출해주세요.")
