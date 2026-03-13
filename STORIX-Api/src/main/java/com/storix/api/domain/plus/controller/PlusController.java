@@ -2,7 +2,6 @@ package com.storix.api.domain.plus.controller;
 
 import com.storix.api.domain.plus.usecase.BoardUseCase;
 import com.storix.api.domain.plus.usecase.ReviewUseCase;
-import com.storix.api.domain.plus.controller.dto.ArtistBoardUploadRequest;
 import com.storix.api.domain.plus.controller.dto.ReaderBoardUploadRequest;
 import com.storix.domain.domains.plus.dto.ReaderReviewRedirectResponse;
 import com.storix.api.domain.plus.controller.dto.ReaderReviewUploadRequest;
@@ -50,16 +49,6 @@ public class PlusController {
     ) {
         return ResponseEntity.ok()
                 .body(reviewUseCase.createReaderReview(authUserDetails.getUserId(), req));
-    }
-
-    @Operation(summary = "작가 게시물 등록", description = "작가 게시물을 등록하는 api 입니다.   \n이미지를 선택한 직후의 렌더링은 프론트에서 진행해주시고, 이미지를 S3 버킷에 업로드한 후 objectKey와 함께 호출해주세요.")
-    @PostMapping("/artist/board")
-    public ResponseEntity<CustomResponse<Void>> uploadArtistBoard(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @RequestBody ArtistBoardUploadRequest req
-    ) {
-        return ResponseEntity.ok()
-                .body(boardUseCase.createArtistBoard(authUserDetails.getUserId(), req));
     }
 
     @GetMapping("/reader/works")

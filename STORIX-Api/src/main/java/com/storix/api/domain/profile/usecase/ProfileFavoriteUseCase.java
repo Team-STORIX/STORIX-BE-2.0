@@ -1,9 +1,11 @@
 package com.storix.api.domain.profile.usecase;
 
 import com.storix.common.annotation.UseCase;
-import com.storix.domain.domains.profile.dto.*;
+import com.storix.domain.domains.profile.dto.FavoriteWorksWithReviewInfo;
+import com.storix.domain.domains.profile.dto.FavoriteHashtagsResponse;
+import com.storix.domain.domains.profile.dto.ProfileFavoriteWorksWrapperDto;
+import com.storix.domain.domains.profile.dto.RatingCountResponse;
 import com.storix.domain.domains.profile.service.ProfileFavoriteService;
-import com.storix.domain.domains.user.dto.FavoriteArtistInfo;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
 import lombok.RequiredArgsConstructor;
@@ -15,20 +17,6 @@ import org.springframework.data.domain.Slice;
 public class ProfileFavoriteUseCase {
 
     private final ProfileFavoriteService profileFavoriteService;
-
-    // 관심 작가 조회
-    public CustomResponse<ProfileFavoriteArtistWrapperDto<FavoriteArtistInfo>> getFavoriteArtistList(Long userId, Pageable pageable) {
-
-        // 관심 작가 등록수
-        int totalFavoriteArtistCount = profileFavoriteService.findTotalFavoriteArtistCount(userId);
-        // 관심 작가 정보
-        Slice<FavoriteArtistInfo> favoriteArtistInfos = profileFavoriteService.findAllFavoriteArtistInfo(userId, pageable);
-
-        ProfileFavoriteArtistWrapperDto<FavoriteArtistInfo> result
-                = new ProfileFavoriteArtistWrapperDto<>(totalFavoriteArtistCount, favoriteArtistInfos);
-
-        return CustomResponse.onSuccess(SuccessCode.PROFILE_FAVORITE_ARTIST_LIST_LOAD_SUCCESS, result);
-    }
 
     // 관심 작품 조회
     public CustomResponse<ProfileFavoriteWorksWrapperDto<FavoriteWorksWithReviewInfo>> getFavoriteWorksList(Long userId, Pageable pageable) {
