@@ -52,7 +52,9 @@ public class AuthService {
         boolean isUserPresent = userAdaptor.isUserPresentWithProviderAndOid(provider, oid);
         if (isUserPresent) throw DuplicateUserException.EXCEPTION;
 
-        onboardingWorksHelper.checkReaderSignUpWithOnboardingWorksList(cmd.favoriteWorksIdList());
+        if (cmd.favoriteWorksIdList() != null && !cmd.favoriteWorksIdList().isEmpty()) {
+            onboardingWorksHelper.checkReaderSignUpWithOnboardingWorksList(cmd.favoriteWorksIdList());
+        }
 
         userAdaptor.checkNicknameDuplicate(cmd.nickName());
 
@@ -61,14 +63,15 @@ public class AuthService {
                 provider,
                 oid,
                 cmd.nickName(),
-                cmd.gender(),
                 cmd.favoriteGenreList()
         );
 
         AuthUserDetails authUserDetails = userAdaptor.saveReaderUser(m);
         tokenAdaptor.deleteOnboardingTokenByJti(jti);
 
-        favoriteWorksAdaptor.saveFavoriteWorks(authUserDetails.getUserId(), cmd.favoriteWorksIdList());
+        if (cmd.favoriteWorksIdList() != null && !cmd.favoriteWorksIdList().isEmpty()) {
+            favoriteWorksAdaptor.saveFavoriteWorks(authUserDetails.getUserId(), cmd.favoriteWorksIdList());
+        }
         libraryAdaptor.initLibrary(authUserDetails.getUserId());
 
         return authUserDetails;
