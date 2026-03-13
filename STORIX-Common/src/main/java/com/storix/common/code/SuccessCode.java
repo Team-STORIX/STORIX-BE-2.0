@@ -24,8 +24,6 @@ public enum SuccessCode {
     AUTH_SIGNUP_SUCCESS(HttpStatus.CREATED, "AUTH_SUCCESS_001", "유저 정보 등록이 완료되었습니다."),
     AUTH_LOGOUT_SUCCESS(HttpStatus.OK, "AUTH_SUCCESS_002", "로그아웃에 성공했습니다."),
     AUTH_REISSUE_ACCESSTOKEN_SUCCESS(HttpStatus.CREATED, "AUTH_SUCCESS_003", "엑세스 토큰 재발급에 성공했습니다."),
-    AUTH_ARTIST_SIGNUP_SUCCESS(HttpStatus.CREATED, "AUTH_SUCCESS_004", "작가 계정 생성이 완료되었습니다."),
-    AUTH_ARTIST_LOGIN_SUCCESS(HttpStatus.OK, "AUTH_SUCCESS_005", "작가 계정 로그인에 성공했습니다."),
     AUTH_WITHDRAW_SUCCESS(HttpStatus.OK, "AUTH_SUCCESS_006", "회원 탈퇴에 성공했습니다."),
     ONBOARDING_WORKS_LIST_LOAD_SUCCESS(HttpStatus.OK, "ONBOARDING_SUCCESS_001", "온보딩 작품 리스트 조회에 성공했습니다."),
 
@@ -38,7 +36,6 @@ public enum SuccessCode {
     PROFILE_UPDATE_NICKNAME_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_003", "닉네임 변경에 성공했습니다."),
     PROFILE_UPDATE_DESCRIPTION_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_004", "한 줄 소개 변경에 성공했습니다."),
     PROFILE_UPDATE_IMAGE_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_005", "프로필 이미지 변경에 성공했습니다."),
-    PROFILE_FAVORITE_ARTIST_LIST_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_006", "프로필 관심 작가 리스트 조회에 성공했습니다."),
     PROFILE_FAVORITE_WORKS_LIST_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_007", "프로필 관심 작품 리스트 조회에 성공했습니다."),
     PROFILE_MY_BOARDS_LIST_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_008", "프로필 내 활동 게시글 리스트 조회에 성공했습니다."),
     PROFILE_MY_BOARDS_REPLY_LIST_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_009", "프로필 내 활동 댓글 리스트 조회에 성공했습니다."),
@@ -81,9 +78,6 @@ public enum SuccessCode {
     FAVORITE_WORKS_LOAD_SUCCESS(HttpStatus.OK, "FAVORITE_SUCCESS_001", "관심 작품 등록 여부 조회에 성공했습니다."),
     FAVORITE_WORKS_ADD_SUCCESS(HttpStatus.CREATED, "FAVORITE_SUCCESS_002", "관심 작품 등록에 성공했습니다."),
     FAVORITE_WORKS_DELETE_SUCCESS(HttpStatus.OK, "FAVORITE_SUCCESS_003", "관심 작품 등록 해제에 성공했습니다."),
-    FAVORITE_ARTIST_LOAD_SUCCESS(HttpStatus.OK, "FAVORITE_SUCCESS_004", "관심 작가 등록 여부 조회에 성공했습니다."),
-    FAVORITE_ARTIST_ADD_SUCCESS(HttpStatus.CREATED, "FAVORITE_SUCCESS_005", "관심 작가 등록에 성공했습니다."),
-    FAVORITE_ARTIST_DELETE_SUCCESS(HttpStatus.OK, "FAVORITE_SUCCESS_006", "관심 작가 등록 해제에 성공했습니다."),
 
     // Library success
     LIBRARY_WORKS_LOAD_SUCCESS(HttpStatus.OK, "LIBRARY_SUCCESS_001", "서재 정보 조회에 성공했습니다."),
