@@ -18,19 +18,11 @@ public class FavoriteUseCase {
 
     // 관심 작품 등록 여부 조회
     public CustomResponse<FavoriteWorksStatusResponse> getFavoriteWorksStatus(AuthUserDetails authUserDetails, Long worksId) {
-
-        Long userId = authUserDetails != null ? authUserDetails.getUserId() : null;
+        Long userId = authUserDetails.getUserId();
 
         // 성인 작품 여부 확인 및 핸들링
         adultWorksHelper.CheckUserAuthorityWithWorks(userId, worksId);
 
-        // 비로그인 유저인 경우
-        if (userId == null) {
-            return CustomResponse.onSuccess(SuccessCode.FAVORITE_WORKS_LOAD_SUCCESS,
-                    new FavoriteWorksStatusResponse(null));
-        }
-
-        // 로그인 유저인 경우
         boolean isFavoriteWorks = favoriteService.isFavoriteWorks(userId, worksId);
         FavoriteWorksStatusResponse result = new FavoriteWorksStatusResponse(isFavoriteWorks);
         return CustomResponse.onSuccess(SuccessCode.FAVORITE_WORKS_LOAD_SUCCESS, result);

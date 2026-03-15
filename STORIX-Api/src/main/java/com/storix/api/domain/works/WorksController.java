@@ -28,11 +28,9 @@ public class WorksController {
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @PathVariable Long worksId
     ) {
-        Long userId = (authUserDetails != null) ? authUserDetails.getUserId() : null;
-
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                worksUseCase.getWorksDetail(userId, worksId)
+                worksUseCase.getWorksDetail(authUserDetails.getUserId(), worksId)
         );
     }
 }
