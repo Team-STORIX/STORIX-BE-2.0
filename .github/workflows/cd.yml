@@ -21,16 +21,17 @@ jobs:
       - name: Deploy on EC2 Instance
         run: |
           cd ~/storix
-          test -f docker-compose.yml || { echo "ERORR: docker-compose.yml not found"; exit 1; }
+          test -f docker-compose.yml || { echo "ERROR: docker-compose.yml not found"; exit 1; }
           test -f .env || { echo "ERROR: .env not found"; exit 1; }
 
           echo ">>> Logging in to ECR..."
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-          echo ">>> Pulling latest image from ECR..."
+          echo ">>> Pulling latest images from ECR..."
           docker compose pull app
+          docker compose pull batch
 
-          echo ">>> Starting new container..."
+          echo ">>> Starting new containers..."
           docker compose up -d
 
           echo ">>> Pruning old images..."
