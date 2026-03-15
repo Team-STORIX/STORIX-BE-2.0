@@ -1,0 +1,19 @@
+apply plugin: 'org.springframework.boot'
+
+processResources {
+    from("${rootProject.projectDir}/src/main/resources")
+}
+
+bootJar { enabled = true }
+jar { enabled = false }
+
+dependencies {
+    implementation project(':STORIX-Infrastructure')
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation "software.amazon.awssdk:s3"
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.7.0'
+    testImplementation 'org.springframework.security:spring-security-test'
+}

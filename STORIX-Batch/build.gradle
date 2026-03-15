@@ -1,0 +1,15 @@
+apply plugin: 'org.springframework.boot'
+
+processResources {
+    from("${rootProject.projectDir}/src/main/resources")
+}
+
+bootJar { enabled = true }
+jar { enabled = false }
+
+dependencies {
+    implementation project(':STORIX-Common')
+    implementation project(':STORIX-Domain')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+}

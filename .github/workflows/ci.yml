@@ -25,15 +25,24 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build & push image to ECR
+      - name: Build & push storix-api image to ECR
         env:
-          IMAGE_NAME: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}
+          IMAGE_NAME: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_API_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
-
         run: |
-          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+          docker build -f STORIX-Api/Dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
           docker push $IMAGE_NAME:$IMAGE_TAG
-          
-          # latest tag
+
+          docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:latest
+
+      - name: Build & push storix-batch image to ECR
+        env:
+          IMAGE_NAME: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_BATCH_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f STORIX-Batch/Dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
+          docker push $IMAGE_NAME:$IMAGE_TAG
+
           docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
           docker push $IMAGE_NAME:latest
