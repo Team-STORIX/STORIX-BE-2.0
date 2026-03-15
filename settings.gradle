@@ -1,1 +1,6 @@
-rootProject.name = 'storix-api'
+rootProject.name = 'storix-be'
+include 'STORIX-Common'
+include 'STORIX-Domain'
+include 'STORIX-Infrastructure'
+include 'STORIX-Api'
+include 'STORIX-Batch'

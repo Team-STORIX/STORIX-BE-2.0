@@ -1,0 +1,11 @@
+apply plugin: 'org.springframework.boot'
+
+bootJar { enabled = true }
+jar { enabled = false }
+
+dependencies {
+    implementation project(':STORIX-Common')
+    implementation project(':STORIX-Domain')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+}
