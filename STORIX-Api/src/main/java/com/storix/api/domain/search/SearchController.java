@@ -1,7 +1,10 @@
 package com.storix.api.domain.search;
 
 import com.storix.domain.domains.search.application.SearchUseCase;
-import com.storix.domain.domains.search.dto.*;
+import com.storix.domain.domains.search.dto.RecentResponseDto;
+import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
+import com.storix.domain.domains.search.dto.TrendingResponseDto;
+import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
 import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.works.domain.WorksSortType;
@@ -41,20 +44,6 @@ public class SearchController {
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
                 searchUseCase.searchWorks(userId, keyword, pageable)
-        );
-    }
-
-    @GetMapping("/artists")
-    @Operation(summary = "작가 검색", description = "작가명을 검색합니다. 결과값은 무한 스크롤로 구성됩니다.")
-    public CustomResponse<SearchResponseWrapperDto<ArtistSearchResponseDto>> searchArtists(
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page
-    ) {
-        Pageable pageable = PageRequest.of(page, 10);
-
-        return CustomResponse.onSuccess(
-                SuccessCode.SUCCESS,
-                searchUseCase.searchArtists(keyword, pageable)
         );
     }
 

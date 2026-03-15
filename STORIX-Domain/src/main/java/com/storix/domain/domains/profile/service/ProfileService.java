@@ -33,25 +33,9 @@ public class ProfileService {
                 .build();
     }
 
-    // 작가 프로필 조회
-    @Transactional(readOnly = true)
-    public UserInfo getArtistProfileInfo(Long userId) {
-        User artistUser = userAdaptor.findUserById(userId);
-
-        return UserInfo.builder()
-                .userId(userId)
-                .role(artistUser.getRole().toString())
-                .nickName(artistUser.getNickName())
-                .profileDescription(artistUser.getProfileDescription())
-                .profileImageUrl(artistUser.getProfileImageUrl() == null
-                        ? null : baseUrl + "/" + artistUser.getProfileImageUrl())
-                .build();
-    }
-
     // 독자 닉네임 중복 체크
     @Transactional(readOnly = true)
     public void validNickname(String nickName, Long userId) {
-        userAdaptor.checkNicknameDuplicateWithArtists(nickName);
         userAdaptor.checkNicknameDuplicateExceptSelf(nickName, userId);
     }
 

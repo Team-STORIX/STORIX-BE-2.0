@@ -4,11 +4,10 @@ import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.domain.User;
-import com.storix.domain.domains.user.dto.*;
-import com.storix.domain.domains.user.exception.auth.ArtistLoginException;
+import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
+import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.user.exception.me.*;
 import com.storix.domain.domains.user.repository.UserRepository;
-import com.storix.domain.domains.works.repository.WorksRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -27,7 +26,6 @@ public class UserAdaptor {
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
     private final UserRepository userRepository;
-    private final WorksRepository worksRepository;
 
     public Role findUserRoleByUserId(Long userId) {
         Optional<Role> role = userRepository.findRoleByUserId(userId);
@@ -74,12 +72,6 @@ public class UserAdaptor {
         }
     }
 
-    public void checkNicknameDuplicateWithArtists(String nickName) {
-        if (worksRepository.existsByAnyAuthorName(nickName)) {
-            throw ProfileForbiddenNicknameException.EXCEPTION;
-        }
-    }
-
     // 독자 회원 가입
     public AuthUserDetails saveReaderUser(CreateReaderUserCommand cmd) {
         try {
@@ -90,62 +82,12 @@ public class UserAdaptor {
         }
     }
 
-    /**
-     * 작가
-     * */
-    // loginId -> userId (회원가입 api 응답, 작품-작가 매칭 용)
-    public Long findArtistUserIdByLoginId(String loginId){
-        Optional<User> artistUser = userRepository.findArtistUserByLoginId(loginId);
-        if(artistUser.isPresent()){
-            return artistUser.get().getId();
-        }
-        throw UnknownUserException.EXCEPTION;
-    }
-
-    // loginId -> Optional<User> (로그인 시, loginId가 DB에 존재하는가? 존재한다면 password까지)
-    public LoginInfo findArtistUserLoginInfoByLoginId(String loginId){
-
-        Optional<User> artistUser = userRepository.findArtistUserByLoginId(loginId);
-
-        if(artistUser.isEmpty()) { throw ArtistLoginException.EXCEPTION; }
-
-        return new LoginInfo(artistUser.get().getLoginId(), artistUser.get().getPassword());
-    }
-
-    public User findArtistUserByLoginId(String loginId){
-        Optional<User> artistUser = userRepository.findArtistUserByLoginId(loginId);
-        if(artistUser.isPresent()){
-            return artistUser.get();
-        }
-        throw UnknownUserException.EXCEPTION;
-    }
-
-    public void checkLoginIdDuplicate(String loginId) {
-        Optional<User> artistUser = userRepository.findArtistUserByLoginId(loginId);
-        if (artistUser.isPresent()) {
-            throw DuplicateUserException.EXCEPTION;
-        }
-    }
-
-    public void saveArtistUser(CreateArtistUserCommand cmd) { userRepository.save(cmd.toEntity()); }
-
     public User findUserById(Long userId) {
         Optional<User> user = userRepository.findById(userId);
         if (user.isEmpty()) {
             throw UnknownUserException.EXCEPTION;
         }
         return user.get();
-    }
-
-    public List<FavoriteArtistInfo> findAllFavoriteArtistInfoByArtistIds(List<Long> artistIds) {
-        if (artistIds == null || artistIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        return userRepository.findFavoriteArtistInfosByIds(artistIds)
-                .stream()
-                .map(info -> info.withBaseUrl(baseUrl))
-                .toList();
     }
 
     public Map<Long, StandardProfileInfo> findStandardProfileInfoByUserIds(List<Long> userIds) {

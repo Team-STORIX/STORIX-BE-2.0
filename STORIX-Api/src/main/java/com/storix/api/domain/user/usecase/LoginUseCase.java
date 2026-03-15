@@ -1,11 +1,14 @@
 package com.storix.api.domain.user.usecase;
 
-import com.storix.api.domain.user.controller.dto.*;
+import com.storix.api.domain.user.controller.dto.LoginWithTokenResponse;
+import com.storix.api.domain.user.controller.dto.ReaderLoginResponse;
+import com.storix.api.domain.user.controller.dto.ReaderPreLoginResponse;
+import com.storix.api.domain.user.controller.dto.ReaderSocialLoginResponse;
+import com.storix.api.domain.user.controller.dto.OAuthLoginWithTokenResponse;
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.api.domain.user.helper.CookieHelper;
 import com.storix.api.domain.user.helper.TokenGenerateHelper;
-import com.storix.domain.domains.user.service.ArtistLoginService;
 import com.storix.api.domain.user.helper.OAuthHelper;
 import com.storix.domain.domains.user.service.ReaderLoginService;
 import com.storix.domain.domains.user.domain.OAuthInfo;
@@ -20,7 +23,6 @@ import org.springframework.http.ResponseEntity;
 public class LoginUseCase {
 
     private final ReaderLoginService readerLoginService;
-    private final ArtistLoginService artistLoginService;
 
     private final OAuthHelper oauthHelper;
     private final TokenGenerateHelper tokenGenerateHelper;
@@ -61,23 +63,6 @@ public class LoginUseCase {
         return ResponseEntity.ok()
                 .body(CustomResponse.onSuccess(SuccessCode.OAUTH_PRE_LOGIN_SUCCESS,
                         new ReaderSocialLoginResponse(false, null, readerPreLoginResponse)));
-    }
-
-    /**
-     * 작가용
-     * username = loginId
-     * */
-    // 로그인
-    public ResponseEntity<CustomResponse<AuthorizationResponse>> artistLoginWithLoginId(ArtistLoginRequest req) {
-        artistLoginService.validateArtistLogin(req.loginId(), req.password());
-
-        AuthUserDetails userDetails = artistLoginService.loadUserByUsername(req.loginId());
-        LoginWithTokenResponse tokenResponse = tokenGenerateHelper.generateLoginWithToken(userDetails);
-        AuthorizationResponse result = new AuthorizationResponse(tokenResponse.accessToken());
-
-        return ResponseEntity.ok()
-                .headers(cookieHelper.getTokenCookie(tokenResponse.refreshToken()))
-                .body(CustomResponse.onSuccess(SuccessCode.AUTH_ARTIST_LOGIN_SUCCESS, result));
     }
 
 }
