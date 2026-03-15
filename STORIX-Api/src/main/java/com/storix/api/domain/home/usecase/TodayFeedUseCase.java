@@ -19,9 +19,7 @@ public class TodayFeedUseCase {
     // 오늘의 피드
     public CustomResponse<List<SlicedReaderBoardWithProfileInfo>> getTodayTrendingFeeds(AuthUserDetails authUserDetails) {
 
-        Long userId = (authUserDetails != null) ? authUserDetails.getUserId() : null;
-
-        List<SlicedReaderBoardWithProfileInfo> result = feedService.findTodayTrendingFeeds(userId);
+        List<SlicedReaderBoardWithProfileInfo> result = feedService.findTodayTrendingFeeds(authUserDetails.getUserId());
         return CustomResponse.onSuccess(SuccessCode.HOME_TODAY_FEED_LOAD_SUCCESS, result);
     }
 
