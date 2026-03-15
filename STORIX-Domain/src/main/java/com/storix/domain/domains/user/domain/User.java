@@ -99,13 +99,6 @@ public class User extends BaseTimeEntity {
     })
     private OAuthInfo oauthInfo;
 
-    // 작가용 아이디/비번
-    @Column(name = "login_id")
-    private String loginId = null;
-
-    @Column(name = "password")
-    private String password = null;
-
     /** 생성자 로직 **/
     protected User() {}
 
@@ -116,15 +109,6 @@ public class User extends BaseTimeEntity {
         this.nickName = nickName;
         this.gender = gender;
         this.favoriteGenreList = favoriteGenreList;
-    }
-
-    @Builder(builderMethodName = "artistBuilder")
-    public User(String nickName, String loginId, String password) {
-        this.nickName = nickName;
-        this.loginId = loginId;
-        this.password = password;
-        this.role = Role.ARTIST;
-        this.marketingAgree = true;
     }
 
     /** 비즈니스 로직 **/
@@ -172,14 +156,8 @@ public class User extends BaseTimeEntity {
         gender = null;
         favoriteGenreList = null;
         profileImageUrl = null;
-        if (role.equals(Role.READER)) {
-            nickName = "탈퇴한 유저";
-            oauthInfo = oauthInfo.withDrawOauthInfo();
-        } else {
-            nickName = "탈퇴한 작가";
-            loginId = null;
-            password = null;
-        }
+        nickName = "탈퇴한 유저";
+        oauthInfo = oauthInfo.withDrawOauthInfo();
         marketingAgree = null;
         isAdultVerified = null;
     }
