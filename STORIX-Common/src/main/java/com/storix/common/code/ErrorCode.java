@@ -107,10 +107,7 @@ public enum ErrorCode {
 
     // Favorite error
     FAVORITE_WORKS_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "FAVORITE_ERROR_001", "이미 관심 작품 해제가 되었거나, 관심 작품으로 등록한 적 없는 작품입니다."),
-    FAVORITE_ARTIST_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "FAVORITE_ERROR_002", "이미 관심 작가 해제가 되었거나, 관심 작가로 등록한 적 없는 작가입니다."),
     FAVORITE_WORKS_DUPLICATE_REQUEST(HttpStatus.BAD_REQUEST, "FAVORITE_ERROR_003", "이미 관심 작품 등록이 된 작품입니다."),
-    FAVORITE_ARTIST_DUPLICATE_REQUEST(HttpStatus.BAD_REQUEST, "FAVORITE_ERROR_004", "이미 관심 작가 등록이 된 작가입니다."),
-    FAVORITE_ARTIST_NOT_FOUND(HttpStatus.NOT_FOUND, "FAVORITE_ERROR_005", "작가 계정이 아닙니다."),
   
     // Plus error
     PLUS_INVALID_RATING(HttpStatus.BAD_REQUEST, "PLUS_ERROR_001", "Enum 필드와 매핑할 수 없는 잘못된 평점값입니다."),
