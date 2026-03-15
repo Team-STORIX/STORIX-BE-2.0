@@ -1,0 +1,14 @@
+apply plugin: 'org.springframework.boot'
+
+processResources {
+    from("${rootProject.projectDir}/src/main/resources")
+}
+
+bootJar { enabled = false }
+jar { enabled = true }
+
+dependencies {
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-validation'
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+}
