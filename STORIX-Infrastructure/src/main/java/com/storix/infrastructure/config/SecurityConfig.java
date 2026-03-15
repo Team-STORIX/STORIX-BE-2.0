@@ -104,6 +104,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         (requests) -> requests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                .requestMatchers("/actuator/health").permitAll()
 
                                 // [Onboarding]
                                 .requestMatchers("/api/v1/onboarding/**").permitAll()
