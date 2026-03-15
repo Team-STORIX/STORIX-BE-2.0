@@ -114,50 +114,10 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v1/auth/tokens/refresh").permitAll()
                                 .requestMatchers("/api/v1/auth/developer/**").hasRole("ADMIN")
 
-                                // [Home]
-                                .requestMatchers("/api/v1/home/**").permitAll()
-          
-                                // [Search]
-                                .requestMatchers("/api/v1/search/**").permitAll()
-          
-                                // [Profile]
-                                .requestMatchers("/api/v1/profile/reader/**").hasRole("READER")
-                                .requestMatchers("/api/v1/profile/**").hasRole("READER")
-
-                                // [Plus]
-                                .requestMatchers("/api/v1/plus/reader/**").hasRole("READER")
-
-                                // [Library]
-                                .requestMatchers("/api/v1/library/**").hasRole("READER")
-
                                 // [TopicRoom]
-                                .requestMatchers("/api/v1/topic-rooms/popular").permitAll()
-                                .requestMatchers("/api/v1/topic-rooms/today").permitAll()
-                                .requestMatchers("/api/v1/topic-rooms/search").permitAll()
-                                .requestMatchers("/api/v1/topic-rooms/**").hasRole("READER")
                                 .requestMatchers("/ws-stomp/**").permitAll()
 
-                                // [Works]
-                                .requestMatchers(HttpMethod.PATCH,   "/api/v1/works/review/*").hasRole("READER")
-                                .requestMatchers(HttpMethod.POST,   "/api/v1/works/review/*").hasRole("READER")
-                                .requestMatchers(HttpMethod.DELETE, "/api/v1/works/review/*").hasRole("READER")
-                                .requestMatchers("/api/v1/works/review/*/like").hasRole("READER")
-                                .requestMatchers("/api/v1/works/review/*/report").hasRole("READER")
-                                .requestMatchers("/api/v1/works/**").permitAll()
-
-                                // [Favorite]
-                                .requestMatchers("/api/v1/favorite/**").hasRole("READER")
-
-                                // [Hashtag]
-                                .requestMatchers("/api/v1/hashtags/recommendations").permitAll()
-
-                                // [Feed]
-                                .requestMatchers("/api/v1/feed/**").hasRole("READER")
-
-                                // [Preference]
-                                .requestMatchers("/api/v1/preference/**").hasRole("READER")
-
-                                .anyRequest().authenticated()
+                                .anyRequest().hasRole("READER")
                 )
 
                 // jwt filter

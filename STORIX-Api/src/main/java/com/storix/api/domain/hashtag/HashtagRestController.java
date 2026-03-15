@@ -29,11 +29,9 @@ public class HashtagRestController {
             @AuthenticationPrincipal AuthUserDetails authUserDetails
             ) {
 
-        Long userId = (authUserDetails != null) ? authUserDetails.getUserId() : null;
-
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                hashtagRecommendationService.getRecommendedHashtags(userId)
+                hashtagRecommendationService.getRecommendedHashtags(authUserDetails.getUserId())
         );
     }
 
