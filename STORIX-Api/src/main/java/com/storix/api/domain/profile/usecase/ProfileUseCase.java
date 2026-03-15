@@ -5,7 +5,6 @@ import com.storix.domain.domains.image.service.S3CacheHelper;
 import com.storix.domain.domains.profile.service.ProfileService;
 import com.storix.domain.domains.profile.dto.UserInfo;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
-import com.storix.domain.domains.user.domain.Role;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
 import com.storix.domain.domains.profile.exception.ProfileImageNotExistException;
@@ -20,17 +19,9 @@ public class ProfileUseCase {
 
     // 기본 프로필 조회
     public CustomResponse<UserInfo> getUserProfile(AuthUserDetails authUserDetails) {
-
-        String role = authUserDetails.getRole().getStringValue();
         Long userId = authUserDetails.getUserId();
-
-        if (role.equals(String.valueOf(Role.READER))) {
-            UserInfo readerProfileInfo = profileService.getReaderProfileInfo(userId);
-            return CustomResponse.onSuccess(SuccessCode.PROFILE_LOAD_SUCCESS, readerProfileInfo);
-        } else {
-            UserInfo artistProfileInfo = profileService.getArtistProfileInfo(userId);
-            return CustomResponse.onSuccess(SuccessCode.PROFILE_LOAD_SUCCESS, artistProfileInfo);
-        }
+        UserInfo readerProfileInfo = profileService.getReaderProfileInfo(userId);
+        return CustomResponse.onSuccess(SuccessCode.PROFILE_LOAD_SUCCESS, readerProfileInfo);
     }
 
     // 독자 닉네임 변경

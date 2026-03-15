@@ -1,7 +1,6 @@
 package com.storix.api.domain.favorite.controller;
 
 import com.storix.api.domain.favorite.usecase.FavoriteUseCase;
-import com.storix.domain.domains.favorite.dto.FavoriteArtistStatusResponse;
 import com.storix.domain.domains.favorite.dto.FavoriteWorksStatusResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.common.payload.CustomResponse;
@@ -45,33 +44,6 @@ public class FavoriteController {
             @PathVariable Long worksId
     ) {
         return ResponseEntity.ok(favoriteUseCase.deleteFavoriteWorks(authUserDetails.getUserId(), worksId));
-    }
-
-    @Operation(summary = "관심 작가 등록 여부 조회", description = "관심 작가 등록 여부를 조회하는 api 입니다.")
-    @GetMapping("/artist/{artistId}")
-    public ResponseEntity<CustomResponse<FavoriteArtistStatusResponse>> isFavoriteArtist(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @PathVariable Long artistId
-    ) {
-        return ResponseEntity.ok(favoriteUseCase.getFavoriteArtistStatus(authUserDetails, artistId));
-    }
-
-    @Operation(summary = "관심 작가 등록", description = "관심 작가를 등록하는 api 입니다.")
-    @PostMapping("/artist/{artistId}")
-    public ResponseEntity<CustomResponse<FavoriteArtistStatusResponse>> addFavoriteArtist(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @PathVariable Long artistId
-    ) {
-        return ResponseEntity.ok(favoriteUseCase.addArtistToFavorite(authUserDetails.getUserId(), artistId));
-    }
-
-    @Operation(summary = "관심 작가 해제", description = "관심 작가 등록을 해제하는 api 입니다.")
-    @DeleteMapping("/artist/{artistId}")
-    public ResponseEntity<CustomResponse<FavoriteArtistStatusResponse>> deleteFavoriteArtist(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @PathVariable Long artistId
-    ) {
-        return ResponseEntity.ok(favoriteUseCase.deleteFavoriteArtist(authUserDetails.getUserId(), artistId));
     }
 
 }

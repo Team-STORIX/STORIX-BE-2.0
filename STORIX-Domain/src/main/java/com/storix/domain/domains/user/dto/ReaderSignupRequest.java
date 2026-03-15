@@ -1,6 +1,5 @@
 package com.storix.domain.domains.user.dto;
 
-import com.storix.domain.domains.user.domain.Gender;
 import com.storix.domain.domains.works.domain.Genre;
 import jakarta.validation.constraints.*;
 
@@ -19,14 +18,10 @@ public record ReaderSignupRequest(
     )
     String nickName,
 
-    @NotNull(message = "성별은 필수입니다.")
-    Gender gender,
-
     @NotNull(message = "관심 장르는 필수입니다.")
     @Size(min = 1, max = 3, message = "관심 장르는 1개 이상 3개 이하로 선택해야 합니다.")
     Set<Genre> favoriteGenreList,
 
-    @NotNull(message = "관심 작품은 필수입니다.")
     @Size(min = 2, max = 18, message = "관심 작품은 2개 이상 18개 이하로 선택해야 합니다.")
     Set<Long> favoriteWorksIdList
 ) {

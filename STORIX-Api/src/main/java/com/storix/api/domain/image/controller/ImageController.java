@@ -44,16 +44,6 @@ public class ImageController {
                 .body(imageUseCase.getProfileImagePresignedUrl(authUserDetails.getUserId(), req));
     }
 
-    @Operation(summary = "팬콘텐츠 이미지 업로드", description = "S3 버킷에 팬콘텐츠 이미지를 업로드할 수 있는 presignedUrl을 발급하는 api 입니다.   \n해당 url로 이미지를 업로드 한 후, url과 함께 반환된 objectKey는 작가 게시물 등록 api로 보내주세요.")
-    @PostMapping("/fan-board")
-    public ResponseEntity<CustomResponse<List<PresignedUrlResponse>>> getFanBoardImagePresignedUrl(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @Valid @RequestBody FileUploadRequest req
-    ) {
-        return ResponseEntity.ok()
-                .body(imageUseCase.getFanBoardImagePresignedUrl(authUserDetails.getUserId(), req));
-    }
-
     @Operation(summary = "[테스트용] 이미지 확인", description = "S3 버킷에 업로드된 이미지를 확인할 수 있는 presignedGetUrl을 발급하는 api 입니다.   \nobjectKey를 보내주세요.")
     @GetMapping("/confirm")
     public ResponseEntity<CustomResponse<String>> getProfileImagePresignedUrl(
