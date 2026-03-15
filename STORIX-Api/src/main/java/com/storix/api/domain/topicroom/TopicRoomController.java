@@ -15,12 +15,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -39,14 +40,6 @@ public class TopicRoomController {
             @AuthenticationPrincipal AuthUserDetails authUser,
             @ParameterObject @PageableDefault(size = 3, sort = "topicRoom.lastChatTime", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        // 비로그인 시 빈 리스트 반환
-        if (authUser == null) {
-            return CustomResponse.onSuccess(
-                    SuccessCode.SUCCESS,
-                    new SliceImpl<>(Collections.emptyList(), pageable, false)
-            );
-        }
-
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
                 topicRoomUseCase.getMyJoinedRooms(authUser.getUserId(), pageable));
@@ -59,11 +52,9 @@ public class TopicRoomController {
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
 
-        Long userId = (authUser != null) ? authUser.getUserId() : null;
-
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCase.getTodayTrendingRooms(userId)
+                topicRoomUseCase.getTodayTrendingRooms(authUser.getUserId())
         );
     }
 
@@ -75,11 +66,9 @@ public class TopicRoomController {
             @AuthenticationPrincipal AuthUserDetails authUser,
             @ParameterObject @PageableDefault( size = 10, sort = "topicRoomName", direction = Sort.Direction.ASC) Pageable pageable) {
 
-        Long userId = (authUser != null) ? authUser.getUserId() : null;
-
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCase.searchRooms(keyword, userId, pageable));
+                topicRoomUseCase.searchRooms(keyword, authUser.getUserId(), pageable));
     }
 
     // 4. 생성
@@ -137,9 +126,7 @@ public class TopicRoomController {
     public CustomResponse<List<TopicRoomResponseDto>> getPopularRooms(
             @AuthenticationPrincipal AuthUserDetails authUserDetails
     ) {
-        Long userId = (authUserDetails != null) ? authUserDetails.getUserId() : null;
-
-        List<TopicRoomResponseDto> rooms = topicRoomUseCase.getPopularRooms(userId);
+        List<TopicRoomResponseDto> rooms = topicRoomUseCase.getPopularRooms(authUserDetails.getUserId());
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, rooms);
     }
 
