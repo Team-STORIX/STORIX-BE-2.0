@@ -1,0 +1,6 @@
+### Presigned URL로 S3 업로드 (PUT)
+@putUrl = https://presignedPutUrl
+PUT {{putUrl}}
+Content-Type: image/jpeg
+
+< ./test.jpeg
