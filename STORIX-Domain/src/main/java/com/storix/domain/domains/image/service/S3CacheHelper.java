@@ -18,7 +18,6 @@ public class S3CacheHelper {
 
     private static final String BOARD_KEY_PREFIX = "image:public:board:";
     private static final String PROFILE_KEY_PREFIX = "image:public:profile:";
-    private static final String FAN_CONTENT_KEY_PREFIX = "image:private:board:";
 
     private static final long IMAGE_KEY_TTL_MINUTE = 20;
 
@@ -33,10 +32,6 @@ public class S3CacheHelper {
 
     public void cacheProfileKey(Long userId, String objectKey) {
         cacheAsSet(keyFor(userId, PROFILE_KEY_PREFIX), List.of(objectKey));
-    }
-
-    public void cacheFanContentKeys(Long userId, List<String> objectKeys) {
-        cacheAsSet(keyFor(userId, FAN_CONTENT_KEY_PREFIX), objectKeys);
     }
 
     private static final DefaultRedisScript<Long> CACHE_SET_WITH_TTL_SCRIPT =
@@ -70,10 +65,6 @@ public class S3CacheHelper {
 
     public boolean isValidProfileKey(Long userId, String objectKey) {
         return isValidAll(keyFor(userId, PROFILE_KEY_PREFIX), List.of(objectKey));
-    }
-
-    public boolean isValidFanContentKeys(Long userId, List<String> objectKeys) {
-        return isValidAll(keyFor(userId, FAN_CONTENT_KEY_PREFIX), objectKeys);
     }
 
     private static final DefaultRedisScript<Long> CONTAINS_ALL_REDIS_SCRIPT =
