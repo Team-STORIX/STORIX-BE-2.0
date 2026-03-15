@@ -39,13 +39,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Boolean findIsAdultVerifiedById(@Param("userId") Long userId);
 
     // 단건 프로필 정보 조회
-    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(u.id, u.profileImageUrl, u.nickName)" +
+    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(u.id, u.profileObjectKey, u.nickName)" +
             "FROM User u " +
             "WHERE u.id = :userId ")
     StandardProfileInfo findStandardProfileInfoById(@Param("userId") Long userId);
 
     // 단체 프로필 정보 조회
-    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(u.id, u.profileImageUrl, u.nickName)" +
+    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(u.id, u.profileObjectKey, u.nickName)" +
             "FROM User u " +
             "WHERE u.id IN :userIds ")
     List<StandardProfileInfo> findStandardProfileInfoByUserIds(@Param("userIds") List<Long> userIds);

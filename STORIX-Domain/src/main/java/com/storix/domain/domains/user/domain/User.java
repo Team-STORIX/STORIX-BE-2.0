@@ -41,9 +41,6 @@ public class User extends BaseTimeEntity {
     @Column(name = "nick_name", nullable = false, length = 10)
     private String nickName;
 
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
-
     @ElementCollection(targetClass = Genre.class)
     @CollectionTable(
             name = "user_favorite_genre",
@@ -53,8 +50,8 @@ public class User extends BaseTimeEntity {
     @Column(name = "genre")
     private Set<Genre> favoriteGenreList = new HashSet<>();
 
-    @Column(name = "profile_image_url")
-    private String profileImageUrl = null;
+    @Column(name = "profile_object_key")
+    private String profileObjectKey = null;
 
     @Column(length = 30)
     private String profileDescription;
@@ -102,12 +99,11 @@ public class User extends BaseTimeEntity {
     /** 생성자 로직 **/
     protected User() {}
 
-    @Builder(builderMethodName = "readerBuilder")
-    public User(boolean marketingAgree, OAuthInfo oauthInfo, String nickName, Gender gender, Set<Genre> favoriteGenreList) {
+    @Builder
+    public User(boolean marketingAgree, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList) {
         this.marketingAgree = marketingAgree;
         this.oauthInfo = oauthInfo;
         this.nickName = nickName;
-        this.gender = gender;
         this.favoriteGenreList = favoriteGenreList;
     }
 
@@ -126,7 +122,7 @@ public class User extends BaseTimeEntity {
         this.profileDescription = profileDescription;
     }
 
-    public void changeProfileImage(String objectKey) { this.profileImageUrl = objectKey; }
+    public void changeProfileImage(String objectKey) { this.profileObjectKey = objectKey; }
 
     public void changeLevel(int level) {
 //        if (level < 1 || level > 5) {
@@ -153,9 +149,8 @@ public class User extends BaseTimeEntity {
         }
         accountState = AccountState.DELETED;
         deletedSuffix = UUID.randomUUID().toString();
-        gender = null;
         favoriteGenreList = null;
-        profileImageUrl = null;
+        profileObjectKey = null;
         nickName = "탈퇴한 유저";
         oauthInfo = oauthInfo.withDrawOauthInfo();
         marketingAgree = null;
