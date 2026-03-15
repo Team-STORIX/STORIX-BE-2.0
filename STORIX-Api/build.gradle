@@ -1,9 +1,5 @@
 apply plugin: 'org.springframework.boot'
 
-processResources {
-    from("${rootProject.projectDir}/src/main/resources")
-}
-
 bootJar { enabled = true }
 jar { enabled = false }
 

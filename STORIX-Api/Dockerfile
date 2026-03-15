@@ -7,25 +7,19 @@ WORKDIR /app
 COPY gradlew ./gradlew
 COPY gradle ./gradle
 COPY build.gradle ./
-COPY settings.gradle ./
-COPY src ./src
+COPY settings.gradle .
 
 COPY STORIX-Common/build.gradle ./STORIX-Common/build.gradle
 COPY STORIX-Domain/build.gradle ./STORIX-Domain/build.gradle
 COPY STORIX-Infrastructure/build.gradle ./STORIX-Infrastructure/build.gradle
 COPY STORIX-Api/build.gradle ./STORIX-Api/build.gradle
 
-RUN ./gradlew :STORIX-Api:dependencies --no-daemon
-
-COPY STORIX-Common/src ./STORIX-Common/src
-COPY STORIX-Domain/src ./STORIX-Domain/src
-COPY STORIX-Infrastructure/src ./STORIX-Infrastructure/src
-COPY STORIX-Api/src ./STORIX-Api/src
+COPY . .
 
 RUN ./gradlew :STORIX-Api:bootJar -x test --no-daemon
 
 # Run Stage
-FROM amazoncorretto:17-alpine-jdk
+FROM eclipse-temurin:17-jre-alpine
 
 ENV TZ=Asia/Seoul
 WORKDIR /app
