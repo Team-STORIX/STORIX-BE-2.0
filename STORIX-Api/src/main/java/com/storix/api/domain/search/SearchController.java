@@ -18,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/v1/search")
@@ -37,7 +36,7 @@ public class SearchController {
             @RequestParam(defaultValue = "NAME") WorksSortType sort,
             @RequestParam(defaultValue = "0") int page
     ) {
-        Long userId = (authUser != null) ? authUser.getUserId() : null;
+        Long userId = authUser.getUserId();
 
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
 
@@ -63,16 +62,6 @@ public class SearchController {
     public CustomResponse<RecentResponseDto> getRecent(
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
-
-        if (authUser == null) {
-            return CustomResponse.onSuccess(
-                    SuccessCode.SUCCESS,
-                    RecentResponseDto.builder()
-                            .recentKeywords(Collections.emptyList())
-                            .build()
-            );
-        }
-
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
                 RecentResponseDto.builder()
@@ -88,10 +77,7 @@ public class SearchController {
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
 
-        if (authUser != null) {
-            searchHistoryService.deleteRecentKeyword(authUser.getUserId(), keyword);
-        }
-
+        searchHistoryService.deleteRecentKeyword(authUser.getUserId(), keyword);
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
     }
 }
