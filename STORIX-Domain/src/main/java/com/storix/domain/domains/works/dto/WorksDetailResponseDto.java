@@ -2,6 +2,8 @@ package com.storix.domain.domains.works.dto;
 
 import com.storix.domain.domains.hashtag.domain.Hashtag;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksPlatform;
+import com.storix.domain.domains.works.domain.Platform;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -18,7 +20,7 @@ public record WorksDetailResponseDto(
         String illustrator,
         String originalAuthor,
         String genre,
-        String platform,
+        List<String> platforms,
         String ageClassification,
         Double avgRating,
         Long reviewCount,
@@ -35,7 +37,9 @@ public record WorksDetailResponseDto(
                 .illustrator(works.getIllustrator())
                 .originalAuthor(works.getOriginalAuthor())
                 .genre(works.getGenre().getDbValue())
-                .platform(works.getPlatform().getDbValue())
+                .platforms(works.getPlatforms().stream()
+                        .map(wp -> wp.getPlatform().getDbValue())
+                        .toList())
                 .ageClassification(works.getAgeClassification().getDbValue())
                 .avgRating(works.getAvgRating() != null ? roundAvgRating(works.getAvgRating()) : 0.0)
                 .reviewCount(reviewCount)
