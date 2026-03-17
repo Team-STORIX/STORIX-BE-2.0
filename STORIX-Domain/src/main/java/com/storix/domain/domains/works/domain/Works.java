@@ -27,9 +27,8 @@ public class Works {
     @Column(name = "user_id")
     private Long userId = null;
 
-    // 작품 플랫폼
-    @Column(nullable = false)
-    private Platform platform;
+    @OneToMany(mappedBy = "works", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<WorksPlatform> platforms = new HashSet<>();
 
     // 작품명
     @Column(name = "works_name", nullable = false)
@@ -86,13 +85,12 @@ public class Works {
     private Boolean isOnboarding;
 
     @Builder
-    private Works(Platform platform, String worksName,
+    private Works(String worksName,
                   String artistName, String author, String illustrator,
                   String originalAuthor, AgeClassification ageClassification,
                   String description, Genre genre, String thumbnailUrl,
                   WorksType worksType) {
 
-        this.platform = platform;
         this.worksName = worksName;
         this.artistName = artistName;
         this.author = author;
@@ -105,13 +103,19 @@ public class Works {
         this.worksType = worksType;
         this.reviewsCount = 0;
         this.avgRating = 0.0;
+        this.platforms = new HashSet<>();
         this.hashtags = new HashSet<>();
     }
 
-    /**
-     * 해시태그 조회 (read-only)
-     * */
+    public void addPlatform(Platform platform) {
+        this.platforms.add(new WorksPlatform(this, platform));
+    }
+
     public Set<Hashtag> getHashtags() {
         return Set.copyOf(hashtags);
+    }
+
+    public Set<WorksPlatform> getPlatforms() {
+        return Set.copyOf(platforms);
     }
 }
