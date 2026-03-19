@@ -13,6 +13,7 @@ import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.exception.me.UnknownUserException;
 import com.storix.domain.domains.user.exception.oauth.FeignClientServerErrorException;
+import com.storix.domain.domains.user.exception.oauth.UnsupportedOAuthProviderException;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class AuthUseCase {
                 if (naverUser.id() == null) throw FeignClientServerErrorException.EXCEPTION;
                 yield authService.validNaverSignup(naverUser.id());
             }
+            case SLACK -> throw UnsupportedOAuthProviderException.EXCEPTION;
         };
     }
 
