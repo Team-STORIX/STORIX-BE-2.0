@@ -2,6 +2,7 @@ package com.storix.domain.domains.preference.dto;
 
 import com.storix.domain.domains.hashtag.domain.Hashtag;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksPlatform;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +19,7 @@ public class ExplorationWorksResponseDto {
     private String thumbnailUrl;
     private String artistName;
 
-    private String platform;
+    private List<String> platforms;
     private String genre;
     private String description;
     private List<String> hashtags;
@@ -29,7 +30,9 @@ public class ExplorationWorksResponseDto {
                 .worksName(works.getWorksName())
                 .thumbnailUrl(works.getThumbnailUrl())
                 .artistName(works.getArtistName())
-                .platform(works.getPlatform() != null ? works.getPlatform().toString() : null)
+                .platforms(works.getPlatforms() != null ? works.getPlatforms().stream()
+                        .map(wp -> wp.getPlatform().getDbValue())
+                        .toList() : List.of())
                 .genre(works.getGenre() != null ? works.getGenre().getDbValue() : null)
                 .description(works.getDescription())
                 .hashtags(works.getHashtags() != null ? works.getHashtags().stream()

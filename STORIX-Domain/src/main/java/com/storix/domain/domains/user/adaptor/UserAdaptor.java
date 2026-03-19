@@ -4,6 +4,7 @@ import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.dto.CreateDeveloperUserCommand;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.user.exception.me.*;
@@ -41,10 +42,6 @@ public class UserAdaptor {
         return info == null ? null : info.withBaseUrl(baseUrl);
     }
 
-    /**
-     * 독자
-     * */
-    // 독자
     // OAuthInfo(oid, provider) -> userId(PK), role (토큰 서명용)
     public User findReaderUserByOAuthInfo(OAuthInfo oauthInfo) {
         Optional<User> readerUser = userRepository.findByOauthInfoProviderAndOauthInfoOid(oauthInfo.getProvider(), oauthInfo.getOid());
@@ -69,6 +66,16 @@ public class UserAdaptor {
     public void checkNicknameDuplicateExceptSelf(String nickName, Long userId) {
         if (userRepository.existsNickNameExceptSelf(nickName, userId)) {
             throw ProfileDuplicateNicknameException.EXCEPTION;
+        }
+    }
+
+    // 개발자 회원 가입
+    public AuthUserDetails saveDeveloperUser(CreateDeveloperUserCommand cmd) {
+        try {
+            User user = userRepository.save(cmd.toEntity());
+            return new AuthUserDetails(user.getId(), user.getRole());
+        } catch (DataIntegrityViolationException e) {
+            throw DuplicateUserException.EXCEPTION;
         }
     }
 
