@@ -17,9 +17,6 @@ import java.util.UUID;
 @Getter
 @Table(
         name = "users",
-        indexes = {
-                @Index(name = "idx_loginId", columnList = "loginId")
-        },
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_oauth_provider_oid",
@@ -86,9 +83,9 @@ public class User extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private Role role = Role.READER;
+    private Role role;
 
-    // 독자용 소셜 로그인
+    // 소셜 로그인
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "provider", column = @Column(name = "oauth_provider")),
@@ -100,11 +97,12 @@ public class User extends BaseTimeEntity {
     protected User() {}
 
     @Builder
-    public User(boolean marketingAgree, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList) {
+    public User(boolean marketingAgree, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList, Role role) {
         this.marketingAgree = marketingAgree;
         this.oauthInfo = oauthInfo;
         this.nickName = nickName;
         this.favoriteGenreList = favoriteGenreList;
+        if (role != null) this.role = role;
     }
 
     /** 비즈니스 로직 **/

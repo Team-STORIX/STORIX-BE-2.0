@@ -75,6 +75,26 @@ public enum ErrorCode {
     NOE_UNSUPPORTED_RESPONSE_TYPE(HttpStatus.BAD_REQUEST, "NAVER_NOE_UNSUPPORTED_RESPONSE_TYPE", "정의되지 않은 반환 형식으로 요청했습니다."),
     NOE_SERVER_ERROR(HttpStatus.BAD_REQUEST, "NAVER_SERVER_ERROR", "네이버 인증 서버의 오류로 요청을 처리하지 못했습니다."),
 
+    // Apple OAuth error
+    AOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_REQUEST", "Apple 요청이 잘못되었습니다."),
+    AOE_INVALID_CLIENT(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_CLIENT", "Apple 클라이언트 인증에 실패했습니다."),
+    AOE_INVALID_GRANT(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_GRANT", "Apple 인가 코드가 유효하지 않거나 만료되었습니다."),
+
+    // X OAuth error
+    XOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "X_XOE_INVALID_REQUEST", "X 요청이 잘못되었습니다."),
+    XOE_UNAUTHORIZED_CLIENT(HttpStatus.BAD_REQUEST, "X_XOE_UNAUTHORIZED_CLIENT", "X 클라이언트 인증에 실패했습니다."),
+    XOE_INVALID_GRANT(HttpStatus.BAD_REQUEST, "X_XOE_INVALID_GRANT", "X 인가 코드가 유효하지 않거나 만료되었습니다."),
+
+    // Slack OAuth error
+    SLACK_SEND_MESSAGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SLACK_ERROR_001", "Slack 메시지 전송에 실패했습니다."),
+    SLACK_INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "SLACK_ERROR_002", "Slack 서명 검증에 실패했습니다."),
+
+    // Developer Auth error
+    DEVELOPER_SIGNUP_PENDING_NOT_FOUND(HttpStatus.NOT_FOUND, "DEV_AUTH_ERROR_001", "개발자 회원가입 대기 요청을 찾을 수 없습니다."),
+    DEVELOPER_NOT_APPROVED(HttpStatus.BAD_REQUEST, "DEV_AUTH_ERROR_002", "아직 Slack 승인이 완료되지 않았습니다."),
+    UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "DEV_AUTH_ERROR_003", "지원하지 않는 OAuth Provider입니다."),
+    DEVELOPER_IDENTIFIER_MISMATCH(HttpStatus.FORBIDDEN, "DEV_AUTH_ERROR_004", "개발자 식별자가 일치하지 않습니다."),
+
     // OIDC error
     OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),
 

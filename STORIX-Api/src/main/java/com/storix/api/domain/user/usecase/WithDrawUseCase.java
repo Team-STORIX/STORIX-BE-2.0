@@ -30,6 +30,7 @@ public class WithDrawUseCase {
             switch (user.getOauthInfo().getProvider()) {
                 case KAKAO -> oauthHelper.unlinkKakaoUser(user.getOauthInfo().getOid());
                 case NAVER -> oauthHelper.unlinkNaverUser(user.getOauthInfo().getOid());
+                case SLACK -> {} // Slack은 별도 연동 해제 불필요
             }
         }
         authService.withDrawUser(userId);
