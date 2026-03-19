@@ -25,6 +25,9 @@ public enum SuccessCode {
     AUTH_LOGOUT_SUCCESS(HttpStatus.OK, "AUTH_SUCCESS_002", "로그아웃에 성공했습니다."),
     AUTH_REISSUE_ACCESSTOKEN_SUCCESS(HttpStatus.CREATED, "AUTH_SUCCESS_003", "엑세스 토큰 재발급에 성공했습니다."),
     AUTH_WITHDRAW_SUCCESS(HttpStatus.OK, "AUTH_SUCCESS_006", "회원 탈퇴에 성공했습니다."),
+    DEVELOPER_SIGNUP_PENDING_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_001", "개발자 회원가입 요청이 Slack으로 전송되었습니다. 승인을 기다려주세요."),
+    DEVELOPER_SIGNUP_APPROVED_SUCCESS(HttpStatus.CREATED, "DEV_AUTH_SUCCESS_002", "개발자 회원가입이 승인되었습니다."),
+    DEVELOPER_LOGIN_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_003", "개발자 로그인에 성공했습니다."),
     ONBOARDING_WORKS_LIST_LOAD_SUCCESS(HttpStatus.OK, "ONBOARDING_SUCCESS_001", "온보딩 작품 리스트 조회에 성공했습니다."),
 
     // Home success
