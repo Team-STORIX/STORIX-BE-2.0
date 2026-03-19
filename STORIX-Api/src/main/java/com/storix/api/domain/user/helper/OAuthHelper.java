@@ -10,6 +10,7 @@ import com.storix.domain.domains.user.dto.*;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.exception.oauth.OidcJwksRefreshRequiredException;
+import com.storix.domain.domains.user.exception.oauth.UnsupportedOAuthProviderException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -90,6 +91,7 @@ public class OAuthHelper {
         return switch (provider) {
             case KAKAO -> kakaoOauthClient.getKakaoOIDCOpenKeys();
             case NAVER -> naverOauthClient.getNaverOIDCOpenKeys();
+            case SLACK -> throw UnsupportedOAuthProviderException.EXCEPTION;
         };
     }
 
@@ -139,6 +141,9 @@ public class OAuthHelper {
 
     // OIDC 스펙: 검증된 idToken으로 OAuthInfo 반환 (provider, oid)
     public OAuthInfo getOauthInfoByIdToken(String idToken, OAuthProvider provider) {
+        if (provider == OAuthProvider.SLACK) {
+            throw UnsupportedOAuthProviderException.EXCEPTION;
+        }
         if (provider == OAuthProvider.NAVER) {
             return OAuthInfo.builder()
                     .provider(provider)
