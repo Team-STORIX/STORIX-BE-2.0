@@ -7,7 +7,11 @@ public record StandardReplyInfoWithLike(
         String comment,
         String lastCreatedTime,
         int likeCount,
-        boolean isLiked
+        boolean isLiked,
+        int depth,
+        int childReplyCount,
+        Long parentReplyId,
+        boolean deleted
 ) {
     public static StandardReplyInfoWithLike of(ReaderBoardReplyInfo reply, boolean isLiked) {
         return new StandardReplyInfoWithLike(
@@ -17,7 +21,11 @@ public record StandardReplyInfoWithLike(
                 reply.comment(),
                 reply.lastCreatedTime(),
                 reply.likeCount(),
-                isLiked
+                isLiked,
+                reply.depth(),
+                reply.childReplyCount(),
+                reply.parentReplyId(),
+                reply.deleted()
         );
     }
 }

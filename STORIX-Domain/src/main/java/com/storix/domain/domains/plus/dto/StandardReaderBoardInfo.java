@@ -10,6 +10,7 @@ public record StandardReaderBoardInfo(
         int likeCount,
         int replyCount,
         boolean isSpoiler,
+        String spoilerScript,
 
         // 인기 점수
         int popularityScore

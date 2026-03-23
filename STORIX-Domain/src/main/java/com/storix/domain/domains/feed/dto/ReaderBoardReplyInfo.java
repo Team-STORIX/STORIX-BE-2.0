@@ -12,16 +12,24 @@ public record ReaderBoardReplyInfo(
         Long boardId,
         String comment,
         String lastCreatedTime,
-        int likeCount
+        int likeCount,
+        int depth,
+        int childReplyCount,
+        Long parentReplyId,
+        boolean deleted
 ) {
     public static ReaderBoardReplyInfo from(ReaderBoardReply reply) {
         return new ReaderBoardReplyInfo(
                 reply.getId(),
                 reply.getUserId(),
                 reply.getBoardId(),
-                reply.getComment(),
+                reply.getDisplayComment(),
                 formatTimeAgo(reply.getCreatedAt()),
-                reply.getLikeCount()
+                reply.getLikeCount(),
+                reply.getDepth(),
+                reply.getChildReplyCount(),
+                reply.getParentReply() != null ? reply.getParentReply().getId() : null,
+                reply.isDeleted()
         );
     }
 
