@@ -24,5 +24,18 @@ public abstract class BoardReply extends BaseTimeEntity {
     @Column(name = "like_count", nullable = false)
     protected int likeCount = 0;
 
+    @Column(nullable = false)
+    protected int depth = 0;
+
+    @Column(name = "child_reply_count", nullable = false)
+    protected int childReplyCount = 0;
+
+    @Column(nullable = false)
+    protected boolean deleted = false;
+
+    public String getDisplayComment() {
+        return deleted ? "삭제된 댓글입니다" : comment;
+    }
+
     public abstract Long getBoardId();
 }

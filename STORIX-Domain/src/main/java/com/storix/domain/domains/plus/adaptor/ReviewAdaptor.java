@@ -95,7 +95,8 @@ public class ReviewAdaptor {
     }
 
     public Long updateReviewDetail(Long reviewId, ModifyReviewRequest cmd) {
-        int isUpdated = reviewRepository.updateMyReview(reviewId, cmd.rating(), cmd.isSpoiler(), cmd.content());
+        String spoilerScript = cmd.isSpoiler() ? cmd.spoilerScript() : null;
+        int isUpdated = reviewRepository.updateMyReview(reviewId, cmd.rating(), cmd.isSpoiler(), spoilerScript, cmd.content());
         if (isUpdated == 0) {
             throw InvalidReviewUpdateRequestException.EXCEPTION;
         }

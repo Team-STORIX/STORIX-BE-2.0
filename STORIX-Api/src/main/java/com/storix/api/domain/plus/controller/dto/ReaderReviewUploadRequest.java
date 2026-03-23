@@ -13,6 +13,8 @@ public record ReaderReviewUploadRequest(
 
         boolean isSpoiler,
 
+        String spoilerScript,
+
         @Size(max = 500, message = "리뷰는 500자까지 가능합니다.")
         String content
 

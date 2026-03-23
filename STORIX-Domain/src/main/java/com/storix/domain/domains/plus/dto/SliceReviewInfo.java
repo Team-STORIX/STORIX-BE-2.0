@@ -4,6 +4,7 @@ public record SliceReviewInfo(
         Long userId,
         Long reviewId,
         boolean isSpoiler,
+        String spoilerScript,
         String content
 ) {
 }

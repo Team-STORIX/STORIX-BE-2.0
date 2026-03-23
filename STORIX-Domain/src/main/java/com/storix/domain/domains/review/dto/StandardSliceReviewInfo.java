@@ -5,12 +5,14 @@ import com.storix.domain.domains.plus.dto.SliceReviewInfo;
 public record StandardSliceReviewInfo(
         Long reviewId,
         boolean isSpoiler,
+        String spoilerScript,
         String content
 ) {
     public static StandardSliceReviewInfo from(SliceReviewInfo review) {
         return new StandardSliceReviewInfo(
                 review.reviewId(),
                 review.isSpoiler(),
+                review.spoilerScript(),
                 review.content()
         );
     }

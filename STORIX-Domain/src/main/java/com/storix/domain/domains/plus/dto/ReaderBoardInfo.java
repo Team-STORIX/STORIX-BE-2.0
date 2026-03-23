@@ -23,6 +23,7 @@ public record ReaderBoardInfo(
         int likeCount,
         int replyCount,
         boolean isSpoiler,
+        String spoilerScript,
 
         // 좋아요 여부
         boolean isLiked
@@ -39,6 +40,7 @@ public record ReaderBoardInfo(
                 .likeCount(board.getLikeCount())
                 .replyCount(board.getReplyCount())
                 .isSpoiler(board.isSpoiler())
+                .spoilerScript(board.getSpoilerScript())
                 .isLiked(isLiked)
                 .build();
     }
@@ -55,6 +57,7 @@ public record ReaderBoardInfo(
                 .likeCount(board.getLikeCount())
                 .replyCount(board.getReplyCount())
                 .isSpoiler(board.isSpoiler())
+                .spoilerScript(board.getSpoilerScript())
                 .isLiked(isLiked)
                 .build();
     }
@@ -71,6 +74,7 @@ public record ReaderBoardInfo(
                 .likeCount(board.likeCount())
                 .replyCount(board.replyCount())
                 .isSpoiler(board.isSpoiler())
+                .spoilerScript(board.spoilerScript())
                 .isLiked(isLiked)
                 .build();
     }
