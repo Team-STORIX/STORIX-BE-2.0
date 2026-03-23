@@ -4,6 +4,7 @@ import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.review.service.WorksDetailKebabService;
 import com.storix.api.domain.review.controller.dto.ReviewReportRequest;
 import com.storix.domain.domains.review.dto.ModifyReviewRequest;
+import com.storix.domain.domains.plus.exception.SpoilerScriptRequiredException;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,9 @@ public class WorksDetailKebabUseCase {
 
     // 내 리뷰 수정
     public CustomResponse<Long> modifyMyReview(Long userId, Long reviewId, ModifyReviewRequest req) {
-
+        if (req.isSpoiler() && (req.spoilerScript() == null || req.spoilerScript().isBlank())) {
+            throw SpoilerScriptRequiredException.EXCEPTION;
+        }
         Long result = worksDetailKebabService.changeReviewDetail(userId, reviewId, req);
         return CustomResponse.onSuccess(SuccessCode.WORKS_DETAIL_REVIEW_UPDATE_SUCCESS, result);
     }

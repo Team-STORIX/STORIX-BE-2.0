@@ -12,6 +12,7 @@ public record ReviewInfo(
         // 리뷰 정보
         Long reviewId,
         boolean isSpoiler,
+        String spoilerScript,
         Rating rating,
         String content,
         int likeCount,
@@ -25,6 +26,7 @@ public record ReviewInfo(
                 review.getLibraryUserId(),
                 review.getId(),
                 review.isSpoiler(),
+                review.getSpoilerScript(),
                 review.getRating(),
                 review.getContent(),
                 review.getLikeCount(),
