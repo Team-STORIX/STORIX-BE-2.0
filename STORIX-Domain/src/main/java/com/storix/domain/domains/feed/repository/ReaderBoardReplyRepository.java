@@ -30,8 +30,29 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             "WHERE r.id = :id AND r.likeCount > 0")
     void decrementLikeCount(@Param("id") Long id);
 
-    // 피드 댓글 - 조회
-    Slice<ReaderBoardReply> findAllByBoard_Id(Long boardId, Pageable pageable);
+    // 답댓글 - childReplyCount
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ReaderBoardReply r " +
+            "SET r.childReplyCount = r.childReplyCount + 1 " +
+            "WHERE r.id = :id")
+    void incrementChildReplyCount(@Param("id") Long id);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ReaderBoardReply r " +
+            "SET r.childReplyCount = r.childReplyCount - 1 " +
+            "WHERE r.id = :id AND r.childReplyCount > 0")
+    void decrementChildReplyCount(@Param("id") Long id);
+
+    // 피드 댓글 - 조회 (최상위 댓글만)
+    @Query("SELECT r FROM ReaderBoardReply r " +
+            "WHERE r.board.id = :boardId AND r.parentReply IS NULL")
+    Slice<ReaderBoardReply> findAllByBoard_Id(@Param("boardId") Long boardId, Pageable pageable);
+
+    // 답댓글 조회
+    @Query("SELECT r FROM ReaderBoardReply r " +
+            "WHERE r.parentReply.id = :parentReplyId " +
+            "ORDER BY r.createdAt ASC")
+    Slice<ReaderBoardReply> findAllByParentReplyId(@Param("parentReplyId") Long parentReplyId, Pageable pageable);
 
     // 프로필 댓글 - 조회
     Slice<ReaderBoardReply> findAllByUserId(Long userId, Pageable pageable);
