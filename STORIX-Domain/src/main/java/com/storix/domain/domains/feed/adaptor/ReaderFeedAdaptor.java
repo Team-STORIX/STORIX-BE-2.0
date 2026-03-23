@@ -113,8 +113,31 @@ public class ReaderFeedAdaptor {
         // 댓글 개수 증가
         readerBoardRepository.incrementReplyCount(cmd.readerBoard().getId());
 
-        // 5) 응답 DTO 변환
+        // 응답 DTO 변환
         return StandardReplyInfo.from(reply);
+    }
+
+    // 답댓글 생성
+    public StandardReplyInfo uploadReaderBoardChildReply(CreateFeedReplyCommand cmd) {
+
+        // 답댓글 저장
+        ReaderBoardReply reply = cmd.toEntity();
+        readerBoardReplyRepository.save(reply);
+
+        // 부모 댓글 childReplyCount 증가
+        readerBoardReplyRepository.incrementChildReplyCount(cmd.parentReply().getId());
+
+        // 게시글 전체 댓글 개수 증가
+        readerBoardRepository.incrementReplyCount(cmd.readerBoard().getId());
+
+        // 응답 DTO 변환
+        return StandardReplyInfo.from(reply);
+    }
+
+    // 댓글 단건 조회
+    public ReaderBoardReply findReplyById(Long replyId) {
+        return readerBoardReplyRepository.findById(replyId)
+                .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
     }
 
     // 댓글 존재 여부 확인
@@ -160,17 +183,36 @@ public class ReaderFeedAdaptor {
 
         Optional<ReaderBoardReply> readerBoardReply = readerBoardReplyRepository.findById(replyId);
         if (readerBoardReply.isPresent()) {
-            if (readerBoardReply.get().getUserId().equals(userId)) {
-                readerBoardReplyRepository.deleteById(replyId);
-                readerBoardReplyRepository.flush();
-                readerBoardRepository.decrementReplyCount(boardId);
-            } else {
+            ReaderBoardReply reply = readerBoardReply.get();
+            if (!reply.getUserId().equals(userId)) {
                 throw ForbiddenApproachException.EXCEPTION;
             }
+
+            if (reply.getChildReplyCount() > 0) {
+                // 자식 댓글이 있으면 소프트 삭제
+                reply.softDelete();
+                readerBoardReplyRepository.save(reply);
+            } else {
+                // 자식 댓글이 없으면 하드 삭제
+                readerBoardReplyRepository.deleteById(replyId);
+                readerBoardReplyRepository.flush();
+
+                // 부모 댓글이 있으면 childReplyCount 감소
+                if (reply.getParentReply() != null) {
+                    readerBoardReplyRepository.decrementChildReplyCount(reply.getParentReply().getId());
+                }
+            }
+
+            readerBoardRepository.decrementReplyCount(boardId);
         } else {
             throw BoardReplyNotFoundException.EXCEPTION;
         }
 
+    }
+
+    // 답댓글 조회
+    public Slice<ReaderBoardReply> findAllByParentReplyId(Long parentReplyId, Pageable pageable) {
+        return readerBoardReplyRepository.findAllByParentReplyId(parentReplyId, pageable);
     }
 
     // 게시물 - 댓글 정보 확인
