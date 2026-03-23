@@ -7,6 +7,7 @@ public record CreateReviewCommand(
         Long libraryUserId,
         Long worksId,
         boolean isSpoiler,
+        String spoilerScript,
         Rating rating,
         String content
 ) {
@@ -15,6 +16,7 @@ public record CreateReviewCommand(
                 libraryUserId,
                 worksId,
                 isSpoiler,
+                spoilerScript,
                 rating,
                 content
         );
