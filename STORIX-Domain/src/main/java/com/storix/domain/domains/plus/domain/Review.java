@@ -38,6 +38,9 @@ public class Review extends BaseTimeEntity {
     @Column(name = "is_spoiler")
     private boolean isSpoiler;
 
+    @Column(name = "spoiler_script")
+    private String spoilerScript;
+
     @Column(precision = 2, scale = 1, nullable = false)
     @Convert(converter = RatingConverter.class)
     private Rating rating;
@@ -49,10 +52,11 @@ public class Review extends BaseTimeEntity {
 
     /** 생성자 로직 **/
     @Builder
-    public Review (Long libraryUserId, Long worksId, boolean isSpoiler, Rating rating, String content) {
+    public Review (Long libraryUserId, Long worksId, boolean isSpoiler, String spoilerScript, Rating rating, String content) {
         this.libraryUserId = libraryUserId;
         this.worksId = worksId;
         this.isSpoiler = isSpoiler;
+        this.spoilerScript = isSpoiler ? spoilerScript : null;
         this.rating = rating;
         this.content = content;
     }
