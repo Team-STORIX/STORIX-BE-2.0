@@ -1,5 +1,8 @@
 package com.storix.domain.domains.search.service;
 
+import static com.storix.common.utils.STORIXStatic.TRENDING_AGGREGATED_KEY;
+import static com.storix.common.utils.STORIXStatic.TRENDING_PREV_AGGREGATED_KEY;
+
 import com.storix.domain.domains.search.dto.TrendingItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,17 +91,12 @@ public class SearchHistoryService {
         }
     }
 
-
-    /** 2. 급상승 검색어 조회 (Top 10) */
+    /** 2. 급상승 검색어 조회 (72시간 누적 Top 10) */
     public List<TrendingItem> getTrendingKeywords() {
 
-        LocalDate now = LocalDate.now();
-        String todayKey = TRENDING_KEY_PREFIX + now.format(DateTimeFormatter.BASIC_ISO_DATE);
-        String yesterdayKey = TRENDING_KEY_PREFIX + now.minusDays(1).format(DateTimeFormatter.BASIC_ISO_DATE);
-
-        // 오늘 Top 10
+        // 합산 키에서 Top 10 조회
         Set<ZSetOperations.TypedTuple<String>> currentKeywordsWithScores =
-                redisTemplate.opsForZSet().reverseRangeWithScores(todayKey, 0, 9);
+                redisTemplate.opsForZSet().reverseRangeWithScores(TRENDING_AGGREGATED_KEY, 0, 9);
 
         if (currentKeywordsWithScores == null || currentKeywordsWithScores.isEmpty()) {
             return List.of();
@@ -112,13 +110,11 @@ public class SearchHistoryService {
             String keyword = tuple.getValue();
             Double score = tuple.getScore();
 
-            // 최소 점수 미만이면 결과에서 제외
             if (score == null || score < MIN_TRENDING_SCORE) {
                 break;
             }
 
-            // 어제 랭킹 (비교용)
-            Long prevRankIndex = redisTemplate.opsForZSet().reverseRank(yesterdayKey, keyword);
+            Long prevRankIndex = redisTemplate.opsForZSet().reverseRank(TRENDING_PREV_AGGREGATED_KEY, keyword);
 
             String status = "SAME";
 
@@ -164,11 +160,7 @@ public class SearchHistoryService {
     public String getFallbackRecommendation() {
 
         try {
-            // 오늘 날짜 기준으로 급상승 키 생성
-            String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-            String todayKey = TRENDING_KEY_PREFIX + today;
-
-            Set<String> rank11to20 = redisTemplate.opsForZSet().reverseRange(todayKey, 10, 19);
+            Set<String> rank11to20 = redisTemplate.opsForZSet().reverseRange(TRENDING_AGGREGATED_KEY, 10, 19);
 
             if (rank11to20 == null || rank11to20.isEmpty()) {
                 return null;

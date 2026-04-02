@@ -52,12 +52,15 @@ public class SearchService implements SearchUseCase {
     public SearchResponseWrapperDto<WorksSearchResponseDto> searchWorksWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
 
+        // 1. 검색어 저장
         if (keyword != null && pageable.getPageNumber() == 0) {
             searchHistoryService.addSearchLog(userId, keyword);
         }
 
+        // 2. 작품 조회 (다중 필터링)
         Slice<Works> worksSlice = loadWorksPort.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
 
+        // 3. 결과 없으면 추천 검색어 제공
         String fallbackKeyword = worksSlice.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
 
         return SearchResponseWrapperDto.<WorksSearchResponseDto>builder()
