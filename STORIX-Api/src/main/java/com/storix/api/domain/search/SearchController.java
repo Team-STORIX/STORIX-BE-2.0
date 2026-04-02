@@ -80,4 +80,13 @@ public class SearchController {
         searchHistoryService.deleteRecentKeyword(authUser.getUserId(), keyword);
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
     }
+
+    @DeleteMapping("/recent/all")
+    @Operation(summary = "최근 검색어 전체 삭제")
+    public CustomResponse<Void> deleteAllRecent(
+            @AuthenticationPrincipal AuthUserDetails authUser
+    ) {
+        searchHistoryService.deleteAllRecentKeywords(authUser.getUserId());
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
+    }
 }
