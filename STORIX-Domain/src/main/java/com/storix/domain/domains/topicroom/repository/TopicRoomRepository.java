@@ -23,6 +23,15 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
     """)
     Slice<TopicRoomResponseDto> findBySearchCondition(@Param("worksIds") List<Long> worksIds, @Param("keyword") String keyword, Pageable pageable);
 
+    @Query("""
+        SELECT new com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto(
+            t.id, t.topicRoomName, w.worksType, w.worksName, w.thumbnailUrl, t.activeUserNumber, t.lastChatTime, false
+        )
+        FROM TopicRoom t
+        JOIN Works w ON t.worksId = w.id
+        WHERE w.id IN :worksIds
+    """)
+    Slice<TopicRoomResponseDto> findBySearchWithFilters(@Param("worksIds") List<Long> worksIds, Pageable pageable);
 
     @Query("""
         SELECT new com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto(

@@ -1,7 +1,9 @@
 package com.storix.domain.domains.topicroom.service;
 
+import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
+import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
 import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
@@ -11,6 +13,7 @@ import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
+import com.storix.domain.domains.topicroom.domain.enums.TopicRoomSortType;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
@@ -18,7 +21,9 @@ import com.storix.domain.domains.topicroom.exception.*;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
+import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -140,16 +145,6 @@ public class TopicRoomService implements TopicRoomUseCase {
         Slice<TopicRoomResponseDto> rooms = loadTopicRoomPort.searchBySearchCondition(worksIds, keyword, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
-        // 로그인 유저라면 참여 중인 방 ID 리스트를 가져와서 마킹
-        if (userId != null && !rooms.isEmpty()) {
-            List<Long> joinedRoomIds = loadTopicRoomPort.findAllJoinedRoomIdsByUserId(userId);
-            rooms.forEach(dto -> {
-                if (joinedRoomIds.contains(dto.getTopicRoomId())) {
-                    dto.markAsJoined(true);
-                }
-            });
-        }
-
         String fallback = null;
 
         if (rooms.isEmpty()) {
@@ -163,6 +158,22 @@ public class TopicRoomService implements TopicRoomUseCase {
         return SearchResponseWrapperDto.<TopicRoomResponseDto>builder()
                 .result(rooms)
                 .fallbackRecommendation(fallback)
+                .build();
+    }
+
+    // 토픽룸 다중 필터 검색
+    @Override
+    @Transactional
+    public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
+            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable
+    ) {
+        List<Long> worksIds = loadWorksPort.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
+
+        Slice<TopicRoomResponseDto> rooms = loadTopicRoomPort.searchWithFilters(worksIds, pageable);
+        applyMembershipStatus(rooms.getContent(), userId);
+
+        return PlusSearchResponseWrapperDto.<TopicRoomResponseDto>builder()
+                .result(rooms)
                 .build();
     }
 
