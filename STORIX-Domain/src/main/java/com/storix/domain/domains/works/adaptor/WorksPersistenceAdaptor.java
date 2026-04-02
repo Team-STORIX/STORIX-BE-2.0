@@ -38,8 +38,8 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
     }
 
     @Override
-    public Slice<Works> searchWorksWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, WorksSortType sortType, Pageable pageable) {
-        return worksRepository.searchWithFilters(keyword, worksTypes, genres, sortType, pageable);
+    public Slice<Works> searchWorksWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        return worksRepository.searchWithFilters(keyword, worksTypes, genres, pageable);
     }
 
     @Override
@@ -51,6 +51,11 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
     @Override
     public List<Long> findAllIdsByKeyword(String keyword) {
         return worksRepository.findAllIdsByKeyword(keyword);
+    }
+
+    @Override
+    public List<Long> findAllIdsByKeywordWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres) {
+        return worksRepository.searchIdsWithFilters(keyword, worksTypes, genres);
     }
 
     @Override

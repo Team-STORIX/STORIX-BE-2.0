@@ -17,7 +17,7 @@ public interface SearchUseCase {
 
     // 작품 탭 필터 검색
     SearchResponseWrapperDto<WorksSearchResponseDto> searchWorksWithFilters(
-            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, WorksSortType sortType, Pageable pageable);
+            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable);
 
     // [+] 탭 검색
     PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(String keyword, Pageable pageable);
