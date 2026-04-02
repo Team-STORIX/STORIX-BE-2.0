@@ -10,7 +10,8 @@ public record StandardSliceReviewInfo(
         boolean isSpoiler,
         String spoilerScript,
         String content,
-        Rating rating
+        Rating rating,
+        int likeCount
 ) {
     public static StandardSliceReviewInfo from(SliceReviewInfo review) {
         return StandardSliceReviewInfo.builder()
@@ -19,6 +20,7 @@ public record StandardSliceReviewInfo(
                 .spoilerScript(review.spoilerScript())
                 .content(review.content())
                 .rating(review.rating())
+                .likeCount(review.likeCount())
                 .build();
     }
 }
