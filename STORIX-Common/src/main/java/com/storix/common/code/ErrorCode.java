@@ -112,6 +112,9 @@ public enum ErrorCode {
     TOPIC_ROOM_ALREADY_EXISTS(HttpStatus.CONFLICT, "TOPIC_ROOM_ERROR_007", "이미 해당 작품에 대한 토픽룸이 존재합니다."),
     TOPIC_ROOM_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_008", "해당 토픽룸에 참여하지 않은 유저입니다."),
 
+    // Search error
+    SEARCH_NO_TOPIC_ROOM_FOUND(HttpStatus.NOT_FOUND, "SEARCH_ERROR_001", "검색한 키워드로 조회되는 토픽룸이 없습니다."),
+
     // Chat error
     CHAT_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT_ERROR_001", "채팅 메시지 발행 중 서버 관리자에게 문의 바랍니다."),
     CHAT_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT_ERROR_002", "Redis 연결 실패로 메시지 전송이 불가합니다. 서버 관리자에게 문의 바랍니다."),
@@ -144,6 +147,7 @@ public enum ErrorCode {
     DUPLICATE_FEED_USER_REPORT(HttpStatus.BAD_REQUEST, "FEED_ERROR_001", "이미 신고가 완료된 게시물입니다."),
     DUPLICATE_FEED_REPLY_USER_REPORT(HttpStatus.BAD_REQUEST, "FEED_ERROR_002", "이미 신고가 완료된 댓글입니다."),
     BOARD_REPLY_NOT_FOUND(HttpStatus.NOT_FOUND, "REPLY_ERROR_001", "해당 게시글에 대한 댓글 정보를 찾을 수 없습니다."),
+    SPOILER_SCRIPT_REQUIRED(HttpStatus.BAD_REQUEST, "SPOILER_ERROR_001", "스포일러 설정 시 스포일러 문구를 입력해주세요."),
 
     // Preference error
     PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다.");

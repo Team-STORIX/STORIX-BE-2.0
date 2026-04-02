@@ -19,6 +19,8 @@ public interface LoadTopicRoomPort {
 
     Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable);
 
+    Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable);
+
     List<Long> findAllJoinedRoomIdsByUserId(Long userId);
 
     long countJoinedRooms(Long userId);

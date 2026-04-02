@@ -9,6 +9,7 @@ public record CreateReaderBoardCommand(
         boolean isWorksSelected,
         Long worksId,
         boolean isSpoiler,
+        String spoilerScript,
         String content,
         List<String> objectKeys
 ) {
@@ -18,6 +19,7 @@ public record CreateReaderBoardCommand(
                 isWorksSelected,
                 worksId,
                 isSpoiler,
+                spoilerScript,
                 content
         );
     }

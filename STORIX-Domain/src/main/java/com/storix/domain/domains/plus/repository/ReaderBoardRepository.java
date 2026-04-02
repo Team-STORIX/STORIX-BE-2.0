@@ -28,18 +28,18 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
     Slice<ReaderBoard> findAllLikedReaderBoards(@Param("userId") Long userId, Pageable pageable);
 
     // 홈 관련
-    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.popularityScore) " +
+    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.popularityScore) " +
             "FROM ReaderBoard rb " +
             "WHERE rb.createdAt > :threshold " +
             "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
     List<StandardReaderBoardInfo> findTop3TrendingFeed(@Param("threshold") LocalDateTime threshold, Pageable pageable);
 
-    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.popularityScore) " +
+    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.popularityScore) " +
             "FROM ReaderBoard rb " +
             "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
     List<StandardReaderBoardInfo> findSteadyTrendingFeed(Pageable pageable);
 
-    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.popularityScore) " +
+    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.popularityScore) " +
             "FROM ReaderBoard rb " +
             "WHERE rb.id NOT IN :excludeIds " +
             "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")

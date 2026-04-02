@@ -39,13 +39,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // 작품 상세탭
     long countByWorksId(Long worksId);
 
-    @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.content) " +
+    @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating, r.likeCount) " +
             "FROM Review r " +
             "WHERE r.libraryUserId = :userId AND r.worksId = :worksId")
     SliceReviewInfo findMySliceReviewInfo(@Param("userId") Long userId,
                                           @Param("worksId") Long worksId);
 
-    @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.content) " +
+    @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating, r.likeCount) " +
             "FROM Review r " +
             "WHERE (:userId IS NULL OR r.libraryUserId <> :userId) AND r.worksId = :worksId")
     Slice<SliceReviewInfo> findOtherSliceReviewInfo(@Param("userId") Long userId,
@@ -61,11 +61,12 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Review r " +
-            "SET r.rating = :rating, r.isSpoiler = :isSpoiler, r.content = :content " +
+            "SET r.rating = :rating, r.isSpoiler = :isSpoiler, r.spoilerScript = :spoilerScript, r.content = :content " +
             "WHERE r.id = :reviewId")
     int updateMyReview(@Param("reviewId") Long reviewId,
                        @Param("rating") Rating rating,
                        @Param("isSpoiler") boolean isSpoiler,
+                       @Param("spoilerScript") String spoilerScript,
                        @Param("content") String content);
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo(r.worksId, r.id, r.rating) " +

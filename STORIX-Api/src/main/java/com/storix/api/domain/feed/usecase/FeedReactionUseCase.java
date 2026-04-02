@@ -29,6 +29,13 @@ public class FeedReactionUseCase {
         return CustomResponse.onSuccess(SuccessCode.FEED_READER_BOARD_REPLY_UPLOAD_SUCCESS, result);
     }
 
+    // 답댓글 작성
+    public CustomResponse<ReaderBoardReplyResponse> writeReaderBoardChildReply(Long userId, Long boardId, Long parentReplyId, ReaderBoardReplyRequest req) {
+
+        ReaderBoardReplyResponse result = feedReactionService.uploadReaderBoardChildReply(userId, boardId, parentReplyId, req.comment());
+        return CustomResponse.onSuccess(SuccessCode.FEED_READER_BOARD_REPLY_UPLOAD_SUCCESS, result);
+    }
+
     // 독자 댓글 좋아요
     public CustomResponse<LikeToggleResponse> toggleReaderBoardReplyLike(Long userId, Long boardId, Long replyId) {
 

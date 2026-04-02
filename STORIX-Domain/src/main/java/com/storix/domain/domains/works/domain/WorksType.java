@@ -12,6 +12,5 @@ public enum WorksType {
     WEBNOVEL("웹소설"),
     COMIC("만화");
 
-    @JsonValue
     private final String dbValue;
 }

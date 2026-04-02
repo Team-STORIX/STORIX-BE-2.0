@@ -4,7 +4,10 @@ import com.storix.domain.domains.works.dto.SlicedWorksInfo;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
+import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksSortType;
+import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.repository.WorksRepository;
 import com.storix.domain.domains.plus.exception.WorksNotExistException;
@@ -35,6 +38,11 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
     }
 
     @Override
+    public Slice<Works> searchWorksWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        return worksRepository.searchWithFilters(keyword, worksTypes, genres, pageable);
+    }
+
+    @Override
     public Works findById(Long worksId) {
         return worksRepository.findById(worksId)
                 .orElseThrow(() -> UnknownWorksException.EXCEPTION);
@@ -43,6 +51,11 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
     @Override
     public List<Long> findAllIdsByKeyword(String keyword) {
         return worksRepository.findAllIdsByKeyword(keyword);
+    }
+
+    @Override
+    public List<Long> findAllIdsByKeywordWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres) {
+        return worksRepository.searchIdsWithFilters(keyword, worksTypes, genres);
     }
 
     @Override

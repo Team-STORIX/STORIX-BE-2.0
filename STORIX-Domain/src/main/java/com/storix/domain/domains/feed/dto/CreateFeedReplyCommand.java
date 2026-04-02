@@ -6,13 +6,15 @@ import com.storix.domain.domains.plus.domain.ReaderBoard;
 public record CreateFeedReplyCommand(
         ReaderBoard readerBoard,
         Long userId,
-        String comment
+        String comment,
+        ReaderBoardReply parentReply
 ) {
     public ReaderBoardReply toEntity() {
         return new ReaderBoardReply(
                 readerBoard,
                 userId,
-                comment
+                comment,
+                parentReply
         );
     }
 }
