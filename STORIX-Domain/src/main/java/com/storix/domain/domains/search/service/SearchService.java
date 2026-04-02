@@ -5,7 +5,10 @@ import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
+import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksSortType;
+import com.storix.domain.domains.works.domain.WorksType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +39,25 @@ public class SearchService implements SearchUseCase {
         Slice<Works> worksSlice = loadWorksPort.searchWorks(keyword, pageable);
 
         // 3. 결과 없으면 추천 검색어 조회
+        String fallbackKeyword = worksSlice.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
+
+        return SearchResponseWrapperDto.<WorksSearchResponseDto>builder()
+                .result(worksSlice.map(this::toWorkDto))
+                .fallbackRecommendation(fallbackKeyword)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public SearchResponseWrapperDto<WorksSearchResponseDto> searchWorksWithFilters(
+            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, WorksSortType sortType, Pageable pageable) {
+
+        if (keyword != null && pageable.getPageNumber() == 0) {
+            searchHistoryService.addSearchLog(userId, keyword);
+        }
+
+        Slice<Works> worksSlice = loadWorksPort.searchWorksWithFilters(keyword, worksTypes, genres, sortType, pageable);
+
         String fallbackKeyword = worksSlice.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
 
         return SearchResponseWrapperDto.<WorksSearchResponseDto>builder()
