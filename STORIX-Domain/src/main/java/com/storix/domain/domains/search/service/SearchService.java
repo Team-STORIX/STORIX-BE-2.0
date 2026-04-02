@@ -50,13 +50,13 @@ public class SearchService implements SearchUseCase {
     @Override
     @Transactional
     public SearchResponseWrapperDto<WorksSearchResponseDto> searchWorksWithFilters(
-            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, WorksSortType sortType, Pageable pageable) {
+            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
 
         if (keyword != null && pageable.getPageNumber() == 0) {
             searchHistoryService.addSearchLog(userId, keyword);
         }
 
-        Slice<Works> worksSlice = loadWorksPort.searchWorksWithFilters(keyword, worksTypes, genres, sortType, pageable);
+        Slice<Works> worksSlice = loadWorksPort.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
 
         String fallbackKeyword = worksSlice.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
 
