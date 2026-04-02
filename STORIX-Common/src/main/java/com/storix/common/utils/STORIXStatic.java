@@ -15,6 +15,10 @@ public class STORIXStatic {
 
     public static final int MILLI_TO_SECOND = 1000;
 
+    // 인기 검색어 Redis 합산 키
+    public static final String TRENDING_AGGREGATED_KEY = "search:trending:aggregated";
+    public static final String TRENDING_PREV_AGGREGATED_KEY = "search:trending:aggregated:prev";
+
     public static final List<String> SWAGGER_URI= List.of(
             new String[]{"/swagger-resources/", "/swagger-ui/", "/v3/api-docs"}
     );
