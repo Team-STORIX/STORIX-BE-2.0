@@ -15,7 +15,12 @@ public interface WorksRepositoryCustom {
             String keyword,
             List<WorksType> worksTypes,
             List<Genre> genres,
-            WorksSortType sortType,
             Pageable pageable
+    );
+
+    List<Long> searchIdsWithFilters(
+            String keyword,
+            List<WorksType> worksTypes,
+            List<Genre> genres
     );
 }
