@@ -156,6 +156,14 @@ public class SearchHistoryService {
         redisTemplate.opsForList().remove(key, 1, keyword);
     }
 
+    /** 4-1. 최근 검색어 전체 삭제 */
+    public void deleteAllRecentKeywords(Long userId) {
+
+        String key = RECENT_KEY_PREFIX + userId;
+
+        redisTemplate.delete(key);
+    }
+
     /** 5. 추천 검색어 (검색 결과 없는 경우) */
     public String getFallbackRecommendation() {
 
