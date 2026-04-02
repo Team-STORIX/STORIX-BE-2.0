@@ -1,5 +1,6 @@
 package com.storix.domain.domains.topicroom.adaptor;
 
+import com.storix.domain.domains.search.exception.SearchNoTopicRoomFoundException;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.RecordTopicRoomPort;
@@ -53,6 +54,18 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
 
     @Override public Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable) {
         return topicRoomRepository.findBySearchCondition(worksIds, keyword, pageable);
+    }
+
+    @Override public Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable) {
+        if (worksIds.isEmpty()) {
+            throw SearchNoTopicRoomFoundException.EXCEPTION;
+        }
+
+        Slice<TopicRoomResponseDto> result = topicRoomRepository.findBySearchWithFilters(worksIds, pageable);
+        if (result.isEmpty()) {
+            throw SearchNoTopicRoomFoundException.EXCEPTION;
+        }
+        return result;
     }
 
     @Override public long countJoinedRooms(Long userId) {

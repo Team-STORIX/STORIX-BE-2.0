@@ -4,7 +4,10 @@ import com.storix.domain.domains.works.dto.SlicedWorksInfo;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
+import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksSortType;
+import com.storix.domain.domains.works.domain.WorksType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
@@ -14,11 +17,16 @@ import java.util.Map;
 public interface LoadWorksPort {
 
     Slice<Works> searchWorks(String keyword, Pageable pageable);
+
+    Slice<Works> searchWorksWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable);
   
     Works findById(Long worksId);
 
     // 키워드로 작품 ID 리스트만 조회 (검색용)
     List<Long> findAllIdsByKeyword(String keyword);
+
+    // 토픽룸 도메인 용 (키워드 + 필터로 작품 ID 리스트 조회)
+    List<Long> findAllIdsByKeywordWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres);
 
     Works findByIdWithHashtags(Long worksId);
 
