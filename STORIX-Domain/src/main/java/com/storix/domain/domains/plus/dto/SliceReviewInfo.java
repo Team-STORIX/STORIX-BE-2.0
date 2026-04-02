@@ -8,6 +8,7 @@ public record SliceReviewInfo(
         boolean isSpoiler,
         String spoilerScript,
         String content,
-        Rating rating
+        Rating rating,
+        int likeCount
 ) {
 }
