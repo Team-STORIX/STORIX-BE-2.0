@@ -39,13 +39,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // 작품 상세탭
     long countByWorksId(Long worksId);
 
-    @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating) " +
+    @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating, r.likeCount) " +
             "FROM Review r " +
             "WHERE r.libraryUserId = :userId AND r.worksId = :worksId")
     SliceReviewInfo findMySliceReviewInfo(@Param("userId") Long userId,
                                           @Param("worksId") Long worksId);
 
-    @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating) " +
+    @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating, r.likeCount) " +
             "FROM Review r " +
             "WHERE (:userId IS NULL OR r.libraryUserId <> :userId) AND r.worksId = :worksId")
     Slice<SliceReviewInfo> findOtherSliceReviewInfo(@Param("userId") Long userId,
