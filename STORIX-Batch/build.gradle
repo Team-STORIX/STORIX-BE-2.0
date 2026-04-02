@@ -4,8 +4,7 @@ bootJar { enabled = true }
 jar { enabled = false }
 
 dependencies {
-    implementation project(':STORIX-Common')
-    implementation project(':STORIX-Domain')
+    implementation project(':STORIX-Infrastructure')
 
     implementation 'org.springframework.boot:spring-boot-starter'
 }
