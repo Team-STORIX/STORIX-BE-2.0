@@ -27,6 +27,9 @@ public class ReaderBoard extends Board {
     @Column(name = "is_spoiler")
     private boolean isSpoiler;
 
+    @Column(name = "spoiler_script")
+    private String spoilerScript;
+
     @Column(name = "popularity_score")
     private int popularityScore = 0;
 
@@ -45,11 +48,12 @@ public class ReaderBoard extends Board {
 
     @Builder
     public ReaderBoard(Long userId, boolean isWorksSelected,
-                       Long worksId, boolean isSpoiler, String content) {
+                       Long worksId, boolean isSpoiler, String spoilerScript, String content) {
         this.userId = userId;
         this.isWorksSelected = isWorksSelected;
         this.worksId = worksId;
         this.isSpoiler = isSpoiler;
+        this.spoilerScript = isSpoiler ? spoilerScript : null;
         this.content = content;
     }
 }

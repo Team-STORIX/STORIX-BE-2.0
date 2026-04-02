@@ -9,6 +9,7 @@ import java.util.Locale;
 public record StandardReviewInfo(
         Long reviewId,
         boolean isSpoiler,
+        String spoilerScript,
         String rating,
         String content,
         int likeCount,
@@ -19,6 +20,7 @@ public record StandardReviewInfo(
         return new StandardReviewInfo(
                 reviewInfo.reviewId(),
                 reviewInfo.isSpoiler(),
+                reviewInfo.spoilerScript(),
                 reviewInfo.rating().getDbValue(),
                 reviewInfo.content(),
                 reviewInfo.likeCount(),

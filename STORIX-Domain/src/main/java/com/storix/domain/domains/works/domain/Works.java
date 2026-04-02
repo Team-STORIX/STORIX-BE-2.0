@@ -24,9 +24,6 @@ public class Works {
     @Column(name = "works_id")
     private Long id;
 
-    @Column(name = "user_id")
-    private Long userId = null;
-
     @OneToMany(mappedBy = "works", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<WorksPlatform> platforms = new HashSet<>();
 

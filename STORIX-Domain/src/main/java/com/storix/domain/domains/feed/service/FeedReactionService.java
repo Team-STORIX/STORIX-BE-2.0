@@ -1,6 +1,7 @@
 package com.storix.domain.domains.feed.service;
 
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
+import com.storix.domain.domains.feed.domain.ReaderBoardReply;
 import com.storix.domain.domains.feed.dto.CreateFeedReplyCommand;
 import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyResponse;
@@ -41,10 +42,29 @@ public class FeedReactionService {
         ReaderBoard readerBoard = readerFeedAdaptor.findReaderBoardById(boardId);
 
         CreateFeedReplyCommand cmd =
-                new CreateFeedReplyCommand(readerBoard, userId, comment);
+                new CreateFeedReplyCommand(readerBoard, userId, comment, null);
 
         // 1) 댓글 정보
         StandardReplyInfo reply = readerFeedAdaptor.uploadReaderBoardReply(cmd);
+
+        // 2) 프로필 정보
+        StandardProfileInfo profile = userAdaptor.findStandardProfileInfoByUserId(userId);
+
+        return ReaderBoardReplyResponse.of(profile, reply);
+    }
+
+    // 답댓글 등록
+    @Transactional
+    public ReaderBoardReplyResponse uploadReaderBoardChildReply(Long userId, Long boardId, Long parentReplyId, String comment) {
+
+        ReaderBoard readerBoard = readerFeedAdaptor.findReaderBoardById(boardId);
+        ReaderBoardReply parentReply = readerFeedAdaptor.findReplyById(parentReplyId);
+
+        CreateFeedReplyCommand cmd =
+                new CreateFeedReplyCommand(readerBoard, userId, comment, parentReply);
+
+        // 1) 댓글 정보
+        StandardReplyInfo reply = readerFeedAdaptor.uploadReaderBoardChildReply(cmd);
 
         // 2) 프로필 정보
         StandardProfileInfo profile = userAdaptor.findStandardProfileInfoByUserId(userId);
