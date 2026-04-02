@@ -8,7 +8,7 @@ import org.springframework.data.domain.Sort;
 @RequiredArgsConstructor
 public enum ReviewSortType {
 
-    LATEST("최신순", Sort.by(Sort.Direction.DESC, "id"));
+    TRENDING("좋아요순", Sort.by(Sort.Direction.DESC,"likeCount", "id"));
 
     private final String description;
     private final Sort sortValue;

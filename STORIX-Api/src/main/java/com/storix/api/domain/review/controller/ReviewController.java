@@ -50,7 +50,7 @@ public class ReviewController {
     public ResponseEntity<CustomResponse<Slice<SliceReviewInfoWithProfile>>> getOtherReview(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @PathVariable @NotNull Long worksId,
-            @RequestParam(defaultValue = "LATEST") ReviewSortType sort,
+            @RequestParam(defaultValue = "TRENDING") ReviewSortType sort,
             @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
