@@ -16,6 +16,7 @@ import com.storix.domain.domains.feed.exception.BoardReplyNotFoundException;
 import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -240,19 +241,21 @@ public class ReaderFeedAdaptor {
     }
 
     // 오늘의 피드
+    @Cacheable(cacheNames = "trendingFeed", key = "'top3'", cacheManager = "trendingCacheManager")
     public List<StandardReaderBoardInfo> findTop3TrendingFeed(LocalDateTime threshold) {
         Pageable pageable = PageRequest.of(0, 3);
 
         return readerBoardRepository.findTop3TrendingFeed(threshold, pageable);
     }
 
-    public List<StandardReaderBoardInfo> findSteadyTrendingFeedNotToday(List<Long> excludeIds, int limit) {
+    @Cacheable(cacheNames = "steadyTrendingFeed", key = "#excludeIds.hashCode() + '_' + #limit", cacheManager = "trendingCacheManager")
+    public List<StandardReaderBoardInfo> findSteadyTrendingFeedNotToday(List<Long> excludeIds, int limit, LocalDateTime threshold) {
         Pageable pageable = PageRequest.of(0, limit);
 
         if (excludeIds == null || excludeIds.isEmpty()) {
-            return readerBoardRepository.findSteadyTrendingFeed(pageable);
+            return readerBoardRepository.findSteadyTrendingFeed(threshold, pageable);
         }
-        return readerBoardRepository.findSteadyTrendingFeedNotToday(excludeIds, pageable);
+        return readerBoardRepository.findSteadyTrendingFeedNotToday(excludeIds, threshold, pageable);
     }
 
 }

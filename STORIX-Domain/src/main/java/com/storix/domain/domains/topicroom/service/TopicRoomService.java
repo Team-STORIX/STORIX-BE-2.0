@@ -3,7 +3,6 @@ package com.storix.domain.domains.topicroom.service;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
-import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
 import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
@@ -13,7 +12,6 @@ import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
-import com.storix.domain.domains.topicroom.domain.enums.TopicRoomSortType;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
@@ -33,7 +31,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -75,38 +72,27 @@ public class TopicRoomService implements TopicRoomUseCase {
         });
     }
 
+
     @Override
     public List<TopicRoomResponseDto> getTodayTrendingRooms(Long userId) {
 
-        // 현재 시간으로부터 24시간 전 시점 계산
-        LocalDateTime threshold = LocalDateTime.now().minusHours(24);
+        List<TopicRoomResponseDto> trendingRooms = new java.util.ArrayList<>();
 
-        // 24시간 내 인기 토픽룸 DTO로 조회
-        List<TopicRoomResponseDto> trendingRooms = loadTopicRoomPort.findTop3TrendingWithWorks(threshold);
+        // 1) 충성 유저 탐색 필터 - 슬롯 1개
+        List<TopicRoomResponseDto> loyaltySlot = loadTopicRoomPort.findLoyaltySlot();
+        trendingRooms.addAll(loyaltySlot);
 
-        // fallback 로직 추가 - 24시간 내 생성된 토픽룸이 없는 경우
-        if (trendingRooms.size() < 3) {
-            int needed = 3 - trendingRooms.size();
+        // 2) 신규 유저 락인 필터 - 슬롯 최대 2~3개
+        int newUserSlotCount = 3 - trendingRooms.size();
 
-            // 중복 토픽룸 방지
-            List<Long> excludeIds = trendingRooms.stream()
-                    .map(TopicRoomResponseDto::getTopicRoomId)
-                    .toList();
+        List<Long> excludeIds = loyaltySlot.stream()
+                .map(TopicRoomResponseDto::getTopicRoomId)
+                .toList();
 
-            // 부족한 개수만큼만 전체 인기순 적용
-            List<TopicRoomResponseDto> fallbackRooms = loadTopicRoomPort.findTopAllTimeExcludingWithWorks(needed, excludeIds);
-            trendingRooms.addAll(fallbackRooms);
-        }
+        List<TopicRoomResponseDto> newUserSlots = loadTopicRoomPort.findNewUserSlots(excludeIds, newUserSlotCount);
+        trendingRooms.addAll(newUserSlots);
 
-        // 로그인 유저인 경우 참여 여부(isJoined) 일괄 업데이트
-        if (userId != null && !trendingRooms.isEmpty()) {
-            List<Long> joinedRoomIds = loadTopicRoomPort.findAllJoinedRoomIdsByUserId(userId);
-            trendingRooms.forEach(dto -> {
-                if (joinedRoomIds.contains(dto.getTopicRoomId())) {
-                    dto.markAsJoined(true);
-                }
-            });
-        }
+        // 참여 여부 마킹
         applyMembershipStatus(trendingRooms, userId);
         return trendingRooms;
     }
