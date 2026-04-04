@@ -14,6 +14,7 @@ import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
 import com.storix.domain.domains.topicroom.exception.TodayTopicRoomNotFoundException;
+import org.springframework.cache.annotation.Cacheable;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -44,11 +45,13 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     }
 
     @Override
+    @Cacheable(cacheNames = "trendingLoyaltySlot", cacheManager = "trendingCacheManager")
     public List<TopicRoomResponseDto> findLoyaltySlot() {
         return topicRoomRepository.findLoyaltySlot();
     }
 
     @Override
+    @Cacheable(cacheNames = "trendingNewUserSlots", cacheManager = "trendingCacheManager")
     public List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit) {
         List<TopicRoomResponseDto> result = topicRoomRepository.findNewUserSlots(excludeIds, limit);
 
