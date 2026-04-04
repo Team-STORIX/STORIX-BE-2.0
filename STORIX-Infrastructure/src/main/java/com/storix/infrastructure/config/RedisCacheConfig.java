@@ -35,4 +35,23 @@ public class RedisCacheConfig {
                 .cacheDefaults(redisCacheConfiguration)
                 .build();
     }
+
+    @Bean
+    public CacheManager trendingCacheManager(RedisConnectionFactory redisConnectionFactory) {
+
+        RedisCacheConfiguration redisCacheConfiguration
+                = RedisCacheConfiguration.defaultCacheConfig()
+                    .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(
+                                new StringRedisSerializer()))
+                    .serializeValuesWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(
+                                new GenericJackson2JsonRedisSerializer()))
+                    .entryTtl(Duration.ofDays(1L));
+
+        return RedisCacheManager.RedisCacheManagerBuilder
+                .fromConnectionFactory(redisConnectionFactory)
+                .cacheDefaults(redisCacheConfiguration)
+                .build();
+    }
 }
