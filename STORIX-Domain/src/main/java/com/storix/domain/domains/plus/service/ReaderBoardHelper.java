@@ -13,6 +13,7 @@ import com.storix.domain.domains.plus.dto.ReaderBoardImageInfo;
 import com.storix.domain.domains.plus.dto.ReaderBoardInfo;
 import com.storix.domain.domains.plus.dto.StandardReaderBoardInfo;
 import com.storix.domain.domains.profile.dto.ReaderBoardWithProfileInfo;
+import com.storix.domain.domains.feed.exception.TodayFeedNotFoundException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
@@ -111,7 +112,7 @@ public class ReaderBoardHelper {
     public List<ReaderBoardInfo> findTop3TrendingFeedInfo(Long userId, LocalDateTime threshold) {
 
         // 1) 오늘의 피드 (최대 3개)
-        List<StandardReaderBoardInfo> boards = readerFeedAdaptor.findTop3TrendingFeed(threshold);
+        List<StandardReaderBoardInfo> boards = new ArrayList<>(readerFeedAdaptor.findTop3TrendingFeed(threshold));
 
         if (boards.size() < 3) {
             int needed = 3 - boards.size();
@@ -121,23 +122,16 @@ public class ReaderBoardHelper {
                     .map(StandardReaderBoardInfo::boardId)
                     .toList();
 
-            // 부족한 개수만큼만 전체 인기순 적용 (최근 7일까지)
-            List<StandardReaderBoardInfo> fallbackBoards = readerFeedAdaptor.findSteadyTrendingFeedNotToday(excludeIds, needed);
+            // 부족한 개수만큼만 7일 내 인기순 적용
+            LocalDateTime weekThreshold = LocalDateTime.now().minusDays(7);
+            List<StandardReaderBoardInfo> fallbackBoards = readerFeedAdaptor.findSteadyTrendingFeedNotToday(excludeIds, needed, weekThreshold);
 
             boards.addAll(fallbackBoards);
         }
 
-        // 인기 점수 기준 재정렬
-        boards.sort(
-                Comparator
-                        .comparing(StandardReaderBoardInfo::popularityScore)
-                        .reversed()
-        );
-
-        // 상위 3개 유지
-        boards = boards.stream()
-                .limit(3)
-                .toList();
+        if (boards.isEmpty()) {
+            throw TodayFeedNotFoundException.EXCEPTION;
+        }
 
         // 게시물 ids
         List<Long> boardIds = boards.stream()

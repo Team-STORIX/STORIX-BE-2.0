@@ -246,13 +246,13 @@ public class ReaderFeedAdaptor {
         return readerBoardRepository.findTop3TrendingFeed(threshold, pageable);
     }
 
-    public List<StandardReaderBoardInfo> findSteadyTrendingFeedNotToday(List<Long> excludeIds, int limit) {
+    public List<StandardReaderBoardInfo> findSteadyTrendingFeedNotToday(List<Long> excludeIds, int limit, LocalDateTime threshold) {
         Pageable pageable = PageRequest.of(0, limit);
 
         if (excludeIds == null || excludeIds.isEmpty()) {
-            return readerBoardRepository.findSteadyTrendingFeed(pageable);
+            return readerBoardRepository.findSteadyTrendingFeed(threshold, pageable);
         }
-        return readerBoardRepository.findSteadyTrendingFeedNotToday(excludeIds, pageable);
+        return readerBoardRepository.findSteadyTrendingFeedNotToday(excludeIds, threshold, pageable);
     }
 
 }
