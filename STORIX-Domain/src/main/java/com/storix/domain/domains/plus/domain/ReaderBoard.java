@@ -13,7 +13,8 @@ import java.util.List;
 @Table(
         name = "reader_board",
         indexes = {
-                @Index(name = "idx_reader_board_user_id", columnList = "user_id")
+                @Index(name = "idx_reader_board_user_id", columnList = "user_id"),
+                @Index(name = "idx_reader_board_popularity", columnList = "popularity_score")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
