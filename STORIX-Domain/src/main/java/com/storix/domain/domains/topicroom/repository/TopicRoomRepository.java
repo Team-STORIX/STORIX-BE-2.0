@@ -33,28 +33,6 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
     """)
     Slice<TopicRoomResponseDto> findBySearchWithFilters(@Param("worksIds") List<Long> worksIds, Pageable pageable);
 
-    @Query("""
-        SELECT new com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto(
-            t.id, t.topicRoomName, w.worksType, w.worksName, w.thumbnailUrl, t.activeUserNumber, t.lastChatTime, false
-        )
-        FROM TopicRoom t
-        JOIN Works w ON t.worksId = w.id
-        WHERE t.createdAt > :threshold
-        ORDER BY t.activeUserNumber DESC
-    """)
-    List<TopicRoomResponseDto> findTop3TrendingWithWorks(@Param("threshold") LocalDateTime threshold, Pageable pageable);
-
-    @Query("""
-        SELECT new com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto(
-            t.id, t.topicRoomName, w.worksType, w.worksName, w.thumbnailUrl, t.activeUserNumber, t.lastChatTime, false
-        )
-        FROM TopicRoom t
-        JOIN Works w ON t.worksId = w.id
-        WHERE t.id NOT IN :excludeIds
-        ORDER BY t.activeUserNumber DESC
-    """)
-    List<TopicRoomResponseDto> findTopAllTimeExcludingWithWorks(@Param("excludeIds") List<Long> excludeIds, Pageable pageable);
-
     @Modifying(clearAutomatically = true)
     @Query("UPDATE TopicRoom t SET t.activeUserNumber = t.activeUserNumber + 1 WHERE t.id = :id")
     void incrementActiveUserNumber(@Param("id") Long id);
