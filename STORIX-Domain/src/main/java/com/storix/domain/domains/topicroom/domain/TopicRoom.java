@@ -21,8 +21,9 @@ import java.time.LocalDateTime;
                 )
         },
         indexes = {
-                // 인기도 순 정렬 및 시간 조회를 위한 복합 인덱스
-                @Index(name = "idx_popularity_last_chat", columnList = "popularity_score, last_chat_time")
+                @Index(name = "idx_popularity_last_chat", columnList = "popularity_score, last_chat_time"),
+                @Index(name = "idx_growth_rate", columnList = "popularity_growth_rate"),
+                @Index(name = "idx_active_user_last_chat", columnList = "active_user_number, last_chat_time")
         }
 )
 public class TopicRoom extends BaseTimeEntity {
@@ -41,24 +42,41 @@ public class TopicRoom extends BaseTimeEntity {
     @Column(name = "active_user_number", nullable = false)
     private Integer activeUserNumber;
 
+    @Column(name = "previous_active_user_number", nullable = false)
+    private Integer previousActiveUserNumber;
+
     @Column(name = "last_chat_time")
     private LocalDateTime lastChatTime;
 
     @Column(name = "popularity_score", nullable = false)
     private Double popularityScore;
 
+    @Column(name = "popularity_growth_rate", nullable = false)
+    private Double popularityGrowthRate;
+
     @Builder
     public TopicRoom(String topicRoomName, Long worksId) {
         this.topicRoomName = topicRoomName;
         this.worksId = worksId;
         this.activeUserNumber = 0;
+        this.previousActiveUserNumber = 0;
         this.lastChatTime = LocalDateTime.now();
         this.popularityScore = 0.0;
+        this.popularityGrowthRate = 0.0;
     }
 
-
-    // 인기도 점수 업데이트 메서드
+    // 인기도 점수 업데이트
     public void updatePopularityScore(double score) {
         this.popularityScore = score;
+    }
+
+    // 증가율 업데이트
+    public void updatePopularityGrowthRate(double rate) {
+        this.popularityGrowthRate = rate;
+    }
+
+    // 참여자 수 스냅샷
+    public void snapshotActiveUserNumber() {
+        this.previousActiveUserNumber = this.activeUserNumber;
     }
 }
