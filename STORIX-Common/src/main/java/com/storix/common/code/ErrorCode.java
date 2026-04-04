@@ -146,6 +146,7 @@ public enum ErrorCode {
     REVIEW_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "REVIEW_ERROR_001", "이미 삭제된 리뷰이거나 정보를 찾을 수 없습니다."),
     DUPLICATE_FEED_USER_REPORT(HttpStatus.BAD_REQUEST, "FEED_ERROR_001", "이미 신고가 완료된 게시물입니다."),
     DUPLICATE_FEED_REPLY_USER_REPORT(HttpStatus.BAD_REQUEST, "FEED_ERROR_002", "이미 신고가 완료된 댓글입니다."),
+    TODAY_FEED_NOT_FOUND(HttpStatus.NOT_FOUND, "FEED_ERROR_003", "오늘의 피드 게시물이 없습니다."),
     BOARD_REPLY_NOT_FOUND(HttpStatus.NOT_FOUND, "REPLY_ERROR_001", "해당 게시글에 대한 댓글 정보를 찾을 수 없습니다."),
     SPOILER_SCRIPT_REQUIRED(HttpStatus.BAD_REQUEST, "SPOILER_ERROR_001", "스포일러 설정 시 스포일러 문구를 입력해주세요."),
 
