@@ -13,9 +13,12 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
+import com.storix.domain.domains.topicroom.exception.TodayTopicRoomNotFoundException;
+import org.springframework.cache.annotation.Cacheable;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -42,14 +45,21 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     }
 
     @Override
-    public List<TopicRoomResponseDto> findTop3TrendingWithWorks(LocalDateTime threshold) {
-        return topicRoomRepository.findTop3TrendingWithWorks(threshold, PageRequest.of(0, 3));
+    @Cacheable(cacheNames = "trendingLoyaltySlot", cacheManager = "trendingCacheManager")
+    public List<TopicRoomResponseDto> findLoyaltySlot() {
+        return topicRoomRepository.findLoyaltySlot();
     }
 
     @Override
-    public List<TopicRoomResponseDto> findTopAllTimeExcludingWithWorks(int limit, List<Long> excludeIds) {
-        if (excludeIds.isEmpty()) excludeIds = List.of(-1L);
-        return topicRoomRepository.findTopAllTimeExcludingWithWorks(excludeIds, PageRequest.of(0, limit));
+    @Cacheable(cacheNames = "trendingNewUserSlots", cacheManager = "trendingCacheManager")
+    public List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit) {
+        List<TopicRoomResponseDto> result = topicRoomRepository.findNewUserSlots(excludeIds, limit);
+
+        if (excludeIds.isEmpty() && result.isEmpty()) {
+            throw TodayTopicRoomNotFoundException.EXCEPTION;
+        }
+
+        return result;
     }
 
     @Override public Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable) {
@@ -149,8 +159,13 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     }
 
     @Override
-    public void updatePopularityScores(List<TopicRoom> rooms) {
-        topicRoomRepository.bulkUpdatePopularityScores(rooms);
+    public void updatePopularity(List<TopicRoom> rooms) {
+        topicRoomRepository.bulkUpdatePopularity(rooms);
+    }
+
+    @Override
+    public void updatePreviousActiveUserNumbers(List<TopicRoom> rooms) {
+        topicRoomRepository.bulkUpdatePreviousActiveUserNumbers(rooms);
     }
 
     @Override

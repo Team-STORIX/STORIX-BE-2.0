@@ -112,6 +112,7 @@ public class SecurityConfig {
           
                                 // [Auth]
                                 .requestMatchers("/api/v1/auth/oauth/**").permitAll()
+                                .requestMatchers("/api/v1/auth/users/reader/signup").hasRole("ONBOARDING")
                                 .requestMatchers("/api/v1/auth/nickname/valid").permitAll()
                                 .requestMatchers("/api/v1/auth/tokens/refresh").permitAll()
                                 .requestMatchers("/api/v1/auth/developer/signup").permitAll()
