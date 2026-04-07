@@ -2,6 +2,7 @@ package com.storix.domain.domains.user.dto;
 
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
+import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.domain.Genre;
 import java.util.Collections;
@@ -25,6 +26,7 @@ public record CreateReaderUserCommand(
                 .oauthInfo(oauthInfo)
                 .nickName(nickName)
                 .favoriteGenreList(genres)
+                .role(Role.READER)
                 .build();
     }
 }
