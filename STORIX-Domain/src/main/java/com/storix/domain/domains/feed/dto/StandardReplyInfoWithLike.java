@@ -1,5 +1,7 @@
 package com.storix.domain.domains.feed.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 public record StandardReplyInfoWithLike(
         Long replyId,
         Long userId,
@@ -9,7 +11,8 @@ public record StandardReplyInfoWithLike(
         int likeCount,
         boolean isLiked,
         int depth,
-        int childReplyCount,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer childReplyCount,
         Long parentReplyId,
         boolean deleted
 ) {
@@ -23,7 +26,7 @@ public record StandardReplyInfoWithLike(
                 reply.likeCount(),
                 isLiked,
                 reply.depth(),
-                reply.childReplyCount(),
+                reply.depth() >= 1 ? null : reply.childReplyCount(),
                 reply.parentReplyId(),
                 reply.deleted()
         );
