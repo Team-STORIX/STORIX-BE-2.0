@@ -246,27 +246,32 @@ public class ReaderBoardHelper {
             return replies.map(r -> null);
         }
 
-        // 1) 댓글 작성자 userIds
-        List<Long> userIds = content.stream()
-                .map(ReaderBoardReply::getUserId)
-                .distinct()
-                .toList();
+        // 1) 부모 댓글 + 답댓글 작성자 userIds 전부 수집
+        List<Long> userIds = new ArrayList<>();
+        List<Long> allReplyIds = new ArrayList<>();
+
+        for (ReaderBoardReply reply : content) {
+            userIds.add(reply.getUserId());
+            allReplyIds.add(reply.getId());
+
+            for (ReaderBoardReply child : reply.getChildReplies()) {
+                userIds.add(child.getUserId());
+                allReplyIds.add(child.getId());
+            }
+        }
+
+        userIds = userIds.stream().distinct().toList();
 
         // 2) 프로필 조회
         Map<Long, StandardProfileInfo> profileMap =
                 userAdaptor.findStandardProfileInfoByUserIds(userIds);
 
-        // 3) 댓글 ids
-        List<Long> replyIds = content.stream()
-                .map(ReaderBoardReply::getId)
-                .toList();
-
-        // 4) 좋아요 여부 조회
+        // 3) 좋아요 여부 조회 (부모 + 답댓글 전부)
         Set<Long> likedReplyIds = (userId != null)
-                ? readerFeedAdaptor.findLikedReplyIds(userId, replyIds)
+                ? readerFeedAdaptor.findLikedReplyIds(userId, allReplyIds)
                 : Collections.emptySet();
 
-        // 5) 최종 매핑
+        // 4) 최종 매핑 (답댓글 embed)
         return replies.map(reply -> {
             StandardProfileInfo profile = profileMap.get(reply.getUserId());
             if (profile == null) return null;
@@ -274,9 +279,28 @@ public class ReaderBoardHelper {
             ReaderBoardReplyInfo replyInfo = ReaderBoardReplyInfo.from(reply);
             boolean isLiked = likedReplyIds.contains(reply.getId());
 
+            // 답댓글 매핑
+            List<ReaderBoardReplyInfoWithProfile> childRepliesDto = reply.getChildReplies().stream()
+                    .sorted(Comparator.comparing(ReaderBoardReply::getCreatedAt))
+                    .map(child -> {
+                        StandardProfileInfo childProfile = profileMap.get(child.getUserId());
+                        if (childProfile == null) return null;
+
+                        ReaderBoardReplyInfo childInfo = ReaderBoardReplyInfo.from(child);
+                        boolean childIsLiked = likedReplyIds.contains(child.getId());
+
+                        return ReaderBoardReplyInfoWithProfile.of(
+                                childProfile,
+                                StandardReplyInfoWithLike.of(childInfo, childIsLiked)
+                        );
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+
             return ReaderBoardReplyInfoWithProfile.of(
                     profile,
-                    StandardReplyInfoWithLike.of(replyInfo, isLiked)
+                    StandardReplyInfoWithLike.of(replyInfo, isLiked),
+                    childRepliesDto
             );
         });
     }

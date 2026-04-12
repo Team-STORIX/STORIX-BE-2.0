@@ -43,8 +43,9 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             "WHERE r.id = :id AND r.childReplyCount > 0")
     void decrementChildReplyCount(@Param("id") Long id);
 
-    // 피드 댓글 - 조회 (최상위 댓글만)
-    @Query("SELECT r FROM ReaderBoardReply r " +
+    // 피드 댓글 - 조회 (최상위 댓글 + 답댓글 fetch join)
+    @Query("SELECT DISTINCT r FROM ReaderBoardReply r " +
+            "LEFT JOIN FETCH r.childReplies c " +
             "WHERE r.board.id = :boardId AND r.parentReply IS NULL")
     Slice<ReaderBoardReply> findAllByBoard_Id(@Param("boardId") Long boardId, Pageable pageable);
 
