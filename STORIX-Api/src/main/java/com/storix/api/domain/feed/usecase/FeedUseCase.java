@@ -46,11 +46,5 @@ public class FeedUseCase {
         return CustomResponse.onSuccess(SuccessCode.FEED_READER_BOARD_LOAD_SUCCESS, result);
     }
 
-    // 답댓글 조회
-    public CustomResponse<Slice<ReaderBoardReplyInfoWithProfile>> getChildReplies(Long userId, Long parentReplyId, Pageable pageable) {
-
-        Slice<ReaderBoardReplyInfoWithProfile> result = feedService.findChildReplies(userId, parentReplyId, pageable);
-        return CustomResponse.onSuccess(SuccessCode.FEED_READER_BOARD_CHILD_REPLY_LOAD_SUCCESS, result);
-    }
 
 }
