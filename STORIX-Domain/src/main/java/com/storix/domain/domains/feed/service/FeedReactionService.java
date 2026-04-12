@@ -6,6 +6,7 @@ import com.storix.domain.domains.feed.dto.CreateFeedReplyCommand;
 import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyResponse;
 import com.storix.domain.domains.feed.dto.StandardReplyInfo;
+import com.storix.domain.domains.feed.exception.ReplyDepthExceededException;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
@@ -53,12 +54,16 @@ public class FeedReactionService {
         return ReaderBoardReplyResponse.of(profile, reply);
     }
 
-    // 답댓글 등록
+    // 답댓글 등록 (depth 1 제한: 답댓글에 대한 답댓글 불가)
     @Transactional
     public ReaderBoardReplyResponse uploadReaderBoardChildReply(Long userId, Long boardId, Long parentReplyId, String comment) {
 
         ReaderBoard readerBoard = readerFeedAdaptor.findReaderBoardById(boardId);
         ReaderBoardReply parentReply = readerFeedAdaptor.findReplyById(parentReplyId);
+
+        if (parentReply.getDepth() >= 1) {
+            throw ReplyDepthExceededException.EXCEPTION;
+        }
 
         CreateFeedReplyCommand cmd =
                 new CreateFeedReplyCommand(readerBoard, userId, comment, parentReply);
