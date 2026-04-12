@@ -79,6 +79,7 @@ public enum ErrorCode {
     AOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_REQUEST", "Apple 요청이 잘못되었습니다."),
     AOE_INVALID_CLIENT(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_CLIENT", "Apple 클라이언트 인증에 실패했습니다."),
     AOE_INVALID_GRANT(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_GRANT", "Apple 인가 코드가 유효하지 않거나 만료되었습니다."),
+    AOE_PRIVATE_KEY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "APPLE_AOE_PRIVATE_KEY_ERROR", "Apple private key 파싱에 실패했습니다."),
 
     // X OAuth error
     XOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "X_XOE_INVALID_REQUEST", "X 요청이 잘못되었습니다."),

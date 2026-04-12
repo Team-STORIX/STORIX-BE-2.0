@@ -45,6 +45,11 @@ public class AuthUseCase {
                 if (naverUser.id() == null) throw FeignClientServerErrorException.EXCEPTION;
                 yield authService.validNaverSignup(naverUser.id());
             }
+            case APPLE -> {
+                AppleTokenResponse appleToken = oauthHelper.getAppleOAuthToken(req.authCode());
+                OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(appleToken.idToken(), OAuthProvider.APPLE);
+                yield authService.validAppleSignup(oauthInfo.getOid(), appleToken.idToken());
+            }
             case SLACK -> throw UnsupportedOAuthProviderException.EXCEPTION;
         };
     }
