@@ -1,6 +1,7 @@
 package com.storix.domain.domains.works.service;
 
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
+import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.application.usecase.WorksUseCase;
@@ -17,6 +18,7 @@ public class WorksService implements WorksUseCase {
 
     private final LoadWorksPort loadWorksPort;
     private final LoadUserPort loadUserPort;
+    private final LoadTopicRoomPort loadTopicRoomPort;
 
     private final ReviewAdaptor reviewAdaptor;
 
@@ -42,8 +44,9 @@ public class WorksService implements WorksUseCase {
         }
 
         long reviewCount = reviewAdaptor.getReviewCount(worksId);
+        boolean hasTopicRoom = loadTopicRoomPort.existsByWorksId(worksId);
 
-        return WorksDetailResponseDto.from(works, reviewCount);
+        return WorksDetailResponseDto.from(works, reviewCount, hasTopicRoom);
     }
 
 
