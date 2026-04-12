@@ -25,9 +25,10 @@ public record WorksDetailResponseDto(
         Double avgRating,
         Long reviewCount,
         String description,
-        List<String> hashtags
+        List<String> hashtags,
+        boolean hasTopicRoom
 ) {
-    public static WorksDetailResponseDto from(Works works, Long reviewCount) {
+    public static WorksDetailResponseDto from(Works works, Long reviewCount, boolean hasTopicRoom) {
         return WorksDetailResponseDto.builder()
                 .worksId(works.getId())
                 .worksName(works.getWorksName())
@@ -47,6 +48,7 @@ public record WorksDetailResponseDto(
                 .hashtags(works.getHashtags().stream()
                         .map(Hashtag::getName)
                         .toList())
+                .hasTopicRoom(hasTopicRoom)
                 .build();
     }
 
