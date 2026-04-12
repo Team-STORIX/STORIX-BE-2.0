@@ -141,14 +141,6 @@ public class FeedService {
         return new BoardWrapperDto<>(board, comments);
     }
 
-    @Transactional(readOnly = true)
-    public Slice<ReaderBoardReplyInfoWithProfile> findChildReplies(Long userId, Long parentReplyId, Pageable pageable) {
-
-        Slice<ReaderBoardReply> childReplies =
-                readerFeedAdaptor.findAllByParentReplyId(parentReplyId, pageable);
-
-        return readerBoardHelper.mapRepliesWithProfileAndLike(userId, childReplies);
-    }
 
     @Transactional(readOnly = true)
     public List<SlicedReaderBoardWithProfileInfo> findTodayTrendingFeeds(Long userId) {

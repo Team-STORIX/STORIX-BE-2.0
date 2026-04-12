@@ -6,8 +6,11 @@ import com.storix.api.domain.feed.controller.dto.ReaderBoardReplyRequest;
 import com.storix.api.domain.feed.usecase.FeedKebabUseCase;
 import com.storix.api.domain.feed.usecase.FeedReactionUseCase;
 import com.storix.api.domain.feed.usecase.FeedUseCase;
+import com.storix.common.code.ErrorCode;
 import com.storix.common.code.SuccessCode;
+import com.storix.common.exception.STORIXCodeException;
 import com.storix.common.payload.CustomResponse;
+import com.storix.common.payload.ErrorResponse;
 import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyInfoWithProfile;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyResponse;
@@ -22,15 +25,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
@@ -68,6 +66,7 @@ class FeedReplyE2ETest {
                         new PageableHandlerMethodArgumentResolver(),
                         new AuthUserDetailsArgumentResolver()
                 )
+                .setControllerAdvice(new TestExceptionHandler())
                 .build();
     }
 
@@ -103,28 +102,18 @@ class FeedReplyE2ETest {
         }
 
         @Test
-        @DisplayName("성공: 답댓글에 답댓글을 작성한다 (depth 제한 없음)")
-        void writeNestedChildReply_success() throws Exception {
+        @DisplayName("실패: 답댓글에 답댓글을 작성하면 에러가 발생한다 (depth 1 제한)")
+        void writeNestedChildReply_depthExceeded_fail() throws Exception {
             // given
-            Long nestedReplyId = 400L;
-            StandardReplyInfo replyInfo = new StandardReplyInfo(
-                    nestedReplyId, "대댓글의 대댓글", 0, 2, 0, CHILD_REPLY_ID, false
-            );
-            ReaderBoardReplyResponse response = new ReaderBoardReplyResponse(null, replyInfo);
-            CustomResponse<ReaderBoardReplyResponse> customResponse =
-                    CustomResponse.onSuccess(SuccessCode.FEED_READER_BOARD_REPLY_UPLOAD_SUCCESS, response);
-
             given(feedReactionUseCase.writeReaderBoardChildReply(eq(USER_ID), eq(BOARD_ID), eq(CHILD_REPLY_ID), any()))
-                    .willReturn(customResponse);
+                    .willThrow(new com.storix.common.exception.STORIXCodeException(
+                            com.storix.common.code.ErrorCode.REPLY_DEPTH_EXCEEDED));
 
             // when & then
             mockMvc.perform(post("/api/v1/feed/reader/board/{boardId}/reply/{replyId}/reply", BOARD_ID, CHILD_REPLY_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(new ReaderBoardReplyRequest("대댓글의 대댓글"))))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.isSuccess").value(true))
-                    .andExpect(jsonPath("$.result.content.depth").value(2))
-                    .andExpect(jsonPath("$.result.content.parentReplyId").value(CHILD_REPLY_ID));
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
@@ -144,33 +133,6 @@ class FeedReplyE2ETest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(new ReaderBoardReplyRequest(longComment))))
                     .andExpect(status().isBadRequest());
-        }
-    }
-
-    // ===== 답댓글 조회 =====
-
-    @Nested
-    @DisplayName("답댓글 조회 API")
-    class GetChildReplies {
-
-        @Test
-        @DisplayName("성공: 원댓글의 답댓글 목록을 조회한다")
-        void getChildReplies_success() throws Exception {
-            // given
-            Slice<ReaderBoardReplyInfoWithProfile> emptySlice =
-                    new SliceImpl<>(Collections.emptyList(), PageRequest.of(0, 10), false);
-            CustomResponse<Slice<ReaderBoardReplyInfoWithProfile>> customResponse =
-                    CustomResponse.onSuccess(SuccessCode.FEED_READER_BOARD_CHILD_REPLY_LOAD_SUCCESS, emptySlice);
-
-            given(feedUseCase.getChildReplies(eq(USER_ID), eq(REPLY_ID), any()))
-                    .willReturn(customResponse);
-
-            // when & then
-            mockMvc.perform(get("/api/v1/feed/reader/board/{boardId}/reply/{replyId}/children", BOARD_ID, REPLY_ID)
-                            .param("page", "0"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.isSuccess").value(true))
-                    .andExpect(jsonPath("$.result.content").isArray());
         }
     }
 
@@ -276,6 +238,19 @@ class FeedReplyE2ETest {
                             .content(objectMapper.writeValueAsString(new FeedReportRequest(99L))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isSuccess").value(true));
+        }
+    }
+
+    /**
+     * STORIXCodeException을 처리하는 테스트용 예외 핸들러
+     */
+    @org.springframework.web.bind.annotation.RestControllerAdvice
+    static class TestExceptionHandler {
+
+        @org.springframework.web.bind.annotation.ExceptionHandler(STORIXCodeException.class)
+        public org.springframework.http.ResponseEntity<ErrorResponse> handleSTORIXCodeException(STORIXCodeException ex) {
+            ErrorCode errorCode = ex.getErrorCode();
+            return org.springframework.http.ResponseEntity.status(errorCode.getHttpStatus()).body(new ErrorResponse(errorCode));
         }
     }
 

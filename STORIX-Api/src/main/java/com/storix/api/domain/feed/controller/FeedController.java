@@ -121,20 +121,7 @@ public class FeedController {
                 .body(feedReactionUseCase.writeReaderBoardReply(authUserDetails.getUserId(), boardId, req));
     }
 
-    @Operation(summary = "[관심 작품] 답댓글 조회", description = "댓글의 답댓글 목록을 조회하는 api 입니다. '답글 N개 보기' UI에서 호출합니다.")
-    @GetMapping("/reader/board/{boardId}/reply/{replyId}/children")
-    public ResponseEntity<CustomResponse<Slice<ReaderBoardReplyInfoWithProfile>>> getChildReplies(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @PathVariable @NotNull Long boardId,
-            @PathVariable @NotNull Long replyId,
-            @RequestParam(defaultValue = "0") @Min(0) int page
-    ) {
-        Pageable pageable = PageRequest.of(page, 10);
-        return ResponseEntity.ok()
-                .body(feedUseCase.getChildReplies(authUserDetails.getUserId(), replyId, pageable));
-    }
-
-    @Operation(summary = "[관심 작품] 답댓글 작성", description = "댓글에 대한 답댓글을 작성하는 api 입니다. depth 제한 없이 답댓글에 답댓글 작성이 가능합니다.")
+    @Operation(summary = "[관심 작품] 답댓글 작성", description = "댓글에 대한 답댓글을 작성하는 api 입니다. depth 1까지만 허용됩니다 (답댓글에 답댓글 불가).")
     @PostMapping("/reader/board/{boardId}/reply/{replyId}/reply")
     public ResponseEntity<CustomResponse<ReaderBoardReplyResponse>> writeReaderBoardChildReply(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
