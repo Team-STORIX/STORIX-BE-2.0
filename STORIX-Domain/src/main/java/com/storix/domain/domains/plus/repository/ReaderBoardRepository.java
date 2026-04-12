@@ -36,14 +36,16 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.popularityScore) " +
             "FROM ReaderBoard rb " +
+            "WHERE rb.createdAt > :threshold " +
             "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
-    List<StandardReaderBoardInfo> findSteadyTrendingFeed(Pageable pageable);
+    List<StandardReaderBoardInfo> findSteadyTrendingFeed(@Param("threshold") LocalDateTime threshold, Pageable pageable);
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.popularityScore) " +
             "FROM ReaderBoard rb " +
             "WHERE rb.id NOT IN :excludeIds " +
+            "AND rb.createdAt > :threshold " +
             "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
-    List<StandardReaderBoardInfo> findSteadyTrendingFeedNotToday(@Param("excludeIds") List<Long> excludeIds, Pageable pageable);
+    List<StandardReaderBoardInfo> findSteadyTrendingFeedNotToday(@Param("excludeIds") List<Long> excludeIds, @Param("threshold") LocalDateTime threshold, Pageable pageable);
 
     // 피드 관련
     @Query("SELECT rb " +

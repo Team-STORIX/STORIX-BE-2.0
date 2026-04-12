@@ -16,4 +16,8 @@ public record OAuthAuthorizationRequest(
     ) {
         return new OAuthAuthorizationRequest(authCode, null, state);
     }
+
+    public static OAuthAuthorizationRequest forApple(String authCode) {
+        return new OAuthAuthorizationRequest(authCode, null, null);
+    }
 }

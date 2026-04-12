@@ -4,7 +4,6 @@ import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import org.springframework.data.domain.*;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface LoadTopicRoomPort {
@@ -13,9 +12,9 @@ public interface LoadTopicRoomPort {
 
     Slice<TopicRoomUser> findParticipationsByUserId(Long userId, Pageable pageable);
 
-    List<TopicRoomResponseDto> findTop3TrendingWithWorks(LocalDateTime threshold);
+    List<TopicRoomResponseDto> findLoyaltySlot();
 
-    List<TopicRoomResponseDto> findTopAllTimeExcludingWithWorks(int limit, List<Long> excludeIds);
+    List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit);
 
     Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable);
 
