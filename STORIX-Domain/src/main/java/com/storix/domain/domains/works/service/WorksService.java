@@ -11,6 +11,7 @@ import com.storix.domain.domains.topicroom.exception.UnverifiedException;
 import com.storix.domain.domains.user.exception.auth.LoginRequiredException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class WorksService implements WorksUseCase {
     private final ReviewAdaptor reviewAdaptor;
 
     @Override
+    @Transactional(readOnly = true)
     public WorksDetailResponseDto getWorksDetail(Long userId, Long worksId) {
 
         Works works = loadWorksPort.findByIdWithHashtags(worksId);
