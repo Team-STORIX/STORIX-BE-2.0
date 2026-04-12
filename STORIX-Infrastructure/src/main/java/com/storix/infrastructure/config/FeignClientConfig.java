@@ -1,5 +1,6 @@
 package com.storix.infrastructure.config;
 
+import com.storix.infrastructure.external.oauth.client.AppleOAuthClient;
 import com.storix.infrastructure.external.oauth.client.KakaoInfoClient;
 import com.storix.infrastructure.external.oauth.client.KakaoOAuthClient;
 import com.storix.infrastructure.external.oauth.client.NaverInfoClient;
@@ -15,7 +16,8 @@ import org.springframework.context.annotation.Configuration;
         KakaoInfoClient.class,
         KakaoOAuthClient.class,
         NaverInfoClient.class,
-        NaverOAuthClient.class
+        NaverOAuthClient.class,
+        AppleOAuthClient.class
 })
 public class FeignClientConfig {
 

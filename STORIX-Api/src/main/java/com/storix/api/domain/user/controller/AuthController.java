@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthUseCase authUseCase;
-    private final LoginUseCase loginUseCase;
     private final LogoutUseCase logoutUseCase;
     private final OAuthLoginUseCase oauthLoginUseCase;
     private final AuthorizationUseCase authorizationUseCase;
@@ -54,6 +53,15 @@ public class AuthController {
     ) {
         OAuthAuthorizationRequest req = OAuthAuthorizationRequest.forNaver(code, state);
         return oauthLoginUseCase.readerOAuthLogin(req, OAuthProvider.NAVER);
+    }
+
+    @Operation(summary = "애플 로그인", description = "애플로 로그인 하는 api 입니다.  \n회원가입한 유저의 경우 readerLoginResponse로 액세스 토큰을 리프레쉬 토큰 쿠키와 함께 반환합니다.   \n회원가입이 필요한 유저의 경우 readerPreLoginResponse로 온보딩 토큰을 반환합니다.")
+    @GetMapping("/oauth/apple/login")
+    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> appleLogin(
+            @RequestParam("code") String code
+    ) {
+        OAuthAuthorizationRequest req = OAuthAuthorizationRequest.forApple(code);
+        return oauthLoginUseCase.readerOAuthLogin(req, OAuthProvider.APPLE);
     }
 
     @Operation(summary = "독자 계정 회원가입", description = "유저 정보를 최종적으로 등록하는 api 입니다.  \n온보딩 토큰을 보내주세요.")
