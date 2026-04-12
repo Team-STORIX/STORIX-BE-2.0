@@ -3,6 +3,7 @@ package com.storix.batch.scheduler;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,8 @@ public class ReaderBoardRankingScheduler {
 
     private final BoardAdaptor boardAdaptor;
 
+    @CacheEvict(cacheNames = {"trendingFeed", "steadyTrendingFeed"},
+            allEntries = true, cacheManager = "trendingCacheManager")
     @Scheduled(cron = "0 0/20 * * * *")
     public void calculateReaderBoardPopularity() {
 

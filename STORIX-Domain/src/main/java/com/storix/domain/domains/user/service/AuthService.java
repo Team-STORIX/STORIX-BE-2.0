@@ -42,6 +42,13 @@ public class AuthService {
         return new ValidAuthDTO(isRegistered, naverUserId);
     }
 
+    // - 애플
+    @Transactional(readOnly = true)
+    public ValidAuthDTO validAppleSignup(String appleUserId, String idToken) {
+        boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.APPLE, appleUserId);
+        return new ValidAuthDTO(isRegistered, idToken);
+    }
+
     // 독자 회원 가입 (소셜 로그인)
     @Transactional
     public AuthUserDetails signUpReaderUser(ReaderSignupRequest cmd, String jti) {

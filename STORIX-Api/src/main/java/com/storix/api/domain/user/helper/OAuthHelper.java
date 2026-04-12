@@ -2,6 +2,7 @@ package com.storix.api.domain.user.helper;
 
 import com.storix.domain.domains.user.adaptor.JwtOIDCProvider;
 import com.storix.common.property.OAuthProperties;
+import com.storix.infrastructure.external.oauth.client.AppleOAuthClient;
 import com.storix.infrastructure.external.oauth.client.KakaoInfoClient;
 import com.storix.infrastructure.external.oauth.client.KakaoOAuthClient;
 import com.storix.infrastructure.external.oauth.client.NaverInfoClient;
@@ -33,6 +34,10 @@ public class OAuthHelper {
     // 네이버
     private final NaverOAuthClient naverOauthClient;
     private final NaverInfoClient naverInfoClient;
+
+    // 애플
+    private final AppleOAuthClient appleOauthClient;
+    private final AppleClientSecretHelper appleClientSecretHelper;
 
     // 카카오: 인가 코드로 토큰 발급 요청 -> accessToken, idToken
     public KakaoTokenResponse getKakaoOAuthToken(String code, String redirectUri) {
@@ -85,12 +90,24 @@ public class OAuthHelper {
         // 네이버는 토큰 캐싱 및 주기적 갱신 필요
     }
 
+    // 애플: 인가 코드로 토큰 발급 요청 -> accessToken, idToken (네이티브 전용)
+    public AppleTokenResponse getAppleOAuthToken(String code) {
+        var apple = oauthProperties.getApple();
+        String clientSecret = appleClientSecretHelper.generateClientSecret();
+        return appleOauthClient.appleAuth(
+                "authorization_code",
+                apple.getClientId(),
+                clientSecret,
+                code
+        );
+    }
 
     // OIDC 스펙: OIDC 공개키 목록 조회
     public OIDCPublicKeysResponse getOIDCPublicKeys(OAuthProvider provider) {
         return switch (provider) {
             case KAKAO -> kakaoOauthClient.getKakaoOIDCOpenKeys();
             case NAVER -> naverOauthClient.getNaverOIDCOpenKeys();
+            case APPLE -> appleOauthClient.getAppleOIDCOpenKeys();
             case SLACK -> throw UnsupportedOAuthProviderException.EXCEPTION;
         };
     }
@@ -101,6 +118,7 @@ public class OAuthHelper {
         switch (provider) {
             case KAKAO -> cache = oidcCacheManager.getCache("KakaoOIDC");
             case NAVER -> cache = oidcCacheManager.getCache("NaverOIDC");
+            case APPLE -> cache = oidcCacheManager.getCache("AppleOIDC");
             default -> cache = null;
         }
 
@@ -117,6 +135,10 @@ public class OAuthHelper {
              case NAVER ->  {
                 var naver = oauthProperties.getNaver();
                 return new OIDCConfigDTO(naver.getBaseUri(), naver.getClientId());
+             }
+             case APPLE -> {
+                var apple = oauthProperties.getApple();
+                return new OIDCConfigDTO(apple.getBaseUri(), apple.getClientId());
              }
             default -> {
                 return null;
@@ -150,6 +172,7 @@ public class OAuthHelper {
                     .oid(idToken) // 네이버인 경우, 일시적으로 idToken 값에 oid 값 반환
                     .build();
         }
+        // KAKAO, APPLE: OIDC idToken에서 sub 클레임 추출
         OIDCDecodePayload oidcDecodePayload = getOIDCDecodePayload(idToken, provider);
         return OAuthInfo.builder()
                 .provider(provider)

@@ -79,6 +79,7 @@ public enum ErrorCode {
     AOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_REQUEST", "Apple 요청이 잘못되었습니다."),
     AOE_INVALID_CLIENT(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_CLIENT", "Apple 클라이언트 인증에 실패했습니다."),
     AOE_INVALID_GRANT(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_GRANT", "Apple 인가 코드가 유효하지 않거나 만료되었습니다."),
+    AOE_PRIVATE_KEY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "APPLE_AOE_PRIVATE_KEY_ERROR", "Apple private key 파싱에 실패했습니다."),
 
     // X OAuth error
     XOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "X_XOE_INVALID_REQUEST", "X 요청이 잘못되었습니다."),
@@ -111,6 +112,7 @@ public enum ErrorCode {
     SELF_REPORT_ERROR(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_006", "자기 자신은 신고할 수 없습니다."),
     TOPIC_ROOM_ALREADY_EXISTS(HttpStatus.CONFLICT, "TOPIC_ROOM_ERROR_007", "이미 해당 작품에 대한 토픽룸이 존재합니다."),
     TOPIC_ROOM_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_008", "해당 토픽룸에 참여하지 않은 유저입니다."),
+    TODAY_TOPIC_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_009", "오늘의 토픽룸이 없습니다."),
 
     // Search error
     SEARCH_NO_TOPIC_ROOM_FOUND(HttpStatus.NOT_FOUND, "SEARCH_ERROR_001", "검색한 키워드로 조회되는 토픽룸이 없습니다."),
@@ -146,7 +148,9 @@ public enum ErrorCode {
     REVIEW_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "REVIEW_ERROR_001", "이미 삭제된 리뷰이거나 정보를 찾을 수 없습니다."),
     DUPLICATE_FEED_USER_REPORT(HttpStatus.BAD_REQUEST, "FEED_ERROR_001", "이미 신고가 완료된 게시물입니다."),
     DUPLICATE_FEED_REPLY_USER_REPORT(HttpStatus.BAD_REQUEST, "FEED_ERROR_002", "이미 신고가 완료된 댓글입니다."),
+    TODAY_FEED_NOT_FOUND(HttpStatus.NOT_FOUND, "FEED_ERROR_003", "오늘의 피드 게시물이 없습니다."),
     BOARD_REPLY_NOT_FOUND(HttpStatus.NOT_FOUND, "REPLY_ERROR_001", "해당 게시글에 대한 댓글 정보를 찾을 수 없습니다."),
+    REPLY_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "REPLY_ERROR_002", "답댓글에는 답댓글을 작성할 수 없습니다."),
     SPOILER_SCRIPT_REQUIRED(HttpStatus.BAD_REQUEST, "SPOILER_ERROR_001", "스포일러 설정 시 스포일러 문구를 입력해주세요."),
 
     // Preference error
