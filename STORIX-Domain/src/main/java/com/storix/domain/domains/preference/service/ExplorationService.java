@@ -5,6 +5,7 @@ import com.storix.common.code.ErrorCode;
 import com.storix.common.exception.STORIXCodeException;
 import com.storix.domain.domains.preference.application.ExplorationUseCase;
 import com.storix.domain.domains.preference.dto.*;
+import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.preference.exception.DuplicatedExplorationException;
 import com.storix.domain.domains.preference.repository.ExplorationRepository;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
@@ -25,6 +26,7 @@ public class ExplorationService implements ExplorationUseCase {
     private final ExplorationRepository explorationRepository;
     private final LoadWorksPort loadWorksPort;
     private final ExplorationCacheHelper cacheHelper;
+    private final FavoriteWorksAdaptor favoriteWorksAdaptor;
 
     @Override
     @Transactional(readOnly = true)
@@ -37,9 +39,11 @@ public class ExplorationService implements ExplorationUseCase {
 
         List<Long> dbHistoryIds = explorationRepository.findRespondedWorksIdsByUserId(userId);
         Set<Long> pendingIds = cacheHelper.getPendingWorksIds(userId);
+        List<Long> favoriteWorksIds = favoriteWorksAdaptor.findAllFavoriteWorksIdsByUserId(userId);
 
         Set<Long> allHistoryIds = new HashSet<>(dbHistoryIds);
         allHistoryIds.addAll(pendingIds);
+        allHistoryIds.addAll(favoriteWorksIds);
 
         int sessionCount = explorationRepository.countByUserIdAndCreatedAtAfter(userId, threshold)
                 + pendingIds.size();
