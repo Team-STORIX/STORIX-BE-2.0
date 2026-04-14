@@ -97,11 +97,12 @@ public class User extends BaseTimeEntity {
     protected User() {}
 
     @Builder
-    public User(boolean marketingAgree, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList, Role role) {
+    public User(boolean marketingAgree, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList, String profileDescription, Role role) {
         this.marketingAgree = marketingAgree;
         this.oauthInfo = oauthInfo;
         this.nickName = nickName;
         this.favoriteGenreList = favoriteGenreList;
+        this.profileDescription = profileDescription;
         if (role != null) this.role = role;
     }
 
