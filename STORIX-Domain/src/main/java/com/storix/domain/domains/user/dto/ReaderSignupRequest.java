@@ -23,6 +23,9 @@ public record ReaderSignupRequest(
     Set<Genre> favoriteGenreList,
 
     @Size(min = 2, max = 18, message = "관심 작품은 2개 이상 18개 이하로 선택해야 합니다.")
-    Set<Long> favoriteWorksIdList
+    Set<Long> favoriteWorksIdList,
+
+    @Size(max = 30, message = "한 줄 소개는 30자까지 가능합니다.")
+    String profileDescription
 ) {
 }

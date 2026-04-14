@@ -14,7 +14,8 @@ public record CreateReaderUserCommand(
         OAuthProvider provider,
         String oid,
         String nickName,
-        Set<Genre> favoriteGenreList
+        Set<Genre> favoriteGenreList,
+        String profileDescription
 ) {
     public User toEntity() {
         OAuthInfo oauthInfo = new OAuthInfo(provider, oid);
@@ -26,6 +27,7 @@ public record CreateReaderUserCommand(
                 .oauthInfo(oauthInfo)
                 .nickName(nickName)
                 .favoriteGenreList(genres)
+                .profileDescription(profileDescription)
                 .role(Role.READER)
                 .build();
     }
