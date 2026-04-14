@@ -70,7 +70,8 @@ public class AuthService {
                 provider,
                 oid,
                 cmd.nickName(),
-                cmd.favoriteGenreList()
+                cmd.favoriteGenreList(),
+                cmd.profileDescription()
         );
 
         AuthUserDetails authUserDetails = userAdaptor.saveReaderUser(m);
