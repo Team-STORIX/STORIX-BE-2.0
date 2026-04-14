@@ -152,7 +152,9 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "https://storix-fe-git-develop-kim-yunseongs-projects.vercel.app",
-                "https://storix-fe-git-main-kim-yunseongs-projects.vercel.app"
+                "https://storix-fe-git-main-kim-yunseongs-projects.vercel.app",
+                "capacitor://localhost",
+                "https://localhost"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
