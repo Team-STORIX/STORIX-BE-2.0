@@ -21,6 +21,7 @@ public class ExplorationWorksResponseDto {
 
     private List<String> platforms;
     private String genre;
+    private String worksType;
     private String description;
     private List<String> hashtags;
 
@@ -34,6 +35,7 @@ public class ExplorationWorksResponseDto {
                         .map(wp -> wp.getPlatform().getDbValue())
                         .toList() : List.of())
                 .genre(works.getGenre() != null ? works.getGenre().getDbValue() : null)
+                .worksType(works.getWorksType() != null ? works.getWorksType().getDbValue() : null)
                 .description(works.getDescription())
                 .hashtags(works.getHashtags() != null ? works.getHashtags().stream()
                         .map(Hashtag::getName)
