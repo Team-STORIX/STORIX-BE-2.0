@@ -48,7 +48,7 @@ public class ExplorationService implements ExplorationUseCase {
         int sessionCount = explorationRepository.countByUserIdAndCreatedAtAfter(userId, threshold)
                 + pendingIds.size();
 
-        int needed = 15 - sessionCount;
+        int needed = 10 - sessionCount;
         if (needed <= 0) return Collections.emptyList();
 
         return loadWorksPort.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed)
