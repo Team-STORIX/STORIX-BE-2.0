@@ -19,13 +19,13 @@ public class OAuthLoginUseCase {
     // Web: authCode로 accessToken(+idToken) 요청 및 검증
     public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerOAuthLogin(OAuthAuthorizationRequest req, OAuthProvider provider) {
         ValidAuthDTO valid = authUseCase.checkAvailableRegister(req, provider);
-        return dispatchLoginByRegistration(valid, provider);
+        return dispatchLoginByRegistration(valid, provider, false);
     }
 
     // Native: Kakao/Naver SDK에서 받은 accessToken(+idToken)을 그대로 검증
     public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerOAuthNativeLogin(OAuthAuthorizationRequest req, OAuthProvider provider) {
         ValidAuthDTO valid = authUseCase.checkAvailableRegisterNative(req, provider);
-        return dispatchLoginByRegistration(valid, provider);
+        return dispatchLoginByRegistration(valid, provider, true);
     }
 
     /**
@@ -35,12 +35,12 @@ public class OAuthLoginUseCase {
      * (2) isRegistered = false -> 온보딩 토큰 반환 (회원가입 필요)
      */
     private ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> dispatchLoginByRegistration(
-            ValidAuthDTO valid, OAuthProvider provider
+            ValidAuthDTO valid, OAuthProvider provider, boolean isNative
     ) {
         if (valid.isRegistered()) {
-            return loginUseCase.readerLoginWithIdToken(valid.idToken(), provider);
+            return loginUseCase.readerLoginWithIdToken(valid.idToken(), provider, isNative);
         }
-        return loginUseCase.readerPreLoginWithIdToken(valid.idToken(), provider);
+        return loginUseCase.readerPreLoginWithIdToken(valid.idToken(), provider, isNative);
     }
 
 }
