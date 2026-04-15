@@ -34,8 +34,8 @@ public class LoginUseCase {
      * 독자용
      * */
     // 회원가입한 경우 로그인
-    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerLoginWithIdToken(String idToken, OAuthProvider provider) {
-        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider);
+    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerLoginWithIdToken(String idToken, OAuthProvider provider, boolean isNative) {
+        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider, isNative);
 
         AuthUserDetails userDetails = readerLoginService.execute(oauthInfo);
         LoginWithTokenResponse loginToken = tokenGenerateHelper.generateLoginWithToken(userDetails);
@@ -51,8 +51,8 @@ public class LoginUseCase {
     }
 
     // 회원가입하지 않은 경우 로그인
-    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerPreLoginWithIdToken(String idToken, OAuthProvider provider) {
-        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider);
+    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerPreLoginWithIdToken(String idToken, OAuthProvider provider, boolean isNative) {
+        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider, isNative);
 
         OAuthLoginWithTokenResponse onboardingToken = tokenGenerateHelper.generateOAuthLoginWithToken(oauthInfo);
 
