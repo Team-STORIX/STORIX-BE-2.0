@@ -16,23 +16,31 @@ public class OAuthLoginUseCase {
     private final AuthUseCase authUseCase;
     private final LoginUseCase loginUseCase;
 
+    // Web: authCode로 accessToken(+idToken) 요청 및 검증
     public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerOAuthLogin(OAuthAuthorizationRequest req, OAuthProvider provider) {
         ValidAuthDTO valid = authUseCase.checkAvailableRegister(req, provider);
+        return dispatchLoginByRegistration(valid, provider);
+    }
 
-        /**
-         * (1) isRegistered = true (계정 정보 있음) -> 로그인 시키기
-         *     return 1)isRegistered 2)AccessToken 3)RefreshToken
-         * */
+    // Native: Kakao/Naver SDK에서 받은 accessToken(+idToken)을 그대로 검증
+    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerOAuthNativeLogin(OAuthAuthorizationRequest req, OAuthProvider provider) {
+        ValidAuthDTO valid = authUseCase.checkAvailableRegisterNative(req, provider);
+        return dispatchLoginByRegistration(valid, provider);
+    }
+
+    /**
+     * 회원 등록 여부에 따라 로그인 응답을 분기
+     *
+     * (1) isRegistered = true  -> 액세스 토큰 + 리프레쉬 토큰 쿠키 반환
+     * (2) isRegistered = false -> 온보딩 토큰 반환 (회원가입 필요)
+     */
+    private ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> dispatchLoginByRegistration(
+            ValidAuthDTO valid, OAuthProvider provider
+    ) {
         if (valid.isRegistered()) {
             return loginUseCase.readerLoginWithIdToken(valid.idToken(), provider);
         }
-        /**
-         * (2) isRegistered = false (계정 정보 없음) -> 회원가입에 필요한 유저 정보를 담은 온보딩 토큰 반환 (OAuthInfo)
-         *     return 1)isRegistered 2)OnboardingToken
-         * */
-        else {
-            return loginUseCase.readerPreLoginWithIdToken(valid.idToken(), provider);
-        }
+        return loginUseCase.readerPreLoginWithIdToken(valid.idToken(), provider);
     }
 
 }

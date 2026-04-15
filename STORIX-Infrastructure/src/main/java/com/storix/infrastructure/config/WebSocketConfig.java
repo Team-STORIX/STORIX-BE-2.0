@@ -28,6 +28,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 "https://api.storix.kr",
                 "http://localhost:3000",
                 "http://localhost:5173",
+                "capacitor://localhost",
+                "https://localhost",
                 "https://storix-fe-git-develop-kim-yunseongs-projects.vercel.app",
                 "https://storix-fe-git-main-kim-yunseongs-projects.vercel.app"
         );
