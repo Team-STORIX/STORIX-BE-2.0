@@ -125,21 +125,23 @@ public class OAuthHelper {
         if (cache != null) cache.clear();
     }
 
-    // OIDC 스펙: OIDC Config 정보 조회 (baseUrl, clientId)
-    public OIDCConfigDTO getOIDCConfig(OAuthProvider provider) {
+    // OIDC 스펙: OIDC Config (Web/Native 구분)
+    // - Kakao는 REST API Key(웹) vs Native App Key(모바일 SDK) 분기
+    public OIDCConfigDTO getOIDCConfig(OAuthProvider provider, boolean isNative) {
         switch (provider) {
             case KAKAO -> {
                 var kakao = oauthProperties.getKakao();
-                return new OIDCConfigDTO(kakao.getBaseUri(), kakao.getClientId());
+                String aud = isNative ? kakao.getNativeAppKey() : kakao.getClientId();
+                return new OIDCConfigDTO(kakao.getBaseUri(), aud);
             }
-             case NAVER ->  {
+            case NAVER -> {
                 var naver = oauthProperties.getNaver();
                 return new OIDCConfigDTO(naver.getBaseUri(), naver.getClientId());
-             }
-             case APPLE -> {
+            }
+            case APPLE -> {
                 var apple = oauthProperties.getApple();
                 return new OIDCConfigDTO(apple.getBaseUri(), apple.getClientId());
-             }
+            }
             default -> {
                 return null;
             }
@@ -147,9 +149,10 @@ public class OAuthHelper {
     }
 
     // OIDC 스펙: idToken 검증 후 OIDC Payload 반환 (iss, aud, sub)
-    public OIDCDecodePayload getOIDCDecodePayload(String idToken, OAuthProvider provider) {
+    // - Kakao는 Web(REST API Key) / Native(Native App Key) 에 따라 audience 가 다르므로 isNative 전파 필수.
+    public OIDCDecodePayload getOIDCDecodePayload(String idToken, OAuthProvider provider, boolean isNative) {
 
-        OIDCConfigDTO oidcConfig = getOIDCConfig(provider);
+        OIDCConfigDTO oidcConfig = getOIDCConfig(provider, isNative);
         OIDCPublicKeysResponse oidcPublicKeysResponse = getOIDCPublicKeys(provider);
 
         try {
@@ -162,7 +165,7 @@ public class OAuthHelper {
     }
 
     // OIDC 스펙: 검증된 idToken으로 OAuthInfo 반환 (provider, oid)
-    public OAuthInfo getOauthInfoByIdToken(String idToken, OAuthProvider provider) {
+    public OAuthInfo getOauthInfoByIdToken(String idToken, OAuthProvider provider, boolean isNative) {
         if (provider == OAuthProvider.SLACK) {
             throw UnsupportedOAuthProviderException.EXCEPTION;
         }
@@ -173,7 +176,7 @@ public class OAuthHelper {
                     .build();
         }
         // KAKAO, APPLE: OIDC idToken에서 sub 클레임 추출
-        OIDCDecodePayload oidcDecodePayload = getOIDCDecodePayload(idToken, provider);
+        OIDCDecodePayload oidcDecodePayload = getOIDCDecodePayload(idToken, provider, isNative);
         return OAuthInfo.builder()
                 .provider(provider)
                 .oid(oidcDecodePayload.sub())
