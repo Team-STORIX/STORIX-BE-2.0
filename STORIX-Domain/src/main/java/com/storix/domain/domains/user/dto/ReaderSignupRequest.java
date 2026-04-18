@@ -18,14 +18,15 @@ public record ReaderSignupRequest(
     )
     String nickName,
 
+    @Size(max = 30, message = "한 줄 소개는 30자까지 가능합니다.")
+    String profileDescription,
+
     @NotNull(message = "관심 장르는 필수입니다.")
     @Size(min = 1, max = 3, message = "관심 장르는 1개 이상 3개 이하로 선택해야 합니다.")
     Set<Genre> favoriteGenreList,
 
-    @Size(min = 2, max = 18, message = "관심 작품은 2개 이상 18개 이하로 선택해야 합니다.")
-    Set<Long> favoriteWorksIdList,
+    @Size(max = 18, message = "관심 작품은 18개 이하로 선택해야 합니다.")
+    Set<Long> favoriteWorksIdList
 
-    @Size(max = 30, message = "한 줄 소개는 30자까지 가능합니다.")
-    String profileDescription
 ) {
 }
