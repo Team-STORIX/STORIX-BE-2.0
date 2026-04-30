@@ -22,7 +22,7 @@ public class ReaderBoardRankingRepositoryImpl implements ReaderBoardRankingRepos
             UPDATE reader_board
             SET popularity_score = (like_count * 4 + reply_count * 3)
             WHERE created_at >= ?
-                AND (popularity_score IS NULL OR popularity_score <> (like_count*3 + reply_count*4))
+                AND (popularity_score IS NULL OR popularity_score <> (like_count * 4 + reply_count * 3))
         """;
 
         return jdbcTemplate.update(sql, threshold);
