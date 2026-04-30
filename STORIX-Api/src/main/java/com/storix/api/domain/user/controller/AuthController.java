@@ -4,6 +4,7 @@ import com.storix.api.domain.user.controller.dto.AuthorizationResponse;
 import com.storix.api.domain.user.controller.dto.KakaoNativeLoginRequest;
 import com.storix.api.domain.user.controller.dto.NaverNativeLoginRequest;
 import com.storix.api.domain.user.controller.dto.ReaderSocialLoginResponse;
+import com.storix.api.domain.user.controller.dto.RefreshTokenRequest;
 import com.storix.api.domain.user.usecase.*;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.OnboardingUserDetails;
@@ -117,13 +118,18 @@ public class AuthController {
                 .body(authUseCase.checkAvailableNickname(nickName));
     }
 
-    @Operation(summary = "토큰 재발급", description = "액세스 토큰을 리프레쉬 토큰 쿠키와 함께 재발급하는 api 입니다.   \n액세스 토큰 만료 시 호출해주세요.")
+    @Operation(summary = "토큰 재발급", description = "액세스 토큰을 재발급하는 api 입니다. 액세스 토큰 만료 시 호출해주세요.  \n" +
+            "- Web   : 요청에 Cookie 붙여서 호출 -> 응답 body로 accessToken, Set-Cookie로 refreshToken 재발급  \n" +
+            "- Native: RequestBody에 refreshToken 담아 전송 -> 응답 body로 access/refreshToken 재발급")
     @PostMapping("/tokens/refresh")
     public ResponseEntity<CustomResponse<AuthorizationResponse>> reissueAccessToken(
             @Parameter(hidden = true)
-            @CookieValue(value = "refreshToken", required = false) String refreshToken
+            @CookieValue(value = "refreshToken", required = false) String cookieRefreshToken,
+
+            @RequestBody(required = false) RefreshTokenRequest body
     ) {
-        return authorizationUseCase.getTokenRefresh(refreshToken);
+        String bodyRefreshToken = (body != null) ? body.refreshToken() : null;
+        return authorizationUseCase.getTokenRefresh(cookieRefreshToken, bodyRefreshToken);
     }
 
     @Operation(summary = "로그아웃", description = "로그아웃용 api 입니다.   \n액세스 토큰을 보내주세요.")
