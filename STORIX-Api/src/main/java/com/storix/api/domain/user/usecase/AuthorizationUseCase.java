@@ -19,15 +19,28 @@ public class AuthorizationUseCase {
 
     private final CookieHelper cookieHelper;
 
-    public ResponseEntity<CustomResponse<AuthorizationResponse>> getTokenRefresh(String refreshToken) {
+    // 토큰 재발급
+    public ResponseEntity<CustomResponse<AuthorizationResponse>> getTokenRefresh(
+            String cookieRefreshToken, String bodyRefreshToken
+    ) {
+        boolean useBodyToken = cookieRefreshToken == null || cookieRefreshToken.isBlank();
+        String refreshToken = useBodyToken ? bodyRefreshToken : cookieRefreshToken;
 
         if (refreshToken == null || refreshToken.isBlank()) throw RefreshTokenNotExistException.EXCEPTION;
 
         LoginWithTokenResponse tokenResponse = tokenGenerateHelper.reissueTokens(refreshToken);
-        AuthorizationResponse result = new AuthorizationResponse(tokenResponse.accessToken());
 
+        // Native: body로 access/refresh 둘 다 반환
+        if (useBodyToken) {
+            return ResponseEntity.ok()
+                    .body(CustomResponse.onSuccess(SuccessCode.AUTH_REISSUE_ACCESSTOKEN_SUCCESS,
+                            AuthorizationResponse.nativeRefresh(tokenResponse.accessToken(), tokenResponse.refreshToken())));
+        }
+
+        // Web: accessToken만 body, refreshToken은 Set-Cookie 로 재발급
         return ResponseEntity.ok()
                 .headers(cookieHelper.getTokenCookie(tokenResponse.refreshToken()))
-                .body(CustomResponse.onSuccess(SuccessCode.AUTH_REISSUE_ACCESSTOKEN_SUCCESS, result));
+                .body(CustomResponse.onSuccess(SuccessCode.AUTH_REISSUE_ACCESSTOKEN_SUCCESS,
+                        AuthorizationResponse.webRefresh(tokenResponse.accessToken())));
     }
 }
