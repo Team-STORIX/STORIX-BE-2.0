@@ -40,14 +40,22 @@ public class LoginUseCase {
         AuthUserDetails userDetails = readerLoginService.execute(oauthInfo);
         LoginWithTokenResponse loginToken = tokenGenerateHelper.generateLoginWithToken(userDetails);
 
-        ReaderLoginResponse readerLoginResponse = new ReaderLoginResponse(
-                loginToken.accessToken()
-        );
+        // Native: body로 access/refresh 둘 다 반환
+        if (isNative) {
+            return ResponseEntity.ok()
+                    .body(CustomResponse.onSuccess(SuccessCode.OAUTH_LOGIN_SUCCESS,
+                            new ReaderSocialLoginResponse(true,
+                                    ReaderLoginResponse.nativeLogin(loginToken.accessToken(), loginToken.refreshToken()),
+                                    null)));
+        }
 
+        // Web: accessToken만 body, refreshToken은 Set-Cookie
         return ResponseEntity.ok()
                 .headers(cookieHelper.getTokenCookie(loginToken.refreshToken()))
                 .body(CustomResponse.onSuccess(SuccessCode.OAUTH_LOGIN_SUCCESS,
-                        new ReaderSocialLoginResponse(true, readerLoginResponse, null)));
+                        new ReaderSocialLoginResponse(true,
+                                ReaderLoginResponse.webLogin(loginToken.accessToken()),
+                                null)));
     }
 
     // 회원가입하지 않은 경우 로그인
