@@ -57,7 +57,7 @@ public class DeveloperAuthUseCase {
     public ResponseEntity<CustomResponse<AuthorizationResponse>> developerLogin(DeveloperLoginRequest req) {
         AuthUserDetails userDetails = developerAuthService.loginDeveloper(req.pendingId());
         LoginWithTokenResponse tokenResponse = tokenGenerateHelper.generateLoginWithToken(userDetails);
-        AuthorizationResponse result = new AuthorizationResponse(tokenResponse.accessToken());
+        AuthorizationResponse result = AuthorizationResponse.webRefresh(tokenResponse.accessToken());
 
         return ResponseEntity.ok()
                 .headers(cookieHelper.getTokenCookie(tokenResponse.refreshToken()))
