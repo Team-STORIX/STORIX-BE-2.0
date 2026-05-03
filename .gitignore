@@ -51,3 +51,4 @@ out/
 !gradle/wrapper/gradle-wrapper.properties
 
 .omc/state
+/storix-db-tunnel.sh
