@@ -4,7 +4,6 @@ import com.storix.domain.domains.preference.application.ExplorationUseCase;
 import com.storix.domain.domains.preference.dto.ExplorationResultResponseDto;
 import com.storix.domain.domains.preference.dto.ExplorationSubmitRequestDto;
 import com.storix.domain.domains.preference.dto.ExplorationWorksResponseDto;
-import com.storix.domain.domains.preference.dto.GenreScoreInfo;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
@@ -60,15 +59,4 @@ public class PreferenceController {
                 explorationUseCase.getExplorationResults(authUserDetails.getUserId()));
     }
 
-    // 마이페이지 누적 조회
-    @Operation(summary = "마이페이지 선호 장르 통계", description = "레이더 차트용 선호 장르별 점수를 조회합니다.")
-    @GetMapping("/stats")
-    public CustomResponse<List<GenreScoreInfo>> getStats(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails
-    ) {
-        return CustomResponse.onSuccess(
-                SuccessCode.SUCCESS,
-                explorationUseCase.getCumulativeStats(authUserDetails.getUserId())
-        );
-    }
 }

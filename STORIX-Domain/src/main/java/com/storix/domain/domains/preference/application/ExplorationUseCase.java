@@ -3,7 +3,6 @@ package com.storix.domain.domains.preference.application;
 import com.storix.domain.domains.preference.dto.ExplorationResultResponseDto;
 import com.storix.domain.domains.preference.dto.ExplorationSubmitRequestDto;
 import com.storix.domain.domains.preference.dto.ExplorationWorksResponseDto;
-import com.storix.domain.domains.preference.dto.GenreScoreInfo;
 
 import java.util.List;
 
@@ -17,7 +16,4 @@ public interface ExplorationUseCase {
 
     // 결과 모아보기
     ExplorationResultResponseDto getExplorationResults(Long userId);
-
-    // 마이페이지용 누적 통계
-    List<GenreScoreInfo> getCumulativeStats(Long userId);
 }

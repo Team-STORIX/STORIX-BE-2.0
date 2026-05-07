@@ -9,7 +9,6 @@ import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.preference.exception.DuplicatedExplorationException;
 import com.storix.domain.domains.preference.repository.ExplorationRepository;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
-import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -124,26 +123,6 @@ public class ExplorationService implements ExplorationUseCase {
                 .likedWorks(toLibraryWorksInfoList(allLiked))
                 .dislikedWorks(toLibraryWorksInfoList(allDisliked))
                 .build();
-    }
-
-    @Override
-    public List<GenreScoreInfo> getCumulativeStats(Long userId) {
-        return cacheHelper.getOrGenerateChart(userId, () -> {
-            List<Object[]> raw = explorationRepository.countLikedGenresByUserId(userId);
-            return transformToScoreInfo(raw);
-        });
-    }
-
-    private List<GenreScoreInfo> transformToScoreInfo(List<Object[]> rawCounts) {
-        long totalLiked = rawCounts.stream().mapToLong(row -> (long) row[1]).sum();
-        if (totalLiked == 0) return Collections.emptyList();
-
-        return rawCounts.stream()
-                .map(row -> new GenreScoreInfo(
-                        ((Genre) row[0]).getDbValue(),
-                        Math.round(((long) row[1] / (double) totalLiked) * 5.0 * 10) / 10.0
-                ))
-                .toList();
     }
 
     private List<LibraryWorksInfo> toLibraryWorksInfoList(List<Works> worksList) {
