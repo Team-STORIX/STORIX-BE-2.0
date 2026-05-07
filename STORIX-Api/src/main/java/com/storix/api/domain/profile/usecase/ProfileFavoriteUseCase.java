@@ -1,6 +1,8 @@
 package com.storix.api.domain.profile.usecase;
 
 import com.storix.common.annotation.UseCase;
+import com.storix.domain.domains.genrescore.service.GenreScoreQueryService;
+import com.storix.domain.domains.preference.dto.GenreScoreInfo;
 import com.storix.domain.domains.profile.dto.FavoriteWorksWithReviewInfo;
 import com.storix.domain.domains.profile.dto.FavoriteHashtagsResponse;
 import com.storix.domain.domains.profile.dto.ProfileFavoriteWorksWrapperDto;
@@ -12,11 +14,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
+import java.util.List;
+
 @UseCase
 @RequiredArgsConstructor
 public class ProfileFavoriteUseCase {
 
     private final ProfileFavoriteService profileFavoriteService;
+    private final GenreScoreQueryService genreScoreQueryService;
 
     // 관심 작품 조회
     public CustomResponse<ProfileFavoriteWorksWrapperDto<FavoriteWorksWithReviewInfo>> getFavoriteWorksList(Long userId, Pageable pageable) {
@@ -44,5 +49,12 @@ public class ProfileFavoriteUseCase {
 
         FavoriteHashtagsResponse result = profileFavoriteService.findFavoriteHashtagsByUserId(userId);
         return CustomResponse.onSuccess(SuccessCode.PROFILE_FAVORITE_HASHTAGS_LOAD_SUCCESS, result);
+    }
+
+    // 선호 장르 통계 조회 (비율 정규화)
+    public CustomResponse<List<GenreScoreInfo>> getGenreStats(Long userId) {
+
+        List<GenreScoreInfo> result = genreScoreQueryService.getRatioNormalized(userId);
+        return CustomResponse.onSuccess(SuccessCode.PROFILE_GENRE_STATS_LOAD_SUCCESS, result);
     }
 }

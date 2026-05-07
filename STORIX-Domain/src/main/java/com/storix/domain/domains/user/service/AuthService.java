@@ -1,6 +1,8 @@
 package com.storix.domain.domains.user.service;
 
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
+import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
+import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
@@ -26,6 +28,7 @@ public class AuthService {
     private final LibraryAdaptor libraryAdaptor;
     private final TokenAdaptor tokenAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
+    private final GenreScorePublisher genreScorePublisher;
 
     // 독자 회원 가입 가능 여부 (토큰 검증, 계정 정보 유무)
     // - 카카오
@@ -79,6 +82,10 @@ public class AuthService {
 
         if (cmd.favoriteWorksIdList() != null && !cmd.favoriteWorksIdList().isEmpty()) {
             favoriteWorksAdaptor.saveFavoriteWorks(authUserDetails.getUserId(), cmd.favoriteWorksIdList());
+            genreScorePublisher.publishBatch(
+                    authUserDetails.getUserId(),
+                    cmd.favoriteWorksIdList(),
+                    GenreScoreEventType.ONBOARDING_SELECT);
         }
         libraryAdaptor.initLibrary(authUserDetails.getUserId());
 

@@ -45,6 +45,7 @@ public enum SuccessCode {
     PROFILE_MY_BOARDS_LIKE_LIST_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_010", "프로필 내 활동 좋아요 리스트 조회에 성공했습니다."),
     PROFILE_RATING_DISTRIBUTION_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_011", "프로필 리뷰 별점 분포 조회에 성공했습니다."),
     PROFILE_FAVORITE_HASHTAGS_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_012", "프로필 선호 해시태그 조회에 성공했습니다."),
+    PROFILE_GENRE_STATS_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_013", "프로필 선호 장르 통계 조회에 성공했습니다."),
 
     // Image success
     IMAGE_ISSUE_PRESIGNED_URL_SUCCESS(HttpStatus.OK, "IMAGE_SUCCESS_001", "이미지를 업로드할 Presigned Url 발급에 성공했습니다."),
