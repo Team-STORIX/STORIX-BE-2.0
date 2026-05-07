@@ -4,7 +4,6 @@ import com.storix.domain.domains.preference.application.ExplorationUseCase;
 import com.storix.domain.domains.preference.dto.ExplorationResultResponseDto;
 import com.storix.domain.domains.preference.dto.ExplorationSubmitRequestDto;
 import com.storix.domain.domains.preference.dto.ExplorationWorksResponseDto;
-import com.storix.domain.domains.preference.dto.GenreScoreInfo;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
