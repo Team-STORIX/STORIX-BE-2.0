@@ -34,25 +34,33 @@ public class LoginUseCase {
      * 독자용
      * */
     // 회원가입한 경우 로그인
-    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerLoginWithIdToken(String idToken, OAuthProvider provider) {
-        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider);
+    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerLoginWithIdToken(String idToken, OAuthProvider provider, boolean isNative) {
+        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider, isNative);
 
         AuthUserDetails userDetails = readerLoginService.execute(oauthInfo);
         LoginWithTokenResponse loginToken = tokenGenerateHelper.generateLoginWithToken(userDetails);
 
-        ReaderLoginResponse readerLoginResponse = new ReaderLoginResponse(
-                loginToken.accessToken()
-        );
+        // Native: body로 access/refresh 둘 다 반환
+        if (isNative) {
+            return ResponseEntity.ok()
+                    .body(CustomResponse.onSuccess(SuccessCode.OAUTH_LOGIN_SUCCESS,
+                            new ReaderSocialLoginResponse(true,
+                                    ReaderLoginResponse.nativeLogin(loginToken.accessToken(), loginToken.refreshToken()),
+                                    null)));
+        }
 
+        // Web: accessToken만 body, refreshToken은 Set-Cookie
         return ResponseEntity.ok()
                 .headers(cookieHelper.getTokenCookie(loginToken.refreshToken()))
                 .body(CustomResponse.onSuccess(SuccessCode.OAUTH_LOGIN_SUCCESS,
-                        new ReaderSocialLoginResponse(true, readerLoginResponse, null)));
+                        new ReaderSocialLoginResponse(true,
+                                ReaderLoginResponse.webLogin(loginToken.accessToken()),
+                                null)));
     }
 
     // 회원가입하지 않은 경우 로그인
-    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerPreLoginWithIdToken(String idToken, OAuthProvider provider) {
-        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider);
+    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerPreLoginWithIdToken(String idToken, OAuthProvider provider, boolean isNative) {
+        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider, isNative);
 
         OAuthLoginWithTokenResponse onboardingToken = tokenGenerateHelper.generateOAuthLoginWithToken(oauthInfo);
 
