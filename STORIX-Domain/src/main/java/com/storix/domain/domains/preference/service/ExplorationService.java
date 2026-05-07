@@ -5,10 +5,10 @@ import com.storix.common.code.ErrorCode;
 import com.storix.common.exception.STORIXCodeException;
 import com.storix.domain.domains.preference.application.ExplorationUseCase;
 import com.storix.domain.domains.preference.dto.*;
+import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.preference.exception.DuplicatedExplorationException;
 import com.storix.domain.domains.preference.repository.ExplorationRepository;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
-import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +25,7 @@ public class ExplorationService implements ExplorationUseCase {
     private final ExplorationRepository explorationRepository;
     private final LoadWorksPort loadWorksPort;
     private final ExplorationCacheHelper cacheHelper;
+    private final FavoriteWorksAdaptor favoriteWorksAdaptor;
 
     @Override
     @Transactional(readOnly = true)
@@ -37,14 +38,16 @@ public class ExplorationService implements ExplorationUseCase {
 
         List<Long> dbHistoryIds = explorationRepository.findRespondedWorksIdsByUserId(userId);
         Set<Long> pendingIds = cacheHelper.getPendingWorksIds(userId);
+        List<Long> favoriteWorksIds = favoriteWorksAdaptor.findAllFavoriteWorksIdsByUserId(userId);
 
         Set<Long> allHistoryIds = new HashSet<>(dbHistoryIds);
         allHistoryIds.addAll(pendingIds);
+        allHistoryIds.addAll(favoriteWorksIds);
 
         int sessionCount = explorationRepository.countByUserIdAndCreatedAtAfter(userId, threshold)
                 + pendingIds.size();
 
-        int needed = 15 - sessionCount;
+        int needed = 10 - sessionCount;
         if (needed <= 0) return Collections.emptyList();
 
         return loadWorksPort.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed)
@@ -120,26 +123,6 @@ public class ExplorationService implements ExplorationUseCase {
                 .likedWorks(toLibraryWorksInfoList(allLiked))
                 .dislikedWorks(toLibraryWorksInfoList(allDisliked))
                 .build();
-    }
-
-    @Override
-    public List<GenreScoreInfo> getCumulativeStats(Long userId) {
-        return cacheHelper.getOrGenerateChart(userId, () -> {
-            List<Object[]> raw = explorationRepository.countLikedGenresByUserId(userId);
-            return transformToScoreInfo(raw);
-        });
-    }
-
-    private List<GenreScoreInfo> transformToScoreInfo(List<Object[]> rawCounts) {
-        long totalLiked = rawCounts.stream().mapToLong(row -> (long) row[1]).sum();
-        if (totalLiked == 0) return Collections.emptyList();
-
-        return rawCounts.stream()
-                .map(row -> new GenreScoreInfo(
-                        ((Genre) row[0]).getDbValue(),
-                        Math.round(((long) row[1] / (double) totalLiked) * 5.0 * 10) / 10.0
-                ))
-                .toList();
     }
 
     private List<LibraryWorksInfo> toLibraryWorksInfoList(List<Works> worksList) {

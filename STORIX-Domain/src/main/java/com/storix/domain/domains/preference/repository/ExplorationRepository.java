@@ -28,11 +28,6 @@ public interface ExplorationRepository extends JpaRepository<PreferenceExplorati
             @Param("threshold") LocalDateTime threshold
     );
 
-    // 마이페이지 누적 차트용
-    @Query("SELECT w.genre, COUNT(w) FROM PreferenceExploration pe JOIN Works w ON pe.worksId = w.id " +
-            "WHERE pe.userId = :userId AND pe.isLiked = true GROUP BY w.genre")
-    List<Object[]> countLikedGenresByUserId(@Param("userId") Long userId);
-
     @Query("SELECT pe.worksId FROM PreferenceExploration pe WHERE pe.userId = :userId")
     List<Long> findRespondedWorksIdsByUserId(@Param("userId") Long userId);
 
