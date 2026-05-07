@@ -1,6 +1,7 @@
 package com.storix.api.domain.profile.controller;
 
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyInfoWithProfile;
+import com.storix.domain.domains.preference.dto.GenreScoreInfo;
 import com.storix.domain.domains.profile.dto.*;
 import com.storix.api.domain.profile.usecase.ProfileActivityUseCase;
 import com.storix.api.domain.profile.usecase.ProfileFavoriteUseCase;
@@ -22,6 +23,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Validated
 @RestController
@@ -111,6 +114,16 @@ public class ProfileController {
     ) {
         return ResponseEntity.ok()
                 .body(profileFavoriteUseCase.getRatingDistribution(authUserDetails.getUserId()));
+    }
+
+    // 마이페이지 누적 조회
+    @Operation(summary = "[독자] 선호 장르 통계 조회", description = "선호 장르별 점수를 조회합니다.")
+    @GetMapping("/reader/stats")
+    public ResponseEntity<CustomResponse<List<GenreScoreInfo>>> getStats(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails
+    ) {
+        return ResponseEntity.ok()
+                .body(profileFavoriteUseCase.getGenreStats(authUserDetails.getUserId()));
     }
 
     // 선호 해시태그 조회
