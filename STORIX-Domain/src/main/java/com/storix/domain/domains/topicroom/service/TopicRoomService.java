@@ -1,5 +1,7 @@
 package com.storix.domain.domains.topicroom.service;
 
+import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
+import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
@@ -49,6 +51,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final SearchHistoryService searchHistoryService;
     private final ProfanityFilterService profanityFilterService;
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
+    private final GenreScorePublisher genreScorePublisher;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -190,6 +193,9 @@ public class TopicRoomService implements TopicRoomUseCase {
             recordTopicRoomPort.saveParticipation(user.getId(), savedRoom, TopicRoomRole.HOST);
             recordTopicRoomPort.incrementActiveUserNumber(savedRoom.getId());
 
+            genreScorePublisher.publishWithGenre(
+                    user.getId(), works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
+
             return savedRoom.getId();
         } catch (DataIntegrityViolationException e) {
 
@@ -213,6 +219,9 @@ public class TopicRoomService implements TopicRoomUseCase {
         try {
             recordTopicRoomPort.saveParticipation(userId, room, TopicRoomRole.MEMBER);
             recordTopicRoomPort.incrementActiveUserNumber(roomId);
+
+            genreScorePublisher.publishWithGenre(
+                    userId, works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
         } catch (DataIntegrityViolationException e) {
             throw AlreadyJoinedException.EXCEPTION;
         }

@@ -1,5 +1,7 @@
 package com.storix.domain.domains.plus.service;
 
+import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
+import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.domain.Review;
@@ -42,6 +44,10 @@ public class ReviewService {
 
     private final AdultWorksHelper adultWorksHelper;
 
+    private final GenreScorePublisher genreScorePublisher;
+
+    private static final double POSITIVE_REVIEW_THRESHOLD = 3.0;
+
     // 플러스탭
     @Transactional
     public ReaderReviewRedirectResponse createReview(CreateReviewCommand cmd) {
@@ -58,6 +64,10 @@ public class ReviewService {
 
         // 작품 도메인 업데이트
         loadWorksPort.updateIncrementingReviewInfoToWorks(cmd.worksId(), cmd.rating().getRatingValue());
+
+        if (cmd.rating().getRatingValue() >= POSITIVE_REVIEW_THRESHOLD) {
+            genreScorePublisher.publish(cmd.libraryUserId(), cmd.worksId(), GenreScoreEventType.REVIEW_WRITE_POSITIVE);
+        }
 
         return new ReaderReviewRedirectResponse(review.getWorksId(), review.getLibraryUserId(), review.getId());
     }
