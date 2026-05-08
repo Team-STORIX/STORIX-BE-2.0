@@ -1,9 +1,11 @@
-package com.storix.api.domain.chat;
+package com.storix.api.domain.chat.controller;
 
+import com.storix.api.domain.chat.usecase.ChatRestUseCase;
 import com.storix.domain.domains.chat.application.usecase.ChatUseCase;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
+import com.storix.domain.domains.chat.repository.ChatRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "토픽룸 - 채팅", description = "토픽룸 채팅 REST API")
 public class ChatRestController {
 
-    private final ChatUseCase chatUseCase;
+    private final ChatRestUseCase chatRestUseCase;
 
     @GetMapping("/rooms/{roomId}/messages")
     @Operation(summary = "채팅방 메시지 조회", description = "과거 메시지를 불러옵니다. 페이지네이션 디폴트 값을 참고해 주세요.")
@@ -31,7 +33,7 @@ public class ChatRestController {
             @PathVariable Long roomId,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Slice<ChatMessageResponseDto> history = chatUseCase.getChatHistory(roomId, pageable);
+        Slice<ChatMessageResponseDto> history = chatRestUseCase.getChatHistory(roomId, pageable);
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, history);
     }
 }

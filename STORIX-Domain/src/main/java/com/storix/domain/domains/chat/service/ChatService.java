@@ -1,11 +1,13 @@
 package com.storix.domain.domains.chat.service;
 
+import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.chat.application.port.LoadChatPort;
 import com.storix.domain.domains.chat.application.port.PublishChatPort;
 import com.storix.domain.domains.chat.application.usecase.ChatUseCase;
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
@@ -31,6 +33,8 @@ public class ChatService implements ChatUseCase {
     private final LoadChatPort loadChatPort;
     private final ChatAsyncService chatAsyncService;
     private final LoadTopicRoomUserPort loadTopicRoomUserPort;
+
+    private final ChatAdaptor chatAdaptor;
 
     @Override
     @Transactional
@@ -74,5 +78,13 @@ public class ChatService implements ChatUseCase {
         }
 
         return loadChatPort.loadMessages(roomId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Slice<ChatMessageResponseDto> getChat(Long roomId,  Pageable pageable) {
+
+        log.info(">>>> [ChatService] 과거 내역 조회 요청 - RoomID: {}, Page: {}", roomId, pageable.getPageNumber());
+
+        return chatAdaptor.loadMessages(roomId, pageable);
     }
 }

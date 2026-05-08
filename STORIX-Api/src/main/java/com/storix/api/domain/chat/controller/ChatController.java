@@ -1,4 +1,4 @@
-package com.storix.api.domain.chat;
+package com.storix.api.domain.chat.controller;
 
 import com.storix.domain.domains.chat.application.usecase.ChatUseCase;
 import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
