@@ -10,8 +10,6 @@ public interface LoadTopicRoomPort {
 
     TopicRoom findById(Long roomId);
 
-    Slice<TopicRoomUser> findParticipationsByUserId(Long userId, Pageable pageable);
-
     List<TopicRoomResponseDto> findLoyaltySlot();
 
     List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit);

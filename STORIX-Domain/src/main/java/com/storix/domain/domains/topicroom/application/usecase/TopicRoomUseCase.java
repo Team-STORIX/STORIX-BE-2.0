@@ -15,8 +15,6 @@ import java.util.List;
 
 public interface TopicRoomUseCase {
 
-    Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable);
-
     List<TopicRoomResponseDto> getTodayTrendingRooms(Long userId);
 
     SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable);

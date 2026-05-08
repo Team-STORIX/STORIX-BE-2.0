@@ -4,6 +4,7 @@ import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
 import com.storix.domain.domains.search.service.SearchHistoryService;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.RecordTopicRoomPort;
@@ -18,6 +19,7 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.works.adaptor.WorksAdapter;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
@@ -49,12 +51,14 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final SearchHistoryService searchHistoryService;
     private final ProfanityFilterService profanityFilterService;
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
+    private final TopicRoomAdaptor topicRoomAdaptor;
+    private final WorksAdapter worksAdapter;
 
-    @Override
+    @Transactional(readOnly = true)
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
 
         // 참여 정보 조회
-        Slice<TopicRoomUser> participations = loadTopicRoomPort.findParticipationsByUserId(userId, pageable);
+        Slice<TopicRoomUser> participations = topicRoomAdaptor.findParticipationsByUserId(userId, pageable);
 
         // 조회된 토픽룸의 worksId
         List<Long> worksIds = participations.stream()
@@ -62,7 +66,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .toList();
 
         // works 정보를 한 번에 조회하여 Map으로 변환
-        Map<Long, TopicRoomWorksInfo> worksMap = loadWorksPort.loadWorksMapByIds(worksIds);
+        Map<Long, TopicRoomWorksInfo> worksMap = worksAdapter.loadWorksMapByIds(worksIds);
 
         return participations.map(participation -> {
             TopicRoom room = participation.getTopicRoom();

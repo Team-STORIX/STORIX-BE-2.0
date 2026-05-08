@@ -1,5 +1,6 @@
-package com.storix.api.domain.topicroom;
+package com.storix.api.domain.topicroom.controller;
 
+import com.storix.api.domain.topicroom.usecase.TopicRoomUseCaseV2;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
@@ -32,6 +33,7 @@ public class TopicRoomController {
 
     private final TopicRoomUseCase topicRoomUseCase;
     private final TopicRoomUserService topicRoomUserService;
+    private final TopicRoomUseCaseV2 topicRoomUseCaseV2;
 
     // 1. 참여 목록
     @GetMapping("/me")
@@ -42,7 +44,7 @@ public class TopicRoomController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCase.getMyJoinedRooms(authUser.getUserId(), pageable));
+                topicRoomUseCaseV2.getMyJoinedRooms(authUser.getUserId(), pageable));
     }
 
     // 2. 오늘의 토픽룸

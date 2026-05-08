@@ -40,10 +40,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
                 .orElseThrow(() -> UnknownTopicRoomException.EXCEPTION);
     }
 
-    @Override public Slice<TopicRoomUser> findParticipationsByUserId(Long userId, Pageable pageable) {
-        return topicRoomUserRepository.findByUserIdWithTopicRoom(userId, pageable);
-    }
-
     @Override
     @Cacheable(cacheNames = "trendingLoyaltySlot", cacheManager = "trendingCacheManager")
     public List<TopicRoomResponseDto> findLoyaltySlot() {
