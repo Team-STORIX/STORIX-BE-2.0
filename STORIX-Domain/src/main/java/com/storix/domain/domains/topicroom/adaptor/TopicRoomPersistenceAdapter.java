@@ -40,24 +40,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
                 .orElseThrow(() -> UnknownTopicRoomException.EXCEPTION);
     }
 
-    @Override
-    @Cacheable(cacheNames = "trendingLoyaltySlot", cacheManager = "trendingCacheManager")
-    public List<TopicRoomResponseDto> findLoyaltySlot() {
-        return topicRoomRepository.findLoyaltySlot();
-    }
-
-    @Override
-    @Cacheable(cacheNames = "trendingNewUserSlots", cacheManager = "trendingCacheManager")
-    public List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit) {
-        List<TopicRoomResponseDto> result = topicRoomRepository.findNewUserSlots(excludeIds, limit);
-
-        if (excludeIds.isEmpty() && result.isEmpty()) {
-            throw TodayTopicRoomNotFoundException.EXCEPTION;
-        }
-
-        return result;
-    }
-
     @Override public Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable) {
         return topicRoomRepository.findBySearchCondition(worksIds, keyword, pageable);
     }

@@ -76,24 +76,23 @@ public class TopicRoomService implements TopicRoomUseCase {
         });
     }
 
-
-    @Override
-    public List<TopicRoomResponseDto> getTodayTrendingRooms(Long userId) {
+    @Transactional(readOnly = true)
+    public List<TopicRoomResponseDto> getTodayTopicRooms(Long userId) {
 
         List<TopicRoomResponseDto> trendingRooms = new java.util.ArrayList<>();
 
         // 1) 충성 유저 탐색 필터 - 슬롯 1개
-        List<TopicRoomResponseDto> loyaltySlot = loadTopicRoomPort.findLoyaltySlot();
+        List<TopicRoomResponseDto> loyaltySlot = topicRoomAdaptor.findLoyaltySlot();
         trendingRooms.addAll(loyaltySlot);
 
-        // 2) 신규 유저 락인 필터 - 슬롯 최대 2~3개
+        // 2) 신규 유저 락인 필터 - 나머지 슬롯
         int newUserSlotCount = 3 - trendingRooms.size();
 
         List<Long> excludeIds = loyaltySlot.stream()
                 .map(TopicRoomResponseDto::getTopicRoomId)
                 .toList();
 
-        List<TopicRoomResponseDto> newUserSlots = loadTopicRoomPort.findNewUserSlots(excludeIds, newUserSlotCount);
+        List<TopicRoomResponseDto> newUserSlots = topicRoomAdaptor.findNewUserSlots(excludeIds, newUserSlotCount);
         trendingRooms.addAll(newUserSlots);
 
         // 참여 여부 마킹

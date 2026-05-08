@@ -56,7 +56,7 @@ public class TopicRoomController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCase.getTodayTrendingRooms(authUser.getUserId())
+                topicRoomUseCaseV2.getTodayTopicRooms(authUser.getUserId())
         );
     }
 

@@ -10,10 +10,6 @@ public interface LoadTopicRoomPort {
 
     TopicRoom findById(Long roomId);
 
-    List<TopicRoomResponseDto> findLoyaltySlot();
-
-    List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit);
-
     Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable);
 
     Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable);

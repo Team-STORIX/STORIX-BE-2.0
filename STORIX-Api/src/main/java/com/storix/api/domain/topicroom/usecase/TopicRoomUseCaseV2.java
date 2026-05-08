@@ -16,8 +16,11 @@ public class TopicRoomUseCaseV2 {
     private final TopicRoomService topicRoomService;
 
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
-
         return topicRoomService.getMyJoinedRooms(userId, pageable);
+    }
+
+    public List<TopicRoomResponseDto> getTodayTopicRooms(Long userId) {
+        return topicRoomService.getTodayTopicRooms(userId);
     }
 
 }

@@ -15,8 +15,6 @@ import java.util.List;
 
 public interface TopicRoomUseCase {
 
-    List<TopicRoomResponseDto> getTodayTrendingRooms(Long userId);
-
     SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable);
 
     // 토픽룸 탭 필터 검색
