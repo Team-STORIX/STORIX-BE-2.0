@@ -19,7 +19,7 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
-import com.storix.domain.domains.works.adaptor.WorksAdapter;
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
@@ -52,7 +52,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final ProfanityFilterService profanityFilterService;
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
     private final TopicRoomAdaptor topicRoomAdaptor;
-    private final WorksAdapter worksAdapter;
+    private final WorksAdaptor worksAdapter;
 
     @Transactional(readOnly = true)
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -126,12 +126,12 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .toList();
     }
 
-    @Override
+    @Transactional(readOnly = true)
     public SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable) {
 
-        List<Long> worksIds = loadWorksPort.findAllIdsByKeyword(keyword);
+        List<Long> worksIds = worksAdapter.findAllIdsByKeyword(keyword);
 
-        Slice<TopicRoomResponseDto> rooms = loadTopicRoomPort.searchBySearchCondition(worksIds, keyword, pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(worksIds, keyword, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         String fallback = null;

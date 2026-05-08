@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class WorksAdapter {
+public class WorksAdaptor {
 
     private final WorksRepository worksRepository;
 
@@ -28,5 +28,9 @@ public class WorksAdapter {
 
         return infos.stream()
                 .collect(Collectors.toMap(TopicRoomWorksInfo::id, Function.identity()));
+    }
+
+    public List<Long> findAllIdsByKeyword(String keyword) {
+        return worksRepository.findAllIdsByKeyword(keyword);
     }
 }

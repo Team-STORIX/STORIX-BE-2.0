@@ -15,8 +15,6 @@ import java.util.List;
 
 public interface TopicRoomUseCase {
 
-    SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable);
-
     // 토픽룸 탭 필터 검색
     PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable);

@@ -51,6 +51,10 @@ public class TopicRoomAdaptor {
         return result;
     }
 
+    public Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable) {
+        return topicRoomRepository.findBySearchCondition(worksIds, keyword, pageable);
+    }
+
 
 
 

@@ -70,7 +70,7 @@ public class TopicRoomController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCase.searchRooms(keyword, authUser.getUserId(), pageable));
+                topicRoomUseCaseV2.searchRooms(keyword, authUser.getUserId(), pageable));
     }
 
     // 4. 생성

@@ -40,10 +40,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
                 .orElseThrow(() -> UnknownTopicRoomException.EXCEPTION);
     }
 
-    @Override public Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable) {
-        return topicRoomRepository.findBySearchCondition(worksIds, keyword, pageable);
-    }
-
     @Override public Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable) {
         if (worksIds.isEmpty()) {
             throw SearchNoTopicRoomFoundException.EXCEPTION;

@@ -10,8 +10,6 @@ public interface LoadTopicRoomPort {
 
     TopicRoom findById(Long roomId);
 
-    Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable);
-
     Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable);
 
     List<Long> findAllJoinedRoomIdsByUserId(Long userId);

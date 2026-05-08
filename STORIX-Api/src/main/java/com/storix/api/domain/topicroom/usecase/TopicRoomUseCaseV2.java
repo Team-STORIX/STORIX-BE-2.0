@@ -1,6 +1,7 @@
 package com.storix.api.domain.topicroom.usecase;
 
 import com.storix.common.annotation.UseCase;
+import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.service.TopicRoomService;
 import lombok.RequiredArgsConstructor;
@@ -23,4 +24,7 @@ public class TopicRoomUseCaseV2 {
         return topicRoomService.getTodayTopicRooms(userId);
     }
 
+    public SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable) {
+        return topicRoomService.searchRooms(keyword, userId, pageable);
+    }
 }

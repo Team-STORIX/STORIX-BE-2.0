@@ -22,9 +22,6 @@ public interface LoadWorksPort {
   
     Works findById(Long worksId);
 
-    // 키워드로 작품 ID 리스트만 조회 (검색용)
-    List<Long> findAllIdsByKeyword(String keyword);
-
     // 토픽룸 도메인 용 (키워드 + 필터로 작품 ID 리스트 조회)
     List<Long> findAllIdsByKeywordWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres);
 
