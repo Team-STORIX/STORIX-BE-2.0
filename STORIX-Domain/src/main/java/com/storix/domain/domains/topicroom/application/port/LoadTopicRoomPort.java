@@ -14,8 +14,6 @@ public interface LoadTopicRoomPort {
 
     List<Long> findAllJoinedRoomIdsByUserId(Long userId);
 
-    long countJoinedRooms(Long userId);
-
     boolean existsByWorksId(Long worksId);
 
     boolean existsById(Long roomId);

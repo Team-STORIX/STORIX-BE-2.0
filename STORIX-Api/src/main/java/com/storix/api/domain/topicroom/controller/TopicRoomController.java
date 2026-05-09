@@ -92,7 +92,7 @@ public class TopicRoomController {
             @AuthenticationPrincipal AuthUserDetails authUser,
             @PathVariable Long roomId) {
 
-        topicRoomUseCase.joinRoom(authUser.getUserId(), roomId);
+        topicRoomUseCaseV2.joinRoom(authUser.getUserId(), roomId);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS);
     }
@@ -104,7 +104,7 @@ public class TopicRoomController {
             @AuthenticationPrincipal AuthUserDetails authUser,
             @PathVariable Long roomId) {
 
-        topicRoomUseCase.leaveRoom(authUser.getUserId(), roomId);
+        topicRoomUseCaseV2.leaveRoom(authUser.getUserId(), roomId);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS);
     }

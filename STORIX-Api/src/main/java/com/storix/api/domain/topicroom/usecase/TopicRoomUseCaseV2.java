@@ -38,6 +38,14 @@ public class TopicRoomUseCaseV2 {
         return topicRoomService.createRoom(userId, request);
     }
 
+    public void joinRoom(Long userId, Long roomId) {
+        topicRoomService.joinRoom(userId, roomId);
+    }
+
+    public void leaveRoom(Long userId, Long roomId) {
+        topicRoomService.leaveRoom(userId, roomId);
+    }
+
     public void validate(String text) {
 
         for (String word : bannedWords) {

@@ -52,31 +52,8 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
         return result;
     }
 
-    @Override public long countJoinedRooms(Long userId) {
-        return topicRoomUserRepository.countByUserId(userId);
-    }
-
-    @Override
-    public void saveParticipation(Long userId, TopicRoom room, TopicRoomRole role) {
-        topicRoomUserRepository.save(new TopicRoomUser(room, userId, role));
-    }
-
-    @Override public int deleteParticipation(Long userId, Long roomId) {
-        return topicRoomUserRepository.deleteByUserIdAndTopicRoomId(userId, roomId);
-    }
-
     @Override public void saveReport(TopicRoomReport report) {
         topicRoomReportRepository.save(report);
-    }
-
-    @Override
-    public void incrementActiveUserNumber(Long roomId) {
-        topicRoomRepository.incrementActiveUserNumber(roomId);
-    }
-
-    @Override
-    public void decrementActiveUserNumber(Long roomId) {
-        topicRoomRepository.decrementActiveUserNumber(roomId);
     }
 
     @Override
@@ -104,9 +81,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     public List<Long> findAllJoinedRoomIdsByUserId(Long userId) {
         return topicRoomUserRepository.findAllJoinedRoomIdsByUserId(userId);
     }
-
-    // 0명 시 방 삭제
-    @Override public void deleteRoom(Long roomId) { topicRoomRepository.deleteById(roomId); }
 
     @Override
     public boolean existsByWorksId(Long worksId) {

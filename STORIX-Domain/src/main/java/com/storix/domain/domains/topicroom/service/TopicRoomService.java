@@ -47,7 +47,6 @@ public class TopicRoomService implements TopicRoomUseCase {
 
     private final LoadTopicRoomPort loadTopicRoomPort;
     private final RecordTopicRoomPort recordTopicRoomPort;
-    private final LoadUserPort loadUserPort;
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
@@ -199,43 +198,42 @@ public class TopicRoomService implements TopicRoomUseCase {
         }
     }
 
-    @Override
     @Transactional
     public void joinRoom(Long userId, Long roomId) {
-        User user = loadUserPort.findById(userId);
-        TopicRoom room = loadTopicRoomPort.findById(roomId);
-        Works works = loadWorksPort.findById(room.getWorksId());
+        User user = userAdaptor.findUserById(userId);
+        TopicRoom room = topicRoomAdaptor.findById(roomId);
+        Works works = worksAdapter.findById(room.getWorksId());
 
         if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
             throw UnverifiedException.EXCEPTION;
-        if (loadTopicRoomPort.countJoinedRooms(userId) >= 9)
+
+        if (topicRoomAdaptor.countJoinedRooms(userId) >= 9)
             throw MaxLimitException.EXCEPTION;
 
         try {
-            recordTopicRoomPort.saveParticipation(userId, room, TopicRoomRole.MEMBER);
-            recordTopicRoomPort.incrementActiveUserNumber(roomId);
+            topicRoomAdaptor.saveParticipation(userId, room, TopicRoomRole.MEMBER);
+            topicRoomAdaptor.incrementActiveUserNumber(roomId);
         } catch (DataIntegrityViolationException e) {
             throw AlreadyJoinedException.EXCEPTION;
         }
     }
 
-    @Override
     @Transactional
     public void leaveRoom(Long userId, Long roomId) {
 
-        int deleteCount = recordTopicRoomPort.deleteParticipation(userId, roomId);
+        int deleteCount = topicRoomAdaptor.deleteParticipation(userId, roomId);
 
         // 삭제된 행이 0개면 이미 나갔거나 참여 정보가 없는 상태
         if (deleteCount == 0) { return; }
 
-        recordTopicRoomPort.decrementActiveUserNumber(roomId);
+        topicRoomAdaptor.decrementActiveUserNumber(roomId);
 
         try {
-            TopicRoom room = loadTopicRoomPort.findById(roomId);
+            TopicRoom room = topicRoomAdaptor.findById(roomId);
 
             // 인원수가 0 이하면 방 삭제 로직 실행
             if (room.getActiveUserNumber() <= 0) {
-                recordTopicRoomPort.deleteRoom(roomId);
+                topicRoomAdaptor.deleteRoom(roomId);
             }
         } catch (UnknownTopicRoomException e) {
             log.info("[leaveRoom] 다른 스레드에 의해 이미 지워진 토픽룸 {}번", roomId);

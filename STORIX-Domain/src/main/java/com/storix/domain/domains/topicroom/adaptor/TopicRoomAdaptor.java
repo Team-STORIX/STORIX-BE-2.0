@@ -61,6 +61,9 @@ public class TopicRoomAdaptor {
         return topicRoomRepository.findBySearchCondition(worksIds, keyword, pageable);
     }
 
+    public long countJoinedRooms(Long userId) {
+        return topicRoomUserRepository.countByUserId(userId);
+    }
 
     public TopicRoom saveRoom(TopicRoom room) {
         return topicRoomRepository.save(room);
@@ -74,4 +77,15 @@ public class TopicRoomAdaptor {
         topicRoomRepository.incrementActiveUserNumber(roomId);
     }
 
+    public int deleteParticipation(Long userId, Long roomId) {
+        return topicRoomUserRepository.deleteByUserIdAndTopicRoomId(userId, roomId);
+    }
+
+    public void decrementActiveUserNumber(Long roomId) {
+        topicRoomRepository.decrementActiveUserNumber(roomId);
+    }
+
+    public void deleteRoom(Long roomId) {
+        topicRoomRepository.deleteById(roomId);
+    }
 }
