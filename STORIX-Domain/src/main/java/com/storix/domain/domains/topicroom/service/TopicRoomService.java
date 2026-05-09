@@ -43,6 +43,11 @@ public class TopicRoomService  {
     private final UserAdaptor userAdaptor;
 
     @Transactional(readOnly = true)
+    public TopicRoom findTopicRoomById(Long roomId) {
+        return topicRoomAdaptor.findById(roomId);
+    }
+
+    @Transactional(readOnly = true)
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
 
         // 참여 정보 조회

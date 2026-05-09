@@ -1,10 +1,9 @@
 package com.storix.api.domain.chat.usecase;
 
 import com.storix.common.annotation.UseCase;
-import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.chat.service.ChatService;
-import com.storix.domain.domains.topicroom.service.TopicRoomServiceV2;
+import com.storix.domain.domains.topicroom.service.TopicRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -13,7 +12,7 @@ import org.springframework.data.domain.Slice;
 @RequiredArgsConstructor
 public class ChatRestUseCase {
 
-    private final TopicRoomServiceV2 topicRoomService;
+    private final TopicRoomService topicRoomService;
     private final ChatService chatService;
 
     public Slice<ChatMessageResponseDto> getChatHistory(Long roomId, Pageable pageable){

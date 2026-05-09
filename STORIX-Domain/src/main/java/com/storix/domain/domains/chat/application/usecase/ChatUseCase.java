@@ -7,5 +7,4 @@ import org.springframework.data.domain.Slice;
 
 public interface ChatUseCase {
     void sendMessage(Long userId, ChatMessageRequestDto request);
-    Slice<ChatMessageResponseDto> getChatHistory(Long roomId, Pageable pageable);
-}
+ }
