@@ -16,7 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -60,12 +62,26 @@ public class TopicRoomAdaptor {
         return result;
     }
 
+    public Set<Long> loadJoinedRoomIds(Long userId, List<Long> roomIds) {
+
+        // 빈 리스트일 경우 -> 빈 Set 반환
+        if (roomIds == null || roomIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return topicRoomUserRepository.findJoinedRoomIdsByUserIdAndRoomIds(userId, roomIds);
+    }
+
     public Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable) {
         return topicRoomRepository.findBySearchCondition(worksIds, keyword, pageable);
     }
 
     public long countJoinedRooms(Long userId) {
         return topicRoomUserRepository.countByUserId(userId);
+    }
+
+    public List<TopicRoom> loadTop5PopularRooms() {
+        return topicRoomRepository.findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();
     }
 
     public TopicRoom saveRoom(TopicRoom room) {

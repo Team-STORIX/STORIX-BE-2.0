@@ -51,6 +51,10 @@ public class TopicRoomUseCaseV2 {
         topicRoomService.reportUser(reporterId, roomId, request);
     }
 
+    public List<TopicRoomResponseDto> getPopularRooms(Long userId) {
+        return topicRoomService.getPopularRooms(userId);
+    }
+
     public void validate(String text) {
 
         for (String word : bannedWords) {

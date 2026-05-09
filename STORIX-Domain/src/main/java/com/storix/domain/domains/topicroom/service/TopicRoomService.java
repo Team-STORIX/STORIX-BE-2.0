@@ -97,20 +97,21 @@ public class TopicRoomService implements TopicRoomUseCase {
         return trendingRooms;
     }
 
-    @Override
+    @Transactional(readOnly = true)
     public List<TopicRoomResponseDto> getPopularRooms(Long userId) {
+
         // 1. 상위 5개 토픽룸 가져오기
-        List<TopicRoom> rooms = loadTopicRoomPort.loadTop5PopularRooms();
+        List<TopicRoom> rooms = topicRoomAdaptor.loadTop5PopularRooms();
         if (rooms.isEmpty()) return Collections.emptyList();
 
         List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
         List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
 
-        Map<Long, TopicRoomWorksInfo> worksMap = loadWorksPort.loadWorksMapByIds(worksIds);
+        Map<Long, TopicRoomWorksInfo> worksMap = worksAdapter.loadWorksMapByIds(worksIds);
 
         // 포트를 통해 Set<Long> 형태의 가입된 방 ID 목록 수신
         Set<Long> joinedRoomIds = (userId != null)
-                ? loadTopicRoomMemberPort.loadJoinedRoomIds(userId, roomIds)
+                ? topicRoomAdaptor.loadJoinedRoomIds(userId, roomIds)
                 : Collections.emptySet();
 
         return rooms.stream()

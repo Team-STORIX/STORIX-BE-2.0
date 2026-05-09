@@ -162,20 +162,6 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
         return worksRepository.findAllByIdWithHashtags(targetIds);
     }
 
-
-    @Override
-    public Map<Long, TopicRoomWorksInfo> loadWorksMapByIds(List<Long> worksIds) {
-
-        if (worksIds == null || worksIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        List<TopicRoomWorksInfo> infos = worksRepository.findSimpleInfoByIdIn(worksIds);
-
-        return infos.stream()
-                .collect(Collectors.toMap(TopicRoomWorksInfo::id, Function.identity()));
-    }
-
     @Override
     public List<Works> findWorksByIds(List<Long> worksIds) {
 

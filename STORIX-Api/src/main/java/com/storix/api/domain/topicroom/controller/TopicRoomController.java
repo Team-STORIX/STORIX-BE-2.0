@@ -128,8 +128,9 @@ public class TopicRoomController {
     public CustomResponse<List<TopicRoomResponseDto>> getPopularRooms(
             @AuthenticationPrincipal AuthUserDetails authUserDetails
     ) {
-        List<TopicRoomResponseDto> rooms = topicRoomUseCase.getPopularRooms(authUserDetails.getUserId());
-        return CustomResponse.onSuccess(SuccessCode.SUCCESS, rooms);
+        return CustomResponse.onSuccess(
+                SuccessCode.SUCCESS,
+                topicRoomUseCaseV2.getPopularRooms(authUserDetails.getUserId()));
     }
 
     // 9. 토픽룸 참여자 목록 조회

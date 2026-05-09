@@ -13,6 +13,4 @@ public interface TopicRoomUseCase {
     PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable);
 
-    List<TopicRoomResponseDto> getPopularRooms(Long userId);
-
 }
