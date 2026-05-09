@@ -1,6 +1,7 @@
 package com.storix.api.domain.topicroom.usecase;
 
 import com.storix.common.annotation.UseCase;
+import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
@@ -8,6 +9,8 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
 import com.storix.domain.domains.topicroom.exception.InvalidTitleException;
 import com.storix.domain.domains.topicroom.service.TopicRoomService;
+import com.storix.domain.domains.works.domain.Genre;
+import com.storix.domain.domains.works.domain.WorksType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -16,7 +19,7 @@ import java.util.List;
 
 @UseCase
 @RequiredArgsConstructor
-public class TopicRoomUseCaseV2 {
+public class TopicRoomUseCase {
 
     // TODO: 리스트 확정 시 별도로 분리 예정
     private final List<String> bannedWords = List.of("비속어", "욕설", "정치");
@@ -58,6 +61,12 @@ public class TopicRoomUseCaseV2 {
 
     public List<TopicRoomUserResponseDto> getRoomMembers(Long roomId) {
         return topicRoomService.getRoomMembers(roomId);
+    }
+
+    public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
+            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable
+    ) {
+        return topicRoomService.searchRoomsWithFilters(userId,  keyword, worksTypes,  genres, pageable);
     }
 
     public void validate(String text) {

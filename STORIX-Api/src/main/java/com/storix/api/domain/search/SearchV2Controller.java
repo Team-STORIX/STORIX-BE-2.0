@@ -1,10 +1,10 @@
 package com.storix.api.domain.search;
 
+import com.storix.api.domain.topicroom.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.search.application.SearchUseCase;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
-import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomSortType;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;

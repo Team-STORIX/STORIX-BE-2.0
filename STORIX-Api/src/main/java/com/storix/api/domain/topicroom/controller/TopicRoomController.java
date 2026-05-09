@@ -1,6 +1,6 @@
 package com.storix.api.domain.topicroom.controller;
 
-import com.storix.api.domain.topicroom.usecase.TopicRoomUseCaseV2;
+import com.storix.api.domain.topicroom.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
@@ -29,7 +29,7 @@ import java.util.List;
 @Tag(name = "토픽룸", description = "토픽룸 REST API")
 public class TopicRoomController {
 
-    private final TopicRoomUseCaseV2 topicRoomUseCaseV2;
+    private final TopicRoomUseCase topicRoomUseCase;
 
     // 1. 참여 목록
     @GetMapping("/me")
@@ -40,7 +40,7 @@ public class TopicRoomController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCaseV2.getMyJoinedRooms(authUser.getUserId(), pageable));
+                topicRoomUseCase.getMyJoinedRooms(authUser.getUserId(), pageable));
     }
 
     // 2. 오늘의 토픽룸
@@ -52,7 +52,7 @@ public class TopicRoomController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCaseV2.getTodayTopicRooms(authUser.getUserId())
+                topicRoomUseCase.getTodayTopicRooms(authUser.getUserId())
         );
     }
 
@@ -66,7 +66,7 @@ public class TopicRoomController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCaseV2.searchRooms(keyword, authUser.getUserId(), pageable));
+                topicRoomUseCase.searchRooms(keyword, authUser.getUserId(), pageable));
     }
 
     // 4. 생성
@@ -78,7 +78,7 @@ public class TopicRoomController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCaseV2.createRoom(authUser.getUserId(), request));
+                topicRoomUseCase.createRoom(authUser.getUserId(), request));
     }
 
     // 5. 입장
@@ -88,7 +88,7 @@ public class TopicRoomController {
             @AuthenticationPrincipal AuthUserDetails authUser,
             @PathVariable Long roomId) {
 
-        topicRoomUseCaseV2.joinRoom(authUser.getUserId(), roomId);
+        topicRoomUseCase.joinRoom(authUser.getUserId(), roomId);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS);
     }
@@ -100,7 +100,7 @@ public class TopicRoomController {
             @AuthenticationPrincipal AuthUserDetails authUser,
             @PathVariable Long roomId) {
 
-        topicRoomUseCaseV2.leaveRoom(authUser.getUserId(), roomId);
+        topicRoomUseCase.leaveRoom(authUser.getUserId(), roomId);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS);
     }
@@ -113,7 +113,7 @@ public class TopicRoomController {
             @PathVariable Long roomId,
             @Valid @RequestBody TopicRoomReportRequestDto request) {
 
-        topicRoomUseCaseV2.reportUser(authUser.getUserId(), roomId, request);
+        topicRoomUseCase.reportUser(authUser.getUserId(), roomId, request);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS);
     }
@@ -126,7 +126,7 @@ public class TopicRoomController {
     ) {
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCaseV2.getPopularRooms(authUserDetails.getUserId()));
+                topicRoomUseCase.getPopularRooms(authUserDetails.getUserId()));
     }
 
     // 9. 토픽룸 참여자 목록 조회
@@ -135,6 +135,6 @@ public class TopicRoomController {
     public CustomResponse<List<TopicRoomUserResponseDto>> getRoomMembers(@PathVariable Long roomId) {
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCaseV2.getRoomMembers(roomId));
+                topicRoomUseCase.getRoomMembers(roomId));
     }
 }

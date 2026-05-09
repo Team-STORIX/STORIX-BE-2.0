@@ -1,6 +1,8 @@
 package com.storix.domain.domains.works.adaptor;
 
+import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.exception.UnknownWorksException;
 import com.storix.domain.domains.works.repository.WorksRepository;
@@ -39,5 +41,10 @@ public class WorksAdaptor {
 
     public List<Long> findAllIdsByKeyword(String keyword) {
         return worksRepository.findAllIdsByKeyword(keyword);
+    }
+
+    // 토픽룸 도메인 용 (키워드 + 필터로 작품 ID 리스트 조회)
+    public List<Long> findAllIdsByKeywordWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres) {
+        return worksRepository.searchIdsWithFilters(keyword, worksTypes, genres);
     }
 }

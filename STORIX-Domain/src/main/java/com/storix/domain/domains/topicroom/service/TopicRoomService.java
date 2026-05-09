@@ -5,8 +5,6 @@ import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
 import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
-import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
@@ -20,7 +18,6 @@ import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -37,15 +34,12 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Slf4j
-public class TopicRoomService implements TopicRoomUseCase {
+public class TopicRoomService  {
 
-    private final LoadTopicRoomPort loadTopicRoomPort;
-    private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
     private final TopicRoomAdaptor topicRoomAdaptor;
-    private final WorksAdaptor worksAdapter;
+    private final WorksAdaptor worksAdaptor;
     private final UserAdaptor userAdaptor;
 
     @Transactional(readOnly = true)
@@ -60,7 +54,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .toList();
 
         // works 정보를 한 번에 조회하여 Map으로 변환
-        Map<Long, TopicRoomWorksInfo> worksMap = worksAdapter.loadWorksMapByIds(worksIds);
+        Map<Long, TopicRoomWorksInfo> worksMap = worksAdaptor.loadWorksMapByIds(worksIds);
 
         return participations.map(participation -> {
             TopicRoom room = participation.getTopicRoom();
@@ -104,7 +98,7 @@ public class TopicRoomService implements TopicRoomUseCase {
         List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
         List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
 
-        Map<Long, TopicRoomWorksInfo> worksMap = worksAdapter.loadWorksMapByIds(worksIds);
+        Map<Long, TopicRoomWorksInfo> worksMap = worksAdaptor.loadWorksMapByIds(worksIds);
 
         // 포트를 통해 Set<Long> 형태의 가입된 방 ID 목록 수신
         Set<Long> joinedRoomIds = (userId != null)
@@ -124,7 +118,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     @Transactional(readOnly = true)
     public SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable) {
 
-        List<Long> worksIds = worksAdapter.findAllIdsByKeyword(keyword);
+        List<Long> worksIds = worksAdaptor.findAllIdsByKeyword(keyword);
 
         Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(worksIds, keyword, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
@@ -146,14 +140,13 @@ public class TopicRoomService implements TopicRoomUseCase {
     }
 
     // 토픽룸 다중 필터 검색
-    @Override
     @Transactional
     public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable
     ) {
-        List<Long> worksIds = loadWorksPort.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
+        List<Long> worksIds = worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
 
-        Slice<TopicRoomResponseDto> rooms = loadTopicRoomPort.searchWithFilters(worksIds, pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         return PlusSearchResponseWrapperDto.<TopicRoomResponseDto>builder()
@@ -165,7 +158,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     public Long createRoom(Long userId, TopicRoomCreateRequestDto request) {
 
         User user = userAdaptor.findUserById(userId);
-        Works works = worksAdapter.findById(request.getWorksId());
+        Works works = worksAdaptor.findById(request.getWorksId());
 
         // 이미 해당 작품의 토픽룸이 존재하는지 확인
         if (topicRoomAdaptor.existsByWorksId(works.getId())) {
@@ -197,7 +190,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     public void joinRoom(Long userId, Long roomId) {
         User user = userAdaptor.findUserById(userId);
         TopicRoom room = topicRoomAdaptor.findById(roomId);
-        Works works = worksAdapter.findById(room.getWorksId());
+        Works works = worksAdaptor.findById(room.getWorksId());
 
         if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
             throw UnverifiedException.EXCEPTION;
@@ -279,7 +272,6 @@ public class TopicRoomService implements TopicRoomUseCase {
                 ))
                 .toList();
     }
-
 
     // 참여 여부 마킹 로직 공통화
     private void applyMembershipStatus(List<TopicRoomResponseDto> rooms, Long userId) {

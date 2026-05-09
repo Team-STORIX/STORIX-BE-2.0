@@ -7,8 +7,6 @@ import java.util.List;
 
 public interface LoadTopicRoomPort {
 
-    Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable);
-
     boolean existsByWorksId(Long worksId);
 
     boolean existsById(Long roomId);

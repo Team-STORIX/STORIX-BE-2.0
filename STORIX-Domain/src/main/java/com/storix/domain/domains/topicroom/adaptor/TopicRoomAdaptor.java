@@ -1,5 +1,6 @@
 package com.storix.domain.domains.topicroom.adaptor;
 
+import com.storix.domain.domains.search.exception.SearchNoTopicRoomFoundException;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
@@ -75,6 +76,18 @@ public class TopicRoomAdaptor {
         }
 
         return topicRoomUserRepository.findJoinedRoomIdsByUserIdAndRoomIds(userId, roomIds);
+    }
+
+    public Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable) {
+        if (worksIds.isEmpty()) {
+            throw SearchNoTopicRoomFoundException.EXCEPTION;
+        }
+
+        Slice<TopicRoomResponseDto> result = topicRoomRepository.findBySearchWithFilters(worksIds, pageable);
+        if (result.isEmpty()) {
+            throw SearchNoTopicRoomFoundException.EXCEPTION;
+        }
+        return result;
     }
 
     public List<Long> findAllJoinedRoomIdsByUserId(Long userId) {
