@@ -56,10 +56,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
         return topicRoomUserRepository.countByUserId(userId);
     }
 
-    @Override public TopicRoom saveRoom(TopicRoom room) {
-        return topicRoomRepository.save(room);
-    }
-
     @Override
     public void saveParticipation(Long userId, TopicRoom room, TopicRoomRole role) {
         topicRoomUserRepository.save(new TopicRoomUser(room, userId, role));

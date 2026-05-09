@@ -90,11 +90,8 @@ public class UserAdaptor {
     }
 
     public User findUserById(Long userId) {
-        Optional<User> user = userRepository.findById(userId);
-        if (user.isEmpty()) {
-            throw UnknownUserException.EXCEPTION;
-        }
-        return user.get();
+        return userRepository.findById(userId)
+                .orElseThrow(() -> UnknownUserException.EXCEPTION);
     }
 
     public Map<Long, StandardProfileInfo> findStandardProfileInfoByUserIds(List<Long> userIds) {

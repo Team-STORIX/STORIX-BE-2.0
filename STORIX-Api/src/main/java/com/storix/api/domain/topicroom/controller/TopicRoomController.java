@@ -82,7 +82,7 @@ public class TopicRoomController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUseCase.createRoom(authUser.getUserId(), request));
+                topicRoomUseCaseV2.createRoom(authUser.getUserId(), request));
     }
 
     // 5. 입장

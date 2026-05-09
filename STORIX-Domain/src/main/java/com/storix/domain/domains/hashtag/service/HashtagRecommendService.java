@@ -2,6 +2,7 @@ package com.storix.domain.domains.hashtag.service;
 
 import com.storix.domain.domains.hashtag.application.port.LoadHashtagPort;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.domain.Genre;

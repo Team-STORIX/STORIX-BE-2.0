@@ -1,6 +1,8 @@
 package com.storix.domain.domains.works.adaptor;
 
+import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
+import com.storix.domain.domains.works.exception.UnknownWorksException;
 import com.storix.domain.domains.works.repository.WorksRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,11 @@ import java.util.stream.Collectors;
 public class WorksAdaptor {
 
     private final WorksRepository worksRepository;
+
+    public Works findById(Long worksId) {
+        return worksRepository.findById(worksId)
+                .orElseThrow(() -> UnknownWorksException.EXCEPTION);
+    }
 
     // 작품 ID 리스트로 작품 정보 맵 로드
     public Map<Long, TopicRoomWorksInfo> loadWorksMapByIds(List<Long> worksIds) {

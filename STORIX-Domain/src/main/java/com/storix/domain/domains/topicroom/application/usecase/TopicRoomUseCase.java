@@ -19,8 +19,6 @@ public interface TopicRoomUseCase {
     PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable);
 
-    Long createRoom(Long userId, TopicRoomCreateRequestDto request);
-
     void joinRoom(Long userId, Long roomId);
 
     void leaveRoom(Long userId, Long roomId);

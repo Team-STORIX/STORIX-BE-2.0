@@ -17,6 +17,7 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
@@ -49,10 +50,10 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final LoadUserPort loadUserPort;
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
-    private final ProfanityFilterService profanityFilterService;
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdapter;
+    private final UserAdaptor userAdaptor;
 
     @Transactional(readOnly = true)
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -166,17 +167,14 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .build();
     }
 
-    @Override
     @Transactional
     public Long createRoom(Long userId, TopicRoomCreateRequestDto request) {
 
-        profanityFilterService.validate(request.getTopicRoomName());
-
-        User user = loadUserPort.findById(userId);
-        Works works = loadWorksPort.findById(request.getWorksId());
+        User user = userAdaptor.findUserById(userId);
+        Works works = worksAdapter.findById(request.getWorksId());
 
         // 이미 해당 작품의 토픽룸이 존재하는지 확인
-        if (loadTopicRoomPort.existsByWorksId(works.getId())) {
+        if (topicRoomAdaptor.existsByWorksId(works.getId())) {
             throw TopicRoomAlreadyExistsException.EXCEPTION;
         }
 
@@ -189,9 +187,9 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .build();
 
         try {
-            TopicRoom savedRoom = recordTopicRoomPort.saveRoom(room);
-            recordTopicRoomPort.saveParticipation(user.getId(), savedRoom, TopicRoomRole.HOST);
-            recordTopicRoomPort.incrementActiveUserNumber(savedRoom.getId());
+            TopicRoom savedRoom = topicRoomAdaptor.saveRoom(room);
+            topicRoomAdaptor.saveParticipation(user.getId(), savedRoom, TopicRoomRole.HOST);
+            topicRoomAdaptor.incrementActiveUserNumber(savedRoom.getId());
 
             return savedRoom.getId();
         } catch (DataIntegrityViolationException e) {

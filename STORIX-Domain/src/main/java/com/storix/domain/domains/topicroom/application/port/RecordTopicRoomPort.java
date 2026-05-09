@@ -8,8 +8,6 @@ import java.time.LocalDateTime;
 
 public interface RecordTopicRoomPort {
 
-    TopicRoom saveRoom(TopicRoom room);
-
     void saveParticipation(Long userId, TopicRoom room, TopicRoomRole role);
 
     int deleteParticipation(Long userId, Long roomId);

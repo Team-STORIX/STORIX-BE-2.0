@@ -2,6 +2,7 @@ package com.storix.domain.domains.topicroom.adaptor;
 
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
+import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.TodayTopicRoomNotFoundException;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
@@ -22,10 +23,15 @@ public class TopicRoomAdaptor {
     private final TopicRoomRepository topicRoomRepository;
     private final TopicRoomUserRepository topicRoomUserRepository;
 
-    // 토픽룸 존재 여부 검증
+    // 토픽룸 반환
     public TopicRoom findById(Long roomId) {
         return topicRoomRepository.findById(roomId)
                 .orElseThrow(() -> UnknownTopicRoomException.EXCEPTION);
+    }
+
+    // 토픽룸 존재 여부 검증
+    public boolean existsByWorksId(Long worksId) {
+        return topicRoomRepository.existsByWorksId(worksId);
     }
 
     // 토픽룸 참여 정보 조회
@@ -56,6 +62,16 @@ public class TopicRoomAdaptor {
     }
 
 
+    public TopicRoom saveRoom(TopicRoom room) {
+        return topicRoomRepository.save(room);
+    }
 
+    public void saveParticipation(Long userId, TopicRoom room, TopicRoomRole role) {
+        topicRoomUserRepository.save(new TopicRoomUser(room, userId, role));
+    }
+
+    public void incrementActiveUserNumber(Long roomId) {
+        topicRoomRepository.incrementActiveUserNumber(roomId);
+    }
 
 }
