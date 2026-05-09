@@ -3,6 +3,7 @@ package com.storix.api.domain.topicroom.usecase;
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
+import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.InvalidTitleException;
 import com.storix.domain.domains.topicroom.service.TopicRoomService;
@@ -44,6 +45,10 @@ public class TopicRoomUseCaseV2 {
 
     public void leaveRoom(Long userId, Long roomId) {
         topicRoomService.leaveRoom(userId, roomId);
+    }
+
+    public void reportUser(Long reporterId, Long roomId, TopicRoomReportRequestDto request) {
+        topicRoomService.reportUser(reporterId, roomId, request);
     }
 
     public void validate(String text) {

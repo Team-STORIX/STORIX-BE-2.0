@@ -117,7 +117,7 @@ public class TopicRoomController {
             @PathVariable Long roomId,
             @Valid @RequestBody TopicRoomReportRequestDto request) {
 
-        topicRoomUseCase.reportUser(authUser.getUserId(), roomId, request);
+        topicRoomUseCaseV2.reportUser(authUser.getUserId(), roomId, request);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS);
     }

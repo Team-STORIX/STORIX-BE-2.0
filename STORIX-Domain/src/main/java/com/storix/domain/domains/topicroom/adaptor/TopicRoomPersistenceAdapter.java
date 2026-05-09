@@ -3,19 +3,11 @@ package com.storix.domain.domains.topicroom.adaptor;
 import com.storix.domain.domains.search.exception.SearchNoTopicRoomFoundException;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
-import com.storix.domain.domains.topicroom.application.port.RecordTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.UpdateTopicRoomPort;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
-import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
-import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
-import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
-import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
-import com.storix.domain.domains.topicroom.exception.TodayTopicRoomNotFoundException;
-import org.springframework.cache.annotation.Cacheable;
-import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -28,17 +20,10 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTopicRoomPort, UpdateTopicRoomPort, LoadTopicRoomUserPort {
+public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, UpdateTopicRoomPort, LoadTopicRoomUserPort {
 
     private final TopicRoomRepository topicRoomRepository;
     private final TopicRoomUserRepository topicRoomUserRepository;
-    private final TopicRoomReportRepository topicRoomReportRepository;
-
-    @Override public TopicRoom findById(Long roomId) {
-
-        return topicRoomRepository.findById(roomId)
-                .orElseThrow(() -> UnknownTopicRoomException.EXCEPTION);
-    }
 
     @Override public Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable) {
         if (worksIds.isEmpty()) {
@@ -50,10 +35,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
             throw SearchNoTopicRoomFoundException.EXCEPTION;
         }
         return result;
-    }
-
-    @Override public void saveReport(TopicRoomReport report) {
-        topicRoomReportRepository.save(report);
     }
 
     @Override

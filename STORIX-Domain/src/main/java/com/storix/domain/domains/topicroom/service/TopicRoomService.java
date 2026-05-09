@@ -7,7 +7,6 @@ import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
-import com.storix.domain.domains.topicroom.application.port.RecordTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
@@ -18,7 +17,6 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
@@ -46,7 +44,6 @@ import java.util.Set;
 public class TopicRoomService implements TopicRoomUseCase {
 
     private final LoadTopicRoomPort loadTopicRoomPort;
-    private final RecordTopicRoomPort recordTopicRoomPort;
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
@@ -240,7 +237,6 @@ public class TopicRoomService implements TopicRoomUseCase {
         }
     }
 
-    @Override
     @Transactional
     public void reportUser(Long reporterId, Long roomId, TopicRoomReportRequestDto request) {
 
@@ -255,7 +251,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .reason(request.getReason())
                 .otherReason(request.getOtherReason())
                 .build();
-        recordTopicRoomPort.saveReport(report);
+        topicRoomAdaptor.saveReport(report);
     }
 
 

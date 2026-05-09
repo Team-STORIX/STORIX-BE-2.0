@@ -1,14 +1,11 @@
 package com.storix.domain.domains.topicroom.application.port;
 
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
-import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import org.springframework.data.domain.*;
 import java.util.List;
 
 public interface LoadTopicRoomPort {
-
-    TopicRoom findById(Long roomId);
 
     Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable);
 

@@ -1,11 +1,13 @@
 package com.storix.domain.domains.topicroom.adaptor;
 
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.TodayTopicRoomNotFoundException;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
+import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class TopicRoomAdaptor {
 
     private final TopicRoomRepository topicRoomRepository;
     private final TopicRoomUserRepository topicRoomUserRepository;
+    private final TopicRoomReportRepository topicRoomReportRepository;
 
     // 토픽룸 반환
     public TopicRoom findById(Long roomId) {
@@ -87,5 +90,8 @@ public class TopicRoomAdaptor {
 
     public void deleteRoom(Long roomId) {
         topicRoomRepository.deleteById(roomId);
+    }
+    public void saveReport(TopicRoomReport report) {
+        topicRoomReportRepository.save(report);
     }
 }
