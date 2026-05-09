@@ -7,7 +7,4 @@ public interface LoadTopicRoomUserPort {
 
     // 특정 유저가 특정 방에 참여 중인지 확인
     boolean existsByUserIdAndRoomId(Long userId, Long roomId);
-
-    // 유저 프로필 조회용
-    List<Long> loadMemberIdsByRoomId(Long roomId);
 }

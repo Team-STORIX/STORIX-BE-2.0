@@ -2,12 +2,10 @@ package com.storix.api.domain.topicroom.controller;
 
 import com.storix.api.domain.topicroom.usecase.TopicRoomUseCaseV2;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
-import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
-import com.storix.domain.domains.topicroom.service.TopicRoomUserService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
@@ -31,8 +29,6 @@ import java.util.List;
 @Tag(name = "토픽룸", description = "토픽룸 REST API")
 public class TopicRoomController {
 
-    private final TopicRoomUseCase topicRoomUseCase;
-    private final TopicRoomUserService topicRoomUserService;
     private final TopicRoomUseCaseV2 topicRoomUseCaseV2;
 
     // 1. 참여 목록
@@ -139,6 +135,6 @@ public class TopicRoomController {
     public CustomResponse<List<TopicRoomUserResponseDto>> getRoomMembers(@PathVariable Long roomId) {
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUserService.getRoomMembers(roomId));
+                topicRoomUseCaseV2.getRoomMembers(roomId));
     }
 }

@@ -35,6 +35,11 @@ public class TopicRoomAdaptor {
     }
 
     // 토픽룸 존재 여부 검증
+    public boolean existsById(Long roomId) {
+        return topicRoomRepository.existsById(roomId);
+    }
+
+    // 작품 기반 토픽룸 존재 여부 검증
     public boolean existsByWorksId(Long worksId) {
         return topicRoomRepository.existsByWorksId(worksId);
     }
@@ -72,6 +77,10 @@ public class TopicRoomAdaptor {
         return topicRoomUserRepository.findJoinedRoomIdsByUserIdAndRoomIds(userId, roomIds);
     }
 
+    public List<Long> findAllJoinedRoomIdsByUserId(Long userId) {
+        return topicRoomUserRepository.findAllJoinedRoomIdsByUserId(userId);
+    }
+
     public Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable) {
         return topicRoomRepository.findBySearchCondition(worksIds, keyword, pageable);
     }
@@ -82,6 +91,10 @@ public class TopicRoomAdaptor {
 
     public List<TopicRoom> loadTop5PopularRooms() {
         return topicRoomRepository.findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();
+    }
+
+    public List<Long> loadMemberIdsByRoomId(Long roomId) {
+        return topicRoomUserRepository.findMemberIdsByRoomId(roomId);
     }
 
     public TopicRoom saveRoom(TopicRoom room) {

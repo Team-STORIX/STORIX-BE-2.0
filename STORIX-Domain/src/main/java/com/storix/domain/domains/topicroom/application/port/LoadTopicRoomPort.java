@@ -9,8 +9,6 @@ public interface LoadTopicRoomPort {
 
     Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable);
 
-    List<Long> findAllJoinedRoomIdsByUserId(Long userId);
-
     boolean existsByWorksId(Long worksId);
 
     boolean existsById(Long roomId);

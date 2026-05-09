@@ -5,6 +5,7 @@ import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
+import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
 import com.storix.domain.domains.topicroom.exception.InvalidTitleException;
 import com.storix.domain.domains.topicroom.service.TopicRoomService;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,10 @@ public class TopicRoomUseCaseV2 {
 
     public List<TopicRoomResponseDto> getPopularRooms(Long userId) {
         return topicRoomService.getPopularRooms(userId);
+    }
+
+    public List<TopicRoomUserResponseDto> getRoomMembers(Long roomId) {
+        return topicRoomService.getRoomMembers(roomId);
     }
 
     public void validate(String text) {

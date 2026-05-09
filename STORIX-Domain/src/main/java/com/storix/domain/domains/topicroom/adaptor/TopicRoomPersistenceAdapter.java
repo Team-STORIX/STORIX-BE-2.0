@@ -41,11 +41,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, UpdateTop
     }
 
     @Override
-    public List<Long> findAllJoinedRoomIdsByUserId(Long userId) {
-        return topicRoomUserRepository.findAllJoinedRoomIdsByUserId(userId);
-    }
-
-    @Override
     public boolean existsByWorksId(Long worksId) {
         return topicRoomRepository.existsByWorksId(worksId);
     }
@@ -58,11 +53,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, UpdateTop
     @Override
     public boolean existsByUserIdAndRoomId(Long userId, Long roomId) {
         return topicRoomUserRepository.existsByUserIdAndTopicRoomId(userId, roomId);
-    }
-
-    @Override
-    public List<Long> loadMemberIdsByRoomId(Long roomId) {
-        return topicRoomUserRepository.findMemberIdsByRoomId(roomId);
     }
 
     @Override

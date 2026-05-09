@@ -5,7 +5,6 @@ import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
 import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
@@ -15,9 +14,11 @@ import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
+import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
@@ -32,10 +33,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +44,6 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final LoadTopicRoomPort loadTopicRoomPort;
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
-    private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdapter;
     private final UserAdaptor userAdaptor;
@@ -255,11 +252,39 @@ public class TopicRoomService implements TopicRoomUseCase {
         topicRoomAdaptor.saveReport(report);
     }
 
+    // 특정 토픽룸에 참여 중인 멤버들의 프로필 목록 조회
+    @Transactional(readOnly = true)
+    public List<TopicRoomUserResponseDto> getRoomMembers(Long roomId) {
+
+        if  (!topicRoomAdaptor.existsById(roomId)) {
+            throw UnknownTopicRoomException.EXCEPTION;
+        }
+
+        // 참여자 ID 목록 조회
+        List<Long> memberIds = topicRoomAdaptor.loadMemberIdsByRoomId(roomId);
+
+        if (memberIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, StandardProfileInfo> profileMap = userAdaptor.findStandardProfileInfoByUserIds(memberIds);
+
+        return memberIds.stream()
+                .map(profileMap::get)
+                .filter(Objects::nonNull)
+                .map(info -> new TopicRoomUserResponseDto(
+                        info.userId(),
+                        info.nickName(),
+                        info.profileImageUrl() // S3 BaseUrl이 적용된 URL
+                ))
+                .toList();
+    }
+
 
     // 참여 여부 마킹 로직 공통화
     private void applyMembershipStatus(List<TopicRoomResponseDto> rooms, Long userId) {
         if (userId != null && !rooms.isEmpty()) {
-            List<Long> joinedRoomIds = loadTopicRoomPort.findAllJoinedRoomIdsByUserId(userId);
+            List<Long> joinedRoomIds = topicRoomAdaptor.findAllJoinedRoomIdsByUserId(userId);
             rooms.forEach(dto -> {
                 if (joinedRoomIds.contains(dto.getTopicRoomId())) {
                     dto.markAsJoined(true);
