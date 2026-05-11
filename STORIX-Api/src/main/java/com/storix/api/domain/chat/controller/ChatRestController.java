@@ -1,11 +1,9 @@
 package com.storix.api.domain.chat.controller;
 
 import com.storix.api.domain.chat.usecase.ChatRestUseCase;
-import com.storix.domain.domains.chat.application.usecase.ChatUseCase;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
-import com.storix.domain.domains.chat.repository.ChatRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

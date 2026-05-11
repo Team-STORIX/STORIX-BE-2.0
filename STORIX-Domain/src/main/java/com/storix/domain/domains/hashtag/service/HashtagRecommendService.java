@@ -20,6 +20,7 @@ public class HashtagRecommendService {
 
     private final LoadUserPort loadUserPort;
     private final LoadHashtagPort loadHashtagPort;
+    private final UserAdaptor userAdaptor;
 
     private static final int RECOMMENDATION_LIMIT = 10; // 추천 개수 제한
 
@@ -30,7 +31,7 @@ public class HashtagRecommendService {
         }
 
         // 2. 로그인 유저 정보 로드
-        User user = loadUserPort.findById(userId);
+        User user = userAdaptor.findUserById(userId);
         Set<Genre> favoriteGenres = user.getFavoriteGenreList();
 
         // 3. 선호 장르가 설정되지 않은 유저 -> 전체 인기 태그 추천

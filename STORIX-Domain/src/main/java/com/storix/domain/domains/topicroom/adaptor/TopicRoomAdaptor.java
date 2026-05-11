@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -66,6 +67,14 @@ public class TopicRoomAdaptor {
         }
 
         return result;
+    }
+
+    public boolean existsByUserIdAndRoomId(Long userId, Long roomId) {
+        return topicRoomUserRepository.existsByUserIdAndTopicRoomId(userId, roomId);
+    }
+
+    public void updateLastChatTime(Long roomId, LocalDateTime lastChatTime) {
+        topicRoomRepository.updateLastChatTime(roomId, lastChatTime);
     }
 
     public Set<Long> loadJoinedRoomIds(Long userId, List<Long> roomIds) {

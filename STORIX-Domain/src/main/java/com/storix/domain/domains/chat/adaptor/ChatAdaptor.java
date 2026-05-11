@@ -17,4 +17,8 @@ public class ChatAdaptor {
     public Slice<ChatMessageResponseDto> loadMessages(Long roomId, Pageable pageable) {
         return chatRepository.findAllByRoomIdOrderByCreatedAtDesc(roomId, pageable);
     }
+
+    public ChatMessage saveMessage(ChatMessage message) {
+        return chatRepository.save(message);
+    }
 }

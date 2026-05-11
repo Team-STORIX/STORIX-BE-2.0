@@ -1,11 +1,9 @@
 package com.storix.domain.domains.topicroom.adaptor;
 
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.UpdateTopicRoomPort;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
-import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,29 +12,13 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, UpdateTopicRoomPort, LoadTopicRoomUserPort {
+public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, UpdateTopicRoomPort {
 
     private final TopicRoomRepository topicRoomRepository;
-    private final TopicRoomUserRepository topicRoomUserRepository;
-
-    @Override
-    public void updateLastChatTime(Long roomId, LocalDateTime lastChatTime) {
-        topicRoomRepository.updateLastChatTime(roomId, lastChatTime);
-    }
 
     @Override
     public boolean existsByWorksId(Long worksId) {
         return topicRoomRepository.existsByWorksId(worksId);
-    }
-
-    @Override
-    public boolean existsById(Long roomId) {
-        return topicRoomRepository.existsById(roomId);
-    }
-
-    @Override
-    public boolean existsByUserIdAndRoomId(Long userId, Long roomId) {
-        return topicRoomUserRepository.existsByUserIdAndTopicRoomId(userId, roomId);
     }
 
     @Override

@@ -30,6 +30,10 @@ public class TopicRoomUseCase {
     }
 
     public List<TopicRoomResponseDto> getTodayTopicRooms(Long userId) {
+
+        List<TopicRoomResponseDto> trendingRooms = new java.util.ArrayList<>();
+
+
         return topicRoomService.getTodayTopicRooms(userId);
     }
 

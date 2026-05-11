@@ -1,6 +1,6 @@
 package com.storix.api.domain.chat.controller;
 
-import com.storix.domain.domains.chat.application.usecase.ChatUseCase;
+import com.storix.api.domain.chat.usecase.ChatUseCase;
 import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import lombok.RequiredArgsConstructor;

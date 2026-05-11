@@ -159,6 +159,21 @@ public class TopicRoomService  {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public void validateRoomMember(Long userId, Long roomId) {
+
+        // 토픽룸 존재 여부 검증
+        if (!topicRoomAdaptor.existsById(roomId)) {
+            throw UnknownTopicRoomException.EXCEPTION;
+        }
+
+        // 해당 토픽룸에 참여 중인 유저인지 검증
+        if (!topicRoomAdaptor.existsByUserIdAndRoomId(userId, roomId)){
+            throw UnknownTopicRoomUserException.EXCEPTION;
+        }
+
+    }
+
     @Transactional
     public Long createRoom(Long userId, TopicRoomCreateRequestDto request) {
 

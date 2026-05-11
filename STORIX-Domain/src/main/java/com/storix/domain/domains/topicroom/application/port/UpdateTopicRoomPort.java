@@ -7,8 +7,6 @@ import java.util.List;
 
 public interface UpdateTopicRoomPort {
 
-    void updateLastChatTime(Long roomId, LocalDateTime lastChatTime);
-
     // 여러 방의 인기도 점수 일괄 업데이트
     void updatePopularity(List<TopicRoom> rooms);
 
