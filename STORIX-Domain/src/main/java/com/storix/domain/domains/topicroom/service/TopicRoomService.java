@@ -1,5 +1,7 @@
 package com.storix.domain.domains.topicroom.service;
 
+import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
+import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
@@ -38,6 +40,7 @@ import java.util.*;
 public class TopicRoomService  {
 
     private final SearchHistoryService searchHistoryService;
+    private final GenreScorePublisher genreScorePublisher;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
     private final UserAdaptor userAdaptor;
@@ -198,6 +201,9 @@ public class TopicRoomService  {
             topicRoomAdaptor.saveParticipation(user.getId(), savedRoom, TopicRoomRole.HOST);
             topicRoomAdaptor.incrementActiveUserNumber(savedRoom.getId());
 
+            genreScorePublisher.publishWithGenre(
+                    user.getId(), works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
+
             return savedRoom.getId();
         } catch (DataIntegrityViolationException e) {
 
@@ -221,6 +227,9 @@ public class TopicRoomService  {
         try {
             topicRoomAdaptor.saveParticipation(userId, room, TopicRoomRole.MEMBER);
             topicRoomAdaptor.incrementActiveUserNumber(roomId);
+
+            genreScorePublisher.publishWithGenre(
+                    userId, works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
         } catch (DataIntegrityViolationException e) {
             throw AlreadyJoinedException.EXCEPTION;
         }
