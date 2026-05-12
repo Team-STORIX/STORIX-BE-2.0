@@ -47,9 +47,6 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
     @Query("UPDATE TopicRoom t SET t.lastChatTime = :lastChatTime WHERE t.id = :roomId")
     void updateLastChatTime(@Param("roomId") Long roomId, @Param("lastChatTime") LocalDateTime lastChatTime);
 
-    // 인기도 순으로 조회
-    List<TopicRoom> findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();
-
     boolean existsByWorksId(Long worksId);
 
     @Query("SELECT tr FROM TopicRoom tr WHERE tr.activeUserNumber > 1")

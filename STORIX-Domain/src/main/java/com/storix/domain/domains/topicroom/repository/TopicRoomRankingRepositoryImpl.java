@@ -137,4 +137,27 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
                 .limit(limit)
                 .fetch();
     }
+
+    @Override
+    public List<TopicRoomResponseDto> findTop5PopularRooms() {
+        return queryFactory
+                .select(Projections.constructor(TopicRoomResponseDto.class,
+                        topicRoom.id,
+                        topicRoom.topicRoomName,
+                        works.worksType,
+                        works.worksName,
+                        works.thumbnailUrl,
+                        topicRoom.activeUserNumber,
+                        topicRoom.lastChatTime,
+                        Expressions.constant(false)
+                ))
+                .from(topicRoom)
+                .join(works).on(topicRoom.worksId.eq(works.id))
+                .orderBy(
+                        topicRoom.popularityScore.desc(),
+                        topicRoom.lastChatTime.desc()
+                )
+                .limit(5)
+                .fetch();
+    }
 }

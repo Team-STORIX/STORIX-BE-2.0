@@ -111,8 +111,8 @@ public class TopicRoomAdaptor {
         return topicRoomUserRepository.countByUserId(userId);
     }
 
-    public List<TopicRoom> loadTop5PopularRooms() {
-        return topicRoomRepository.findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();
+    public List<TopicRoomResponseDto> findTop5PopularRooms() {
+        return topicRoomRepository.findTop5PopularRooms();
     }
 
     public List<Long> loadMemberIdsByRoomId(Long roomId) {

@@ -3,15 +3,20 @@ package com.storix.domain.domains.works.service;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.application.usecase.WorksUseCase;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksDetailResponseDto;
 import com.storix.domain.domains.topicroom.exception.UnverifiedException;
 import com.storix.domain.domains.user.exception.auth.LoginRequiredException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +27,8 @@ public class WorksService implements WorksUseCase {
     private final LoadTopicRoomPort loadTopicRoomPort;
 
     private final ReviewAdaptor reviewAdaptor;
+    private final WorksAdaptor worksAdaptor;
+
 
     @Override
     @Transactional(readOnly = true)
@@ -51,5 +58,19 @@ public class WorksService implements WorksUseCase {
         return WorksDetailResponseDto.from(works, reviewCount, hasTopicRoom);
     }
 
+    @Transactional(readOnly = true)
+    public Map<Long, TopicRoomWorksInfo> getWorksMapByIds(List<Long> worksIds){
+        return worksAdaptor.loadWorksMapByIds(worksIds);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Long> getIdsByKeyword(String keyword){
+        return worksAdaptor.findAllIdsByKeyword(keyword);
+    }
+
+    @Transactional(readOnly = true)
+    public Works findWorksById(Long worksId) {
+        return worksAdaptor.findById(worksId);
+    }
 
 }

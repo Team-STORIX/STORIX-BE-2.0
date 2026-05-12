@@ -18,4 +18,7 @@ public interface TopicRoomRankingRepository {
 
     // 신규 슬롯: 참여자 수 기준 상위 2개
     List<TopicRoomResponseDto> findNewUserRooms(List<Long> excludeIds, int limit);
+
+    // 인기도 순으로 조회
+    List<TopicRoomResponseDto> findTop5PopularRooms();
 }

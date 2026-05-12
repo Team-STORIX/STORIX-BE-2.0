@@ -3,15 +3,11 @@ package com.storix.domain.domains.topicroom.service;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
-import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
-import com.storix.domain.domains.search.dto.TrendingItem;
-import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
-import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
@@ -20,10 +16,10 @@ import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
+import com.storix.domain.domains.works.domain.AgeClassification;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
-import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -39,11 +35,13 @@ import java.util.*;
 @Slf4j
 public class TopicRoomService  {
 
-    private final SearchHistoryService searchHistoryService;
     private final GenreScorePublisher genreScorePublisher;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
     private final UserAdaptor userAdaptor;
+
+    // TODO: 리스트 확정 시 별도로 분리 예정
+    private final List<String> bannedWords = List.of("비속어", "욕설", "정치");
 
     @Transactional(readOnly = true)
     public TopicRoom findTopicRoomById(Long roomId) {
@@ -51,25 +49,8 @@ public class TopicRoomService  {
     }
 
     @Transactional(readOnly = true)
-    public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
-
-        // 참여 정보 조회
-        Slice<TopicRoomUser> participations = topicRoomAdaptor.findParticipationsByUserId(userId, pageable);
-
-        // 조회된 토픽룸의 worksId
-        List<Long> worksIds = participations.stream()
-                .map(p -> p.getTopicRoom().getWorksId())
-                .toList();
-
-        // works 정보를 한 번에 조회하여 Map으로 변환
-        Map<Long, TopicRoomWorksInfo> worksMap = worksAdaptor.loadWorksMapByIds(worksIds);
-
-        return participations.map(participation -> {
-            TopicRoom room = participation.getTopicRoom();
-            TopicRoomWorksInfo worksInfo = worksMap.get(room.getWorksId());
-
-            return TopicRoomResponseDto.from(room, worksInfo, true);
-        });
+    public Slice<TopicRoomUser> getParticipation(Long userId, Pageable pageable) {
+        return topicRoomAdaptor.findParticipationsByUserId(userId, pageable);
     }
 
     @Transactional(readOnly = true)
@@ -93,54 +74,18 @@ public class TopicRoomService  {
     }
 
     @Transactional(readOnly = true)
-    public List<TopicRoomResponseDto> getPopularRooms(Long userId) {
+    public List<TopicRoomResponseDto> getPopularRooms() {
 
-        // 1. 상위 5개 토픽룸 가져오기
-        List<TopicRoom> rooms = topicRoomAdaptor.loadTop5PopularRooms();
+        // 상위 5개 토픽룸 가져오기
+        List<TopicRoomResponseDto> rooms = topicRoomAdaptor.findTop5PopularRooms();
         if (rooms.isEmpty()) return Collections.emptyList();
 
-        List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
-        List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
-
-        Map<Long, TopicRoomWorksInfo> worksMap = worksAdaptor.loadWorksMapByIds(worksIds);
-
-        // 포트를 통해 Set<Long> 형태의 가입된 방 ID 목록 수신
-        Set<Long> joinedRoomIds = (userId != null)
-                ? topicRoomAdaptor.loadJoinedRoomIds(userId, roomIds)
-                : Collections.emptySet();
-
-        return rooms.stream()
-                .map(room -> {
-                    TopicRoomWorksInfo worksInfo = worksMap.get(room.getWorksId());
-                    boolean isJoined = joinedRoomIds.contains(room.getId());
-
-                    return TopicRoomResponseDto.from(room, worksInfo, isJoined);
-                })
-                .toList();
+        return rooms;
     }
 
     @Transactional(readOnly = true)
-    public SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable) {
-
-        List<Long> worksIds = worksAdaptor.findAllIdsByKeyword(keyword);
-
-        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(worksIds, keyword, pageable);
-        applyMembershipStatus(rooms.getContent(), userId);
-
-        String fallback = null;
-
-        if (rooms.isEmpty()) {
-            List<TrendingItem> trending = searchHistoryService.getTrendingKeywords();
-            if (!trending.isEmpty()) {
-                Collections.shuffle(trending);
-                fallback = trending.get(0).getKeyword();
-            }
-        }
-
-        return SearchResponseWrapperDto.<TopicRoomResponseDto>builder()
-                .result(rooms)
-                .fallbackRecommendation(fallback)
-                .build();
+    public Slice<TopicRoomResponseDto> searchRoomsByCondition(List<Long> worksIds, String keyword, Pageable pageable) {
+        return topicRoomAdaptor.searchBySearchCondition(worksIds, keyword, pageable);
     }
 
     // 토픽룸 다중 필터 검색
@@ -170,25 +115,46 @@ public class TopicRoomService  {
         if (!topicRoomAdaptor.existsByUserIdAndRoomId(userId, roomId)){
             throw UnknownTopicRoomUserException.EXCEPTION;
         }
+    }
 
+    public void checkInvalidity(User user, Works works, String roomName) {
+
+        // 유저 연령 제한 검증
+        checkAgeValidity(user, works.getAgeClassification());
+
+        // 이미 해당 작품의 토픽룸이 존재하는지 확인
+        checkTopicRoomExistence(works.getId());
+
+        // 금지어 필터링
+        checkProhibitedWord(works.getId(), roomName);
+    }
+
+    public void checkAgeValidity(User user, AgeClassification ageClassification) {
+        if (!user.getIsAdultVerified() && "18세 이용가".equals(ageClassification)) {
+            throw UnverifiedException.EXCEPTION;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public void checkTopicRoomExistence(Long worksId){
+        if (topicRoomAdaptor.existsByWorksId(worksId)) {
+            throw TopicRoomAlreadyExistsException.EXCEPTION;
+        }
+    }
+
+    public void checkProhibitedWord(Long worksId, String roomName) {
+        for (String word : bannedWords) {
+            if (roomName.contains(word)) {
+                throw InvalidTitleException.EXCEPTION;
+            }
+        }
     }
 
     @Transactional
-    public Long createRoom(Long userId, TopicRoomCreateRequestDto request) {
-
-        User user = userAdaptor.findUserById(userId);
-        Works works = worksAdaptor.findById(request.getWorksId());
-
-        // 이미 해당 작품의 토픽룸이 존재하는지 확인
-        if (topicRoomAdaptor.existsByWorksId(works.getId())) {
-            throw TopicRoomAlreadyExistsException.EXCEPTION;
-        }
-
-        if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
-            throw UnverifiedException.EXCEPTION;
+    public Long createRoom(User user, Works works, String topicRoomName) {
 
         TopicRoom room = TopicRoom.builder()
-                .topicRoomName(request.getTopicRoomName())
+                .topicRoomName(topicRoomName)
                 .worksId(works.getId())
                 .build();
 
@@ -202,30 +168,26 @@ public class TopicRoomService  {
 
             return savedRoom.getId();
         } catch (DataIntegrityViolationException e) {
-
             // uk constraints 위반 시 에러 던지도록
             throw TopicRoomAlreadyExistsException.EXCEPTION;
         }
     }
 
-    @Transactional
-    public void joinRoom(Long userId, Long roomId) {
-        User user = userAdaptor.findUserById(userId);
-        TopicRoom room = topicRoomAdaptor.findById(roomId);
-        Works works = worksAdaptor.findById(room.getWorksId());
-
-        if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
-            throw UnverifiedException.EXCEPTION;
-
-        if (topicRoomAdaptor.countJoinedRooms(userId) >= 9)
+    public void checkJoinLimit(Long userId) {
+        if (topicRoomAdaptor.countJoinedRooms(userId) >= 9) {
             throw MaxLimitException.EXCEPTION;
+        }
+    }
+
+    @Transactional
+    public void joinRoom(User user, TopicRoom room, Works works) {
 
         try {
-            topicRoomAdaptor.saveParticipation(userId, room, TopicRoomRole.MEMBER);
-            topicRoomAdaptor.incrementActiveUserNumber(roomId);
+            topicRoomAdaptor.saveParticipation(user.getId(), room, TopicRoomRole.MEMBER);
+            topicRoomAdaptor.incrementActiveUserNumber(room.getId());
 
             genreScorePublisher.publishWithGenre(
-                    userId, works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
+                    user.getId(), works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
         } catch (DataIntegrityViolationException e) {
             throw AlreadyJoinedException.EXCEPTION;
         }
@@ -256,10 +218,6 @@ public class TopicRoomService  {
     @Transactional
     public void reportUser(Long reporterId, Long roomId, TopicRoomReportRequestDto request) {
 
-        if (reporterId.equals(request.getReportedUserId())) {
-            throw SelfReportException.EXCEPTION;
-        }
-
         TopicRoomReport report = TopicRoomReport.builder()
                 .reporterId(reporterId)
                 .reportedUserId(request.getReportedUserId())
@@ -270,13 +228,17 @@ public class TopicRoomService  {
         topicRoomAdaptor.saveReport(report);
     }
 
-    // 특정 토픽룸에 참여 중인 멤버들의 프로필 목록 조회
+    // 토픽룸 존재 여부 검증
     @Transactional(readOnly = true)
-    public List<TopicRoomUserResponseDto> getRoomMembers(Long roomId) {
-
+    public void checkRoomExistence(Long roomId) {
         if  (!topicRoomAdaptor.existsById(roomId)) {
             throw UnknownTopicRoomException.EXCEPTION;
         }
+    }
+
+    // 특정 토픽룸에 참여 중인 멤버들의 프로필 목록 조회
+    @Transactional(readOnly = true)
+    public List<Long> getRoomMembers(Long roomId) {
 
         // 참여자 ID 목록 조회
         List<Long> memberIds = topicRoomAdaptor.loadMemberIdsByRoomId(roomId);
@@ -285,17 +247,7 @@ public class TopicRoomService  {
             return Collections.emptyList();
         }
 
-        Map<Long, StandardProfileInfo> profileMap = userAdaptor.findStandardProfileInfoByUserIds(memberIds);
-
-        return memberIds.stream()
-                .map(profileMap::get)
-                .filter(Objects::nonNull)
-                .map(info -> new TopicRoomUserResponseDto(
-                        info.userId(),
-                        info.nickName(),
-                        info.profileImageUrl() // S3 BaseUrl이 적용된 URL
-                ))
-                .toList();
+        return memberIds;
     }
 
     // 참여 여부 마킹 로직 공통화
