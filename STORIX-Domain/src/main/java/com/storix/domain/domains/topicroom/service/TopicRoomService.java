@@ -73,27 +73,23 @@ public class TopicRoomService  {
     }
 
     @Transactional(readOnly = true)
-    public List<TopicRoomResponseDto> getTodayTopicRooms(Long userId) {
+    public List<TopicRoomResponseDto> findLoyaltyRooms(){
+        return topicRoomAdaptor.findLoyaltyRooms();
+    }
 
-        List<TopicRoomResponseDto> trendingRooms = new java.util.ArrayList<>();
+    @Transactional(readOnly = true)
+    public List<TopicRoomResponseDto> findNewUserRooms(List<Long> excludeIds, int limit) {
 
-        // 1) 충성 유저 탐색 필터 - 슬롯 1개
-        List<TopicRoomResponseDto> loyaltySlot = topicRoomAdaptor.findLoyaltySlot();
-        trendingRooms.addAll(loyaltySlot);
+        if (limit <= 0) {
+            return Collections.emptyList();
+        }
 
-        // 2) 신규 유저 락인 필터 - 나머지 슬롯
-        int newUserSlotCount = 3 - trendingRooms.size();
+        return topicRoomAdaptor.findNewUserRooms(excludeIds, limit);
+    }
 
-        List<Long> excludeIds = loyaltySlot.stream()
-                .map(TopicRoomResponseDto::getTopicRoomId)
-                .toList();
-
-        List<TopicRoomResponseDto> newUserSlots = topicRoomAdaptor.findNewUserSlots(excludeIds, newUserSlotCount);
-        trendingRooms.addAll(newUserSlots);
-
-        // 참여 여부 마킹
-        applyMembershipStatus(trendingRooms, userId);
-        return trendingRooms;
+    @Transactional(readOnly = true)
+    public Set<Long> findJoinedRoomIds(Long userId, List<Long> roomIds) {
+        return topicRoomAdaptor.loadJoinedRoomIds(userId, roomIds);
     }
 
     @Transactional(readOnly = true)

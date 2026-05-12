@@ -70,7 +70,7 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
 
     // 충성 유저 탐색 필터 - 슬롯 1개
     @Override
-    public List<TopicRoomResponseDto> findLoyaltySlot() {
+    public List<TopicRoomResponseDto> findLoyaltyRooms() {
 
         BooleanBuilder condition = commonFilter();
         condition.and(topicRoom.activeUserNumber.goe(5));
@@ -104,7 +104,7 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
 
     // 신규 유저 락인 필터 - 슬롯 2개 ~ 3개
     @Override
-    public List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit) {
+    public List<TopicRoomResponseDto> findNewUserRooms(List<Long> excludeIds, int limit) {
 
         LocalDateTime now = LocalDateTime.now();
 

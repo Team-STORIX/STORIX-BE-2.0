@@ -52,15 +52,15 @@ public class TopicRoomAdaptor {
     }
 
     // 오늘의 토픽룸 (최근 활성 방 중 참여자 증가율 기준 상위 1개 조회)
-    @Cacheable(cacheNames = "trendingLoyaltySlot", cacheManager = "trendingCacheManager")
-    public List<TopicRoomResponseDto> findLoyaltySlot() {
-        return topicRoomRepository.findLoyaltySlot();
+    @Cacheable(cacheNames = "trendingLoyaltyRooms", cacheManager = "trendingCacheManager")
+    public List<TopicRoomResponseDto> findLoyaltyRooms() {
+        return topicRoomRepository.findLoyaltyRooms();
     }
 
     // 오늘의 토픽룸 (대표 슬롯 제외 후 최근 활성 방 중 현재 참여자 수 기준으로 조회)
-    @Cacheable(cacheNames = "trendingNewUserSlots", cacheManager = "trendingCacheManager")
-    public List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit) {
-        List<TopicRoomResponseDto> result = topicRoomRepository.findNewUserSlots(excludeIds, limit);
+    @Cacheable(cacheNames = "trendingNewUserRooms", cacheManager = "trendingCacheManager")
+    public List<TopicRoomResponseDto> findNewUserRooms(List<Long> excludeIds, int limit) {
+        List<TopicRoomResponseDto> result = topicRoomRepository.findNewUserRooms(excludeIds, limit);
 
         if (excludeIds.isEmpty() && result.isEmpty()) {
             throw TodayTopicRoomNotFoundException.EXCEPTION;

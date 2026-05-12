@@ -15,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @UseCase
 @RequiredArgsConstructor
@@ -31,10 +33,36 @@ public class TopicRoomUseCase {
 
     public List<TopicRoomResponseDto> getTodayTopicRooms(Long userId) {
 
-        List<TopicRoomResponseDto> trendingRooms = new java.util.ArrayList<>();
+        // 충성 유저 필터 - 단일 토픽룸
+        List<TopicRoomResponseDto> loyaltyRooms = topicRoomService.findLoyaltyRooms();
 
+        // 제외 ID 생성
+        List<Long> excludeIds = loyaltyRooms.stream()
+                .map(TopicRoomResponseDto::getTopicRoomId)
+                .toList();
 
-        return topicRoomService.getTodayTopicRooms(userId);
+        // 인기 상승 토픽룸 조회
+        List<TopicRoomResponseDto> newUserRooms = topicRoomService.findNewUserRooms(excludeIds, 3 - loyaltyRooms.size());
+
+        // 오늘의 토픽룸 후보
+        List<TopicRoomResponseDto> trendingRooms = new ArrayList<>(loyaltyRooms);
+        trendingRooms.addAll(newUserRooms);
+
+        if (userId == null || trendingRooms.isEmpty()) {
+            return trendingRooms;
+        }
+
+        // 참여 여부 마킹
+        List<Long> roomIds = trendingRooms.stream()
+                .map(TopicRoomResponseDto::getTopicRoomId)
+                .toList();
+
+        Set<Long> joinedRoomIds = topicRoomService.findJoinedRoomIds(userId, roomIds);
+
+        trendingRooms.forEach(room ->
+                room.markAsJoined(joinedRoomIds.contains(room.getTopicRoomId())));
+
+        return trendingRooms;
     }
 
     public SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable) {

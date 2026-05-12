@@ -20,6 +20,7 @@ public class RedisChatAdapter implements ChatMessagePublisher {
         this.jsonRedisTemplate = jsonRedisTemplate;
     }
 
+    @Override
     public void publish(ChatMessageResponseDto response) {
 
         try {
