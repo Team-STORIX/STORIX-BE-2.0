@@ -1,12 +1,13 @@
 package com.storix.domain.domains.review.service;
 
-import com.storix.domain.domains.plus.domain.Review;
-import com.storix.domain.domains.plus.repository.ReviewRepository;
-import com.storix.domain.domains.review.domain.ReviewLike;
+import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
+import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
+import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
 import com.storix.domain.domains.review.dto.ReviewLikeToggleResponse;
-import com.storix.domain.domains.review.repository.ReviewLikeRepository;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,37 +15,32 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class WorksDetailReactionService {
 
-    private final ReviewRepository reviewRepository;
-    private final ReviewLikeRepository reviewLikeRepository;
+    private final ReviewAdaptor reviewAdaptor;
+    private final ReviewLikeAdaptor reviewLikeAdaptor;
+    private final UserAdaptor userAdaptor;
+    private final NotificationPublisher notificationPublisher;
 
     @Transactional
     public ReviewLikeToggleResponse toggleReviewLike(Long userId, Long reviewId) {
 
-        int isDeleted = reviewLikeRepository.deleteLike(userId, reviewId);
+        // 리뷰 작성자 조회
+        Long reviewAuthorUserId = reviewAdaptor.findReviewerIdById(reviewId);
+
+        int isDeleted = reviewLikeAdaptor.isReviewLikeDeleted(userId, reviewId);
         if (isDeleted == 1) {
-            reviewRepository.decrementLikeCount(reviewId);
-
-            int likeCount = reviewRepository.findLikeCountById(reviewId);
-            return new ReviewLikeToggleResponse(false, likeCount);
+            return reviewLikeAdaptor.deleteReviewLike(reviewId);
         }
 
-        try {
-            Review reviewRef = reviewRepository.getReferenceById(reviewId);
-
-            ReviewLike like = ReviewLike.of(userId, reviewRef);
-            reviewLikeRepository.saveAndFlush(like);
-
-            reviewRepository.incrementLikeCount(reviewId);
-
-            int likeCount = reviewRepository.findLikeCountById(reviewId);
-            return new ReviewLikeToggleResponse(true, likeCount);
-
-        } catch (DataIntegrityViolationException e) {
-
-            int likeCount = reviewRepository.findLikeCountById(reviewId);
-            return new ReviewLikeToggleResponse(true, likeCount);
-        }
-
+        ReviewLikeToggleResponse response = reviewLikeAdaptor.insertReviewLike(userId, reviewId);
+        publishReviewLikeNotification(userId, reviewId, reviewAuthorUserId);
+        return response;
     }
 
+    private void publishReviewLikeNotification(Long actorUserId, Long reviewId, Long reviewAuthorUserId) {
+        StandardProfileInfo actor = userAdaptor.findStandardProfileInfoByUserId(actorUserId);
+        notificationPublisher.publishUnlessSelf(
+                actorUserId,
+                NotificationEvent.likeReview(reviewAuthorUserId, reviewId, actor.nickName())
+        );
+    }
 }
