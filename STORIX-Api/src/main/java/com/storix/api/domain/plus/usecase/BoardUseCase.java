@@ -35,6 +35,7 @@ public class BoardUseCase {
                 req.isSpoiler(),
                 spoilerScript,
                 req.content(),
+                req.theme(),
                 req.objectKeys()
         );
         boardService.createReaderBoard(cmd);

@@ -1,5 +1,6 @@
 package com.storix.domain.domains.plus.domain;
 
+import com.storix.domain.domains.feed.domain.BoardTheme;
 import com.storix.domain.domains.feed.domain.ReaderBoardLike;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
 import jakarta.persistence.*;
@@ -31,6 +32,10 @@ public class ReaderBoard extends Board {
     @Column(name = "spoiler_script")
     private String spoilerScript;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "theme")
+    private BoardTheme theme;
+
     @Column(name = "popularity_score")
     private int popularityScore = 0;
 
@@ -49,12 +54,13 @@ public class ReaderBoard extends Board {
 
     @Builder
     public ReaderBoard(Long userId, boolean isWorksSelected,
-                       Long worksId, boolean isSpoiler, String spoilerScript, String content) {
+                       Long worksId, boolean isSpoiler, String spoilerScript, String content, BoardTheme theme) {
         this.userId = userId;
         this.isWorksSelected = isWorksSelected;
         this.worksId = worksId;
         this.isSpoiler = isSpoiler;
         this.spoilerScript = isSpoiler ? spoilerScript : null;
         this.content = content;
+        this.theme = theme;
     }
 }
