@@ -17,6 +17,11 @@ public enum SuccessCode {
     NOTIFICATION_READ_SUCCESS(HttpStatus.OK, "NOTI2003", "알림을 읽음 처리했습니다."),
     NOTIFICATION_READ_ALL_SUCCESS(HttpStatus.OK, "NOTI2004", "모든 알림을 읽음 처리했습니다."),
 
+    // PushDevice success
+    DEVICE_SYNC_SUCCESS(HttpStatus.OK, "DEVICE2001", "디바이스 동기화에 성공했습니다."),
+    DEVICE_UNREGISTER_SUCCESS(HttpStatus.OK, "DEVICE2002", "디바이스 해제에 성공했습니다."),
+    DEVICE_TOKEN_REFRESH_SUCCESS(HttpStatus.OK, "DEVICE2003", "FCM 토큰 갱신에 성공했습니다."),
+
     // Auth success
     OAUTH_LOGIN_SUCCESS(HttpStatus.OK, "OAUTH_SUCCESS_001", "소셜 로그인에 성공했습니다."),
     OAUTH_PRE_LOGIN_SUCCESS(HttpStatus.OK, "OAUTH_SUCCESS_002", "소셜 로그인에 성공했습니다. 회원가입이 필요합니다."),
