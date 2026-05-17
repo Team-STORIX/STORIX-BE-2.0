@@ -1,6 +1,9 @@
 package com.storix.api.domain.notification.controller;
 
+import com.storix.api.domain.notification.controller.dto.FcmSendRequest;
+import com.storix.api.domain.notification.controller.dto.NotificationDispatchTestRequest;
 import com.storix.api.domain.notification.usecase.NotificationSettingUseCase;
+import com.storix.api.domain.notification.usecase.NotificationTestUseCase;
 import com.storix.api.domain.notification.usecase.NotificationUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.notification.dto.NotificationResponseDto;
@@ -10,6 +13,7 @@ import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +27,7 @@ public class NotificationController {
 
     private final NotificationUseCase notificationUseCase;
     private final NotificationSettingUseCase notificationSettingUseCase;
+    private final NotificationTestUseCase notificationTestUseCase;
 
     /** 사용자 알림함 */
     // 1. 전체 알림 목록 조회
@@ -84,5 +89,26 @@ public class NotificationController {
             @RequestBody UpdateNotificationSettingRequest request
     ) {
         return notificationSettingUseCase.updateNotificationSetting(authUser.getUserId(), request);
+    }
+
+
+    /** 테스트용 FCM 알림 전송 */
+    // [ADMIN][test] FCM 환경변수 세팅 검증
+    @PostMapping("/admin/test-push")
+    @Operation(summary = "[ADMIN][테스트] FCM 푸시 전송", description = "요청 body 의 token 으로 알림 1건 전송하고 FCM messageId 반환.")
+    public CustomResponse<String> sendTestPush(
+            @RequestBody @Valid FcmSendRequest request
+    ) {
+        return notificationTestUseCase.sendTestPush(request);
+    }
+
+    // [ADMIN][test] 알림 E2E 검증 (인앱 저장 + 멀티 디바이스 푸시)
+    @PostMapping("/admin/test-dispatch")
+    @Operation(summary = "[ADMIN][테스트] 알림 E2E (인앱 + 푸시)", description = "지정한 recipientUserId 로 NotificationEvent 를 publish.  \n" +
+            "AFTER_COMMIT 후 listener 가 인앱 저장 + 활성 디바이스에 FCM 발송.")
+    public CustomResponse<Void> testDispatch(
+            @RequestBody @Valid NotificationDispatchTestRequest request
+    ) {
+        return notificationTestUseCase.testDispatch(request);
     }
 }
