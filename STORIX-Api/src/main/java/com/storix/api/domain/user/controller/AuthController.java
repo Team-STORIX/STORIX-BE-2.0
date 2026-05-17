@@ -11,7 +11,7 @@ import com.storix.domain.domains.user.adaptor.OnboardingUserDetails;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.user.dto.OAuthAuthorizationRequest;
-import com.storix.domain.domains.user.dto.ReaderSignupRequest;
+import com.storix.api.domain.user.controller.dto.ReaderSignupRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -93,13 +93,14 @@ public class AuthController {
         return oauthLoginUseCase.readerOAuthNativeLogin(req, OAuthProvider.NAVER);
     }
 
-    @Operation(summary = "독자 계정 회원가입", description = "유저 정보를 최종적으로 등록하는 api 입니다.  \n온보딩 토큰을 보내주세요.")
+    @Operation(summary = "[v1] 독자 계정 회원가입", description = "[v1 > v2 마이그레이션 필요] 유저 정보를 최종적으로 등록하는 api 입니다.   \n" +
+            "온보딩 토큰을 보내주세요.")
     @PostMapping("/users/reader/signup")
     public ResponseEntity<CustomResponse<AuthorizationResponse>> readerUserSignup(
             @AuthenticationPrincipal OnboardingUserDetails onboardingUser,
             @Valid @RequestBody ReaderSignupRequest req
     ) {
-        return authUseCase.readerSignup(req, onboardingUser.getJti());
+        return authUseCase.readerSignup(req.toData(), onboardingUser.getJti());
     }
 
     @Operation(summary = "닉네임 중복 체크", description = "닉네임 중복 여부를 체크하는 api 입니다.")

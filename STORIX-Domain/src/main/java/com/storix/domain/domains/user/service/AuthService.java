@@ -8,7 +8,7 @@ import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
 import com.storix.domain.domains.user.dto.OnboardingPrincipal;
-import com.storix.domain.domains.user.dto.ReaderSignupRequest;
+import com.storix.domain.domains.user.dto.ReaderSignUpData;
 import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
@@ -60,7 +60,7 @@ public class AuthService {
 
     // 독자 회원 가입 (소셜 로그인)
     @Transactional
-    public AuthUserDetails signUpReaderUser(ReaderSignupRequest cmd, String jti) {
+    public AuthUserDetails signUpReaderUser(ReaderSignUpData cmd, String jti) {
 
         OnboardingPrincipal principal = tokenAdaptor.findOnboardingPrincipalByJti(jti);
         OAuthProvider provider = principal.provider(); String oid = principal.oid();
@@ -75,7 +75,7 @@ public class AuthService {
         userAdaptor.checkNicknameDuplicate(cmd.nickName());
 
         CreateReaderUserCommand m = new CreateReaderUserCommand(
-                cmd.marketingAgree(),
+                cmd.termsAgree(),
                 provider,
                 oid,
                 cmd.nickName(),
