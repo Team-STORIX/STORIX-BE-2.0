@@ -1,15 +1,13 @@
-package com.storix.api.domain.notification;
+package com.storix.api.domain.notification.controller;
 
-import com.storix.domain.domains.notification.dto.NotificationResponseDto;
-import com.storix.domain.domains.notification.service.NotificationService;
-import com.storix.domain.domains.user.adaptor.AuthUserDetails;
+import com.storix.api.domain.notification.usecase.NotificationUseCase;
 import com.storix.common.payload.CustomResponse;
-import com.storix.common.code.SuccessCode;
+import com.storix.domain.domains.notification.dto.NotificationResponseDto;
+import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "사용자 알림", description = "알림 관련 API")
 public class NotificationController {
 
-    private final NotificationService notificationService;
+    private final NotificationUseCase notificationUseCase;
 
     // 1. 전체 알림 목록 조회
     @GetMapping
@@ -32,8 +30,7 @@ public class NotificationController {
             @Parameter(description = "한 번에 가져올 개수 (기본 10)")
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        Slice<NotificationResponseDto> result = notificationService.getNotifications(authUser.getUserId(), cursorId, PageRequest.of(0, size));
-        return CustomResponse.onSuccess(SuccessCode.NOTIFICATION_LOAD_SUCCESS, result);
+        return notificationUseCase.getNotifications(authUser.getUserId(), cursorId, size);
     }
 
     // 2. 안 읽은 알림 개수 조회
@@ -42,8 +39,7 @@ public class NotificationController {
     public CustomResponse<Long> getUnreadCount(
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
-        long count = notificationService.getUnreadCount(authUser.getUserId());
-        return CustomResponse.onSuccess(SuccessCode.NOTIFICATION_COUNT_SUCCESS, count);
+        return notificationUseCase.getUnreadCount(authUser.getUserId());
     }
 
     // 3. 단건 알림 읽음 처리
@@ -53,8 +49,7 @@ public class NotificationController {
             @AuthenticationPrincipal AuthUserDetails authUser,
             @PathVariable("id") Long notificationId
     ) {
-        notificationService.readNotification(authUser.getUserId(), notificationId);
-        return CustomResponse.onSuccess(SuccessCode.NOTIFICATION_READ_SUCCESS);
+        return notificationUseCase.readNotification(authUser.getUserId(), notificationId);
     }
 
     // 4. 전체 알림 읽음 처리
@@ -63,7 +58,6 @@ public class NotificationController {
     public CustomResponse<Void> readAllNotifications(
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
-        notificationService.readAllNotifications(authUser.getUserId());
-        return CustomResponse.onSuccess(SuccessCode.NOTIFICATION_READ_ALL_SUCCESS);
+        return notificationUseCase.readAllNotifications(authUser.getUserId());
     }
 }
