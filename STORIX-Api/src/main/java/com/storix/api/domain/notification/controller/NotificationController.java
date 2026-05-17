@@ -1,8 +1,11 @@
 package com.storix.api.domain.notification.controller;
 
+import com.storix.api.domain.notification.usecase.NotificationSettingUseCase;
 import com.storix.api.domain.notification.usecase.NotificationUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.notification.dto.NotificationResponseDto;
+import com.storix.domain.domains.notification.dto.NotificationSettingResponse;
+import com.storix.domain.domains.notification.dto.UpdateNotificationSettingRequest;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,7 +22,9 @@ import org.springframework.web.bind.annotation.*;
 public class NotificationController {
 
     private final NotificationUseCase notificationUseCase;
+    private final NotificationSettingUseCase notificationSettingUseCase;
 
+    /** 사용자 알림함 */
     // 1. 전체 알림 목록 조회
     @GetMapping
     @Operation(summary = "전체 알림 목록 조회", description = "커서 기반 무한 스크롤입니다. cursorId는 직전 응답의 마지막 알림 ID이며, 첫 요청은 cursorId를 제외합니다.")
@@ -59,5 +64,25 @@ public class NotificationController {
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
         return notificationUseCase.readAllNotifications(authUser.getUserId());
+    }
+
+    /** 알림 설정 */
+    // 5. 알림 설정 조회
+    @GetMapping("/settings")
+    @Operation(summary = "알림 설정 조회", description = "푸시 알림 수신 여부와 알림 종류별 수신 여부를 조회합니다.")
+    public CustomResponse<NotificationSettingResponse> getSettings(
+            @AuthenticationPrincipal AuthUserDetails authUser
+    ) {
+        return notificationSettingUseCase.getNotificationSetting(authUser.getUserId());
+    }
+
+    // 6. 알림 설정 변경
+    @PatchMapping("/settings")
+    @Operation(summary = "알림 설정 변경", description = "알림 수신 여부를 갱신합니다. 변경하려는 항목만 requestBody 에 포함하면 됩니다.")
+    public CustomResponse<NotificationSettingResponse> updateSettings(
+            @AuthenticationPrincipal AuthUserDetails authUser,
+            @RequestBody UpdateNotificationSettingRequest request
+    ) {
+        return notificationSettingUseCase.updateNotificationSetting(authUser.getUserId(), request);
     }
 }
