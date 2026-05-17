@@ -63,8 +63,8 @@ public class AuthUseCase {
     }
 
     // 독자 유저 정보 등록
-    public ResponseEntity<CustomResponse<AuthorizationResponse>> readerSignup(ReaderSignupRequest req, String jti) {
-        AuthUserDetails userDetails = authService.signUpReaderUser(req, jti);
+    public ResponseEntity<CustomResponse<AuthorizationResponse>> readerSignup(ReaderSignUpData data, String jti) {
+        AuthUserDetails userDetails = authService.signUpReaderUser(data, jti);
         LoginWithTokenResponse tokenResponse = tokenGenerateHelper.generateLoginWithToken(userDetails);
         AuthorizationResponse result = AuthorizationResponse.webRefresh(tokenResponse.accessToken());
 
