@@ -2,6 +2,7 @@ package com.storix.domain.domains.notification.dto;
 
 import com.storix.domain.domains.notification.domain.Notification;
 import com.storix.domain.domains.notification.domain.NotificationType;
+import com.storix.domain.domains.notification.domain.TargetType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,20 +14,23 @@ public class NotificationResponseDto {
 
     private Long id;
     private NotificationType notificationType;
-    private String content;
+    private TargetType targetType;
     private Long targetId;
+    private Long parentTargetId;
+    private String content;
     private boolean isRead;
     private LocalDateTime createdAt;
 
-    // Entity -> DTO 변환 정적 팩토리 메서드
     public static NotificationResponseDto from(Notification notification) {
         return NotificationResponseDto.builder()
                 .id(notification.getId())
                 .notificationType(notification.getNotificationType())
-                .content(notification.getContent())
+                .targetType(notification.getTargetType())
                 .targetId(notification.getTargetId())
+                .parentTargetId(notification.getParentTargetId())
+                .content(notification.getContent())
                 .isRead(notification.isRead())
-                .createdAt(notification.getCreatedAt()) // BaseEntity의 getter
+                .createdAt(notification.getCreatedAt())
                 .build();
     }
 }

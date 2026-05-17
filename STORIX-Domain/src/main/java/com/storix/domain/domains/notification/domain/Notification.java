@@ -17,34 +17,51 @@ public class Notification extends BaseTimeEntity {
     @Column(name = "notification_id")
     private Long id;
 
+    // 수신자
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    // 알림 타입
     @Enumerated(EnumType.STRING)
-    @Column(name = "notification_type", nullable = false)
+    @Column(name = "notification_type", nullable = false, length = 32)
     private NotificationType notificationType;
 
-    @Column(nullable = false)
-    private String content;
+    // 알림 클릭 시 이동할 타겟
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_type", nullable = false, length = 16)
+    private TargetType targetType;
 
-    // 알림 클릭 시 이동할 타겟 id
     @Column(name = "target_id")
     private Long targetId;
 
+    @Column(name = "parent_target_id")
+    private Long parentTargetId;
+
+    // 본문
+    @Column(nullable = false, length = 200)
+    private String content;
+
+    // 읽음 여부
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
 
+
+    /** 생성자 메서드 */
+    @Builder
+    public Notification(Long userId, NotificationType notificationType, TargetType targetType, Long targetId, Long parentTargetId, String content) {
+        this.userId = userId;
+        this.notificationType = notificationType;
+        this.targetType = targetType != null ? targetType : TargetType.NONE;
+        this.targetId = targetId;
+        this.parentTargetId = parentTargetId;
+        this.content = content;
+        this.isRead = false;
+    }
+
+
+    /** 비즈니스 메서드 */
     // 알림 읽음 처리
     public void read() {
         this.isRead = true;
-    }
-
-    @Builder
-    public Notification(Long userId, NotificationType notificationType, String content, Long targetId) {
-        this.userId = userId;
-        this.notificationType = notificationType;
-        this.content = content;
-        this.targetId = targetId;
-        this.isRead = false;
     }
 }

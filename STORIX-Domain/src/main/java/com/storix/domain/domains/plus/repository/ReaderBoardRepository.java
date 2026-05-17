@@ -11,8 +11,13 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>, ReaderBoardRankingRepository {
+
+    // 작성자 userId 단건 조회
+    @Query("SELECT rb.userId FROM ReaderBoard rb WHERE rb.id = :boardId")
+    Optional<Long> findUserIdById(@Param("boardId") Long boardId);
 
     // 프로필 관련
     @Query("SELECT rb " +
@@ -55,7 +60,7 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
 
     Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    // 피드 - 댓글
+    // 피드 댓글
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ReaderBoard r " +
             "SET r.replyCount = r.replyCount + 1 " +
@@ -68,7 +73,7 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
             "WHERE r.id = :id AND r.replyCount > 0")
     void decrementReplyCount(@Param("id") Long id);
 
-    // 피드 - 좋아요
+    // 피드 좋아요
     @Query("SELECT r.likeCount " +
             "FROM ReaderBoard r " +
             "WHERE r.id = :boardId")

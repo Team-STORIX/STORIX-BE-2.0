@@ -123,6 +123,9 @@ public class SecurityConfig {
                                 // [TopicRoom]
                                 .requestMatchers("/ws-stomp/**").permitAll()
 
+                                // [Notification] 테스트 엔드포인트는 ADMIN 만
+                                .requestMatchers("/api/v1/notifications/admin/**").hasRole("ADMIN")
+
                                 .anyRequest().hasRole("READER")
                 )
 

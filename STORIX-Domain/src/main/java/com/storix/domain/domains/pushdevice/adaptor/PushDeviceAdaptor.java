@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -22,6 +24,11 @@ public class PushDeviceAdaptor {
         // (userId, installationId) 기존 row 없을 경우 예외 처리
         return pushDeviceRepository.findByUserIdAndInstallationId(userId, installationId)
                 .orElseThrow(() -> UnknownPushDeviceException.EXCEPTION);
+    }
+
+    // [PushDispatch] 한 유저의 활성 디바이스 FCM 토큰 일괄 조회
+    public List<String> findActiveFcmTokensByUserId(Long userId) {
+        return pushDeviceRepository.findActiveFcmTokensByUserId(userId);
     }
 
     /** 쓰기 작업 관련 메서드 */
@@ -50,5 +57,15 @@ public class PushDeviceAdaptor {
     // [PushDevice] 유저 탈퇴 시 모든 디바이스 일괄 비활성화
     public int deactivateAllByUserId(Long userId) {
         return pushDeviceRepository.deactivateAllByUserId(userId);
+    }
+
+    // [PushDispatch] FCM invalid 토큰 일괄 비활성화
+    public int deactivateByFcmTokens(List<String> tokens) {
+        return pushDeviceRepository.deactivateByFcmTokens(tokens);
+    }
+
+    // [PushDispatch] 발송 성공한 토큰들의 lastSuccessAt 일괄 갱신
+    public void markFcmTokensSuccess(List<String> tokens, LocalDateTime now) {
+        pushDeviceRepository.markFcmTokensSuccess(tokens, now);
     }
 }
