@@ -16,6 +16,8 @@ public enum SuccessCode {
     NOTIFICATION_COUNT_SUCCESS(HttpStatus.OK, "NOTI2002", "안 읽은 알림 개수를 성공적으로 조회했습니다."),
     NOTIFICATION_READ_SUCCESS(HttpStatus.OK, "NOTI2003", "알림을 읽음 처리했습니다."),
     NOTIFICATION_READ_ALL_SUCCESS(HttpStatus.OK, "NOTI2004", "모든 알림을 읽음 처리했습니다."),
+    NOTIFICATION_PREFERENCE_LOAD_SUCCESS(HttpStatus.OK, "NOTI2006", "알림 설정을 성공적으로 조회했습니다."),
+    NOTIFICATION_PREFERENCE_UPDATE_SUCCESS(HttpStatus.OK, "NOTI2007", "알림 설정이 변경되었습니다."),
 
     // PushDevice success
     DEVICE_SYNC_SUCCESS(HttpStatus.OK, "DEVICE2001", "디바이스 동기화에 성공했습니다."),

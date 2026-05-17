@@ -103,6 +103,7 @@ public enum ErrorCode {
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_ERROR_001", "알림을 찾을 수 없습니다"),
     NOTIFICATION_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "NOTIFICATION_ERROR_002", "인가되지 않은 접근입니다."),
     FCM_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NOTIFICATION_ERROR_003", "FCM 푸시 전송에 실패했습니다."),
+    NOTIFICATION_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_ERROR_004", "유저의 알림 설정이 존재하지 않습니다."),
 
     // PushDevice error
     PUSH_DEVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "DEVICE_ERROR_001", "해당 기기 식별자로 등록된 디바이스가 없습니다."),
