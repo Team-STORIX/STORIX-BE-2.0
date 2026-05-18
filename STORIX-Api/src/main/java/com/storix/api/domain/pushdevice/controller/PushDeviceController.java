@@ -14,7 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/devices")
+@RequestMapping("/api/v1/push-devices")
 @RequiredArgsConstructor
 @Tag(name = "푸시 알림 디바이스", description = "푸시 알림 발송용 디바이스 토큰 등록/해제 API")
 public class PushDeviceController {
@@ -45,7 +45,7 @@ public class PushDeviceController {
         return CustomResponse.onSuccess(SuccessCode.DEVICE_UNREGISTER_SUCCESS);
     }
 
-    @PatchMapping("/token")
+    @PatchMapping("/fcm-token")
     @Operation(summary = "FCM 토큰 갱신", description = "FCM 토큰 정보만 갱신하는 api 입니다. 단일 디바이스 푸시 알림 등록(/sync)이 선행되어야 합니다.  \n" +
             "1) FCM onTokenRefresh 콜백 시 호출해주세요. (앱 재설치 / 데이터 초기화 등)  \n" +
             "2) WorkManager 주기(30일) 호출 시 직전 캐시 토큰과 비교해 갱신된 경우에만 호출해주세요.")
