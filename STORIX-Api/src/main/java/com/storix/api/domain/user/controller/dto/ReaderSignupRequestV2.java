@@ -8,6 +8,7 @@ import java.util.Set;
 
 public record ReaderSignupRequestV2(
 
+    @NotNull(message = "서비스 이용약관 동의는 필수입니다.")
     @AssertTrue(message = "서비스 이용약관 동의는 필수입니다.")
     Boolean termsAgree,
 
