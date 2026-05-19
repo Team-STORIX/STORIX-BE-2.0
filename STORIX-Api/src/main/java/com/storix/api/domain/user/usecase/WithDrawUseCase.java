@@ -2,6 +2,7 @@ package com.storix.api.domain.user.usecase;
 
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.user.domain.OAuthInfo;
+import com.storix.domain.domains.user.domain.WithdrawReason;
 import com.storix.domain.domains.user.service.AuthService;
 import com.storix.api.domain.user.helper.OAuthHelper;
 import com.storix.api.domain.user.helper.CookieHelper;
@@ -21,7 +22,7 @@ public class WithDrawUseCase {
     private final OAuthHelper oauthHelper;
     private final CookieHelper cookieHelper;
 
-    public ResponseEntity<CustomResponse<Void>> execute(Long userId) {
+    public ResponseEntity<CustomResponse<Void>> execute(Long userId, WithdrawReason reason, String detail) {
 
         // 1. OAuth 연결 해제
         OAuthInfo oauthInfo = authService.findOAuthInfoByUserId(userId);
@@ -40,8 +41,8 @@ public class WithDrawUseCase {
         }
 
 
-        // 2. 유저 탈퇴 처리 (RefreshToken / 관심작품 / 서재 삭제 + 푸시 알림 발송 대상 제외)
-        authService.withDrawUser(userId);
+        // 2. 유저 탈퇴 처리 (RefreshToken / 관심작품 / 서재 삭제 + 푸시 알림 발송 대상 제외 + 탈퇴 사유 로그)
+        authService.withDrawUser(userId, reason, detail);
 
         return ResponseEntity.ok()
                 .headers(cookieHelper.deleteCookie())
