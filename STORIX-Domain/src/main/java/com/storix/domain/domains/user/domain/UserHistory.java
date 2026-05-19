@@ -38,12 +38,17 @@ public class UserHistory extends BaseTimeEntity {
     @Column(name = "processed_at", nullable = false)
     private LocalDateTime processedAt;
 
+    // 부가 정보 — 탈퇴 사유(enum)/직접 입력 등 유형별 컨텍스트 보관 (nullable)
+    @Column(name = "detail", length = 255)
+    private String detail;
+
 
     @Builder
-    private UserHistory(Long userId, UserHistoryType historyType, String sender, LocalDateTime processedAt) {
+    private UserHistory(Long userId, UserHistoryType historyType, String sender, LocalDateTime processedAt, String detail) {
         this.userId = userId;
         this.historyType = historyType;
         this.sender = sender;
         this.processedAt = processedAt;
+        this.detail = detail;
     }
 }

@@ -13,16 +13,23 @@ import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.dto.ReaderSignUpData;
 import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
+import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.adaptor.UserHistoryAdaptor;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.domain.UserHistory;
+import com.storix.domain.domains.user.domain.UserHistoryType;
+import com.storix.domain.domains.user.domain.WithdrawReason;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +42,7 @@ public class AuthService {
 
     private final PushDeviceAdaptor pushDeviceAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
+    private final UserHistoryAdaptor userHistoryAdaptor;
 
     private final OnboardingWorksHelper onboardingWorksHelper; // -> usecase 리팩토링 필요
     private final GenreScorePublisher genreScorePublisher;
@@ -129,7 +137,7 @@ public class AuthService {
 
     // 유저 회원 탈퇴
     @Transactional
-    public void withDrawUser(Long userId) {
+    public void withDrawUser(Long userId, WithdrawReason reason, String detail) {
         // 1. 유저 soft-delete
         User user = userAdaptor.findUserById(userId);
         user.withdraw();
@@ -144,5 +152,17 @@ public class AuthService {
 
         // 4. 알림 설정 삭제 (재가입 시 새 row 생성됨)
         notificationSettingAdaptor.deleteByUserId(userId);
+
+        // 5. 탈퇴 사유 로그 — OTHER 일 때만 detail 보관, 그 외는 enum 값 자체를 detail 로 보관
+        String detailValue = (reason == WithdrawReason.OTHER)
+                ? (StringUtils.hasText(detail) ? detail.trim() : null)
+                : reason.name();
+        userHistoryAdaptor.save(UserHistory.builder()
+                .userId(userId)
+                .historyType(UserHistoryType.WITHDRAW)
+                .sender(STORIXStatic.UserHistory.SENDER_TEAM_STORIX)
+                .processedAt(LocalDateTime.now())
+                .detail(detailValue)
+                .build());
     }
 }
