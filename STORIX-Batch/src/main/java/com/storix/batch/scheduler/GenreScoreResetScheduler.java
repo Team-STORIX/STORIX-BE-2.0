@@ -13,8 +13,8 @@ public class GenreScoreResetScheduler {
 
     private final GenreScoreAggregationService aggregationService;
 
-    // 유저 장르 점수 주기별 초기화
-    @Scheduled(cron = "0 0 4 1 1 *", zone = "Asia/Seoul")
+    // 유저 장르 점수 주기별 초기화 (집계 배치와 시각 분리)
+    @Scheduled(cron = "0 30 3 1 1 *", zone = "Asia/Seoul")
     public void resetAll() {
         long started = System.currentTimeMillis();
         log.info(">>> [GenreScoreReset] start");
