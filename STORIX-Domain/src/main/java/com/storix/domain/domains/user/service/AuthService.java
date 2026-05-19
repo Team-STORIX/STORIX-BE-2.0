@@ -153,16 +153,18 @@ public class AuthService {
         // 4. 알림 설정 삭제 (재가입 시 새 row 생성됨)
         notificationSettingAdaptor.deleteByUserId(userId);
 
-        // 5. 탈퇴 사유 로그 — OTHER 일 때만 detail 보관, 그 외는 enum 값 자체를 detail 로 보관
-        String detailValue = (reason == WithdrawReason.OTHER)
-                ? (StringUtils.hasText(detail) ? detail.trim() : null)
-                : reason.name();
-        userHistoryAdaptor.save(UserHistory.builder()
-                .userId(userId)
-                .historyType(UserHistoryType.WITHDRAW)
-                .sender(STORIXStatic.UserHistory.SENDER_TEAM_STORIX)
-                .processedAt(LocalDateTime.now())
-                .detail(detailValue)
-                .build());
+        // 5. 탈퇴 사유 로그 — v2 에서만 reason 전달, OTHER 일 때만 detail 보관, 그 외는 enum 값 자체를 detail 로 보관
+        if (reason != null) {
+            String detailValue = (reason == WithdrawReason.OTHER)
+                    ? (StringUtils.hasText(detail) ? detail.trim() : null)
+                    : reason.name();
+            userHistoryAdaptor.save(UserHistory.builder()
+                    .userId(userId)
+                    .historyType(UserHistoryType.WITHDRAW)
+                    .sender(STORIXStatic.UserHistory.SENDER_TEAM_STORIX)
+                    .processedAt(LocalDateTime.now())
+                    .detail(detailValue)
+                    .build());
+        }
     }
 }
