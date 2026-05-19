@@ -47,7 +47,6 @@ public class FcmSenderHelper {
     // 영구 invalid 판별 (Firebase 공식 가이드 기준)
     public boolean isPermanentInvalid(MessagingErrorCode code) {
         return code == MessagingErrorCode.UNREGISTERED
-                || code == MessagingErrorCode.INVALID_ARGUMENT
                 || code == MessagingErrorCode.SENDER_ID_MISMATCH;
     }
 
