@@ -2,8 +2,10 @@ package com.storix.api.domain.user.controller;
 
 import com.storix.api.domain.user.controller.dto.AuthorizationResponse;
 import com.storix.api.domain.user.controller.dto.LogoutRequest;
+import com.storix.api.domain.user.controller.dto.WithdrawRequest;
 import com.storix.api.domain.user.usecase.AuthUseCase;
 import com.storix.api.domain.user.usecase.LogoutUseCase;
+import com.storix.api.domain.user.usecase.WithDrawUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.OnboardingUserDetails;
@@ -14,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +30,7 @@ public class AuthV2Controller {
 
     private final AuthUseCase authUseCase;
     private final LogoutUseCase logoutUseCase;
+    private final WithDrawUseCase withDrawUseCase;
 
     @Operation(summary = "[v2] 독자 계정 회원가입", description = "유저 정보를 최종적으로 등록하는 api 입니다.   \n" +
             "- 온보딩 토큰을 헤더로 보내주세요.  \n" +
@@ -50,5 +54,17 @@ public class AuthV2Controller {
     ) {
         String installationId = body != null ? body.installationId() : null;
         return logoutUseCase.execute(authUserDetails.getUserId(), installationId);
+    }
+
+    @Operation(summary = "[v2] 회원 탈퇴", description = "회원 탈퇴용 api 입니다.   \n" +
+            "회원 계정과 관련된 Refresh 토큰과 모든 디바이스의 FCM 토큰을 비활성화합니다.   \n" +
+            "- 탈퇴 사유(reason)는 필수이며, user_history 에 기록됩니다.  \n" +
+            "- reason=OTHER 인 경우에만 detail(직접 입력, 200자 이내)을 함께 보내주세요.")
+    @DeleteMapping("/user/withdraw")
+    public ResponseEntity<CustomResponse<Void>> withdraw(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @Valid @RequestBody WithdrawRequest req
+    ) {
+        return withDrawUseCase.execute(authUserDetails.getUserId(), req.reason(), req.detail());
     }
 }

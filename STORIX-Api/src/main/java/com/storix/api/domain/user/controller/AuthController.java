@@ -5,7 +5,6 @@ import com.storix.api.domain.user.controller.dto.KakaoNativeLoginRequest;
 import com.storix.api.domain.user.controller.dto.NaverNativeLoginRequest;
 import com.storix.api.domain.user.controller.dto.ReaderSocialLoginResponse;
 import com.storix.api.domain.user.controller.dto.RefreshTokenRequest;
-import com.storix.api.domain.user.controller.dto.WithdrawRequest;
 import com.storix.api.domain.user.usecase.*;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.OnboardingUserDetails;
@@ -143,15 +142,13 @@ public class AuthController {
         return logoutUseCase.execute(authUserDetails.getUserId(), null);
     }
 
-    @Operation(summary = "회원 탈퇴", description = "회원 탈퇴용 api 입니다.   \n" +
-            "회원 계정과 관련된 Refresh 토큰과 모든 디바이스의 FCM 토큰을 비활성화합니다.   \n" +
-            "탈퇴 사유(reason)는 필수이며, reason=OTHER 인 경우에만 detail(직접 입력)을 함께 보내주세요.")
+    @Operation(summary = "[v1] 회원 탈퇴", description = "[v1 > v2 마이그레이션 필요] 회원 탈퇴용 api 입니다.   \n" +
+            "회원 계정과 관련된 Refresh 토큰과 모든 디바이스의 FCM 토큰을 비활성화합니다.")
     @DeleteMapping("/user/withdraw")
     public ResponseEntity<CustomResponse<Void>> withdraw(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @Valid @RequestBody WithdrawRequest req
+            @AuthenticationPrincipal AuthUserDetails authUserDetails
     ) {
-        return withDrawUseCase.execute(authUserDetails.getUserId(), req.reason(), req.detail());
+        return withDrawUseCase.execute(authUserDetails.getUserId(), null, null);
     }
 
 }
