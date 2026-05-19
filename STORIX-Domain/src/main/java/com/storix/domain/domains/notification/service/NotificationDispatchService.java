@@ -52,6 +52,7 @@ public class NotificationDispatchService {
                 .targetType(event.targetType())
                 .targetId(event.targetId())
                 .parentTargetId(event.parentTargetId())
+                .title(event.title())
                 .content(event.content())
                 .build());
 

@@ -17,6 +17,7 @@ public class NotificationResponseDto {
     private TargetType targetType;
     private Long targetId;
     private Long parentTargetId;
+    private String title;
     private String content;
     private boolean isRead;
     private LocalDateTime createdAt;
@@ -28,6 +29,7 @@ public class NotificationResponseDto {
                 .targetType(notification.getTargetType())
                 .targetId(notification.getTargetId())
                 .parentTargetId(notification.getParentTargetId())
+                .title(notification.getTitle())
                 .content(notification.getContent())
                 .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())

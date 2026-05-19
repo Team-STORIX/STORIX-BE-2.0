@@ -39,6 +39,9 @@ public class Notification extends BaseTimeEntity {
 
     // 본문
     @Column(nullable = false, length = 200)
+    private String title;
+
+    @Column(nullable = false, length = 200)
     private String content;
 
     // 읽음 여부
@@ -48,12 +51,13 @@ public class Notification extends BaseTimeEntity {
 
     /** 생성자 메서드 */
     @Builder
-    public Notification(Long userId, NotificationType notificationType, TargetType targetType, Long targetId, Long parentTargetId, String content) {
+    public Notification(Long userId, NotificationType notificationType, TargetType targetType, Long targetId, Long parentTargetId, String title, String content) {
         this.userId = userId;
         this.notificationType = notificationType;
         this.targetType = targetType != null ? targetType : TargetType.NONE;
         this.targetId = targetId;
         this.parentTargetId = parentTargetId;
+        this.title = title;
         this.content = content;
         this.isRead = false;
     }
