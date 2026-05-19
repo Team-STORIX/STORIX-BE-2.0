@@ -23,17 +23,7 @@ public class NotificationSettingUseCase {
 
     // 알림 설정 변경
     public CustomResponse<NotificationSettingResponse> updateNotificationSetting(Long userId, UpdateNotificationSettingRequest request) {
-        NotificationSetting updated = notificationSettingService.update(
-                userId,
-                request.likeFeedEnabled(),
-                request.likeReviewEnabled(),
-                request.likeCommentEnabled(),
-                request.commentOnFeedEnabled(),
-                request.replyOnCommentEnabled(),
-                request.todayFeedEnabled(),
-                request.hotTopicRoomEnabled(),
-                request.marketingEnabled()
-        );
+        NotificationSetting updated = notificationSettingService.update(userId, request.toCommand());
         return CustomResponse.onSuccess(SuccessCode.NOTIFICATION_PREFERENCE_UPDATE_SUCCESS, NotificationSettingResponse.from(updated));
     }
 }

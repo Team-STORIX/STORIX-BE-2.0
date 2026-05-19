@@ -30,4 +30,16 @@ public record UpdateNotificationSettingRequest(
         @Schema(description = "운영자 발송 이벤트/광고", example = "false")
         Boolean marketingEnabled
 ) {
+    public UpdateNotificationSettingCommand toCommand() {
+        return new UpdateNotificationSettingCommand(
+                likeFeedEnabled,
+                likeReviewEnabled,
+                likeCommentEnabled,
+                commentOnFeedEnabled,
+                replyOnCommentEnabled,
+                todayFeedEnabled,
+                hotTopicRoomEnabled,
+                marketingEnabled
+        );
+    }
 }
