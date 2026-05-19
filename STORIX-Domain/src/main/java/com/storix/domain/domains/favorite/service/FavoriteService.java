@@ -35,6 +35,7 @@ public class FavoriteService {
     @Transactional
     public void deleteFavoriteWorks(Long userId, Long worksId) {
         favoriteWorksAdaptor.deleteSingleFavoriteWorks(userId, worksId);
+        genreScorePublisher.publish(userId, worksId, GenreScoreEventType.FAVORITE_WORKS_REMOVE);
     }
 
 }
