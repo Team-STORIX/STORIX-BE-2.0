@@ -37,15 +37,7 @@ public class NotificationDispatchService {
             return DispatchResult.skip();
         }
 
-        // 2. 타입별 수신 동의 체크
-        NotificationSetting setting = notificationSettingAdaptor.getByUserId(event.recipientUserId());
-        if (!setting.acceptsType(event.notificationType())) {
-            log.debug(">>> [Notification] skipped (type disabled) userId={}, type={}",
-                    event.recipientUserId(), event.notificationType());
-            return DispatchResult.skip();
-        }
-
-        // 3. 인앱 알림 저장
+        // 2. 인앱 알림함 저장 > 수신 동의와 무관, 항상 저장
         Notification saved = notificationAdaptor.save(Notification.builder()
                 .userId(event.recipientUserId())
                 .notificationType(event.notificationType())
@@ -56,7 +48,14 @@ public class NotificationDispatchService {
                 .content(event.content())
                 .build());
 
-        // 4. SUSPENDED 유저는 제재/신고 안내만 푸시 발송
+        // 3. 푸시 발송 가능한 활성 디바이스 토큰 조회 > 없으면 인앱만
+        List<String> tokens = pushDeviceAdaptor.findActiveFcmTokensByUserId(event.recipientUserId());
+        if (tokens.isEmpty()) {
+            log.debug(">>> [Notification] no active device for userId={}", event.recipientUserId());
+            return DispatchResult.inAppOnly(saved.getId());
+        }
+
+        // 4-1. [SUSPENDED 유저] 제재/신고 안내만 푸시 발송
         if (user.getAccountState() == AccountState.SUSPENDED
                 && !event.notificationType().deliverableToSuspendedUser()) {
             log.debug(">>> [Notification] push skipped (user suspended) userId={}, type={}",
@@ -64,12 +63,14 @@ public class NotificationDispatchService {
             return DispatchResult.inAppOnly(saved.getId());
         }
 
-        // 5. 푸시 발송 대상 디바이스 토큰 조회
-        List<String> tokens = pushDeviceAdaptor.findActiveFcmTokensByUserId(event.recipientUserId());
-        if (tokens.isEmpty()) {
-            log.debug(">>> [Notification] no active device for userId={}", event.recipientUserId());
+        // 4-2. [NORMAL 유저] 푸시 알림 수신 동의 체크
+        NotificationSetting setting = notificationSettingAdaptor.getByUserId(event.recipientUserId());
+        if (!setting.acceptsType(event.notificationType())) {
+            log.debug(">>> [Notification] push skipped (type disabled) userId={}, type={}",
+                    event.recipientUserId(), event.notificationType());
             return DispatchResult.inAppOnly(saved.getId());
         }
+
         return DispatchResult.pushTo(saved.getId(), tokens);
     }
 }
