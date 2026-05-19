@@ -1,5 +1,6 @@
 package com.storix.infrastructure.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -7,6 +8,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
+@Slf4j
 @Configuration
 @EnableAsync
 public class AsyncConfig {
@@ -55,6 +57,15 @@ public class AsyncConfig {
         executor.setMaxPoolSize(16);
         executor.setQueueCapacity(1000);
         executor.setThreadNamePrefix("NotiAsync-");
+
+        // TODO: 재시도 로직 + traceId 로깅 필요
+        executor.setRejectedExecutionHandler((r, exec) -> {
+            log.warn(">>> [Notification] queue overflow — running on caller thread (pool={}, queue={}/{})",
+                    exec.getPoolSize(), exec.getQueue().size(), exec.getQueue().remainingCapacity());
+            if (!exec.isShutdown()) {
+                r.run();
+            }
+        });
         executor.initialize();
         return executor;
     }
