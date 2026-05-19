@@ -102,7 +102,7 @@ public class NotificationController {
             @AuthenticationPrincipal AuthUserDetails authUser,
             @RequestBody @Valid MarketingConsentRequest request
     ) {
-        return marketingConsentUseCase.updateMarketingConsent(authUser.getUserId(), request.agreed());
+        return marketingConsentUseCase.updateMarketingConsent(authUser.getUserId(), request.marketingEnabled());
     }
 
 
