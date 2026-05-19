@@ -60,6 +60,12 @@ public class GenreScoreAggregationService {
         return logRepository.deleteProcessedBefore(LocalDateTime.now().minusDays(LOG_RETENTION_DAYS));
     }
 
+    // 주기별 raw_score 테이블 전체 초기화
+    @Transactional
+    public void resetAllRawScores() {
+        rawScoreRepository.deleteAllInBatch();
+    }
+
     public record ChunkResult(int processedLogs, int groups, Set<Long> users) {
         public static ChunkResult empty() {
             return new ChunkResult(0, 0, Collections.emptySet());
