@@ -30,17 +30,15 @@ public class FeedReactionService {
     @Transactional
     public LikeToggleResponse toggleReaderBoardLike(Long userId, Long boardId) {
 
-        // 게시글 작성자 조회
-        Long boardOwnerUserId = readerFeedAdaptor.findBoardOwnerUserId(boardId);
-
+        // unlike > 작성자 조회 불필요
         int isDeleted = readerFeedAdaptor.isBoardLikeDeleted(userId, boardId);
         if (isDeleted == 1) {
             return readerFeedAdaptor.deleteReaderBoardLike(boardId);
         }
 
+        // like > 알림 발행을 위해 게시글 작성자 조회
+        Long boardOwnerUserId = readerFeedAdaptor.findBoardOwnerUserId(boardId);
         LikeToggleResponse response = readerFeedAdaptor.insertReaderBoardLike(userId, boardId);
-
-        // 알림 발행
         publishFeedLikeNotification(userId, boardOwnerUserId, boardId);
         return response;
     }
@@ -103,14 +101,14 @@ public class FeedReactionService {
     @Transactional
     public LikeToggleResponse toggleReaderBoardReplyLike(Long userId, Long boardId, Long replyId) {
 
-        // 댓글 작성자 조회
-        Long replyOwnerUserId = readerFeedAdaptor.findReplyOwnerUserId(boardId, replyId);
-
+        // unlike(취소) 분기 — 작성자 조회 불필요
         int isDeleted = readerFeedAdaptor.isReplyLikeDeleted(userId, replyId);
         if (isDeleted == 1) {
             return readerFeedAdaptor.deleteReaderBoardReplyLike(replyId);
         }
 
+        // like 분기 — 알림 발행을 위해 댓글 작성자 조회
+        Long replyOwnerUserId = readerFeedAdaptor.findReplyOwnerUserId(boardId, replyId);
         LikeToggleResponse response = readerFeedAdaptor.insertReaderBoardReplyLike(userId, replyId);
         publishReplyLikeNotification(userId, replyOwnerUserId, boardId, replyId);
         return response;
