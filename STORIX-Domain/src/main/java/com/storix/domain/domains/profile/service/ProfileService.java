@@ -30,6 +30,7 @@ public class ProfileService {
                 .profileDescription(readerUser.getProfileDescription())
                 .profileImageUrl(readerUser.getProfileObjectKey() == null
                         ? null : baseUrl + "/" + readerUser.getProfileObjectKey())
+                .oauthProvider(readerUser.getOauthInfo().getProvider())
                 .build();
     }
 
