@@ -2,44 +2,32 @@ package com.storix.domain.domains.notification.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+// 추후 알림 뎁스 세분화를 위한 테이블 컬럼 유지 (9개 -> 4개 상위 분류)
 public record UpdateNotificationSettingRequest(
 
-        /* ─────────── 서비스 알림 ─────────── */
-        @Schema(description = "내 피드에 좋아요", example = "true")
-        Boolean likeFeedEnabled,
+        @Schema(description = "내 활동 알림 — 피드/리뷰/댓글/답댓글/댓글 좋아요", example = "true")
+        Boolean myActivityEnabled,
 
-        @Schema(description = "내 리뷰에 좋아요", example = "true")
-        Boolean likeReviewEnabled,
+        @Schema(description = "콘텐츠/커뮤니티 알림 — 오늘의 피드/HOT 토픽룸 선정", example = "true")
+        Boolean contentCommunityEnabled,
 
-        @Schema(description = "내 피드 댓글에 좋아요", example = "true")
-        Boolean likeCommentEnabled,
+        @Schema(description = "이벤트/혜택 알림 — 운영자 발송 이벤트/광고", example = "false")
+        Boolean eventBenefitEnabled,
 
-        @Schema(description = "내 피드에 댓글", example = "true")
-        Boolean commentOnFeedEnabled,
-
-        @Schema(description = "내 댓글에 답댓글", example = "true")
-        Boolean replyOnCommentEnabled,
-
-        @Schema(description = "내 피드가 오늘의 피드로 선정", example = "true")
-        Boolean todayFeedEnabled,
-
-        @Schema(description = "내가 참여한 토픽룸이 HOT으로 선정", example = "true")
-        Boolean hotTopicRoomEnabled,
-
-        /* ─────────── 마케팅/광고 ─────────── */
-        @Schema(description = "운영자 발송 이벤트/광고", example = "false")
-        Boolean marketingEnabled
+        @Schema(description = "운영/정책 알림 — 신고 처리/이용 제한/약관 업데이트 등", example = "true")
+        Boolean operationPolicyEnabled
 ) {
     public UpdateNotificationSettingCommand toCommand() {
         return new UpdateNotificationSettingCommand(
-                likeFeedEnabled,
-                likeReviewEnabled,
-                likeCommentEnabled,
-                commentOnFeedEnabled,
-                replyOnCommentEnabled,
-                todayFeedEnabled,
-                hotTopicRoomEnabled,
-                marketingEnabled
+                myActivityEnabled,
+                myActivityEnabled,
+                myActivityEnabled,
+                myActivityEnabled,
+                myActivityEnabled,
+                contentCommunityEnabled,
+                contentCommunityEnabled,
+                eventBenefitEnabled,
+                operationPolicyEnabled
         );
     }
 }

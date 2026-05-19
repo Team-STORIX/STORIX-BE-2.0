@@ -45,6 +45,10 @@ public class NotificationSetting extends BaseTimeEntity {
     @Column(name = "marketing_enabled", nullable = false)
     private boolean marketingEnabled;
 
+    // 운영/정책 수신 여부
+    @Column(name = "operation_policy_enabled", nullable = false)
+    private boolean operationPolicyEnabled;
+
 
     /** 생성자 메서드 */
     // 신규 유저용 기본값 — 마케팅만 OFF, 나머지 ON
@@ -59,6 +63,7 @@ public class NotificationSetting extends BaseTimeEntity {
         p.todayFeedEnabled = true;
         p.hotTopicRoomEnabled = true;
         p.marketingEnabled = false;
+        p.operationPolicyEnabled = true;
         return p;
     }
 
@@ -72,7 +77,8 @@ public class NotificationSetting extends BaseTimeEntity {
                        Boolean replyOnCommentEnabled,
                        Boolean todayFeedEnabled,
                        Boolean hotTopicRoomEnabled,
-                       Boolean marketingEnabled) {
+                       Boolean marketingEnabled,
+                       Boolean operationPolicyEnabled) {
         if (likeFeedEnabled != null) this.likeFeedEnabled = likeFeedEnabled;
         if (likeReviewEnabled != null) this.likeReviewEnabled = likeReviewEnabled;
         if (likeCommentEnabled != null) this.likeCommentEnabled = likeCommentEnabled;
@@ -81,9 +87,10 @@ public class NotificationSetting extends BaseTimeEntity {
         if (todayFeedEnabled != null) this.todayFeedEnabled = todayFeedEnabled;
         if (hotTopicRoomEnabled != null) this.hotTopicRoomEnabled = hotTopicRoomEnabled;
         if (marketingEnabled != null) this.marketingEnabled = marketingEnabled;
+        if (operationPolicyEnabled != null) this.operationPolicyEnabled = operationPolicyEnabled;
     }
 
-    // 알림 타입별 수신 여부
+    // 알림 타입별 수신 여부 — 푸시 발송 동의 판정용 (인앱 저장은 토글 무관)
     public boolean acceptsType(NotificationType type) {
         return switch (type) {
             // 서비스 알림 — 타입별 토글
@@ -96,10 +103,10 @@ public class NotificationSetting extends BaseTimeEntity {
             case HOT_TOPIC_ROOM     -> hotTopicRoomEnabled;
             // 마케팅/광고
             case MARKETING          -> marketingEnabled;
-            // 운영 정책상 알림 — 수신 동의 무관, 항상 발송
+            // 운영/정책
             case REPORT_RECEIVED, REPORT_PROCESSED,
                  RESTRICTION_7D, RESTRICTION_30D,
-                 TOS_UPDATE, PRIVACY_UPDATE, FEATURE_UPDATE -> true;
+                 TOS_UPDATE, PRIVACY_UPDATE, FEATURE_UPDATE -> operationPolicyEnabled;
         };
     }
 }
