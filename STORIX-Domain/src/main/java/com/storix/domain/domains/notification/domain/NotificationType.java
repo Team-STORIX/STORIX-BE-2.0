@@ -29,10 +29,12 @@ public enum NotificationType {
     FEATURE_UPDATE;    // 신기능 업데이트
 
 
-    // 일시 정지(SUSPENDED) 유저에게도 푸시를 발송할지 여부 — 서비스 이용 제한 안내만
+    // 일시 정지(SUSPENDED) 유저에게도 푸시 알림을 발송할지 여부 (운영/정책 알림만 발송)
     public boolean deliverableToSuspendedUser() {
         return switch (this) {
-            case RESTRICTION_7D, RESTRICTION_30D -> true;
+            case REPORT_RECEIVED, REPORT_PROCESSED,
+                 RESTRICTION_7D, RESTRICTION_30D,
+                 TOS_UPDATE, PRIVACY_UPDATE, FEATURE_UPDATE -> true;
             default -> false;
         };
     }
