@@ -23,14 +23,14 @@ public class WorksDetailReactionService {
     @Transactional
     public ReviewLikeToggleResponse toggleReviewLike(Long userId, Long reviewId) {
 
-        // 리뷰 작성자 조회
-        Long reviewAuthorUserId = reviewAdaptor.findReviewerIdById(reviewId);
-
+        // unlike > 작성자 조회 불필요
         int isDeleted = reviewLikeAdaptor.isReviewLikeDeleted(userId, reviewId);
         if (isDeleted == 1) {
             return reviewLikeAdaptor.deleteReviewLike(reviewId);
         }
 
+        // like > 알림 발행을 위해 리뷰 작성자 조회
+        Long reviewAuthorUserId = reviewAdaptor.findReviewerIdById(reviewId);
         ReviewLikeToggleResponse response = reviewLikeAdaptor.insertReviewLike(userId, reviewId);
         publishReviewLikeNotification(userId, reviewId, reviewAuthorUserId);
         return response;
