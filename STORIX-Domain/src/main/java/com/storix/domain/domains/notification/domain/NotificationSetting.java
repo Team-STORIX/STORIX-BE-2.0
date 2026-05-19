@@ -69,7 +69,7 @@ public class NotificationSetting extends BaseTimeEntity {
 
 
     /** 비즈니스 메서드 */
-    // 부분 갱신 — null 인자는 변경하지 않음
+    // 부분 갱신 — null 인자는 변경하지 않음 (marketing 은 changeMarketing 으로 분리)
     public void update(Boolean likeFeedEnabled,
                        Boolean likeReviewEnabled,
                        Boolean likeCommentEnabled,
@@ -77,7 +77,6 @@ public class NotificationSetting extends BaseTimeEntity {
                        Boolean replyOnCommentEnabled,
                        Boolean todayFeedEnabled,
                        Boolean hotTopicRoomEnabled,
-                       Boolean marketingEnabled,
                        Boolean operationPolicyEnabled) {
         if (likeFeedEnabled != null) this.likeFeedEnabled = likeFeedEnabled;
         if (likeReviewEnabled != null) this.likeReviewEnabled = likeReviewEnabled;
@@ -86,8 +85,12 @@ public class NotificationSetting extends BaseTimeEntity {
         if (replyOnCommentEnabled != null) this.replyOnCommentEnabled = replyOnCommentEnabled;
         if (todayFeedEnabled != null) this.todayFeedEnabled = todayFeedEnabled;
         if (hotTopicRoomEnabled != null) this.hotTopicRoomEnabled = hotTopicRoomEnabled;
-        if (marketingEnabled != null) this.marketingEnabled = marketingEnabled;
         if (operationPolicyEnabled != null) this.operationPolicyEnabled = operationPolicyEnabled;
+    }
+
+    // 마케팅 수신 동의 단일 갱신 (회원가입 직후 모달 / 설정 페이지 분리 API 용)
+    public void changeMarketing(boolean enabled) {
+        this.marketingEnabled = enabled;
     }
 
     // 알림 타입별 수신 여부 — 푸시 발송 동의 판정용 (인앱 저장은 토글 무관)

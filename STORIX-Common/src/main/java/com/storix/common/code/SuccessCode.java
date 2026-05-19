@@ -19,6 +19,7 @@ public enum SuccessCode {
     NOTIFICATION_PREFERENCE_LOAD_SUCCESS(HttpStatus.OK, "NOTI2006", "알림 설정을 성공적으로 조회했습니다."),
     NOTIFICATION_PREFERENCE_UPDATE_SUCCESS(HttpStatus.OK, "NOTI2007", "알림 설정이 변경되었습니다."),
     NOTIFICATION_TEST_PUSH_SUCCESS(HttpStatus.OK, "NOTI2008", "테스트 푸시 알림 전송에 성공했습니다."),
+    NOTIFICATION_MARKETING_CONSENT_UPDATE_SUCCESS(HttpStatus.OK, "NOTI2009", "마케팅 알림 동의 상태가 변경되었습니다."),
 
     // PushDevice success
     DEVICE_SYNC_SUCCESS(HttpStatus.OK, "DEVICE2001", "디바이스 동기화에 성공했습니다."),
