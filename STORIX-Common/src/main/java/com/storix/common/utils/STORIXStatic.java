@@ -68,4 +68,19 @@ public class STORIXStatic {
         public static final int CONTENT_PREVIEW_MAX = 10;
         public static final String CONTENT_PREVIEW_SUFFIX = "...";
     }
+
+    // 사용자 이력 — 마케팅 동의/거부 모달 표시 문구
+    public static class UserHistory {
+
+        // 발신자 (DB 컬럼에 저장되는 값 — 향후 변동 대비 컬럼 보관)
+        public static final String SENDER_TEAM_STORIX = "팀 스토릭스";
+
+        // 타이틀
+        public static final String TITLE_MARKETING_AGREE  = "이벤트/혜택 알림 동의 안내";
+        public static final String TITLE_MARKETING_REJECT = "이벤트/혜택 알림 거부 안내";
+
+        // 처리 내용
+        public static final String DESC_MARKETING_AGREE   = "알림 동의 처리 완료";
+        public static final String DESC_MARKETING_REJECT  = "알림 거부 처리 완료";
+    }
 }

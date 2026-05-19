@@ -1,7 +1,9 @@
 package com.storix.api.domain.notification.controller;
 
 import com.storix.api.domain.notification.controller.dto.FcmSendRequest;
+import com.storix.api.domain.notification.controller.dto.MarketingConsentRequest;
 import com.storix.api.domain.notification.controller.dto.NotificationDispatchTestRequest;
+import com.storix.api.domain.notification.usecase.MarketingConsentUseCase;
 import com.storix.api.domain.notification.usecase.NotificationSettingUseCase;
 import com.storix.api.domain.notification.usecase.NotificationTestUseCase;
 import com.storix.api.domain.notification.usecase.NotificationUseCase;
@@ -9,6 +11,7 @@ import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.notification.dto.NotificationResponseDto;
 import com.storix.domain.domains.notification.dto.NotificationSettingResponse;
 import com.storix.domain.domains.notification.dto.UpdateNotificationSettingRequest;
+import com.storix.domain.domains.notification.dto.MarketingConsentResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,6 +31,7 @@ public class NotificationController {
     private final NotificationUseCase notificationUseCase;
     private final NotificationSettingUseCase notificationSettingUseCase;
     private final NotificationTestUseCase notificationTestUseCase;
+    private final MarketingConsentUseCase marketingConsentUseCase;
 
     /** 사용자 알림함 */
     // 1. 전체 알림 목록 조회
@@ -89,6 +93,16 @@ public class NotificationController {
             @RequestBody UpdateNotificationSettingRequest request
     ) {
         return notificationSettingUseCase.updateNotificationSetting(authUser.getUserId(), request);
+    }
+
+    // 7. 마케팅 수신 동의/거부
+    @PutMapping("/marketing-consent")
+    @Operation(summary = "마케팅 수신 동의/거부", description = "이벤트/혜택 알림 동의 또는 거부를 처리하고 로그를 DB에 저장합니다.")
+    public CustomResponse<MarketingConsentResponse> updateMarketingConsent(
+            @AuthenticationPrincipal AuthUserDetails authUser,
+            @RequestBody @Valid MarketingConsentRequest request
+    ) {
+        return marketingConsentUseCase.updateMarketingConsent(authUser.getUserId(), request.agreed());
     }
 
 

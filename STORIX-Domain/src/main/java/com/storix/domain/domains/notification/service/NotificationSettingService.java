@@ -31,7 +31,6 @@ public class NotificationSettingService {
                 cmd.replyOnCommentEnabled(),
                 cmd.todayFeedEnabled(),
                 cmd.hotTopicRoomEnabled(),
-                cmd.marketingEnabled(),
                 cmd.operationPolicyEnabled()
         );
         return setting;
