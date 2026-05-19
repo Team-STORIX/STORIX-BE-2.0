@@ -1,5 +1,6 @@
 package com.storix.api.global;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.storix.api.domain.user.helper.CookieHelper;
 import com.storix.common.code.ErrorCode;
 import com.storix.common.payload.ErrorResponse;
@@ -12,14 +13,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -154,8 +159,56 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    /**
+     * 요청 body 파싱 실패 — Jackson 단계에서 발생.
+     * cause 가 InvalidFormatException (enum 값 불일치 / 타입 변환 실패) 이면
+     * 어느 필드가 어떤 값으로 거부됐는지, enum 의 경우 허용값 목록까지 응답에 포함.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException e) {
+
+        log.warn("Body parse exception", e);
+
+        if (e.getCause() instanceof InvalidFormatException ife) {
+            String field = ife.getPath().stream()
+                    .map(InvalidFormatException.Reference::getFieldName)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining("."));
+            if (field.isEmpty()) field = "unknown";
+
+            Class<?> target = ife.getTargetType();
+            String reason;
+            if (target != null && target.isEnum()) {
+                String allowed = Arrays.stream(target.getEnumConstants())
+                        .map(Object::toString)
+                        .collect(Collectors.joining(", "));
+                reason = "허용되지 않는 값입니다. 허용값: [" + allowed + "]";
+            } else {
+                String typeName = target != null ? target.getSimpleName() : "올바른 타입";
+                reason = typeName + " 형식이 아닙니다.";
+            }
+
+            FieldErrorResponse fer = FieldErrorResponse.builder()
+                    .field(field)
+                    .rejectedValue(ife.getValue())
+                    .reason(reason)
+                    .build();
+
+            ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
+            return ResponseEntity
+                    .status(errorCode.getHttpStatus())
+                    .body(new ErrorResponse(errorCode, List.of(fer)));
+        }
+
+        ErrorCode errorCode = ErrorCode.INVALID_JSON_REQUEST;
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(new ErrorResponse(errorCode));
+    }
+
+    /** 그 외 변환 오류 (response 직렬화 실패 등) — fallback */
     @ExceptionHandler(HttpMessageConversionException.class)
-    public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageConversionException e) {
+    public ResponseEntity<ErrorResponse> handleConversion(HttpMessageConversionException e) {
 
         log.warn("Format exception", e);
 
