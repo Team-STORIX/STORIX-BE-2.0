@@ -4,11 +4,13 @@ import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
+import com.storix.domain.domains.notification.domain.NotificationSetting;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
 import com.storix.domain.domains.user.dto.OnboardingPrincipal;
-import com.storix.domain.domains.user.dto.ReaderSignupRequest;
+import com.storix.domain.domains.user.dto.ReaderSignUpData;
 import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
@@ -32,6 +34,7 @@ public class AuthService {
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
 
     private final PushDeviceAdaptor pushDeviceAdaptor;
+    private final NotificationSettingAdaptor notificationSettingAdaptor;
 
     private final OnboardingWorksHelper onboardingWorksHelper; // -> usecase 리팩토링 필요
     private final GenreScorePublisher genreScorePublisher;
@@ -60,7 +63,7 @@ public class AuthService {
 
     // 독자 회원 가입 (소셜 로그인)
     @Transactional
-    public AuthUserDetails signUpReaderUser(ReaderSignupRequest cmd, String jti) {
+    public AuthUserDetails signUpReaderUser(ReaderSignUpData cmd, String jti) {
 
         OnboardingPrincipal principal = tokenAdaptor.findOnboardingPrincipalByJti(jti);
         OAuthProvider provider = principal.provider(); String oid = principal.oid();
@@ -75,7 +78,7 @@ public class AuthService {
         userAdaptor.checkNicknameDuplicate(cmd.nickName());
 
         CreateReaderUserCommand m = new CreateReaderUserCommand(
-                cmd.marketingAgree(),
+                cmd.termsAgree(),
                 provider,
                 oid,
                 cmd.nickName(),
@@ -94,6 +97,9 @@ public class AuthService {
                     GenreScoreEventType.ONBOARDING_SELECT);
         }
         libraryAdaptor.initLibrary(authUserDetails.getUserId());
+
+        // 알림 설정 기본값 생성 (마케팅만 OFF, 나머지 ON)
+        notificationSettingAdaptor.save(authUserDetails.getUserId());
 
         return authUserDetails;
     }
@@ -133,7 +139,10 @@ public class AuthService {
         favoriteWorksAdaptor.deleteFavoriteWorks(userId);
         libraryAdaptor.deleteLibrary(userId);
 
-        // 3. 푸시 알림 디바아스 일괄 비활성화
+        // 3. 푸시 알림 디바이스 일괄 비활성화
         pushDeviceAdaptor.deactivateAllByUserId(userId);
+
+        // 4. 알림 설정 삭제 (재가입 시 새 row 생성됨)
+        notificationSettingAdaptor.deleteByUserId(userId);
     }
 }

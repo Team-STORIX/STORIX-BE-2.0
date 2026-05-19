@@ -1,5 +1,6 @@
-package com.storix.domain.domains.user.dto;
+package com.storix.api.domain.user.controller.dto;
 
+import com.storix.domain.domains.user.dto.ReaderSignUpData;
 import com.storix.domain.domains.works.domain.Genre;
 import jakarta.validation.constraints.*;
 
@@ -29,4 +30,8 @@ public record ReaderSignupRequest(
     Set<Long> favoriteWorksIdList
 
 ) {
+    // [v1] marketingAgree 를 termsAgree 로 매핑
+    public ReaderSignUpData toData() {
+        return new ReaderSignUpData(marketingAgree, nickName, profileDescription, favoriteGenreList, favoriteWorksIdList);
+    }
 }

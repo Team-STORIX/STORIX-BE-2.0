@@ -52,6 +52,12 @@ public class ReaderFeedAdaptor {
         }
     }
 
+    // 게시글 작성자 userId 조회
+    public Long findBoardOwnerUserId(Long boardId) {
+        return readerBoardRepository.findUserIdById(boardId)
+                .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
+    }
+
     // 전체 게시글 확인
     public Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(Pageable pageable) {
         return readerBoardRepository.findAllByOrderByCreatedAtDesc(pageable);
@@ -148,6 +154,18 @@ public class ReaderFeedAdaptor {
         }
     }
 
+    // 댓글 조회 (boardId 일치 검증 포함)
+    public ReaderBoardReply findReplyByBoardIdAndReplyId(Long boardId, Long replyId) {
+        return readerBoardReplyRepository.findByIdAndBoard_Id(replyId, boardId)
+                .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
+    }
+
+    // 댓글 작성자 userId 조회 (boardId 일치 검증 포함)
+    public Long findReplyOwnerUserId(Long boardId, Long replyId) {
+        return readerBoardReplyRepository.findUserIdByIdAndBoardId(replyId, boardId)
+                .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
+    }
+
     // 댓글 좋아요 관련
     public int isReplyLikeDeleted(Long userId, Long replyId) {
         return readerBoardReplyLikeRepository.deleteLike(userId, replyId);
@@ -216,12 +234,12 @@ public class ReaderFeedAdaptor {
         return readerBoardReplyRepository.findAllByParentReplyId(parentReplyId, pageable);
     }
 
-    // 게시물 - 댓글 정보 확인
+    // 게시물 댓글 정보 확인
     public Slice<ReaderBoardReply> findAllByBoardId(Long boardId, Pageable pageable) {
         return readerBoardReplyRepository.findAllByBoard_Id(boardId, pageable);
     }
 
-    // 게시물 - 댓글 좋아요 여부 확인
+    // 게시물 댓글 좋아요 여부 확인
     public Set<Long> findLikedReplyIds(Long userId, List<Long> replyIds) {
         if (userId == null || replyIds == null || replyIds.isEmpty()) {
             return Collections.emptySet();
@@ -230,12 +248,12 @@ public class ReaderFeedAdaptor {
         return new HashSet<>(readerBoardReplyLikeRepository.findLikedReplyIds(userId, replyIds));
     }
 
-    // 프로필 - 댓글 정보 확인
+    // 프로필 댓글 정보 확인
     public Slice<ReaderBoardReply> findAllByUserId(Long userId, Pageable pageable) {
         return readerBoardReplyRepository.findAllByUserId(userId, pageable);
     }
 
-    // 프로필 - 좋아요한 게시글 정보 확인
+    // 프로필 좋아요한 게시글 정보 확인
     public Slice<ReaderBoard> findAllLikedReaderBoards(Long userId, Pageable pageable) {
         return readerBoardRepository.findAllLikedReaderBoards(userId, pageable);
     }
