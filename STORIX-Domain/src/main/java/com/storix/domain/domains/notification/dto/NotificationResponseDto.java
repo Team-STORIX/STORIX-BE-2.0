@@ -1,6 +1,7 @@
 package com.storix.domain.domains.notification.dto;
 
 import com.storix.domain.domains.notification.domain.Notification;
+import com.storix.domain.domains.notification.domain.NotificationCategory;
 import com.storix.domain.domains.notification.domain.NotificationType;
 import com.storix.domain.domains.notification.domain.TargetType;
 import lombok.Builder;
@@ -14,6 +15,7 @@ public class NotificationResponseDto {
 
     private Long id;
     private NotificationType notificationType;
+    private NotificationCategory category;
     private TargetType targetType;
     private Long targetId;
     private Long parentTargetId;
@@ -26,7 +28,8 @@ public class NotificationResponseDto {
         return NotificationResponseDto.builder()
                 .id(notification.getId())
                 .notificationType(notification.getNotificationType())
-                .targetType(notification.getTargetType())
+                .category(notification.getNotificationType().category()) // 알림 분류 라벨 (UI 아이콘 / 그룹)
+                .targetType(notification.getTargetType()) // 알림 클릭 시 라우팅 대상 (페이지 이동)
                 .targetId(notification.getTargetId())
                 .parentTargetId(notification.getParentTargetId())
                 .title(notification.getTitle())
