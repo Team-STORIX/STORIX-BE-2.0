@@ -7,11 +7,14 @@ import com.storix.domain.domains.feed.exception.DuplicateFeedReplyReportExceptio
 import com.storix.domain.domains.feed.exception.DuplicateFeedReportException;
 import com.storix.domain.domains.feed.repository.FeedReplyReportRepository;
 import com.storix.domain.domains.feed.repository.FeedReportRepository;
+import com.storix.domain.domains.feed.repository.ReportCaseCountProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -38,19 +41,33 @@ public class FeedReportAdaptor {
         }
     }
 
-    public long countFeedReportsByReportCaseId(Long reportCaseId) {
-        return feedReportRepository.countByReportCaseId(reportCaseId);
+    public Map<Long, Long> countFeedReportsByReportCaseIds(List<Long> reportCaseIds) {
+        if (reportCaseIds == null || reportCaseIds.isEmpty()) {
+            return Map.of();
+        }
+        return toCountMap(feedReportRepository.countByReportCaseIds(reportCaseIds));
     }
 
     public List<FeedReport> findFeedReportsByReportCaseId(Long reportCaseId) {
         return feedReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCaseId);
     }
 
-    public long countFeedReplyReportsByReportCaseId(Long reportCaseId) {
-        return feedReplyReportRepository.countByReportCaseId(reportCaseId);
+    public Map<Long, Long> countFeedReplyReportsByReportCaseIds(List<Long> reportCaseIds) {
+        if (reportCaseIds == null || reportCaseIds.isEmpty()) {
+            return Map.of();
+        }
+        return toCountMap(feedReplyReportRepository.countByReportCaseIds(reportCaseIds));
     }
 
     public List<FeedReplyReport> findFeedReplyReportsByReportCaseId(Long reportCaseId) {
         return feedReplyReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCaseId);
+    }
+
+    private Map<Long, Long> toCountMap(List<ReportCaseCountProjection> rows) {
+        return rows.stream()
+                .collect(Collectors.toMap(
+                        ReportCaseCountProjection::getReportCaseId,
+                        ReportCaseCountProjection::getReportCount
+                ));
     }
 }
