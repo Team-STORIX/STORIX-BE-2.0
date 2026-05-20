@@ -1,6 +1,7 @@
 package com.storix.domain.domains.preference.repository;
 
 import com.storix.domain.domains.preference.domain.PreferenceExploration;
+import com.storix.domain.domains.preference.dto.ExplorationReactionWithCreatedAt;
 import com.storix.domain.domains.works.domain.Works;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,6 +31,11 @@ public interface ExplorationRepository extends JpaRepository<PreferenceExplorati
 
     @Query("SELECT pe.worksId FROM PreferenceExploration pe WHERE pe.userId = :userId")
     List<Long> findRespondedWorksIdsByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT new com.storix.domain.domains.preference.dto.ExplorationReactionWithCreatedAt(pe.worksId, pe.isLiked, pe.createdAt) " +
+            "FROM PreferenceExploration pe " +
+            "WHERE pe.userId = :userId")
+    List<ExplorationReactionWithCreatedAt> findExplorationsWithCreatedAtByUserId(@Param("userId") Long userId);
 
     // 유저가 특정 작품에 대해 이미 응답했는지 여부 확인
     boolean existsByUserIdAndWorksId(Long userId, Long worksId);

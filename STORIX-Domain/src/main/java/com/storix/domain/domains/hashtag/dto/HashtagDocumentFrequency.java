@@ -1,8 +1,7 @@
 package com.storix.domain.domains.hashtag.dto;
 
-public record HashtagInfo(
-        Long worksId,
+public record HashtagDocumentFrequency(
         Long hashtagId,
-        String hashtagName
+        Long documentFrequency
 ) {
 }
