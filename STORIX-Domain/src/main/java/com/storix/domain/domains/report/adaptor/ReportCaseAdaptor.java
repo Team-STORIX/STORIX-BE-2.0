@@ -17,22 +17,16 @@ import org.springframework.stereotype.Component;
 public class ReportCaseAdaptor {
 
     private final ReportCaseRepository reportCaseRepository;
+    private final ReportCaseTransactionAdaptor reportCaseTransactionAdaptor;
 
     public ReportCase findOrCreate(ReportTargetType targetType, Long targetId, Long reportedUserId) {
-        return reportCaseRepository.findByTargetTypeAndTargetId(targetType, targetId)
+        return reportCaseTransactionAdaptor.findByTarget(targetType, targetId)
                 .orElseGet(() -> {
                     try {
-                        return reportCaseRepository.save(
-                                ReportCase.builder()
-                                        .targetType(targetType)
-                                        .targetId(targetId)
-                                        .reportedUserId(reportedUserId)
-                                        .status(ReportStatus.RECEIVED)
-                                        .build()
-                        );
+                        return reportCaseTransactionAdaptor.create(targetType, targetId, reportedUserId);
                     } catch (DataIntegrityViolationException e) {
-                        return reportCaseRepository.findByTargetTypeAndTargetId(targetType, targetId)
-                                .orElseThrow();
+                        return reportCaseTransactionAdaptor.findByTarget(targetType, targetId)
+                                .orElseThrow(() -> e);
                     }
                 });
     }
