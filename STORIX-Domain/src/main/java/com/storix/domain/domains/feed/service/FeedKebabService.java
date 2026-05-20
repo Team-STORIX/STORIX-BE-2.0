@@ -40,7 +40,7 @@ public class FeedKebabService {
             throw SelfReportException.EXCEPTION;
         }
 
-        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED, boardId);
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED, boardId, reportedUserId);
 
         CreateFeedReportCommand cmd = new CreateFeedReportCommand(
                 userId,
@@ -68,7 +68,7 @@ public class FeedKebabService {
             throw SelfReportException.EXCEPTION;
         }
 
-        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED_REPLY, replyId);
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED_REPLY, replyId, reportedUserId);
 
         CreateFeedReportCommand cmd = new CreateFeedReportCommand(
                 userId,

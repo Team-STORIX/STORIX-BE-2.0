@@ -34,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,8 +59,20 @@ public class AdminReportQueryService {
     private final UserRepository userRepository;
 
     public Page<AdminReportListResponse> getReports(AdminReportSearchCondition condition, Pageable pageable) {
-        return reportCaseAdaptor.searchReportCases(condition, pageable)
-                .map(reportCase -> AdminReportListResponse.from(reportCase, countReports(reportCase)));
+        Page<ReportCase> page = reportCaseAdaptor.searchReportCases(condition, pageable);
+
+        List<Long> reportedUserIds = page.stream()
+                .map(ReportCase::getReportedUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, String> nickNames = loadNickNames(reportedUserIds);
+
+        return page.map(reportCase -> AdminReportListResponse.from(
+                reportCase,
+                countReports(reportCase),
+                nickNames.get(reportCase.getReportedUserId())
+        ));
     }
 
     public long countUnprocessedReports() {
@@ -230,7 +244,7 @@ public class AdminReportQueryService {
         Map<Long, String> nickNames = loadNickNames(collectUserIds(
                 reports.stream().map(TopicRoomReport::getReporterId).toList(),
                 collectUserIds(
-                        java.util.Collections.singletonList(reportedUserId),
+                        Collections.singletonList(reportedUserId),
                         chatMessages.stream().map(ChatMessageResponseDto::senderId).toList()
                 )
         ));
@@ -344,7 +358,7 @@ public class AdminReportQueryService {
 
     private Map<Long, String> loadNickNames(Collection<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
-            return Map.of();
+            return new HashMap<>();
         }
 
         return userRepository.findStandardProfileInfoByUserIds(List.copyOf(userIds)).stream()

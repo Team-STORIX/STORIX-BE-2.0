@@ -34,7 +34,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "   m.id, " +
             "   m.roomId, " +
             "   m.senderId, " +
-            "   COALESCE(u.nickName, '?????놁쓬'), " +
+            "   COALESCE(u.nickName, '알 수 없음'), " +
             "   m.message, " +
             "   m.messageType, " +
             "   m.createdAt " +
