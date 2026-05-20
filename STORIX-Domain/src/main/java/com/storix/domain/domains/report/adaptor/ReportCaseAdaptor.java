@@ -3,8 +3,11 @@ package com.storix.domain.domains.report.adaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
 import com.storix.domain.domains.report.repository.ReportCaseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,5 +25,13 @@ public class ReportCaseAdaptor {
                                 .status(ReportStatus.RECEIVED)
                                 .build()
                 ));
+    }
+
+    public Page<ReportCase> searchReportCases(AdminReportSearchCondition condition, Pageable pageable) {
+        return reportCaseRepository.searchReportCases(condition, pageable);
+    }
+
+    public long countByStatus(ReportStatus status) {
+        return reportCaseRepository.countByStatus(status);
     }
 }

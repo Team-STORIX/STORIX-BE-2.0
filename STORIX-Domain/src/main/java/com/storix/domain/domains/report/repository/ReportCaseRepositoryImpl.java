@@ -1,0 +1,89 @@
+package com.storix.domain.domains.report.repository;
+
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.storix.domain.domains.report.domain.ReportCase;
+import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.storix.domain.domains.report.domain.QReportCase.reportCase;
+
+@RequiredArgsConstructor
+public class ReportCaseRepositoryImpl implements ReportCaseRepositoryCustom {
+
+    private final JPAQueryFactory queryFactory;
+
+    @Override
+    public Page<ReportCase> searchReportCases(AdminReportSearchCondition condition, Pageable pageable) {
+        BooleanBuilder builder = buildCondition(condition);
+
+        List<ReportCase> results = queryFactory
+                .selectFrom(reportCase)
+                .where(builder)
+                .orderBy(getOrderSpecifiers(pageable.getSort()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(reportCase.count())
+                .from(reportCase)
+                .where(builder)
+                .fetchOne();
+
+        return new PageImpl<>(results, pageable, total != null ? total : 0);
+    }
+
+    private BooleanBuilder buildCondition(AdminReportSearchCondition condition) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if (condition == null) {
+            return builder;
+        }
+
+        if (condition.targetType() != null) {
+            builder.and(reportCase.targetType.eq(condition.targetType()));
+        }
+
+        if (condition.status() != null) {
+            builder.and(reportCase.status.eq(condition.status()));
+        }
+
+        if (condition.startAt() != null) {
+            builder.and(reportCase.createdAt.goe(condition.startAt()));
+        }
+
+        if (condition.endAt() != null) {
+            builder.and(reportCase.createdAt.loe(condition.endAt()));
+        }
+
+        return builder;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private OrderSpecifier<?>[] getOrderSpecifiers(Sort sort) {
+        List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
+        PathBuilder<ReportCase> entityPath = new PathBuilder<>(ReportCase.class, "reportCase");
+
+        if (sort.isUnsorted()) {
+            orderSpecifiers.add(new OrderSpecifier(Order.DESC, reportCase.createdAt));
+        }
+
+        for (Sort.Order order : sort) {
+            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+            orderSpecifiers.add(new OrderSpecifier(direction, entityPath.get(order.getProperty())));
+        }
+
+        return orderSpecifiers.toArray(new OrderSpecifier[0]);
+    }
+}

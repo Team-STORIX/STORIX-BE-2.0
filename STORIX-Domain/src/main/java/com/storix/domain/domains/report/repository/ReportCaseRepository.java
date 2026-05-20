@@ -1,12 +1,15 @@
 package com.storix.domain.domains.report.repository;
 
 import com.storix.domain.domains.report.domain.ReportCase;
+import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface ReportCaseRepository extends JpaRepository<ReportCase, Long> {
+public interface ReportCaseRepository extends JpaRepository<ReportCase, Long>, ReportCaseRepositoryCustom {
 
     Optional<ReportCase> findByTargetTypeAndTargetId(ReportTargetType targetType, Long targetId);
+
+    long countByStatus(ReportStatus status);
 }
