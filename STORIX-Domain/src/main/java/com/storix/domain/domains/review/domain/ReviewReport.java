@@ -36,12 +36,20 @@ public class ReviewReport extends BaseTimeEntity {
     @Column(length = 100)
     private String otherReason;
 
-    @Builder
+    @Column(name = "report_case_id")
+    private Long reportCaseId;
+
     public ReviewReport(Long reporterId, Long reportedUserId, Long boardId, ReportReason reason, String otherReason) {
+        this(reporterId, reportedUserId, boardId, reason, otherReason, null);
+    }
+
+    @Builder
+    public ReviewReport(Long reporterId, Long reportedUserId, Long boardId, ReportReason reason, String otherReason, Long reportCaseId) {
         this.reporterId = reporterId;
         this.reportedUserId = reportedUserId;
         this.reviewId = boardId;
         this.reason = reason;
         this.otherReason = otherReason;
+        this.reportCaseId = reportCaseId;
     }
 }
