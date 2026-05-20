@@ -238,7 +238,7 @@ public class AdminReportQueryService {
                         report.getReporterId(),
                         nickName(report.getReporterId(), nickNames),
                         report.getReportedUserId(),
-                        report.getReason(),
+                        reasonName(report.getReason()),
                         report.getOtherReason(),
                         report.getCreatedAt()
                 ))
@@ -261,7 +261,7 @@ public class AdminReportQueryService {
                 reportCase,
                 summary(
                         reportedUserId, nickNames, reviewLocation(review.reviewId()),
-                        firstReport != null ? firstReport.getReason() : null,
+                        firstReport != null ? reasonName(firstReport.getReason()) : null,
                         firstReport != null ? firstReport.getOtherReason() : null,
                         reports.size(), firstReportedAt(reportItems)
                 ),
@@ -293,7 +293,7 @@ public class AdminReportQueryService {
                         report.getReporterId(),
                         nickName(report.getReporterId(), nickNames),
                         report.getReportedUserId(),
-                        report.getReason(),
+                        reasonName(report.getReason()),
                         report.getOtherReason(),
                         report.getCreatedAt()
                 ))
@@ -327,7 +327,7 @@ public class AdminReportQueryService {
                 reportCase,
                 summary(
                         reportedUserId, nickNames, topicRoomLocation(room.getId()),
-                        firstReport != null ? firstReport.getReason() : null,
+                        firstReport != null ? reasonName(firstReport.getReason()) : null,
                         firstReport != null ? firstReport.getOtherReason() : null,
                         reports.size(), firstReportedAt(reportItems)
                 ),
@@ -362,7 +362,7 @@ public class AdminReportQueryService {
             Long reportedUserId,
             Map<Long, String> nickNames,
             String location,
-            com.storix.domain.domains.topicroom.domain.enums.ReportReason reason,
+            String reason,
             String otherReason,
             long reportCount,
             LocalDateTime firstReportedAt
@@ -376,6 +376,10 @@ public class AdminReportQueryService {
                 reportCount,
                 firstReportedAt
         );
+    }
+
+    private String reasonName(Enum<?> reason) {
+        return reason == null ? null : reason.name();
     }
 
     @SafeVarargs
