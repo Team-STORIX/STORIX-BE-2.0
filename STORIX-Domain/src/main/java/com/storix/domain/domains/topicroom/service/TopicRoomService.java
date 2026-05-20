@@ -2,6 +2,9 @@ package com.storix.domain.domains.topicroom.service;
 
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
+import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
+import com.storix.domain.domains.report.domain.ReportCase;
+import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
@@ -52,6 +55,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final ProfanityFilterService profanityFilterService;
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
     private final GenreScorePublisher genreScorePublisher;
+    private final ReportCaseAdaptor reportCaseAdaptor;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -258,12 +262,15 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw SelfReportException.EXCEPTION;
         }
 
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.TOPIC_ROOM, roomId);
+
         TopicRoomReport report = TopicRoomReport.builder()
                 .reporterId(reporterId)
                 .reportedUserId(request.getReportedUserId())
                 .topicRoomId(roomId)
                 .reason(request.getReason())
                 .otherReason(request.getOtherReason())
+                .reportCaseId(reportCase.getId())
                 .build();
         recordTopicRoomPort.saveReport(report);
     }
