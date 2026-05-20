@@ -49,4 +49,12 @@ public class ReportCaseAdaptor {
     public long countByStatus(ReportStatus status) {
         return reportCaseRepository.countByStatus(status);
     }
+
+    public long countByReportedUserId(Long reportedUserId) {
+        return reportCaseRepository.countByReportedUserId(reportedUserId);
+    }
+
+    public long countByReportedUserIdAndStatus(Long reportedUserId, ReportStatus status) {
+        return reportCaseRepository.countByReportedUserIdAndStatus(reportedUserId, status);
+    }
 }

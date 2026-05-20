@@ -12,4 +12,8 @@ public interface ReportCaseRepository extends JpaRepository<ReportCase, Long>, R
     Optional<ReportCase> findByTargetTypeAndTargetId(ReportTargetType targetType, Long targetId);
 
     long countByStatus(ReportStatus status);
+
+    long countByReportedUserId(Long reportedUserId);
+
+    long countByReportedUserIdAndStatus(Long reportedUserId, ReportStatus status);
 }

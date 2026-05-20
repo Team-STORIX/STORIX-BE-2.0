@@ -67,6 +67,10 @@ public class ReportCaseRepositoryImpl implements ReportCaseRepositoryCustom {
             builder.and(reportCase.createdAt.loe(condition.endAt()));
         }
 
+        if (condition.reportedUserId() != null) {
+            builder.and(reportCase.reportedUserId.eq(condition.reportedUserId()));
+        }
+
         return builder;
     }
 

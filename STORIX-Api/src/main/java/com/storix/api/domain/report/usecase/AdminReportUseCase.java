@@ -8,6 +8,7 @@ import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
+import com.storix.domain.domains.report.dto.AdminUserReportSummaryResponse;
 import com.storix.domain.domains.report.service.AdminReportQueryService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.Role;
@@ -30,15 +31,24 @@ public class AdminReportUseCase {
             ReportStatus status,
             LocalDateTime startAt,
             LocalDateTime endAt,
+            Long reportedUserId,
             Pageable pageable
     ) {
         validateAdmin(authUserDetails);
 
         Page<AdminReportListResponse> result = adminReportQueryService.getReports(
-                new AdminReportSearchCondition(targetType, status, startAt, endAt),
+                new AdminReportSearchCondition(targetType, status, startAt, endAt, reportedUserId),
                 pageable
         );
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, result);
+    }
+
+    public CustomResponse<AdminUserReportSummaryResponse> getUserReportSummary(
+            AuthUserDetails authUserDetails,
+            Long userId
+    ) {
+        validateAdmin(authUserDetails);
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminReportQueryService.getUserReportSummary(userId));
     }
 
     public CustomResponse<Long> getUnprocessedCount(AuthUserDetails authUserDetails) {
