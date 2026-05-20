@@ -3,6 +3,9 @@ package com.storix.domain.domains.review.service;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
+import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
+import com.storix.domain.domains.report.domain.ReportCase;
+import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
 import com.storix.domain.domains.review.adaptor.ReviewReportAdaptor;
 import com.storix.domain.domains.review.dto.ModifyReviewRequest;
@@ -23,6 +26,7 @@ public class WorksDetailKebabService {
     private final ReviewAdaptor reviewAdaptor;
     private final ReviewLikeAdaptor reviewLikeAdaptor;
     private final ReviewReportAdaptor reviewReportAdaptor;
+    private final ReportCaseAdaptor reportCaseAdaptor;
     private final LibraryAdaptor libraryAdaptor;
 
     private final LoadWorksPort loadWorksPort;
@@ -70,12 +74,15 @@ public class WorksDetailKebabService {
             throw SelfReportException.EXCEPTION;
         }
 
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.REVIEW, reviewId);
+
         CreateWorksDetailReportCommand cmd = new CreateWorksDetailReportCommand(
                 userId,
                 actualReviewerId,
                 reviewId,
                 reason,
-                otherReason
+                otherReason,
+                reportCase.getId()
         );
 
         reviewReportAdaptor.saveReport(cmd);
