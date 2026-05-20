@@ -76,12 +76,14 @@ public class ReportCaseRepositoryImpl implements ReportCaseRepositoryCustom {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private OrderSpecifier<?>[] getOrderSpecifiers(Sort sort) {
+        if (sort.isUnsorted()) {
+            return new OrderSpecifier[]{
+                    new OrderSpecifier<>(Order.DESC, reportCase.createdAt)
+            };
+        }
+
         List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
         PathBuilder<ReportCase> entityPath = new PathBuilder<>(ReportCase.class, "reportCase");
-
-        if (sort.isUnsorted()) {
-            orderSpecifiers.add(new OrderSpecifier(Order.DESC, reportCase.createdAt));
-        }
 
         for (Sort.Order order : sort) {
             Order direction = order.isAscending() ? Order.ASC : Order.DESC;
