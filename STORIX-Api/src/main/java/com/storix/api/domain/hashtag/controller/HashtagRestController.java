@@ -2,7 +2,6 @@ package com.storix.api.domain.hashtag.controller;
 
 import com.storix.api.domain.hashtag.usecase.HashtagUseCase;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
-import com.storix.domain.domains.hashtag.service.HashtagRecommendService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
@@ -29,7 +28,6 @@ public class HashtagRestController {
     public CustomResponse<List<HashtagRecommendResponseDto>> getRecommendedHashtags(
             @AuthenticationPrincipal AuthUserDetails authUserDetails
             ) {
-
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
                 hashtagUseCase.getHashtagRecommendation(authUserDetails.getUserId())

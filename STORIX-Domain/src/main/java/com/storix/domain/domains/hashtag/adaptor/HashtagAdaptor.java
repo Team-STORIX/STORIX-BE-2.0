@@ -1,5 +1,6 @@
 package com.storix.domain.domains.hashtag.adaptor;
 
+import com.storix.domain.domains.hashtag.dto.HashtagDocumentFrequency;
 import com.storix.domain.domains.hashtag.dto.HashtagInfo;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
 import com.storix.domain.domains.hashtag.repository.HashtagRepository;
@@ -29,6 +30,31 @@ public class HashtagAdaptor {
                         HashtagInfo::worksId,
                         LinkedHashMap::new,
                         Collectors.mapping(HashtagInfo::hashtagName, Collectors.toList())
+                ));
+    }
+
+    public Map<Long, List<HashtagInfo>> findHashtagInfosByWorksIds(List<Long> worksIds) {
+        if (worksIds == null || worksIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return hashtagRepository.findAllByWorksIds(worksIds).stream()
+                .collect(Collectors.groupingBy(
+                        HashtagInfo::worksId,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+    }
+
+    public Map<Long, Long> findDocumentFrequencyMap(Set<Long> hashtagIds) {
+        if (hashtagIds == null || hashtagIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return hashtagRepository.findDocumentFrequencies(hashtagIds).stream()
+                .collect(Collectors.toMap(
+                        HashtagDocumentFrequency::hashtagId,
+                        HashtagDocumentFrequency::documentFrequency
                 ));
     }
 
