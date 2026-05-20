@@ -10,6 +10,15 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Table(
+        name = "topic_room_report",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_topic_room_report_reporter_reported_room",
+                        columnNames = {"reporter_id", "reported_user_id", "topic_room_id"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TopicRoomReport extends BaseTimeEntity {
 

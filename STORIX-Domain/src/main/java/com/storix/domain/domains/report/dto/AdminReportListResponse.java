@@ -11,6 +11,8 @@ public record AdminReportListResponse(
         Long reportCaseId,
         ReportTargetType targetType,
         Long targetId,
+        Long reportedUserId,
+        String reportedUserNickName,
         ReportStatus status,
         long reportCount,
         Long processedByAdminId,
@@ -19,11 +21,13 @@ public record AdminReportListResponse(
         LocalDateTime processedAt
 ) {
 
-    public static AdminReportListResponse from(ReportCase reportCase, long reportCount) {
+    public static AdminReportListResponse from(ReportCase reportCase, long reportCount, String reportedUserNickName) {
         return new AdminReportListResponse(
                 reportCase.getId(),
                 reportCase.getTargetType(),
                 reportCase.getTargetId(),
+                reportCase.getReportedUserId(),
+                reportedUserNickName,
                 reportCase.getStatus(),
                 reportCount,
                 reportCase.getProcessedByAdminId(),

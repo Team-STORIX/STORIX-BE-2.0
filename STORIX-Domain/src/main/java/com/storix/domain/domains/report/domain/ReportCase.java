@@ -43,6 +43,9 @@ public class ReportCase extends BaseTimeEntity {
     @Column(name = "target_id", nullable = false)
     private Long targetId;
 
+    @Column(name = "reported_user_id")
+    private Long reportedUserId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ReportStatus status;
@@ -64,6 +67,7 @@ public class ReportCase extends BaseTimeEntity {
     public ReportCase(
             ReportTargetType targetType,
             Long targetId,
+            Long reportedUserId,
             ReportStatus status,
             Long processedByAdminId,
             String processMemo,
@@ -72,6 +76,7 @@ public class ReportCase extends BaseTimeEntity {
     ) {
         this.targetType = targetType;
         this.targetId = targetId;
+        this.reportedUserId = reportedUserId;
         this.status = status != null ? status : ReportStatus.RECEIVED;
         this.processedByAdminId = processedByAdminId;
         this.processMemo = processMemo;

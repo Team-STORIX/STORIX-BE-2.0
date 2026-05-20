@@ -74,7 +74,7 @@ public class WorksDetailKebabService {
             throw SelfReportException.EXCEPTION;
         }
 
-        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.REVIEW, reviewId);
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.REVIEW, reviewId, actualReviewerId);
 
         CreateWorksDetailReportCommand cmd = new CreateWorksDetailReportCommand(
                 userId,

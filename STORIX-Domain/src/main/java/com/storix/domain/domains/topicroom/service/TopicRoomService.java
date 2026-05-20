@@ -262,7 +262,7 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw SelfReportException.EXCEPTION;
         }
 
-        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.TOPIC_ROOM, roomId);
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.TOPIC_ROOM, roomId, null);
 
         TopicRoomReport report = TopicRoomReport.builder()
                 .reporterId(reporterId)
