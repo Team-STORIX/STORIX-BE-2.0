@@ -13,6 +13,7 @@ import com.storix.domain.domains.plus.dto.ReviewInfo;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
+import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
@@ -36,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -60,17 +62,19 @@ public class AdminReportQueryService {
 
     public Page<AdminReportListResponse> getReports(AdminReportSearchCondition condition, Pageable pageable) {
         Page<ReportCase> page = reportCaseAdaptor.searchReportCases(condition, pageable);
+        List<ReportCase> reportCases = page.getContent();
 
-        List<Long> reportedUserIds = page.stream()
+        List<Long> reportedUserIds = reportCases.stream()
                 .map(ReportCase::getReportedUserId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
         Map<Long, String> nickNames = loadNickNames(reportedUserIds);
+        Map<Long, Long> reportCounts = loadReportCounts(reportCases);
 
         return page.map(reportCase -> AdminReportListResponse.from(
                 reportCase,
-                countReports(reportCase),
+                reportCounts.getOrDefault(reportCase.getId(), 0L),
                 nickNames.get(reportCase.getReportedUserId())
         ));
     }
@@ -108,13 +112,32 @@ public class AdminReportQueryService {
         };
     }
 
-    private long countReports(ReportCase reportCase) {
-        return switch (reportCase.getTargetType()) {
-            case FEED -> feedReportAdaptor.countFeedReportsByReportCaseId(reportCase.getId());
-            case FEED_REPLY -> feedReportAdaptor.countFeedReplyReportsByReportCaseId(reportCase.getId());
-            case REVIEW -> reviewReportAdaptor.countByReportCaseId(reportCase.getId());
-            case TOPIC_ROOM -> topicRoomReportAdaptor.countByReportCaseId(reportCase.getId());
-        };
+    private Map<Long, Long> loadReportCounts(List<ReportCase> reportCases) {
+        if (reportCases.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> reportCounts = new HashMap<>();
+        reportCounts.putAll(feedReportAdaptor.countFeedReportsByReportCaseIds(
+                reportCaseIdsByTargetType(reportCases, ReportTargetType.FEED)
+        ));
+        reportCounts.putAll(feedReportAdaptor.countFeedReplyReportsByReportCaseIds(
+                reportCaseIdsByTargetType(reportCases, ReportTargetType.FEED_REPLY)
+        ));
+        reportCounts.putAll(reviewReportAdaptor.countByReportCaseIds(
+                reportCaseIdsByTargetType(reportCases, ReportTargetType.REVIEW)
+        ));
+        reportCounts.putAll(topicRoomReportAdaptor.countByReportCaseIds(
+                reportCaseIdsByTargetType(reportCases, ReportTargetType.TOPIC_ROOM)
+        ));
+        return reportCounts;
+    }
+
+    private List<Long> reportCaseIdsByTargetType(List<ReportCase> reportCases, ReportTargetType targetType) {
+        return reportCases.stream()
+                .filter(reportCase -> reportCase.getTargetType() == targetType)
+                .map(ReportCase::getId)
+                .toList();
     }
 
     private AdminReportDetailResponse getFeedReportDetail(ReportCase reportCase) {
