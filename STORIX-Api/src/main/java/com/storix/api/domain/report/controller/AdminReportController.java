@@ -4,6 +4,7 @@ import com.storix.api.domain.report.usecase.AdminReportUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +18,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,5 +52,14 @@ public class AdminReportController {
             @AuthenticationPrincipal AuthUserDetails authUserDetails
     ) {
         return adminReportUseCase.getUnprocessedCount(authUserDetails);
+    }
+
+    @GetMapping("/{reportCaseId}")
+    @Operation(summary = "관리자 신고 상세 조회", description = "신고 케이스 요약, 묶인 신고 목록, 피신고 콘텐츠 원문을 조회합니다.")
+    public CustomResponse<AdminReportDetailResponse> getReportDetail(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @PathVariable Long reportCaseId
+    ) {
+        return adminReportUseCase.getReportDetail(authUserDetails, reportCaseId);
     }
 }
