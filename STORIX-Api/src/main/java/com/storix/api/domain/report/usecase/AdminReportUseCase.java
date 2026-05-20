@@ -5,6 +5,7 @@ import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
 import com.storix.domain.domains.report.service.AdminReportQueryService;
@@ -44,6 +45,12 @@ public class AdminReportUseCase {
         validateAdmin(authUserDetails);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminReportQueryService.countUnprocessedReports());
+    }
+
+    public CustomResponse<AdminReportDetailResponse> getReportDetail(AuthUserDetails authUserDetails, Long reportCaseId) {
+        validateAdmin(authUserDetails);
+
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminReportQueryService.getReportDetail(reportCaseId));
     }
 
     private void validateAdmin(AuthUserDetails authUserDetails) {

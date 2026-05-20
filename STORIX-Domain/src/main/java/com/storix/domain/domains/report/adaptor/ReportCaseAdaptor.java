@@ -4,6 +4,7 @@ import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
+import com.storix.domain.domains.report.exception.UnknownReportCaseException;
 import com.storix.domain.domains.report.repository.ReportCaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,11 @@ public class ReportCaseAdaptor {
                                 .status(ReportStatus.RECEIVED)
                                 .build()
                 ));
+    }
+
+    public ReportCase findById(Long reportCaseId) {
+        return reportCaseRepository.findById(reportCaseId)
+                .orElseThrow(() -> UnknownReportCaseException.EXCEPTION);
     }
 
     public Page<ReportCase> searchReportCases(AdminReportSearchCondition condition, Pageable pageable) {
