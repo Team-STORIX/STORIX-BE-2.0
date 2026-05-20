@@ -17,6 +17,7 @@ import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
+import com.storix.domain.domains.report.dto.AdminUserReportSummaryResponse;
 import com.storix.domain.domains.review.domain.ReviewReport;
 import com.storix.domain.domains.review.repository.ReviewReportRepository;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,6 +79,24 @@ public class AdminReportQueryService {
 
     public long countUnprocessedReports() {
         return reportCaseAdaptor.countByStatus(ReportStatus.RECEIVED);
+    }
+
+    public AdminUserReportSummaryResponse getUserReportSummary(Long userId) {
+        String nickName = userRepository.findStandardProfileInfoByUserIds(List.of(userId))
+                .stream().findFirst()
+                .map(info -> info.nickName())
+                .orElse(null);
+
+        long total = reportCaseAdaptor.countByReportedUserId(userId);
+        long received = reportCaseAdaptor.countByReportedUserIdAndStatus(userId, ReportStatus.RECEIVED);
+        long completed = reportCaseAdaptor.countByReportedUserIdAndStatus(userId, ReportStatus.COMPLETED);
+        long rejected = reportCaseAdaptor.countByReportedUserIdAndStatus(userId, ReportStatus.REJECTED);
+
+        AdminReportSearchCondition condition = new AdminReportSearchCondition(null, null, null, null, userId);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<AdminReportListResponse> recentPage = getReports(condition, pageable);
+
+        return new AdminUserReportSummaryResponse(userId, nickName, total, received, completed, rejected, recentPage.getContent());
     }
 
     public AdminReportDetailResponse getReportDetail(Long reportCaseId) {

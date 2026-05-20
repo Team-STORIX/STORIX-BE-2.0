@@ -6,6 +6,7 @@ import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
+import com.storix.domain.domains.report.dto.AdminUserReportSummaryResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,16 +35,26 @@ public class AdminReportController {
     private final AdminReportUseCase adminReportUseCase;
 
     @GetMapping
-    @Operation(summary = "관리자 신고 목록 조회", description = "신고 유형, 처리 상태, 접수 기간으로 신고 케이스 목록을 조회합니다.")
+    @Operation(summary = "관리자 신고 목록 조회", description = "신고 유형, 처리 상태, 접수 기간, 피신고자 ID로 신고 케이스 목록을 조회합니다.")
     public CustomResponse<Page<AdminReportListResponse>> getReports(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam(required = false) ReportTargetType targetType,
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
+            @RequestParam(required = false) Long reportedUserId,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return adminReportUseCase.getReports(authUserDetails, targetType, status, startAt, endAt, pageable);
+        return adminReportUseCase.getReports(authUserDetails, targetType, status, startAt, endAt, reportedUserId, pageable);
+    }
+
+    @GetMapping("/users/{userId}")
+    @Operation(summary = "유저 신고 이력 요약 조회", description = "특정 유저에게 접수된 신고 케이스 집계 및 최근 10건을 조회합니다.")
+    public CustomResponse<AdminUserReportSummaryResponse> getUserReportSummary(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @PathVariable Long userId
+    ) {
+        return adminReportUseCase.getUserReportSummary(authUserDetails, userId);
     }
 
     @GetMapping("/unprocessed-count")

@@ -9,6 +9,7 @@ public record AdminReportSearchCondition(
         ReportTargetType targetType,
         ReportStatus status,
         LocalDateTime startAt,
-        LocalDateTime endAt
+        LocalDateTime endAt,
+        Long reportedUserId
 ) {
 }
