@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class ReviewReportAdaptor {
@@ -23,4 +25,11 @@ public class ReviewReportAdaptor {
         }
     }
 
+    public long countByReportCaseId(Long reportCaseId) {
+        return reviewReportRepository.countByReportCaseId(reportCaseId);
+    }
+
+    public List<ReviewReport> findAllByReportCaseId(Long reportCaseId) {
+        return reviewReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCaseId);
+    }
 }

@@ -3,11 +3,10 @@ package com.storix.domain.domains.report.service;
 import com.storix.domain.domains.chat.adaptor.ChatPersistenceAdapter;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
+import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
 import com.storix.domain.domains.feed.domain.FeedReplyReport;
 import com.storix.domain.domains.feed.domain.FeedReport;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
-import com.storix.domain.domains.feed.repository.FeedReplyReportRepository;
-import com.storix.domain.domains.feed.repository.FeedReportRepository;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.plus.dto.ReviewInfo;
@@ -18,14 +17,14 @@ import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
 import com.storix.domain.domains.report.dto.AdminUserReportSummaryResponse;
+import com.storix.domain.domains.review.adaptor.ReviewReportAdaptor;
 import com.storix.domain.domains.review.domain.ReviewReport;
-import com.storix.domain.domains.review.repository.ReviewReportRepository;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomPersistenceAdapter;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
-import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
-import com.storix.domain.domains.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,11 +36,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,15 +49,14 @@ import java.util.stream.Collectors;
 public class AdminReportQueryService {
 
     private final ReportCaseAdaptor reportCaseAdaptor;
-    private final FeedReportRepository feedReportRepository;
-    private final FeedReplyReportRepository feedReplyReportRepository;
-    private final ReviewReportRepository reviewReportRepository;
-    private final TopicRoomReportRepository topicRoomReportRepository;
+    private final FeedReportAdaptor feedReportAdaptor;
+    private final ReviewReportAdaptor reviewReportAdaptor;
+    private final TopicRoomReportAdaptor topicRoomReportAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final ReviewAdaptor reviewAdaptor;
-    private final LoadTopicRoomPort loadTopicRoomPort;
+    private final TopicRoomPersistenceAdapter topicRoomPersistenceAdapter;
     private final ChatPersistenceAdapter chatPersistenceAdapter;
-    private final UserRepository userRepository;
+    private final UserAdaptor userAdaptor;
 
     public Page<AdminReportListResponse> getReports(AdminReportSearchCondition condition, Pageable pageable) {
         Page<ReportCase> page = reportCaseAdaptor.searchReportCases(condition, pageable);
@@ -82,9 +80,9 @@ public class AdminReportQueryService {
     }
 
     public AdminUserReportSummaryResponse getUserReportSummary(Long userId) {
-        String nickName = userRepository.findStandardProfileInfoByUserIds(List.of(userId))
-                .stream().findFirst()
-                .map(info -> info.nickName())
+        String nickName = Optional.ofNullable(
+                        userAdaptor.findStandardProfileInfoByUserIds(List.of(userId)).get(userId))
+                .map(StandardProfileInfo::nickName)
                 .orElse(null);
 
         long total = reportCaseAdaptor.countByReportedUserId(userId);
@@ -112,15 +110,15 @@ public class AdminReportQueryService {
 
     private long countReports(ReportCase reportCase) {
         return switch (reportCase.getTargetType()) {
-            case FEED -> feedReportRepository.countByReportCaseId(reportCase.getId());
-            case FEED_REPLY -> feedReplyReportRepository.countByReportCaseId(reportCase.getId());
-            case REVIEW -> reviewReportRepository.countByReportCaseId(reportCase.getId());
-            case TOPIC_ROOM -> topicRoomReportRepository.countByReportCaseId(reportCase.getId());
+            case FEED -> feedReportAdaptor.countFeedReportsByReportCaseId(reportCase.getId());
+            case FEED_REPLY -> feedReportAdaptor.countFeedReplyReportsByReportCaseId(reportCase.getId());
+            case REVIEW -> reviewReportAdaptor.countByReportCaseId(reportCase.getId());
+            case TOPIC_ROOM -> topicRoomReportAdaptor.countByReportCaseId(reportCase.getId());
         };
     }
 
     private AdminReportDetailResponse getFeedReportDetail(ReportCase reportCase) {
-        List<FeedReport> reports = feedReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCase.getId());
+        List<FeedReport> reports = feedReportAdaptor.findFeedReportsByReportCaseId(reportCase.getId());
         ReaderBoard board = readerFeedAdaptor.findReaderBoardById(reportCase.getTargetId());
         Long reportedUserId = reports.isEmpty() ? board.getUserId() : reports.get(0).getReportedUserId();
 
@@ -161,7 +159,7 @@ public class AdminReportQueryService {
     }
 
     private AdminReportDetailResponse getFeedReplyReportDetail(ReportCase reportCase) {
-        List<FeedReplyReport> reports = feedReplyReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCase.getId());
+        List<FeedReplyReport> reports = feedReportAdaptor.findFeedReplyReportsByReportCaseId(reportCase.getId());
         ReaderBoardReply reply = readerFeedAdaptor.findReplyById(reportCase.getTargetId());
         Long reportedUserId = reports.isEmpty() ? reply.getUserId() : reports.get(0).getReportedUserId();
 
@@ -202,7 +200,7 @@ public class AdminReportQueryService {
     }
 
     private AdminReportDetailResponse getReviewReportDetail(ReportCase reportCase) {
-        List<ReviewReport> reports = reviewReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCase.getId());
+        List<ReviewReport> reports = reviewReportAdaptor.findAllByReportCaseId(reportCase.getId());
         ReviewInfo review = reviewAdaptor.findReviewById(reportCase.getTargetId());
         Long reportedUserId = reports.isEmpty() ? review.reviewerId() : reports.get(0).getReportedUserId();
 
@@ -239,13 +237,10 @@ public class AdminReportQueryService {
         return detailResponse(
                 reportCase,
                 summary(
-                        reportedUserId,
-                        nickNames,
-                        reviewLocation(review.reviewId()),
+                        reportedUserId, nickNames, reviewLocation(review.reviewId()),
                         firstReport != null ? firstReport.getReason() : null,
                         firstReport != null ? firstReport.getOtherReason() : null,
-                        reports.size(),
-                        firstReportedAt(reportItems)
+                        reports.size(), firstReportedAt(reportItems)
                 ),
                 reportItems,
                 content
@@ -253,8 +248,8 @@ public class AdminReportQueryService {
     }
 
     private AdminReportDetailResponse getTopicRoomReportDetail(ReportCase reportCase) {
-        List<TopicRoomReport> reports = topicRoomReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCase.getId());
-        TopicRoom room = loadTopicRoomPort.findById(reportCase.getTargetId());
+        List<TopicRoomReport> reports = topicRoomReportAdaptor.findAllByReportCaseId(reportCase.getId());
+        TopicRoom room = topicRoomPersistenceAdapter.findById(reportCase.getTargetId());
         Long reportedUserId = reports.isEmpty() ? null : reports.get(0).getReportedUserId();
 
         List<ChatMessageResponseDto> chatMessages = reportedUserId == null
@@ -308,13 +303,10 @@ public class AdminReportQueryService {
         return detailResponse(
                 reportCase,
                 summary(
-                        reportedUserId,
-                        nickNames,
-                        topicRoomLocation(room.getId()),
+                        reportedUserId, nickNames, topicRoomLocation(room.getId()),
                         firstReport != null ? firstReport.getReason() : null,
                         firstReport != null ? firstReport.getOtherReason() : null,
-                        reports.size(),
-                        firstReportedAt(reportItems)
+                        reports.size(), firstReportedAt(reportItems)
                 ),
                 reportItems,
                 content
@@ -378,14 +370,13 @@ public class AdminReportQueryService {
 
     private Map<Long, String> loadNickNames(Collection<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
-            return new HashMap<>();
+            return Map.of();
         }
 
-        return userRepository.findStandardProfileInfoByUserIds(List.copyOf(userIds)).stream()
+        return userAdaptor.findStandardProfileInfoByUserIds(List.copyOf(userIds)).entrySet().stream()
                 .collect(Collectors.toMap(
-                        StandardProfileInfo::userId,
-                        StandardProfileInfo::nickName,
-                        (left, right) -> left
+                        Map.Entry::getKey,
+                        e -> e.getValue().nickName()
                 ));
     }
 
@@ -393,7 +384,6 @@ public class AdminReportQueryService {
         if (userId == null) {
             return null;
         }
-
         return nickNames.get(userId);
     }
 
@@ -401,7 +391,6 @@ public class AdminReportQueryService {
         if (reportItems.isEmpty()) {
             return null;
         }
-
         return reportItems.get(0).reportedAt();
     }
 
