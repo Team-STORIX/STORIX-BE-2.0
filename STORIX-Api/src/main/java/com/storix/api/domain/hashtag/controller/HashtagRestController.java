@@ -1,5 +1,6 @@
-package com.storix.api.domain.hashtag;
+package com.storix.api.domain.hashtag.controller;
 
+import com.storix.api.domain.hashtag.usecase.HashtagUseCase;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
 import com.storix.domain.domains.hashtag.service.HashtagRecommendService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
@@ -21,7 +22,7 @@ import java.util.List;
 @Tag(name = "홈", description = "홈화면 관련 API")
 public class HashtagRestController {
 
-    private final HashtagRecommendService hashtagRecommendationService;
+    private final HashtagUseCase hashtagUseCase;
 
     @Operation(summary = "사용자 맞춤 해시태그 추천", description = "로그인 시 선호 장르 기반, 비로그인 시 전체 인기순으로 해시태그를 추천합니다.")
     @GetMapping("/recommendations")
@@ -31,7 +32,7 @@ public class HashtagRestController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                hashtagRecommendationService.getRecommendedHashtags(authUserDetails.getUserId())
+                hashtagUseCase.getHashtagRecommendation(authUserDetails.getUserId())
         );
     }
 

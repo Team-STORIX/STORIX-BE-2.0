@@ -1,6 +1,5 @@
 package com.storix.domain.domains.hashtag.adaptor;
 
-import com.storix.domain.domains.hashtag.application.port.LoadHashtagPort;
 import com.storix.domain.domains.hashtag.dto.HashtagInfo;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
 import com.storix.domain.domains.hashtag.repository.HashtagRepository;
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class HashtagAdaptor implements LoadHashtagPort {
+public class HashtagAdaptor {
 
     private final HashtagRepository hashtagRepository;
 
@@ -33,12 +32,10 @@ public class HashtagAdaptor implements LoadHashtagPort {
                 ));
     }
 
-    @Override
     public List<HashtagRecommendResponseDto> recommendByGenres(Set<Genre> genres, int limit) {
         return hashtagRepository.findPopularByGenres(genres, PageRequest.of(0, limit));
     }
 
-    @Override
     public List<HashtagRecommendResponseDto> recommendGlobalPopular(int limit) {
         return hashtagRepository.findGlobalPopular(PageRequest.of(0, limit));
     }
