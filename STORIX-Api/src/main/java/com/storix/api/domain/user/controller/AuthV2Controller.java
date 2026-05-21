@@ -58,13 +58,12 @@ public class AuthV2Controller {
 
     @Operation(summary = "[v2] 회원 탈퇴", description = "회원 탈퇴용 api 입니다.   \n" +
             "회원 계정과 관련된 Refresh 토큰과 모든 디바이스의 FCM 토큰을 비활성화합니다.   \n" +
-            "- 탈퇴 사유(reason)는 필수이며, user_history 에 기록됩니다.  \n" +
-            "- reason=OTHER 인 경우에만 detail(직접 입력, 200자 이내)을 함께 보내주세요.")
+            "- 탈퇴 사유(reasons)는 1개 이상 선택해야 하며, reasons 에 OTHER 가 포함된 경우에만 detail(직접 입력, 100자 이내)을 함께 보내주세요.")
     @DeleteMapping("/user/withdraw")
     public ResponseEntity<CustomResponse<Void>> withdraw(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @Valid @RequestBody WithdrawRequest req
     ) {
-        return withDrawUseCase.execute(authUserDetails.getUserId(), req.reason(), req.detail());
+        return withDrawUseCase.execute(authUserDetails.getUserId(), req.reasons(), req.detail());
     }
 }
