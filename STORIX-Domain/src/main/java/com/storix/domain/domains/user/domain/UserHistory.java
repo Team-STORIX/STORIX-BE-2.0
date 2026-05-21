@@ -30,25 +30,32 @@ public class UserHistory extends BaseTimeEntity {
     @Column(name = "history_type", nullable = false, length = 32)
     private UserHistoryType historyType;
 
-    // 발신자
-    @Column(name = "sender", nullable = false, length = 50)
-    private String sender;
+    // 처리자
+    @Column(name = "processor", nullable = false, length = 50)
+    private String processor;
 
     // 처리 시점
     @Column(name = "processed_at", nullable = false)
     private LocalDateTime processedAt;
 
-    // 부가 정보 — 탈퇴 사유(enum)/직접 입력 등 유형별 컨텍스트 보관 (nullable)
+    // 탈퇴 사유
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reason", length = 32)
+    private WithdrawReason reason;
+
+    // 사용자 자유 입력
     @Column(name = "detail", length = 255)
     private String detail;
 
 
     @Builder
-    private UserHistory(Long userId, UserHistoryType historyType, String sender, LocalDateTime processedAt, String detail) {
+    private UserHistory(Long userId, UserHistoryType historyType, String processor,
+                        LocalDateTime processedAt, WithdrawReason reason, String detail) {
         this.userId = userId;
         this.historyType = historyType;
-        this.sender = sender;
+        this.processor = processor;
         this.processedAt = processedAt;
+        this.reason = reason;
         this.detail = detail;
     }
 }

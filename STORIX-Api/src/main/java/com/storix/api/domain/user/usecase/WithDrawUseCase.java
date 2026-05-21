@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Set;
+
 @Slf4j
 @UseCase
 @RequiredArgsConstructor
@@ -22,7 +24,7 @@ public class WithDrawUseCase {
     private final OAuthHelper oauthHelper;
     private final CookieHelper cookieHelper;
 
-    public ResponseEntity<CustomResponse<Void>> execute(Long userId, WithdrawReason reason, String detail) {
+    public ResponseEntity<CustomResponse<Void>> execute(Long userId, Set<WithdrawReason> reasons, String detail) {
 
         // 1. OAuth 연결 해제
         OAuthInfo oauthInfo = authService.findOAuthInfoByUserId(userId);
@@ -42,7 +44,7 @@ public class WithDrawUseCase {
 
 
         // 2. 유저 탈퇴 처리 (RefreshToken / 관심작품 / 서재 삭제 + 푸시 알림 발송 대상 제외 + 탈퇴 사유 로그)
-        authService.withDrawUser(userId, reason, detail);
+        authService.withDrawUser(userId, reasons, detail);
 
         return ResponseEntity.ok()
                 .headers(cookieHelper.deleteCookie())
