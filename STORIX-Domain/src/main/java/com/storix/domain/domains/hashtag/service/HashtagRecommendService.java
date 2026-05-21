@@ -42,6 +42,7 @@ public class HashtagRecommendService {
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final ExplorationAdaptor explorationAdaptor;
     private final WorksAdaptor workAdaptor;
+    private final HashtagCacheHelper hashtagCacheHelper;
 
     public HashtagRecommendationContext collectRecommendationContext(Long userId) {
 
@@ -52,7 +53,7 @@ public class HashtagRecommendService {
                 user.getFavoriteGenreList(),
                 favoriteWorksAdaptor.findAllWithCreatedAtByUserId(userId),
                 explorationAdaptor.findExplorationsWithCreatedAtByUserId(userId),
-                workAdaptor.countAllWorks()
+                hashtagCacheHelper.getOrLoadTotalWorksCount(workAdaptor::countAllWorks)
         );
     }
 
@@ -89,7 +90,10 @@ public class HashtagRecommendService {
         Map<Long, HashtagScore> scoreMap = calculateRawScores(actions, hashtagsByWorksId);
 
         // 5. 후보 해시태그별 전체 작품 등장 빈도를 조회해 IDF 보정에 사용
-        Map<Long, Long> documentFrequencyMap = hashtagAdaptor.findDocumentFrequencyMap(scoreMap.keySet());
+        Map<Long, Long> documentFrequencyMap = hashtagCacheHelper.getOrLoadDocumentFrequencies(
+                scoreMap.keySet(),
+                hashtagAdaptor::findDocumentFrequencyMap
+        );
 
         // 6. raw score에 IDF를 곱해 범용 태그 쏠림을 완화한 뒤 랭킹
         return rankPersonalizedHashtags(
