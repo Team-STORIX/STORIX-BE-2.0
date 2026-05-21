@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record MarketingConsentResult(
         boolean agreed,
-        String sender,
+        String processor,
         LocalDateTime processedAt
 ) {
 }
