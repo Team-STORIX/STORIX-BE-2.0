@@ -13,17 +13,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HashtagUseCase {
 
-    private static final int RECOMMENDATION_LIMIT = 10; // 추천 개수 제한
+    private static final int RECOMMENDATION_LIMIT = 15; // 추천 개수 제한
 
     private final HashtagRecommendService hashtagRecommendService;
 
     @Transactional(readOnly = true)
     public List<HashtagRecommendResponseDto> getHashtagRecommendation(Long userId) {
-
-        // 비로그인 사용자 : 전체 인기 해시태그를 추천
-        if (userId == null) {
-            return hashtagRecommendService.getGlobalPopularHashtags(RECOMMENDATION_LIMIT);
-        }
 
         // 사용자 데이터 수집
         HashtagRecommendationContext context = hashtagRecommendService.collectRecommendationContext(userId);
@@ -32,7 +27,8 @@ public class HashtagUseCase {
         List<HashtagRecommendResponseDto> personalized =
                 hashtagRecommendService.calculatePersonalizedHashtags(context, RECOMMENDATION_LIMIT);
 
-        if (personalized != null && personalized.size() >= RECOMMENDATION_LIMIT) {
+        // 결과 반환
+        if (personalized.size() >= RECOMMENDATION_LIMIT) {
             return personalized;
         }
 
