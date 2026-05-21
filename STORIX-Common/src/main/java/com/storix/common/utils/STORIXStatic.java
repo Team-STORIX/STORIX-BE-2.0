@@ -72,8 +72,8 @@ public class STORIXStatic {
     // 사용자 이력 — 마케팅 동의/거부 모달 표시 문구
     public static class UserHistory {
 
-        // 발신자 (DB 컬럼에 저장되는 값 — 향후 변동 대비 컬럼 보관)
-        public static final String SENDER_TEAM_STORIX = "팀 스토릭스";
+        // 처리자
+        public static final String PROCESSOR_TEAM_STORIX = "팀 스토릭스";
 
         // 타이틀
         public static final String TITLE_MARKETING_AGREE  = "이벤트/혜택 알림 동의 안내";

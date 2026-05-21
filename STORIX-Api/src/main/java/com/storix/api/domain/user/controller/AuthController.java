@@ -94,7 +94,7 @@ public class AuthController {
     }
 
     @Operation(summary = "[v1] 독자 계정 회원가입", description = "[v1 > v2 마이그레이션 필요] 유저 정보를 최종적으로 등록하는 api 입니다.   \n" +
-            "온보딩 토큰을 보내주세요.")
+            "온보딩 토큰을 보내주세요.", deprecated = true)
     @PostMapping("/users/reader/signup")
     public ResponseEntity<CustomResponse<AuthorizationResponse>> readerUserSignup(
             @AuthenticationPrincipal OnboardingUserDetails onboardingUser,
@@ -134,7 +134,7 @@ public class AuthController {
     }
 
     @Operation(summary = "[v1] 로그아웃", description = "[v1 > v2 마이그레이션 필요] 로그아웃용 api 입니다.   \n" +
-            "액세스 토큰을 보내주세요.")
+            "액세스 토큰을 보내주세요.", deprecated = true)
     @PostMapping("/user/logout")
     public ResponseEntity<CustomResponse<Void>> logout(
             @AuthenticationPrincipal AuthUserDetails authUserDetails
@@ -142,13 +142,13 @@ public class AuthController {
         return logoutUseCase.execute(authUserDetails.getUserId(), null);
     }
 
-    @Operation(summary = "회원 탈퇴", description = "회원 탈퇴용 api 입니다.   \n" +
-            "회원 계정과 관련된 Refresh 토큰과 모든 디바이스의 FCM 토큰을 비활성화합니다.")
+    @Operation(summary = "[v1] 회원 탈퇴", description = "[v1 > v2 마이그레이션 필요] 회원 탈퇴용 api 입니다.   \n" +
+            "회원 계정과 관련된 Refresh 토큰과 모든 디바이스의 FCM 토큰을 비활성화합니다.", deprecated = true)
     @DeleteMapping("/user/withdraw")
     public ResponseEntity<CustomResponse<Void>> withdraw(
             @AuthenticationPrincipal AuthUserDetails authUserDetails
     ) {
-        return withDrawUseCase.execute(authUserDetails.getUserId());
+        return withDrawUseCase.execute(authUserDetails.getUserId(), null, null);
     }
 
 }

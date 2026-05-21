@@ -5,7 +5,6 @@ import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
-import com.storix.domain.domains.notification.domain.NotificationSetting;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
@@ -13,16 +12,24 @@ import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.dto.ReaderSignUpData;
 import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
+import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.adaptor.UserHistoryAdaptor;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.domain.UserHistory;
+import com.storix.domain.domains.user.domain.UserHistoryType;
+import com.storix.domain.domains.user.domain.WithdrawReason;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.time.LocalDateTime;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +42,7 @@ public class AuthService {
 
     private final PushDeviceAdaptor pushDeviceAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
+    private final UserHistoryAdaptor userHistoryAdaptor;
 
     private final OnboardingWorksHelper onboardingWorksHelper; // -> usecase 리팩토링 필요
     private final GenreScorePublisher genreScorePublisher;
@@ -129,7 +137,7 @@ public class AuthService {
 
     // 유저 회원 탈퇴
     @Transactional
-    public void withDrawUser(Long userId) {
+    public void withDrawUser(Long userId, Set<WithdrawReason> reasons, String detail) {
         // 1. 유저 soft-delete
         User user = userAdaptor.findUserById(userId);
         user.withdraw();
@@ -144,5 +152,25 @@ public class AuthService {
 
         // 4. 알림 설정 삭제 (재가입 시 새 row 생성됨)
         notificationSettingAdaptor.deleteByUserId(userId);
+
+        // 5. 탈퇴 사유 로그 저장
+        saveWithdrawHistory(userId, reasons, detail);
+    }
+
+    private void saveWithdrawHistory(Long userId, Set<WithdrawReason> reasons, String detail) {
+        String otherDetail = (detail == null) ? null : detail.trim();
+        LocalDateTime processedAt = LocalDateTime.now();
+
+        for (WithdrawReason reason : reasons) {
+            String detailValue = (reason == WithdrawReason.OTHER) ? otherDetail : null;
+            userHistoryAdaptor.save(UserHistory.builder()
+                    .userId(userId)
+                    .historyType(UserHistoryType.WITHDRAW)
+                    .processor(STORIXStatic.UserHistory.PROCESSOR_TEAM_STORIX)
+                    .processedAt(processedAt)
+                    .reason(reason)
+                    .detail(detailValue)
+                    .build());
+        }
     }
 }
