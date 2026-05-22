@@ -1,14 +1,13 @@
 package com.storix.infrastructure.external.fcm;
 
 import com.google.firebase.messaging.AndroidConfig;
-import com.google.firebase.messaging.ApnsConfig;
-import com.google.firebase.messaging.Aps;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.MulticastMessage;
+import com.google.firebase.messaging.Notification;
 import com.storix.domain.domains.notification.exception.FcmSendFailedException;
 import com.storix.infrastructure.external.fcm.dto.MulticastResult;
 import com.storix.infrastructure.external.fcm.dto.SingleSendResult;
@@ -30,11 +29,11 @@ public class FcmSender {
 
     // 단일 토큰 푸시 발송
     public SingleSendResult sendToToken(String token, Map<String, String> data) {
-        // 1. data-only 메시지 빌드
+        // 1. 화면 표시용 notification + 라우팅용 data 메시지 빌드
         Message.Builder builder = Message.builder()
                 .setToken(token)
-                .setAndroidConfig(highPriorityAndroid())
-                .setApnsConfig(backgroundWakeApns());
+                .setNotification(displayNotification(data))
+                .setAndroidConfig(highPriorityAndroid());
         fcmSenderHelper.putData(builder::putData, data);
 
         try {
@@ -62,11 +61,11 @@ public class FcmSender {
             return MulticastResult.empty();
         }
 
-        // 2. data-only + background wake 메시지 빌드
+        // 2. 화면 표시용 notification + 라우팅용 data 메시지 빌드
         MulticastMessage.Builder builder = MulticastMessage.builder()
                 .addAllTokens(tokens)
-                .setAndroidConfig(highPriorityAndroid())
-                .setApnsConfig(backgroundWakeApns());
+                .setNotification(displayNotification(data))
+                .setAndroidConfig(highPriorityAndroid());
         fcmSenderHelper.putData(builder::putData, data);
 
         try {
@@ -89,19 +88,17 @@ public class FcmSender {
         }
     }
 
-    // Android HIGH 우선순위 (data-only 메시지 즉시 배달)
-    private AndroidConfig highPriorityAndroid() {
-        return AndroidConfig.builder()
-                .setPriority(AndroidConfig.Priority.HIGH)
+    private Notification displayNotification(Map<String, String> data) {
+        return Notification.builder()
+                .setTitle(data.get("title"))
+                .setBody(data.get("body"))
                 .build();
     }
 
-    // iOS background wake (data-only 메시지로 background 상태 앱을 깨우기 위한 헤더 조합)
-    private ApnsConfig backgroundWakeApns() {
-        return ApnsConfig.builder()
-                .putHeader("apns-priority", "5")
-                .putHeader("apns-push-type", "background")
-                .setAps(Aps.builder().setContentAvailable(true).build())
+    // Android HIGH 우선순위
+    private AndroidConfig highPriorityAndroid() {
+        return AndroidConfig.builder()
+                .setPriority(AndroidConfig.Priority.HIGH)
                 .build();
     }
 }
