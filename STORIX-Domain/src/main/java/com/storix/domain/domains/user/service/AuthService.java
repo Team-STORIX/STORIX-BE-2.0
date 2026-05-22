@@ -143,7 +143,7 @@ public class AuthService {
         user.withdraw();
 
         // 2. 유저 관련 정보 (refresh 토큰, 관심 작품, 서재) 삭제
-        tokenAdaptor.deleteRefreshTokenByUserId(userId);
+        tokenAdaptor.deleteRefreshTokenForWithdrawByUserId(userId);
         favoriteWorksAdaptor.deleteFavoriteWorks(userId);
         libraryAdaptor.deleteLibrary(userId);
 
