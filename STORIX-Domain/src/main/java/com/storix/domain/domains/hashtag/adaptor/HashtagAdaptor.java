@@ -1,6 +1,6 @@
 package com.storix.domain.domains.hashtag.adaptor;
 
-import com.storix.domain.domains.hashtag.application.port.LoadHashtagPort;
+import com.storix.domain.domains.hashtag.dto.HashtagDocumentFrequency;
 import com.storix.domain.domains.hashtag.dto.HashtagInfo;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
 import com.storix.domain.domains.hashtag.repository.HashtagRepository;
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class HashtagAdaptor implements LoadHashtagPort {
+public class HashtagAdaptor {
 
     private final HashtagRepository hashtagRepository;
 
@@ -33,12 +33,35 @@ public class HashtagAdaptor implements LoadHashtagPort {
                 ));
     }
 
-    @Override
+    public Map<Long, List<HashtagInfo>> findHashtagInfosByWorksIds(List<Long> worksIds) {
+        if (worksIds == null || worksIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return hashtagRepository.findAllByWorksIds(worksIds).stream()
+                .collect(Collectors.groupingBy(
+                        HashtagInfo::worksId,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+    }
+
+    public Map<Long, Long> findDocumentFrequencyMap(Set<Long> hashtagIds) {
+        if (hashtagIds == null || hashtagIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return hashtagRepository.findDocumentFrequencies(hashtagIds).stream()
+                .collect(Collectors.toMap(
+                        HashtagDocumentFrequency::hashtagId,
+                        HashtagDocumentFrequency::documentFrequency
+                ));
+    }
+
     public List<HashtagRecommendResponseDto> recommendByGenres(Set<Genre> genres, int limit) {
         return hashtagRepository.findPopularByGenres(genres, PageRequest.of(0, limit));
     }
 
-    @Override
     public List<HashtagRecommendResponseDto> recommendGlobalPopular(int limit) {
         return hashtagRepository.findGlobalPopular(PageRequest.of(0, limit));
     }
