@@ -1,6 +1,7 @@
 package com.storix.domain.domains.favorite.adaptor;
 
 import com.storix.domain.domains.favorite.domain.FavoriteWorks;
+import com.storix.domain.domains.favorite.dto.FavoriteWorksWithCreatedAt;
 import com.storix.domain.domains.favorite.repository.FavoriteWorksRepository;
 import com.storix.domain.domains.favorite.exception.DuplicateFavoriteWorksRequestException;
 import com.storix.domain.domains.favorite.exception.InvalidFavoriteWorksRequestException;
@@ -68,5 +69,9 @@ public class FavoriteWorksAdaptor {
 
     public List<Long> findAllFavoriteWorksIdsByUserId(Long userId) {
         return favoriteWorksRepository.findAllWorksIdsByUserId(userId);
+    }
+
+    public List<FavoriteWorksWithCreatedAt> findAllWithCreatedAtByUserId(Long userId) {
+        return favoriteWorksRepository.findAllWithCreatedAtByUserId(userId);
     }
 }

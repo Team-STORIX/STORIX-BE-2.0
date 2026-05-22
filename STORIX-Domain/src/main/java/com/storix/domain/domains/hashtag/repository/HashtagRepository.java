@@ -1,6 +1,7 @@
 package com.storix.domain.domains.hashtag.repository;
 
 import com.storix.domain.domains.hashtag.domain.Hashtag;
+import com.storix.domain.domains.hashtag.dto.HashtagDocumentFrequency;
 import com.storix.domain.domains.hashtag.dto.HashtagInfo;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
 import com.storix.domain.domains.works.domain.Genre;
@@ -17,12 +18,19 @@ public interface HashtagRepository extends JpaRepository<Hashtag, Long> {
 
     Optional<Hashtag> findByName(String name);
 
-    @Query("SELECT new com.storix.domain.domains.hashtag.dto.HashtagInfo(w.id, h.name) " +
+    @Query("SELECT new com.storix.domain.domains.hashtag.dto.HashtagInfo(w.id, h.id, h.name) " +
             "FROM Hashtag  h " +
             "JOIN h.works w "+
             "WHERE w.id IN :worksIds " +
             "ORDER BY w.id, h.name")
     List<HashtagInfo> findAllByWorksIds(@Param("worksIds") List<Long> worksIds);
+
+    @Query("SELECT new com.storix.domain.domains.hashtag.dto.HashtagDocumentFrequency(h.id, COUNT(w)) " +
+            "FROM Hashtag h " +
+            "JOIN h.works w " +
+            "WHERE h.id IN :hashtagIds " +
+            "GROUP BY h.id")
+    List<HashtagDocumentFrequency> findDocumentFrequencies(@Param("hashtagIds") Set<Long> hashtagIds);
 
     // 특정 장르들의 작품에서 가장 많이 사용된 해시태그 조회
     @Query("SELECT new com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto(h.id, h.name, COUNT(w)) " +

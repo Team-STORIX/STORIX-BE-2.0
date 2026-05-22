@@ -50,6 +50,4 @@ public class WorksService implements WorksUseCase {
 
         return WorksDetailResponseDto.from(works, reviewCount, hasTopicRoom);
     }
-
-
 }
