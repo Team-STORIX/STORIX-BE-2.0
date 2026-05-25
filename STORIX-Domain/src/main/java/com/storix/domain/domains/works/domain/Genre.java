@@ -11,7 +11,7 @@ public enum Genre {
     FANTASY("판타지"),
     DAILY("일상"),
     ROFAN("로판"),
-    HISTORICAL("무협/사극"),
+    HISTORICAL("무협"),
     DRAMA("드라마"),
     GAG("개그"),
     THRILLER("스릴러"),
