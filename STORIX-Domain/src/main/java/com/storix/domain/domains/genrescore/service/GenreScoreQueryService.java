@@ -9,13 +9,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class GenreScoreQueryService {
+
+    // 아직 디자인 없는 장르: 개그, 액션, 스포츠, 감성 -> 관련 조회 시 노출 X
+    private static final Set<Genre> HIDDEN_GENRES = EnumSet.of(
+            Genre.GAG,
+            Genre.ACTION,
+            Genre.SPORTS,
+            Genre.SENTIMENTAL
+    );
 
     private final UserGenreRawScoreRepository rawScoreRepository;
 
@@ -27,6 +37,7 @@ public class GenreScoreQueryService {
                 .collect(Collectors.toMap(UserGenreRawScore::getGenre, UserGenreRawScore::getRawScore));
 
         return Arrays.stream(Genre.values())
+                .filter(g -> !HIDDEN_GENRES.contains(g))
                 .map(g -> new GenreScoreInfo(
                         g.getDbValue(),
                         (double) rawByGenre.getOrDefault(g, 0L)
