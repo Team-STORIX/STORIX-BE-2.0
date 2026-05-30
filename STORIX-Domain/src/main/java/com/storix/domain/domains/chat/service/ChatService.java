@@ -6,8 +6,10 @@ import com.storix.domain.domains.chat.application.usecase.ChatUseCase;
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
@@ -30,26 +32,26 @@ public class ChatService implements ChatUseCase {
     private final LoadTopicRoomPort loadTopicRoomPort;
     private final LoadChatPort loadChatPort;
     private final ChatAsyncService chatAsyncService;
-    private final LoadTopicRoomUserPort loadTopicRoomUserPort;
+    private final TopicRoomAdaptor topicRoomAdaptor;
+    private final UserAdaptor userAdaptor;
 
     @Override
     @Transactional
     public void sendMessage(Long userId, ChatMessageRequestDto request) {
 
-
         log.info(">>>> [ChatService] 메시지 전송 시도 - UserID: {}, RoomID: {}", userId, request.roomId());
 
         // 토픽룸 존재 여부 검증
-        if (!loadTopicRoomPort.existsById(request.roomId())) {
+        if (!topicRoomAdaptor.existsById(request.roomId())) {
             throw UnknownTopicRoomException.EXCEPTION;
         }
 
         // 해당 토픽룸에 참여 중인 유저인지 검증
-        if (!loadTopicRoomUserPort.existsByUserIdAndRoomId(userId, request.roomId())) {
+        if (!topicRoomAdaptor.existsByUserIdAndRoomId(userId, request.roomId())) {
             throw UnknownTopicRoomUserException.EXCEPTION;
         }
 
-        User user = loadUserPort.findById(userId);
+        User user = userAdaptor.findUserById(userId);
         String nickname = user.getNickName();
 
         ChatMessage chatMessage = request.toEntity(userId);
