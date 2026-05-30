@@ -1,5 +1,6 @@
 package com.storix.domain.domains.favorite.domain;
 
+import com.storix.common.model.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -19,7 +20,7 @@ import lombok.RequiredArgsConstructor;
         }
 )
 @Getter @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public class FavoriteWorks {
+public class FavoriteWorks extends BaseTimeEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "favorite_works_id")

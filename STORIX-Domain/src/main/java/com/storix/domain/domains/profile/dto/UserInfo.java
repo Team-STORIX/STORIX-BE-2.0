@@ -16,6 +16,8 @@ public record UserInfo(
     @JsonInclude(JsonInclude.Include.NON_NULL)
     Integer point,
 
-    String profileDescription
+    String profileDescription,
+
+    String oauthProvider
 ) {
 }

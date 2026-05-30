@@ -32,10 +32,10 @@ public class MarketingConsentService {
         UserHistory saved = userHistoryAdaptor.save(UserHistory.builder()
                 .userId(userId)
                 .historyType(agreed ? UserHistoryType.MARKETING_AGREE : UserHistoryType.MARKETING_REJECT)
-                .sender(STORIXStatic.UserHistory.SENDER_TEAM_STORIX)
+                .processor(STORIXStatic.UserHistory.PROCESSOR_TEAM_STORIX)
                 .processedAt(LocalDateTime.now())
                 .build());
 
-        return new MarketingConsentResult(agreed, saved.getSender(), saved.getProcessedAt());
+        return new MarketingConsentResult(agreed, saved.getProcessor(), saved.getProcessedAt());
     }
 }

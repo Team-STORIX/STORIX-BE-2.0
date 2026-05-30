@@ -1,6 +1,7 @@
 package com.storix.domain.domains.plus.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.storix.domain.domains.feed.domain.BoardTheme;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import lombok.Builder;
 
@@ -24,6 +25,7 @@ public record ReaderBoardInfo(
         int replyCount,
         boolean isSpoiler,
         String spoilerScript,
+        BoardTheme theme,
 
         // 좋아요 여부
         boolean isLiked
@@ -59,6 +61,7 @@ public record ReaderBoardInfo(
                 .isSpoiler(board.isSpoiler())
                 .spoilerScript(board.getSpoilerScript())
                 .isLiked(isLiked)
+                .theme(board.getTheme())
                 .build();
     }
 

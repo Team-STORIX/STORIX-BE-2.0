@@ -41,7 +41,19 @@ public class StompHandler implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        if (accessor == null) {
+            log.warn(">>>> [STOMP_DIAG] inbound message without StompHeaderAccessor headers={}", message.getHeaders().keySet());
+            return message;
+        }
+
         StompCommand command = accessor.getCommand();
+        log.info(">>>> [STOMP_DIAG] inbound command={}, sessionId={}, destination={}, subscriptionId={}, nativeHeaderKeys={}, user={}",
+                command,
+                accessor.getSessionId(),
+                accessor.getDestination(),
+                accessor.getSubscriptionId(),
+                accessor.toNativeHeaderMap().keySet(),
+                accessor.getUser() != null ? accessor.getUser().getName() : null);
 
         if (StompCommand.CONNECT.equals(command)) {
             handleConnect(accessor);
@@ -58,6 +70,12 @@ public class StompHandler implements ChannelInterceptor {
 
     private void handleConnect(StompHeaderAccessor accessor) {
         String token = accessor.getFirstNativeHeader("Authorization");
+        log.info(">>>> [STOMP_DIAG] CONNECT received sessionId={}, authorizationExists={}, bearerToken={}, authorizationLength={}",
+                accessor.getSessionId(),
+                token != null,
+                token != null && token.startsWith("Bearer "),
+                token != null ? token.length() : 0);
+
         if (token != null && token.startsWith("Bearer ")) {
             try {
                 AccessTokenInfo info = tokenProvider.parseAccessToken(token.substring(7));
@@ -68,11 +86,15 @@ public class StompHandler implements ChannelInterceptor {
 
                 log.info(">>>> [STOMP] 인증 성공: UserID {}", info.userId());
             } catch (Exception e) {
-
-                log.error(">>>> [STOMP] 인증 실패: {}", e.getMessage());
+                log.error(">>>> [STOMP] 인증 실패: sessionId={}, exceptionType={}, message={}",
+                        accessor.getSessionId(),
+                        e.getClass().getSimpleName(),
+                        e.getMessage(),
+                        e);
                 throw new MessageDeliveryException("UNAUTHORIZED");
             }
         } else {
+            log.warn(">>>> [STOMP] 인증 실패: sessionId={}, reason=NO_TOKEN_OR_INVALID_BEARER", accessor.getSessionId());
             throw new MessageDeliveryException("NO_TOKEN");
         }
     }

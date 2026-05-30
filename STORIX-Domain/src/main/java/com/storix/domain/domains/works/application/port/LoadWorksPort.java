@@ -58,4 +58,5 @@ public interface LoadWorksPort {
     List<Works> findRandomWorksExcluding(List<Long> excludedIds, int limit);
 
     List<Works> findWorksByIds(List<Long> worksIds);
+
 }

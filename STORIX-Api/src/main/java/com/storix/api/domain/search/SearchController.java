@@ -29,7 +29,7 @@ public class SearchController {
     private final SearchHistoryService searchHistoryService;
 
     @GetMapping("/works")
-    @Operation(summary = "작품 검색", description = "작품명 검색합니다. 결과값은 무한 스크롤로 구성됩니다.")
+    @Operation(summary = "작품 검색", description = "작품명 검색합니다. 결과값은 무한 스크롤로 구성됩니다.", deprecated = true)
     public CustomResponse<SearchResponseWrapperDto<WorksSearchResponseDto>> searchWorks(
             @RequestParam String keyword,
             @AuthenticationPrincipal AuthUserDetails authUser,
