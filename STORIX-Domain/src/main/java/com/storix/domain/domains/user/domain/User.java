@@ -75,6 +75,9 @@ public class User extends BaseTimeEntity {
     @Column(name = "deletedSuffix", length = 36)
     private String deletedSuffix;
 
+    @Column(name = "suspended_at")
+    private LocalDateTime suspendedAt;
+
     @Column(name = "active_nick_name", insertable = false, updatable = false, length = 50)
     private String activeNickName;
 
@@ -145,11 +148,13 @@ public class User extends BaseTimeEntity {
     // 계정 정지
     public void suspend() {
         this.accountState = AccountState.SUSPENDED;
+        this.suspendedAt = LocalDateTime.now();
     }
 
     // 계정 정지 해제
     public void restore() {
         this.accountState = AccountState.NORMAL;
+        this.suspendedAt = null;
     }
 
     // 계정 탈퇴

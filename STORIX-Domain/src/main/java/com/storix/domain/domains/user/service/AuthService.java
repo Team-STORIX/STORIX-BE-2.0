@@ -158,6 +158,7 @@ public class AuthService {
     }
 
     private void saveWithdrawHistory(Long userId, Set<WithdrawReason> reasons, String detail) {
+        if (reasons == null || reasons.isEmpty()) return;
         String otherDetail = (detail == null) ? null : detail.trim();
         LocalDateTime processedAt = LocalDateTime.now();
 

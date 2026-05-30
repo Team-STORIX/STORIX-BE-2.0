@@ -65,10 +65,7 @@ public class ReportCase extends BaseTimeEntity {
 
     public void reopen() {
         this.status = ReportStatus.RECEIVED;
-        this.processAction = null;
-        this.processMemo = null;
-        this.processedByAdminId = null;
-        this.processedAt = null;
+        // processAction / processMemo / processedByAdminId / processedAt 는 감사 이력으로 보존
     }
 
     public void process(ReportStatus status, ReportAction processAction, String processMemo, Long adminId) {
