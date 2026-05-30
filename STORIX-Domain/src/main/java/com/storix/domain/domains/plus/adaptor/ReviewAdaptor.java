@@ -75,6 +75,13 @@ public class ReviewAdaptor {
         return reviewRepository.findOtherSliceReviewInfo(userId, worksId, pageable);
     }
 
+    public Slice<SliceReviewInfo> getOtherReviewInfoExcludingBlocked(Long userId, Long worksId, List<Long> blockedIds, Pageable pageable) {
+        if (blockedIds.isEmpty()) {
+            return reviewRepository.findOtherSliceReviewInfo(userId, worksId, pageable);
+        }
+        return reviewRepository.findOtherSliceReviewInfoExcludingBlocked(userId, worksId, blockedIds, pageable);
+    }
+
     public ReviewInfo findReviewById(Long reviewId) {
         Optional<Review> optionalReview = reviewRepository.findById(reviewId);
         if (optionalReview.isPresent()) {

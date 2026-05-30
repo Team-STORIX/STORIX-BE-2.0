@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardReply, Long> {
@@ -56,6 +57,15 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             "LEFT JOIN FETCH r.childReplies c " +
             "WHERE r.board.id = :boardId AND r.parentReply IS NULL")
     Slice<ReaderBoardReply> findAllByBoard_Id(@Param("boardId") Long boardId, Pageable pageable);
+
+    // 차단 유저 제외 댓글 조회
+    @Query("SELECT DISTINCT r FROM ReaderBoardReply r " +
+            "LEFT JOIN FETCH r.childReplies c " +
+            "WHERE r.board.id = :boardId AND r.parentReply IS NULL AND r.userId NOT IN :blockedIds")
+    Slice<ReaderBoardReply> findAllByBoard_IdExcludingBlocked(
+            @Param("boardId") Long boardId,
+            @Param("blockedIds") List<Long> blockedIds,
+            Pageable pageable);
 
     // 답댓글 조회
     @Query("SELECT r FROM ReaderBoardReply r " +

@@ -13,6 +13,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -63,6 +64,16 @@ public class BoardAdaptor {
         }
 
         return readerBoardRepository.findAllReaderBoardByWorksId(worksId, pageable);
+    }
+
+    public Slice<ReaderBoard> findAllReaderBoardListByWorksIdExcludingBlocked(Long worksId, List<Long> blockedIds, Pageable pageable) {
+        if (worksId == null) {
+            return null;
+        }
+        if (blockedIds.isEmpty()) {
+            return readerBoardRepository.findAllReaderBoardByWorksId(worksId, pageable);
+        }
+        return readerBoardRepository.findAllReaderBoardByWorksIdExcludingBlocked(worksId, blockedIds, pageable);
     }
 
     // 피드 게시글 단건 조회
