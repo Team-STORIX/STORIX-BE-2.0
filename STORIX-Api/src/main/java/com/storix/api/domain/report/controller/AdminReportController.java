@@ -1,5 +1,6 @@
 package com.storix.api.domain.report.controller;
 
+import com.storix.api.domain.report.controller.dto.AdminReportProcessRequest;
 import com.storix.api.domain.report.usecase.AdminReportUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.report.domain.ReportStatus;
@@ -18,8 +19,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -72,5 +76,15 @@ public class AdminReportController {
             @PathVariable Long reportCaseId
     ) {
         return adminReportUseCase.getReportDetail(authUserDetails, reportCaseId);
+    }
+
+    @PatchMapping("/{reportCaseId}/process")
+    @Operation(summary = "관리자 신고 처리", description = "신고 케이스를 반려(REJECTED) 또는 처리 완료(COMPLETED)로 처리합니다. COMPLETED 시 processAction 필수.")
+    public CustomResponse<Void> processReport(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @PathVariable Long reportCaseId,
+            @Valid @RequestBody AdminReportProcessRequest request
+    ) {
+        return adminReportUseCase.processReport(authUserDetails, reportCaseId, request);
     }
 }

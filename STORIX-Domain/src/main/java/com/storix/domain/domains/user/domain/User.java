@@ -142,6 +142,11 @@ public class User extends BaseTimeEntity {
         this.point -= point;
     }
 
+    // 계정 정지
+    public void suspend() {
+        this.accountState = AccountState.SUSPENDED;
+    }
+
     // 계정 탈퇴
     public void withdraw() {
         if (accountState.equals(AccountState.DELETED)) {

@@ -56,6 +56,12 @@ public class BoardAdaptor {
 
     }
 
+    // 관리자 게시글 삭제
+    public void adminDeleteReaderBoard(long boardId) {
+        readerBoardRepository.deleteById(boardId);
+        readerBoardRepository.flush();
+    }
+
     // 피드 작품 관련 게시글 조회
     public Slice<ReaderBoard> findAllReaderBoardListByWorksId(Long worksId, Pageable pageable) {
         if (worksId == null) {

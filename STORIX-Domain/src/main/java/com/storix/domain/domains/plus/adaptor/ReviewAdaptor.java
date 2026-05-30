@@ -112,11 +112,17 @@ public class ReviewAdaptor {
         }
     }
 
+    // 관리자 리뷰 삭제
     public void deleteReview(Long userId, Long reviewId) {
         int isDeleted = reviewRepository.deleteByIdAndUserId(reviewId, userId);
         if (isDeleted == 0) {
             throw InvalidReviewDeleteRequestException.EXCEPTION;
         }
+    }
+
+    // 관리자 리뷰 삭제
+    public void adminDeleteReview(long reviewId) {
+        reviewRepository.deleteById(reviewId);
     }
 
     // 프로필 탭
