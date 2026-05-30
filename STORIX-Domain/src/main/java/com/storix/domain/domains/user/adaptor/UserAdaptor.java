@@ -1,5 +1,6 @@
 package com.storix.domain.domains.user.adaptor;
 
+import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
@@ -114,6 +115,15 @@ public class UserAdaptor {
                         (a, b) -> a,
                         LinkedHashMap::new
                 ));
+    }
+
+    public List<User> findSuspendedUsersByIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        return userRepository.findAllById(userIds).stream()
+                .filter(u -> u.getAccountState() == AccountState.SUSPENDED)
+                .toList();
     }
 
 }

@@ -33,4 +33,10 @@ public class ReportCaseTransactionAdaptor {
                         .build()
         );
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ReportCase reopen(ReportCase reportCase) {
+        reportCase.reopen();
+        return reportCaseRepository.saveAndFlush(reportCase);
+    }
 }

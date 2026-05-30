@@ -3,5 +3,6 @@ package com.storix.domain.domains.report.domain;
 public enum ReportTargetType {
     FEED,
     FEED_REPLY,
-    REVIEW
+    REVIEW,
+    TOPIC_ROOM
 }

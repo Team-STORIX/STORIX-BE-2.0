@@ -2,6 +2,8 @@ package com.storix.api.domain.user.usecase;
 
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.user.domain.OAuthInfo;
+import com.storix.domain.domains.user.domain.Role;
+import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import com.storix.domain.domains.user.service.AuthService;
 import com.storix.api.domain.user.helper.OAuthHelper;
 import com.storix.api.domain.user.helper.CookieHelper;
@@ -19,7 +21,10 @@ public class WithDrawUseCase {
     private final OAuthHelper oauthHelper;
     private final CookieHelper cookieHelper;
 
-    public ResponseEntity<CustomResponse<Void>> execute(Long userId) {
+    public ResponseEntity<CustomResponse<Void>> execute(Long userId, Role role) {
+        if (role == Role.ADMIN) {
+            throw ForbiddenApproachException.EXCEPTION;
+        }
 
         // 1. OAuth 연결 해제
         // TODO: 현재 외부 api 호출 실패 시 feignException 터짐 -> 회원 탈퇴 X -> best-effort + 재시도 워커 처리 고려중

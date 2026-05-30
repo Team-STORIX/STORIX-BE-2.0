@@ -3,7 +3,6 @@ package com.storix.batch.scheduler;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -34,17 +35,28 @@ public class AccountSuspensionRestoreScheduler {
             return;
         }
 
-        int restored = 0;
-        for (ReportCase reportCase : expired) {
-            if (reportCase.getReportedUserId() == null) continue;
+        // 중복 userId 제거
+        Set<Long> candidateUserIds = expired.stream()
+                .map(ReportCase::getReportedUserId)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
 
-            User user = userAdaptor.findUserById(reportCase.getReportedUserId());
-            if (user.getAccountState() == AccountState.SUSPENDED) {
-                user.restore();
-                restored++;
-            }
+        // 더 최근의 유효한 정지 케이스가 있는 userId 제외 (중복 정지 케이스 방어)
+        List<Long> restorableUserIds = candidateUserIds.stream()
+                .filter(userId -> !reportCaseAdaptor.hasActiveSuspension(userId, threshold))
+                .toList();
+
+        if (restorableUserIds.isEmpty()) {
+            return;
         }
 
-        log.info(">>>> [Scheduler] 계정 정지 해제 완료: {}건", restored);
+        // 배치 조회 (N+1 제거)
+        List<User> users = userAdaptor.findSuspendedUsersByIds(restorableUserIds);
+
+        for (User user : users) {
+            user.restore();
+        }
+
+        log.info(">>>> [Scheduler] 계정 정지 해제 완료: {}건", users.size());
     }
 }

@@ -22,4 +22,7 @@ public interface ReportCaseRepository extends JpaRepository<ReportCase, Long>, R
 
     List<ReportCase> findByStatusAndProcessActionAndProcessedAtBefore(
             ReportStatus status, ReportAction processAction, LocalDateTime threshold);
+
+    boolean existsByReportedUserIdAndStatusAndProcessActionAndProcessedAtAfter(
+            Long reportedUserId, ReportStatus status, ReportAction processAction, LocalDateTime threshold);
 }
