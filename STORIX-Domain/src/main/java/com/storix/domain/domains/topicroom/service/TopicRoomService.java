@@ -19,6 +19,7 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -53,6 +55,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final ProfanityFilterService profanityFilterService;
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
     private final GenreScorePublisher genreScorePublisher;
+    private final UserAdaptor userAdaptor;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -109,8 +112,14 @@ public class TopicRoomService implements TopicRoomUseCase {
 
         List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
         List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
+        List<Long> senderIds = rooms.stream()
+                .map(TopicRoom::getLastMessageSenderId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
 
         Map<Long, TopicRoomWorksInfo> worksMap = loadWorksPort.loadWorksMapByIds(worksIds);
+        Map<Long, String> nicknameMap = userAdaptor.findNicknameMapByUserIds(senderIds);
 
         // 포트를 통해 Set<Long> 형태의 가입된 방 ID 목록 수신
         Set<Long> joinedRoomIds = (userId != null)
@@ -121,8 +130,9 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .map(room -> {
                     TopicRoomWorksInfo worksInfo = worksMap.get(room.getWorksId());
                     boolean isJoined = joinedRoomIds.contains(room.getId());
+                    String lastMessageSenderNickname = nicknameMap.get(room.getLastMessageSenderId());
 
-                    return TopicRoomPreviewResponseDto.from(room, worksInfo, isJoined);
+                    return TopicRoomPreviewResponseDto.from(room, worksInfo, lastMessageSenderNickname, isJoined);
                 })
                 .toList();
     }
