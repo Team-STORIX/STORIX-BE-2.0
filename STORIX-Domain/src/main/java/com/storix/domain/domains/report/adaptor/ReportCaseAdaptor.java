@@ -4,6 +4,7 @@ import com.storix.domain.domains.report.domain.ReportAction;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.repository.StatusCountProjection;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
 import com.storix.domain.domains.report.exception.UnknownReportCaseException;
 import com.storix.domain.domains.report.repository.ReportCaseRepository;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -55,14 +58,6 @@ public class ReportCaseAdaptor {
         return reportCaseRepository.countByStatus(status);
     }
 
-    public long countByReportedUserId(Long reportedUserId) {
-        return reportCaseRepository.countByReportedUserId(reportedUserId);
-    }
-
-    public long countByReportedUserIdAndStatus(Long reportedUserId, ReportStatus status) {
-        return reportCaseRepository.countByReportedUserIdAndStatus(reportedUserId, status);
-    }
-
     public List<ReportCase> findExpiredSuspensions(LocalDateTime threshold) {
         return reportCaseRepository.findByStatusAndProcessActionAndProcessedAtBefore(
                 ReportStatus.COMPLETED, ReportAction.ACCOUNT_SUSPENDED, threshold);
@@ -71,5 +66,13 @@ public class ReportCaseAdaptor {
     public boolean hasActiveSuspension(Long reportedUserId, LocalDateTime threshold) {
         return reportCaseRepository.existsByReportedUserIdAndStatusAndProcessActionAndProcessedAtAfter(
                 reportedUserId, ReportStatus.COMPLETED, ReportAction.ACCOUNT_SUSPENDED, threshold);
+    }
+
+    public Map<ReportStatus, Long> countGroupByStatus(Long reportedUserId) {
+        return reportCaseRepository.countGroupByStatusAndReportedUserId(reportedUserId).stream()
+                .collect(Collectors.toMap(
+                        StatusCountProjection::getStatus,
+                        StatusCountProjection::getCount
+                ));
     }
 }
