@@ -159,7 +159,11 @@ public enum ErrorCode {
     SPOILER_SCRIPT_REQUIRED(HttpStatus.BAD_REQUEST, "SPOILER_ERROR_001", "스포일러 설정 시 스포일러 문구를 입력해주세요."),
 
     // Preference error
-    PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다.");
+    PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다."),
+
+    // Block error
+    SELF_BLOCK_ERROR(HttpStatus.BAD_REQUEST, "BLOCK_ERROR_001", "자기 자신은 차단할 수 없습니다."),
+    DUPLICATE_USER_BLOCK(HttpStatus.CONFLICT, "BLOCK_ERROR_002", "이미 차단한 사용자입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
