@@ -15,6 +15,7 @@ import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
+import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
@@ -101,7 +102,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     }
 
     @Override
-    public List<TopicRoomResponseDto> getPopularRooms(Long userId) {
+    public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
         // 1. 상위 5개 토픽룸 가져오기
         List<TopicRoom> rooms = loadTopicRoomPort.loadTop5PopularRooms();
         if (rooms.isEmpty()) return Collections.emptyList();
@@ -121,7 +122,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                     TopicRoomWorksInfo worksInfo = worksMap.get(room.getWorksId());
                     boolean isJoined = joinedRoomIds.contains(room.getId());
 
-                    return TopicRoomResponseDto.from(room, worksInfo, isJoined);
+                    return TopicRoomPreviewResponseDto.from(room, worksInfo, isJoined);
                 })
                 .toList();
     }
