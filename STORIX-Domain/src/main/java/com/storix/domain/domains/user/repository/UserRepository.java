@@ -1,5 +1,6 @@
 package com.storix.domain.domains.user.repository;
 
+import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
@@ -8,6 +9,7 @@ import com.storix.domain.domains.user.domain.User;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,5 +51,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "FROM User u " +
             "WHERE u.id IN :userIds ")
     List<StandardProfileInfo> findStandardProfileInfoByUserIds(@Param("userIds") List<Long> userIds);
+
+    // 정지 만료 대상 유저 배치 조회 — suspendedAt 기준 (ReportCase 독립적)
+    @Query("SELECT u FROM User u WHERE u.accountState = :state AND u.suspendedAt < :threshold")
+    List<User> findByAccountStateAndSuspendedAtBefore(
+            @Param("state") AccountState state,
+            @Param("threshold") LocalDateTime threshold);
 
 }

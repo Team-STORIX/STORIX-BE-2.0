@@ -86,6 +86,7 @@ public class WorksDetailKebabService {
         );
 
         reviewReportAdaptor.saveReport(cmd);
+        reportCaseAdaptor.reopenIfClosed(reportCase);
     }
 
 }

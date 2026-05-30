@@ -7,9 +7,12 @@ import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportAction;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
+import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.report.exception.AlreadyProcessedReportException;
+import com.storix.domain.domains.report.exception.InvalidReportProcessCombinationException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,7 @@ public class AdminReportProcessService {
 
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final UserAdaptor userAdaptor;
+    private final AuthService authService;
     private final BoardAdaptor boardAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
@@ -32,6 +36,11 @@ public class AdminReportProcessService {
 
         if (reportCase.getStatus() != ReportStatus.RECEIVED) {
             throw AlreadyProcessedReportException.EXCEPTION;
+        }
+
+        if (reportCase.getTargetType() == ReportTargetType.TOPIC_ROOM
+                && processAction == ReportAction.CONTENT_DELETED) {
+            throw InvalidReportProcessCombinationException.EXCEPTION;
         }
 
         reportCase.process(status, processAction, processMemo, adminId);
@@ -55,7 +64,7 @@ public class AdminReportProcessService {
             case FEED -> boardAdaptor.adminDeleteReaderBoard(targetId);
             case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(targetId);
             case REVIEW -> reviewAdaptor.adminDeleteReview(targetId);
-            case TOPIC_ROOM -> log.warn(">>> [Report] TOPIC_ROOM CONTENT_DELETED 처리 미정 — reportCaseId={}, targetId={}", reportCase.getId(), targetId);
+            case TOPIC_ROOM -> throw InvalidReportProcessCombinationException.EXCEPTION;
         }
     }
 
@@ -67,7 +76,6 @@ public class AdminReportProcessService {
 
     private void deleteUser(Long reportedUserId) {
         if (reportedUserId == null) return;
-        User user = userAdaptor.findUserById(reportedUserId);
-        user.withdraw();
+        authService.withDrawUser(reportedUserId, null, null);
     }
 }

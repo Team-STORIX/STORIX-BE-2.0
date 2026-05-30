@@ -38,7 +38,6 @@ public class AdminReportUseCase {
             Pageable pageable
     ) {
         validateAdmin(authUserDetails);
-
         Page<AdminReportListResponse> result = adminReportQueryService.getReports(
                 new AdminReportSearchCondition(targetType, status, startAt, endAt, reportedUserId),
                 pageable
@@ -56,13 +55,11 @@ public class AdminReportUseCase {
 
     public CustomResponse<Long> getUnprocessedCount(AuthUserDetails authUserDetails) {
         validateAdmin(authUserDetails);
-
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminReportQueryService.countUnprocessedReports());
     }
 
     public CustomResponse<AdminReportDetailResponse> getReportDetail(AuthUserDetails authUserDetails, Long reportCaseId) {
         validateAdmin(authUserDetails);
-
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminReportQueryService.getReportDetail(reportCaseId));
     }
 

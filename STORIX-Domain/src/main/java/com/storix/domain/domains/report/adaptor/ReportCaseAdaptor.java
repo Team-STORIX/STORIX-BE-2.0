@@ -25,12 +25,6 @@ public class ReportCaseAdaptor {
 
     public ReportCase findOrCreate(ReportTargetType targetType, Long targetId, Long reportedUserId) {
         return reportCaseTransactionAdaptor.findByTarget(targetType, targetId)
-                .map(reportCase -> {
-                    if (reportCase.getStatus() != ReportStatus.RECEIVED) {
-                        return reportCaseTransactionAdaptor.reopen(reportCase);
-                    }
-                    return reportCase;
-                })
                 .orElseGet(() -> {
                     try {
                         return reportCaseTransactionAdaptor.create(targetType, targetId, reportedUserId);
@@ -39,6 +33,13 @@ public class ReportCaseAdaptor {
                                 .orElseThrow(() -> e);
                     }
                 });
+    }
+
+    // report 저장 성공 후 같은 트랜잭션 안에서 호출 — reopen은 부모 트랜잭션과 함께 커밋/롤백
+    public void reopenIfClosed(ReportCase reportCase) {
+        if (reportCase.getStatus() != ReportStatus.RECEIVED) {
+            reportCase.reopen();
+        }
     }
 
     public ReportCase findById(Long reportCaseId) {
