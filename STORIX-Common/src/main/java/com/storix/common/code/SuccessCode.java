@@ -97,7 +97,10 @@ public enum SuccessCode {
     LIBRARY_WORKS_LOAD_SUCCESS(HttpStatus.OK, "LIBRARY_SUCCESS_001", "서재 정보 조회에 성공했습니다."),
     LIBRARY_SEARCH_SUCCESS(HttpStatus.OK, "LIBRARY_SUCCESS_002", "서재 내 검색에 성공했습니다."),
     LIBRARY_RECENT_LOAD_SUCCESS(HttpStatus.OK, "LIBRARY_SUCCESS_003", "서재 최근 검색어 조회에 성공했습니다."),
-    LIBRARY_RECENT_REMOVE_SUCCESS(HttpStatus.OK, "LIBRARY_SUCCESS_004", "서재 최근 검색어 삭제에 성공했습니다.");
+    LIBRARY_RECENT_REMOVE_SUCCESS(HttpStatus.OK, "LIBRARY_SUCCESS_004", "서재 최근 검색어 삭제에 성공했습니다."),
+
+    // Block success
+    USER_BLOCK_SUCCESS(HttpStatus.CREATED, "BLOCK_SUCCESS_001", "사용자 차단에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
