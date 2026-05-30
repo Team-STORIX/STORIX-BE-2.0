@@ -25,6 +25,12 @@ public class ReportCaseAdaptor {
 
     public ReportCase findOrCreate(ReportTargetType targetType, Long targetId, Long reportedUserId) {
         return reportCaseTransactionAdaptor.findByTarget(targetType, targetId)
+                .map(reportCase -> {
+                    if (reportCase.getStatus() != ReportStatus.RECEIVED) {
+                        return reportCaseTransactionAdaptor.reopen(reportCase);
+                    }
+                    return reportCase;
+                })
                 .orElseGet(() -> {
                     try {
                         return reportCaseTransactionAdaptor.create(targetType, targetId, reportedUserId);
@@ -59,5 +65,10 @@ public class ReportCaseAdaptor {
     public List<ReportCase> findExpiredSuspensions(LocalDateTime threshold) {
         return reportCaseRepository.findByStatusAndProcessActionAndProcessedAtBefore(
                 ReportStatus.COMPLETED, ReportAction.ACCOUNT_SUSPENDED, threshold);
+    }
+
+    public boolean hasActiveSuspension(Long reportedUserId, LocalDateTime threshold) {
+        return reportCaseRepository.existsByReportedUserIdAndStatusAndProcessActionAndProcessedAtAfter(
+                reportedUserId, ReportStatus.COMPLETED, ReportAction.ACCOUNT_SUSPENDED, threshold);
     }
 }

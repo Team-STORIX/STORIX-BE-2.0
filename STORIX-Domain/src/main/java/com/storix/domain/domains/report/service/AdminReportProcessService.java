@@ -11,9 +11,11 @@ import com.storix.domain.domains.report.exception.AlreadyProcessedReportExceptio
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminReportProcessService {
@@ -53,6 +55,7 @@ public class AdminReportProcessService {
             case FEED -> boardAdaptor.adminDeleteReaderBoard(targetId);
             case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(targetId);
             case REVIEW -> reviewAdaptor.adminDeleteReview(targetId);
+            case TOPIC_ROOM -> log.warn(">>> [Report] TOPIC_ROOM CONTENT_DELETED 처리 미정 — reportCaseId={}, targetId={}", reportCase.getId(), targetId);
         }
     }
 
