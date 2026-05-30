@@ -64,6 +64,6 @@ public class AuthV2Controller {
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @Valid @RequestBody WithdrawRequest req
     ) {
-        return withDrawUseCase.execute(authUserDetails.getUserId(), authUserDetails.getRole(), req.reasons(), req.detail());
+        return withDrawUseCase.execute(authUserDetails.getUserId(), req.reasons(), req.detail());
     }
 }

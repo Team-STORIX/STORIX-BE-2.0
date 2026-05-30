@@ -2,9 +2,7 @@ package com.storix.api.domain.user.usecase;
 
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.user.domain.OAuthInfo;
-import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.domain.WithdrawReason;
-import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import com.storix.domain.domains.user.service.AuthService;
 import com.storix.api.domain.user.helper.OAuthHelper;
 import com.storix.api.domain.user.helper.CookieHelper;
@@ -26,10 +24,7 @@ public class WithDrawUseCase {
     private final OAuthHelper oauthHelper;
     private final CookieHelper cookieHelper;
 
-    public ResponseEntity<CustomResponse<Void>> execute(Long userId, Role role, Set<WithdrawReason> reasons, String detail) {
-        if (role == Role.ADMIN) {
-            throw ForbiddenApproachException.EXCEPTION;
-        }
+    public ResponseEntity<CustomResponse<Void>> execute(Long userId, Set<WithdrawReason> reasons, String detail) {
 
         // 1. OAuth 연결 해제
         OAuthInfo oauthInfo = authService.findOAuthInfoByUserId(userId);
