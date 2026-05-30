@@ -2,6 +2,8 @@ package com.storix.domain.domains.topicroom.adaptor;
 
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
+import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomUserException;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,5 +46,10 @@ public class TopicRoomAdaptor {
         }
 
         return topicRoomUserRepository.findJoinedRoomIdsByUserIdAndRoomIds(userId, roomIds);
+    }
+
+    public TopicRoomUser findByUserIdAndRoomId(Long userId, Long roomId) {
+        return topicRoomUserRepository.findByUserIdAndTopicRoomId(userId, roomId)
+                .orElseThrow(() -> UnknownTopicRoomUserException.EXCEPTION);
     }
 }
