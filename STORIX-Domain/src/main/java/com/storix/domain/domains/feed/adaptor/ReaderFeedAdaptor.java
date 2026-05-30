@@ -63,6 +63,13 @@ public class ReaderFeedAdaptor {
         return readerBoardRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
+    public Slice<ReaderBoard> findAllExcludingBlocked(List<Long> blockedIds, Pageable pageable) {
+        if (blockedIds.isEmpty()) {
+            return readerBoardRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
+        return readerBoardRepository.findAllExcludingBlockedOrderByCreatedAtDesc(blockedIds, pageable);
+    }
+
     // 리스트 좋아요 정보 확인
     public Set<Long> findLikedBoardIds(Long userId, List<Long> boardIds) {
         if (userId == null || boardIds.isEmpty()) {
@@ -237,6 +244,13 @@ public class ReaderFeedAdaptor {
     // 게시물 댓글 정보 확인
     public Slice<ReaderBoardReply> findAllByBoardId(Long boardId, Pageable pageable) {
         return readerBoardReplyRepository.findAllByBoard_Id(boardId, pageable);
+    }
+
+    public Slice<ReaderBoardReply> findAllByBoardIdExcludingBlocked(Long boardId, List<Long> blockedIds, Pageable pageable) {
+        if (blockedIds.isEmpty()) {
+            return readerBoardReplyRepository.findAllByBoard_Id(boardId, pageable);
+        }
+        return readerBoardReplyRepository.findAllByBoard_IdExcludingBlocked(boardId, blockedIds, pageable);
     }
 
     // 게시물 댓글 좋아요 여부 확인
