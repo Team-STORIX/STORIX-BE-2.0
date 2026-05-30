@@ -1,5 +1,6 @@
 package com.storix.api.domain.report.usecase;
 
+import com.storix.api.domain.report.controller.dto.AdminReportProcessRequest;
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
@@ -9,6 +10,7 @@ import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
 import com.storix.domain.domains.report.dto.AdminUserReportSummaryResponse;
+import com.storix.domain.domains.report.service.AdminReportProcessService;
 import com.storix.domain.domains.report.service.AdminReportQueryService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.Role;
@@ -24,6 +26,7 @@ import java.time.LocalDateTime;
 public class AdminReportUseCase {
 
     private final AdminReportQueryService adminReportQueryService;
+    private final AdminReportProcessService adminReportProcessService;
 
     public CustomResponse<Page<AdminReportListResponse>> getReports(
             AuthUserDetails authUserDetails,
@@ -61,6 +64,22 @@ public class AdminReportUseCase {
         validateAdmin(authUserDetails);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminReportQueryService.getReportDetail(reportCaseId));
+    }
+
+    public CustomResponse<Void> processReport(
+            AuthUserDetails authUserDetails,
+            Long reportCaseId,
+            AdminReportProcessRequest request
+    ) {
+        validateAdmin(authUserDetails);
+        adminReportProcessService.process(
+                reportCaseId,
+                request.status(),
+                request.processAction(),
+                request.processMemo(),
+                authUserDetails.getUserId()
+        );
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
     }
 
     private void validateAdmin(AuthUserDetails authUserDetails) {
