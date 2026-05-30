@@ -1,5 +1,6 @@
 package com.storix.domain.domains.report.adaptor;
 
+import com.storix.domain.domains.report.domain.ReportAction;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
@@ -11,6 +12,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -50,5 +54,10 @@ public class ReportCaseAdaptor {
 
     public long countByReportedUserIdAndStatus(Long reportedUserId, ReportStatus status) {
         return reportCaseRepository.countByReportedUserIdAndStatus(reportedUserId, status);
+    }
+
+    public List<ReportCase> findExpiredSuspensions(LocalDateTime threshold) {
+        return reportCaseRepository.findByStatusAndProcessActionAndProcessedAtBefore(
+                ReportStatus.COMPLETED, ReportAction.ACCOUNT_SUSPENDED, threshold);
     }
 }
