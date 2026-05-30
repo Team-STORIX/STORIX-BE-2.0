@@ -21,7 +21,12 @@ public record TopicRoomPreviewResponseDto(
         String lastChatTime,
         Boolean isJoined
 ) {
-    public static TopicRoomPreviewResponseDto from(TopicRoom room, TopicRoomWorksInfo worksInfo, boolean isJoined) {
+    public static TopicRoomPreviewResponseDto from(
+            TopicRoom room,
+            TopicRoomWorksInfo worksInfo,
+            String lastMessageSenderNickname,
+            boolean isJoined
+    ) {
         return new TopicRoomPreviewResponseDto(
                 room.getId(),
                 room.getTopicRoomName(),
@@ -32,7 +37,7 @@ public record TopicRoomPreviewResponseDto(
                 room.getLastMessage(),
                 room.getLastMessageType(),
                 room.getLastMessageSenderId(),
-                null,
+                lastMessageSenderNickname,
                 formatTimeAgo(room.getLastChatTime()),
                 isJoined
         );
