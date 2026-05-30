@@ -110,8 +110,8 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     }
 
     @Override
-    public void updateLastChatTime(Long roomId, LocalDateTime lastChatTime) {
-        topicRoomRepository.updateLastChatTime(roomId, lastChatTime);
+    public void updateLastChatTime(Long roomId, LocalDateTime now) {
+        topicRoomRepository.updateLastChatTime(roomId, now);
     }
 
     @Override
