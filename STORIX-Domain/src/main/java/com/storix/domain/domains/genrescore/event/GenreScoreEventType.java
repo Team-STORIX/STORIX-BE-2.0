@@ -11,7 +11,8 @@ public enum GenreScoreEventType {
     TOPIC_ROOM_JOIN(4),
     REVIEW_WRITE_POSITIVE(4),
     BOARD_WRITE(3),
-    FAVORITE_WORKS_ADD(3);
+    FAVORITE_WORKS_ADD(3),
+    FAVORITE_WORKS_REMOVE(-3);
 
     private final int weight;
 }
