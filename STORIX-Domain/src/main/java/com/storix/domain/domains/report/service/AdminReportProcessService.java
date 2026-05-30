@@ -53,7 +53,6 @@ public class AdminReportProcessService {
             case FEED -> boardAdaptor.adminDeleteReaderBoard(targetId);
             case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(targetId);
             case REVIEW -> reviewAdaptor.adminDeleteReview(targetId);
-            case TOPIC_ROOM -> { /* 토픽룸 자체는 삭제 대상 아님 */ }
         }
     }
 
