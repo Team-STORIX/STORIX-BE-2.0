@@ -148,7 +148,7 @@ public class AuthController {
     public ResponseEntity<CustomResponse<Void>> withdraw(
             @AuthenticationPrincipal AuthUserDetails authUserDetails
     ) {
-        return withDrawUseCase.execute(authUserDetails.getUserId(), authUserDetails.getRole(), null, null);
+        return withDrawUseCase.execute(authUserDetails.getUserId(), null, null);
     }
 
 }

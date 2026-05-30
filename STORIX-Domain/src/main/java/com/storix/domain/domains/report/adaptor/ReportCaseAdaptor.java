@@ -1,6 +1,5 @@
 package com.storix.domain.domains.report.adaptor;
 
-import com.storix.domain.domains.report.domain.ReportAction;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
@@ -14,8 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -56,16 +53,6 @@ public class ReportCaseAdaptor {
 
     public long countByStatus(ReportStatus status) {
         return reportCaseRepository.countByStatus(status);
-    }
-
-    public List<ReportCase> findExpiredSuspensions(LocalDateTime threshold) {
-        return reportCaseRepository.findByStatusAndProcessActionAndProcessedAtBefore(
-                ReportStatus.COMPLETED, ReportAction.ACCOUNT_SUSPENDED, threshold);
-    }
-
-    public boolean hasActiveSuspension(Long reportedUserId, LocalDateTime threshold) {
-        return reportCaseRepository.existsByReportedUserIdAndStatusAndProcessActionAndProcessedAtAfter(
-                reportedUserId, ReportStatus.COMPLETED, ReportAction.ACCOUNT_SUSPENDED, threshold);
     }
 
     public Map<ReportStatus, Long> countGroupByStatus(Long reportedUserId) {
