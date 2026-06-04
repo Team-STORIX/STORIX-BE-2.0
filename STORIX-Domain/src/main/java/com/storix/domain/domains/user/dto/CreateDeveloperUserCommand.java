@@ -21,7 +21,6 @@ public record CreateDeveloperUserCommand(
                 Collections.emptySet() : new LinkedHashSet<>(favoriteGenreList);
 
         return User.builder()
-                .termsAgree(true)
                 .oauthInfo(oauthInfo)
                 .nickName(nickName)
                 .favoriteGenreList(genres)
