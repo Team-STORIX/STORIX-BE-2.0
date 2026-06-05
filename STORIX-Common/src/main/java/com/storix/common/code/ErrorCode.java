@@ -162,7 +162,8 @@ public enum ErrorCode {
     PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다."),
 
     // Terms error
-    DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다.");
+    DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다."),
+    CURRENT_TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_ERROR_002", "현재 시행 중인 약관이 없습니다. 약관 등록 여부를 확인해주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;
