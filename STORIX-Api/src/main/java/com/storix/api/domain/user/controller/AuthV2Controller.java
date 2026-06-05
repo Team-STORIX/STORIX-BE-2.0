@@ -34,7 +34,7 @@ public class AuthV2Controller {
 
     @Operation(summary = "[v2] 독자 계정 회원가입", description = "유저 정보를 최종적으로 등록하는 api 입니다.   \n" +
             "- 온보딩 토큰을 헤더로 보내주세요.  \n" +
-            "- v1 의 marketingAgree 필드 대신 termsAgree(서비스 이용약관 동의) 필드를 받습니다.  \n" +
+            "- 필수 동의 3가지를 각각 받습니다: serviceTermsAgree(서비스 이용약관), privacyPolicyAgree(개인정보 수집·이용), ageOver14(만 14세 이상). 모두 true 여야 합니다.  \n" +
             "- 마케팅 알림 수신 동의 여부는 가입 후 별도 모달에서 받습니다.")
     @PostMapping("/users/reader/signup")
     public ResponseEntity<CustomResponse<AuthorizationResponse>> readerUserSignup(

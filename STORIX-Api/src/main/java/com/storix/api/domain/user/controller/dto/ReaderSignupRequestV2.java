@@ -10,7 +10,15 @@ public record ReaderSignupRequestV2(
 
     @NotNull(message = "서비스 이용약관 동의는 필수입니다.")
     @AssertTrue(message = "서비스 이용약관 동의는 필수입니다.")
-    Boolean termsAgree,
+    Boolean serviceTermsAgree,
+
+    @NotNull(message = "개인정보 수집·이용 동의는 필수입니다.")
+    @AssertTrue(message = "개인정보 수집·이용 동의는 필수입니다.")
+    Boolean privacyPolicyAgree,
+
+    @NotNull(message = "만 14세 이상 동의는 필수입니다.")
+    @AssertTrue(message = "만 14세 이상만 가입할 수 있습니다.")
+    Boolean ageOver14,
 
     @NotBlank(message = "닉네임은 필수입니다.")
     @Size(min = 2, max = 10, message = "닉네임은 2~10자까지 가능합니다.")
@@ -32,6 +40,14 @@ public record ReaderSignupRequestV2(
 
 ) {
     public ReaderSignUpData toData() {
-        return new ReaderSignUpData(termsAgree, nickName, profileDescription, favoriteGenreList, favoriteWorksIdList);
+        return new ReaderSignUpData(
+                serviceTermsAgree,
+                privacyPolicyAgree,
+                ageOver14,
+                nickName,
+                profileDescription,
+                favoriteGenreList,
+                favoriteWorksIdList
+        );
     }
 }
