@@ -3,7 +3,7 @@ package com.storix.domain.domains.user.dto;
 import com.storix.domain.domains.user.domain.Terms;
 import com.storix.domain.domains.user.domain.TermsType;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public record CreateTermsCommand(
         TermsType termsType,
@@ -11,9 +11,9 @@ public record CreateTermsCommand(
         String version,
         String content,
         boolean isRequired,
-        LocalDateTime announcedAt,
-        LocalDateTime effectiveFrom,
-        LocalDateTime effectiveTo
+        LocalDate announcedAt,
+        LocalDate effectiveFrom,
+        LocalDate effectiveTo
 ) {
     public Terms toEntity() {
         return Terms.builder()

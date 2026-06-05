@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 
 @Entity
@@ -50,20 +50,20 @@ public class Terms extends BaseTimeEntity {
 
     // 고지 일자
     @Column(name = "announced_at")
-    private LocalDateTime announcedAt;
+    private LocalDate announcedAt;
 
     // 시행 시작일
     @Column(name = "effective_from", nullable = false)
-    private LocalDateTime effectiveFrom;
+    private LocalDate effectiveFrom;
 
     // 적용 종료일
     @Column(name = "effective_to")
-    private LocalDateTime effectiveTo;
+    private LocalDate effectiveTo;
 
     @Builder
     private Terms(TermsType termsType, String title, String version, String content,
-                  boolean isRequired, LocalDateTime announcedAt,
-                  LocalDateTime effectiveFrom, LocalDateTime effectiveTo) {
+                  boolean isRequired, LocalDate announcedAt,
+                  LocalDate effectiveFrom, LocalDate effectiveTo) {
         this.termsType = termsType;
         this.title = title;
         this.version = version;
