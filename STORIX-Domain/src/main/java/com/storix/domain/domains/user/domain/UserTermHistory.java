@@ -27,9 +27,10 @@ public class UserTermHistory extends BaseTimeEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    // 동의한 약관 ID
-    @Column(name = "terms_id", nullable = false)
-    private Long termsId;
+    // 동의한 약관
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "terms_id", nullable = false, foreignKey = @ForeignKey(name = "fk_user_term_history_terms"))
+    private Terms terms;
 
     // 동의 여부
     @Column(name = "is_agreed", nullable = false)
@@ -44,10 +45,10 @@ public class UserTermHistory extends BaseTimeEntity {
     private LocalDateTime withdrawnAt;
 
     @Builder
-    private UserTermHistory(Long userId, Long termsId, boolean isAgreed,
+    private UserTermHistory(Long userId, Terms terms, boolean isAgreed,
                             LocalDateTime agreedAt, LocalDateTime withdrawnAt) {
         this.userId = userId;
-        this.termsId = termsId;
+        this.terms = terms;
         this.isAgreed = isAgreed;
         this.agreedAt = agreedAt;
         this.withdrawnAt = withdrawnAt;

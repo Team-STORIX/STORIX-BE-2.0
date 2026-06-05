@@ -184,7 +184,7 @@ public class AuthService {
         Terms terms = termsAdaptor.findCurrentByType(termsType);
         userHistoryAdaptor.saveUserTermHistory(UserTermHistory.builder()
                 .userId(userId)
-                .termsId(terms.getId())
+                .terms(terms)
                 .isAgreed(true)
                 .agreedAt(LocalDateTime.now())
                 .build());

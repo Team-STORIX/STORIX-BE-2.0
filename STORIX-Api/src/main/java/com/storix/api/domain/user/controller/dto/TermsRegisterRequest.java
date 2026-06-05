@@ -3,6 +3,7 @@ package com.storix.api.domain.user.controller.dto;
 import com.storix.domain.domains.user.domain.TermsType;
 import com.storix.domain.domains.user.dto.CreateTermsCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -34,6 +35,7 @@ public record TermsRegisterRequest(
         Boolean isRequired,
 
         @Schema(description = "고지 일자", example = "2026-06-04", format = "date")
+        @NotNull(message = "고지 일자는 필수입니다.")
         LocalDate announcedAt,
 
         @Schema(description = "시행 시작일", example = "2026-06-04", format = "date")
@@ -44,6 +46,14 @@ public record TermsRegisterRequest(
         LocalDate effectiveTo
 
 ) {
+    // 날짜 범위 검증: 고지일 <= 시행일, 종료일(있다면) >= 시행일
+    @AssertTrue(message = "약관 날짜 범위가 올바르지 않습니다.")
+    private boolean isDateRangeValid() {
+        if (announcedAt == null || effectiveFrom == null) return true;
+        if (announcedAt.isAfter(effectiveFrom)) return false;
+        return effectiveTo == null || !effectiveTo.isBefore(effectiveFrom);
+    }
+
     public CreateTermsCommand toCommand() {
         return new CreateTermsCommand(
                 termsType,
