@@ -60,9 +60,9 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private int point = 0;
 
-    // 이용약관 동의 여부
-    @Column(name = "terms_agree")
-    private Boolean termsAgree;
+    // 만 14세 이상 동의 여부
+    @Column(name = "age_over_14")
+    private Boolean ageOver14;
 
     @Column(name = "is_adult_verified")
     private Boolean isAdultVerified = false;
@@ -98,8 +98,8 @@ public class User extends BaseTimeEntity {
     protected User() {}
 
     @Builder
-    public User(Boolean termsAgree, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList, String profileDescription, Role role) {
-        this.termsAgree = termsAgree;
+    public User(Boolean ageOver14, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList, String profileDescription, Role role) {
+        this.ageOver14 = ageOver14;
         this.oauthInfo = oauthInfo;
         this.nickName = nickName;
         this.favoriteGenreList = favoriteGenreList;
@@ -153,7 +153,7 @@ public class User extends BaseTimeEntity {
         profileObjectKey = null;
         nickName = "탈퇴한 유저";
         oauthInfo = oauthInfo.withDrawOauthInfo();
-        termsAgree = null;
+        ageOver14 = null;
         isAdultVerified = null;
     }
 

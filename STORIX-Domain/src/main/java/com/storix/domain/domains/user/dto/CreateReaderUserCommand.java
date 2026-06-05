@@ -10,7 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public record CreateReaderUserCommand(
-        Boolean termsAgree,
+        Boolean ageOver14,
         OAuthProvider provider,
         String oid,
         String nickName,
@@ -23,7 +23,7 @@ public record CreateReaderUserCommand(
                         Collections.emptySet() : new LinkedHashSet<>(favoriteGenreList);
 
         return User.builder()
-                .termsAgree(termsAgree)
+                .ageOver14(ageOver14)
                 .oauthInfo(oauthInfo)
                 .nickName(nickName)
                 .favoriteGenreList(genres)
