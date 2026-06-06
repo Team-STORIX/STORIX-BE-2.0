@@ -53,7 +53,6 @@ public class TopicRoomResponseDto {
     }
 
     private static String formatTimeAgo(LocalDateTime time) {
-        if (time == null) return "대화 없음";
         long diff = Duration.between(time, LocalDateTime.now()).toMinutes();
         if (diff < 1) return "방금 전";
         if (diff < 60) return diff + "분 전";
