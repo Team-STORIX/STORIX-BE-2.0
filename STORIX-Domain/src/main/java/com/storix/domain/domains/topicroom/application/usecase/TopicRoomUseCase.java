@@ -4,6 +4,7 @@ import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomSortType;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
+import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.works.domain.Genre;
@@ -33,6 +34,6 @@ public interface TopicRoomUseCase {
 
     void reportUser(Long reporterId, Long roomId, TopicRoomReportRequestDto request);
 
-    List<TopicRoomResponseDto> getPopularRooms(Long userId);
+    List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId);
 
 }

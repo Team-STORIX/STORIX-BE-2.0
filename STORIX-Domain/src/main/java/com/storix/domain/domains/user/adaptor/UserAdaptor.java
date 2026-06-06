@@ -7,6 +7,7 @@ import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.dto.CreateDeveloperUserCommand;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
+import com.storix.domain.domains.user.dto.UserNicknameInfo;
 import com.storix.domain.domains.user.exception.me.*;
 import com.storix.domain.domains.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -111,6 +112,20 @@ public class UserAdaptor {
                 .collect(Collectors.toMap(
                         StandardProfileInfo::userId,
                         Function.identity(),
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+    }
+
+    public Map<Long, String> findNicknameMapByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return userRepository.findNicknameInfoByUserIds(userIds).stream()
+                .collect(Collectors.toMap(
+                        UserNicknameInfo::userId,
+                        UserNicknameInfo::nickName,
                         (a, b) -> a,
                         LinkedHashMap::new
                 ));
