@@ -34,4 +34,5 @@ public class LogoutUseCase {
                 .headers(cookieHelper.deleteCookie())
                 .body(CustomResponse.onSuccess(SuccessCode.AUTH_LOGOUT_SUCCESS));
     }
+
 }
