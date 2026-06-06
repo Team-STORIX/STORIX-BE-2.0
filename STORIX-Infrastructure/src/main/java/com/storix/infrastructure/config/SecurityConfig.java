@@ -109,7 +109,7 @@ public class SecurityConfig {
 
                                 // [Onboarding]
                                 .requestMatchers("/api/v1/onboarding/**").permitAll()
-          
+
                                 // [Auth]
                                 .requestMatchers("/api/v1/auth/oauth/**").permitAll()
                                 .requestMatchers("/api/v1/auth/users/reader/signup").hasRole("ONBOARDING")

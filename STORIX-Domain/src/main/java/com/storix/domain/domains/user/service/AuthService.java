@@ -5,7 +5,6 @@ import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
-import com.storix.domain.domains.notification.domain.NotificationSetting;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
