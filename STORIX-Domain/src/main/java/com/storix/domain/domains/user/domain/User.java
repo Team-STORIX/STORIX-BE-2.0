@@ -53,8 +53,10 @@ public class User extends BaseTimeEntity {
     @Column(length = 30)
     private String profileDescription;
 
-    @Column(nullable = false)
-    private int level = 1;
+    // 칭호
+    @Enumerated(EnumType.STRING)
+    @Column(name = "title", length = 40)
+    private Title title;
 
     @Min(0)
     @Column(nullable = false)
@@ -124,11 +126,8 @@ public class User extends BaseTimeEntity {
 
     public void changeProfileImage(String objectKey) { this.profileObjectKey = objectKey; }
 
-    public void changeLevel(int level) {
-//        if (level < 1 || level > 5) {
-//            throw new IllegalArgumentException("레벨 범위 오류");
-//        }
-        this.level = level;
+    public void changeTitle(Title title) {
+        this.title = title;
     }
 
     public void increasePoint(int point) {

@@ -98,6 +98,10 @@ public class UserAdaptor {
         return user.get();
     }
 
+    public List<User> findUsersByIds(Collection<Long> userIds) {
+        return userRepository.findAllById(userIds);
+    }
+
     public Map<Long, StandardProfileInfo> findStandardProfileInfoByUserIds(List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyMap();

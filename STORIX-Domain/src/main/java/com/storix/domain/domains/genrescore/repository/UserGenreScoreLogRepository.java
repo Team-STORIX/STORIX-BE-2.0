@@ -2,6 +2,7 @@ package com.storix.domain.domains.genrescore.repository;
 
 import com.storix.domain.domains.genrescore.domain.UserGenreScoreLog;
 import com.storix.domain.domains.genrescore.dto.UnprocessedLogRow;
+import com.storix.domain.domains.works.domain.Genre;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 public interface UserGenreScoreLogRepository extends JpaRepository<UserGenreScoreLog, Long> {
@@ -21,6 +23,21 @@ public interface UserGenreScoreLogRepository extends JpaRepository<UserGenreScor
             ORDER BY l.id ASC
     """)
     List<UnprocessedLogRow> findUnprocessedChunk(Pageable pageable);
+
+    // 동점 대표 장르 타이브레이크: 최근 N일 점수 합 -> 최신 획득 시각 순으로 상위 장르 (Pageable 로 1건만 조회)
+    @Query("""
+            SELECT l.genre
+            FROM UserGenreScoreLog l
+            WHERE l.userId = :userId
+              AND l.genre IN :genres
+              AND l.createdAt >= :since
+            GROUP BY l.genre
+            ORDER BY SUM(l.weight) DESC, MAX(l.createdAt) DESC, l.genre ASC
+    """)
+    List<Genre> findTopGenresByRecentScore(@Param("userId") Long userId,
+                                           @Param("genres") Collection<Genre> genres,
+                                           @Param("since") LocalDateTime since,
+                                           Pageable pageable);
 
     // 미처리 로그 -> 처리 로그 (벌크 업데이트)
     @Modifying
