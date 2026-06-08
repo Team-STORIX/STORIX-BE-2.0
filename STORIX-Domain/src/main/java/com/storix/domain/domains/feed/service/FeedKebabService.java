@@ -50,7 +50,6 @@ public class FeedKebabService {
         );
 
         feedReportAdaptor.saveReport(cmd);
-        reportCaseAdaptor.reopenIfClosed(reportCase);
     }
 
     // 내 댓글 삭제
@@ -79,6 +78,5 @@ public class FeedKebabService {
         );
 
         feedReportAdaptor.saveReplyReport(cmd);
-        reportCaseAdaptor.reopenIfClosed(reportCase);
     }
 }

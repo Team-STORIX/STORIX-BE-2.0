@@ -118,9 +118,9 @@ public class UserAdaptor {
                 ));
     }
 
-    // suspendedAt 기준으로 정지 만료된 유저 일괄 조회 — ReportCase 상태와 독립적
-    public List<User> findExpiredSuspensions(LocalDateTime threshold) {
-        return userRepository.findByAccountStateAndSuspendedAtBefore(AccountState.SUSPENDED, threshold);
+    // suspendedUntil 기준으로 정지 만료된 유저 일괄 조회 — ReportCase 상태와 독립적
+    public List<User> findExpiredSuspensions(LocalDateTime now) {
+        return userRepository.findExpiredSuspensions(AccountState.SUSPENDED, now);
     }
 
 }
