@@ -8,20 +8,20 @@ import org.springframework.data.repository.query.Param;
 
 public interface LibraryRepository extends JpaRepository<Library, Long> {
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Library l SET l.reviewCount = l.reviewCount + 1 WHERE l.id = :id")
     void incrementReviewCount(@Param("id") Long id);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Library l SET l.reviewCount = l.reviewCount - 1 " +
             "WHERE l.id = :id AND l.reviewCount > 0")
     int decrementReviewCount(@Param("id") Long id);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Library l SET l.boardCount = l.boardCount + 1 WHERE l.id = :id")
     void incrementBoardCount(@Param("id") Long id);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Library l SET l.boardCount = l.boardCount - 1 " +
             "WHERE l.id = :id AND l.boardCount > 0")
     void decrementBoardCount(@Param("id") Long id);
