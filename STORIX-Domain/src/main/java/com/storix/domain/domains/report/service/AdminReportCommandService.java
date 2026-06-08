@@ -45,7 +45,7 @@ public class AdminReportCommandService {
     public void processReport(Long adminId, Long reportCaseId, ReportStatus status, ReportAction processAction, String processMemo) {
         validateRequest(status, processAction);
 
-        ReportCase reportCase = reportCaseAdaptor.findById(reportCaseId);
+        ReportCase reportCase = reportCaseAdaptor.findByIdForUpdate(reportCaseId);
 
         if (reportCase.getStatus() != ReportStatus.RECEIVED) {
             throw AlreadyProcessedReportCaseException.EXCEPTION;

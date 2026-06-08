@@ -24,26 +24,24 @@ public class ReportCaseAdaptor {
     private final ReportCaseTransactionAdaptor reportCaseTransactionAdaptor;
 
     public ReportCase findOrCreate(ReportTargetType targetType, Long targetId, Long reportedUserId) {
-        return reportCaseTransactionAdaptor.findByTarget(targetType, targetId)
-                .orElseGet(() -> {
-                    try {
-                        return reportCaseTransactionAdaptor.create(targetType, targetId, reportedUserId);
-                    } catch (DataIntegrityViolationException e) {
-                        return reportCaseTransactionAdaptor.findByTarget(targetType, targetId)
-                                .orElseThrow(() -> e);
-                    }
-                });
-    }
-
-    // report 저장 성공 후 같은 트랜잭션 안에서 호출 — reopen은 부모 트랜잭션과 함께 커밋/롤백
-    public void reopenIfClosed(ReportCase reportCase) {
-        if (reportCase.getStatus() != ReportStatus.RECEIVED) {
-            reportCase.reopen();
+        ReportCase existing = reportCaseTransactionAdaptor.findByTargetAndReopen(targetType, targetId);
+        if (existing != null) return existing;
+        try {
+            return reportCaseTransactionAdaptor.create(targetType, targetId, reportedUserId);
+        } catch (DataIntegrityViolationException e) {
+            ReportCase retried = reportCaseTransactionAdaptor.findByTargetAndReopen(targetType, targetId);
+            if (retried == null) throw e;
+            return retried;
         }
     }
 
     public ReportCase findById(Long reportCaseId) {
         return reportCaseRepository.findById(reportCaseId)
+                .orElseThrow(() -> UnknownReportCaseException.EXCEPTION);
+    }
+
+    public ReportCase findByIdForUpdate(Long reportCaseId) {
+        return reportCaseRepository.findByIdForUpdate(reportCaseId)
                 .orElseThrow(() -> UnknownReportCaseException.EXCEPTION);
     }
 

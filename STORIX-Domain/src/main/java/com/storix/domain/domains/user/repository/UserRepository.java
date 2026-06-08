@@ -52,10 +52,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "WHERE u.id IN :userIds ")
     List<StandardProfileInfo> findStandardProfileInfoByUserIds(@Param("userIds") List<Long> userIds);
 
-    // 정지 만료 대상 유저 배치 조회 — suspendedAt 기준 (ReportCase 독립적)
-    @Query("SELECT u FROM User u WHERE u.accountState = :state AND u.suspendedAt < :threshold")
-    List<User> findByAccountStateAndSuspendedAtBefore(
+    // 정지 만료 대상 유저 배치 조회 — suspendedUntil 기준 (ReportCase 독립적)
+    @Query("SELECT u FROM User u WHERE u.accountState = :state AND u.suspendedUntil < :now")
+    List<User> findExpiredSuspensions(
             @Param("state") AccountState state,
-            @Param("threshold") LocalDateTime threshold);
+            @Param("now") LocalDateTime now);
 
 }
