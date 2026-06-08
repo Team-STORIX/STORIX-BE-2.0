@@ -210,7 +210,7 @@ public class AdminReportQueryService {
                 reply.getBoardId(),
                 reply.getUserId(),
                 nickName(reply.getUserId(), nickNames),
-                reply.getDisplayComment(),
+                reply.getComment(),
                 reply.getCreatedAt(),
                 List.of()
         );
