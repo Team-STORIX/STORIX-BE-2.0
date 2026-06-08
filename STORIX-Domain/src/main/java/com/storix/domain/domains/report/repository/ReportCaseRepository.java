@@ -14,7 +14,11 @@ import java.util.Optional;
 
 public interface ReportCaseRepository extends JpaRepository<ReportCase, Long>, ReportCaseRepositoryCustom {
 
-    Optional<ReportCase> findByTargetTypeAndTargetId(ReportTargetType targetType, Long targetId);
+    Optional<ReportCase> findByTargetTypeAndTargetIdAndReportedUserId(
+            ReportTargetType targetType,
+            Long targetId,
+            Long reportedUserId
+    );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM ReportCase r WHERE r.id = :id")

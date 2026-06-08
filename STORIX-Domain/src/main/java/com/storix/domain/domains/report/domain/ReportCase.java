@@ -23,8 +23,8 @@ import java.time.LocalDateTime;
         name = "report_case",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_report_case_target",
-                        columnNames = {"target_type", "target_id"}
+                        name = "uk_report_case_target_reported_user",
+                        columnNames = {"target_type", "target_id", "reported_user_id"}
                 )
         }
 )
@@ -43,7 +43,7 @@ public class ReportCase extends BaseTimeEntity {
     @Column(name = "target_id", nullable = false)
     private Long targetId;
 
-    @Column(name = "reported_user_id")
+    @Column(name = "reported_user_id", nullable = false)
     private Long reportedUserId;
 
     @Enumerated(EnumType.STRING)
@@ -66,6 +66,14 @@ public class ReportCase extends BaseTimeEntity {
     public void reopen() {
         this.status = ReportStatus.RECEIVED;
         // processAction / processMemo / processedByAdminId / processedAt 는 감사 이력으로 보존
+    }
+
+    /**
+     * RECEIVED 상태인데 처리 이력이 남아있다면, 처리 완료 후 재신고로 reopen된 케이스다.
+     * 화면에서 processAction/processedAt 등을 "현재 처리 결과"가 아닌 "이전 처리 이력"으로 구분 표시할 때 사용한다.
+     */
+    public boolean hasPreviousProcessHistory() {
+        return status == ReportStatus.RECEIVED && processedAt != null;
     }
 
     public void process(ReportStatus status, ReportAction processAction, String processMemo, Long adminId) {

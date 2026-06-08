@@ -60,10 +60,8 @@ public class BoardAdaptor {
     public Long adminDeleteReaderBoard(Long boardId) {
         ReaderBoard board = readerBoardRepository.findById(boardId)
                 .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
-        Long ownerId = board.getUserId();
-        readerBoardRepository.deleteById(boardId);
-        readerBoardRepository.flush();
-        return ownerId;
+        board.softDeleteByAdmin();
+        return board.getUserId();
     }
 
     // 피드 작품 관련 게시글 조회

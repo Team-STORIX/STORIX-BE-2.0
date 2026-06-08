@@ -22,42 +22,43 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
     // 프로필 관련
     @Query("SELECT rb " +
             "FROM ReaderBoard rb " +
-            "WHERE rb.userId = :userId ")
+            "WHERE rb.userId = :userId AND rb.deleted = false")
     Slice<ReaderBoard> findAllReaderBoardByUserId(Long userId, Pageable pageable);
 
     @Query("SELECT rb " +
             "FROM ReaderBoardLike rl " +
             "JOIN rl.board rb " +
-            "WHERE rl.userId = :userId " +
+            "WHERE rl.userId = :userId AND rb.deleted = false " +
             "ORDER BY rl.id DESC ")
     Slice<ReaderBoard> findAllLikedReaderBoards(@Param("userId") Long userId, Pageable pageable);
 
     // 홈 관련
     @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.popularityScore) " +
             "FROM ReaderBoard rb " +
-            "WHERE rb.createdAt > :threshold " +
+            "WHERE rb.createdAt > :threshold AND rb.deleted = false " +
             "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
     List<StandardReaderBoardInfo> findTop3TrendingFeed(@Param("threshold") LocalDateTime threshold, Pageable pageable);
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.popularityScore) " +
             "FROM ReaderBoard rb " +
-            "WHERE rb.createdAt > :threshold " +
+            "WHERE rb.createdAt > :threshold AND rb.deleted = false " +
             "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
     List<StandardReaderBoardInfo> findSteadyTrendingFeed(@Param("threshold") LocalDateTime threshold, Pageable pageable);
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.popularityScore) " +
             "FROM ReaderBoard rb " +
             "WHERE rb.id NOT IN :excludeIds " +
-            "AND rb.createdAt > :threshold " +
+            "AND rb.createdAt > :threshold AND rb.deleted = false " +
             "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
     List<StandardReaderBoardInfo> findSteadyTrendingFeedNotToday(@Param("excludeIds") List<Long> excludeIds, @Param("threshold") LocalDateTime threshold, Pageable pageable);
 
     // 피드 관련
     @Query("SELECT rb " +
             "FROM ReaderBoard rb " +
-            "WHERE rb.worksId = :worksId ")
+            "WHERE rb.worksId = :worksId AND rb.deleted = false")
     Slice<ReaderBoard> findAllReaderBoardByWorksId(Long worksId, Pageable pageable);
 
+    @Query("SELECT rb FROM ReaderBoard rb WHERE rb.deleted = false ORDER BY rb.createdAt DESC")
     Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     // 피드 댓글

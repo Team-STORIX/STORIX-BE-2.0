@@ -18,7 +18,8 @@ public record AdminReportListResponse(
         Long processedByAdminId,
         ReportAction processAction,
         LocalDateTime createdAt,
-        LocalDateTime processedAt
+        LocalDateTime processedAt,
+        boolean reopened
 ) {
 
     public static AdminReportListResponse from(ReportCase reportCase, long reportCount, String reportedUserNickName) {
@@ -33,7 +34,8 @@ public record AdminReportListResponse(
                 reportCase.getProcessedByAdminId(),
                 reportCase.getProcessAction(),
                 reportCase.getCreatedAt(),
-                reportCase.getProcessedAt()
+                reportCase.getProcessedAt(),
+                reportCase.hasPreviousProcessHistory()
         );
     }
 }

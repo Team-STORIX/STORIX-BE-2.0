@@ -63,7 +63,8 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             "ORDER BY r.createdAt ASC")
     Slice<ReaderBoardReply> findAllByParentReplyId(@Param("parentReplyId") Long parentReplyId, Pageable pageable);
 
-    // 프로필 댓글 조회
-    Slice<ReaderBoardReply> findAllByUserId(Long userId, Pageable pageable);
+    // 프로필 댓글 조회 (삭제된 댓글 제외)
+    @Query("SELECT r FROM ReaderBoardReply r WHERE r.userId = :userId AND r.deleted = false ORDER BY r.createdAt DESC")
+    Slice<ReaderBoardReply> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
 
 }

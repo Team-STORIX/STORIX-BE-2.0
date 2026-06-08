@@ -64,7 +64,7 @@ public class ReviewAdaptor {
     }
 
     public boolean isMyReviewExist(Long userId, Long worksId) {
-        return reviewRepository.existsByLibraryUserIdAndWorksId(userId, worksId);
+        return reviewRepository.existsByLibraryUserIdAndWorksIdAndDeletedFalse(userId, worksId);
     }
 
     public SliceReviewInfo getMyReviewInfo(Long userId, Long worksId) {
@@ -119,12 +119,11 @@ public class ReviewAdaptor {
         }
     }
 
-    // 관리자 리뷰 강제 삭제 (소유권 검증 없음)
+    // 관리자 리뷰 강제 삭제 (소유권 검증 없음, 원문 보존 soft delete)
     public void adminDeleteReview(Long reviewId) {
-        if (!reviewRepository.existsById(reviewId)) {
-            throw UnknownReviewException.EXCEPTION;
-        }
-        reviewRepository.deleteById(reviewId);
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> UnknownReviewException.EXCEPTION);
+        review.softDeleteByAdmin();
     }
 
     // 프로필 탭

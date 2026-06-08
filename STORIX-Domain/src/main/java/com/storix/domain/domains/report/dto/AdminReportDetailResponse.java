@@ -18,6 +18,7 @@ public record AdminReportDetailResponse(
         ReportAction processAction,
         LocalDateTime receivedAt,
         LocalDateTime processedAt,
+        boolean reopened,
         Summary summary,
         List<ReportItem> reports,
         ReportedContent reportedContent

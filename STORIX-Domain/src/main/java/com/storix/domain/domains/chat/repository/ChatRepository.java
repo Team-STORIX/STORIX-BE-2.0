@@ -1,10 +1,12 @@
 package com.storix.domain.domains.chat.repository;
 
 import com.storix.domain.domains.chat.domain.ChatMessage;
+import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -23,7 +25,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             ") " +
             "FROM ChatMessage m " +
             "LEFT JOIN User u ON m.senderId = u.id " +
-            "WHERE m.roomId = :roomId " +
+            "WHERE m.roomId = :roomId AND m.deleted = false " +
             "ORDER BY m.createdAt DESC, m.id DESC")
     Slice<ChatMessageResponseDto> findAllByRoomIdOrderByCreatedAtDesc(
             @Param("roomId") Long roomId,
@@ -47,5 +49,15 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             @Param("roomId") Long roomId,
             @Param("senderId") Long senderId,
             Pageable pageable
+    );
+
+    @Modifying
+    @Query("UPDATE ChatMessage m SET m.deleted = true, m.deletedAt = CURRENT_TIMESTAMP " +
+            "WHERE m.roomId = :roomId AND m.senderId = :senderId " +
+            "AND m.messageType = :messageType AND m.deleted = false")
+    int softDeleteByRoomIdAndSenderId(
+            @Param("roomId") Long roomId,
+            @Param("senderId") Long senderId,
+            @Param("messageType") MessageType messageType
     );
 }

@@ -1,7 +1,11 @@
 package com.storix.infrastructure.global.security;
 
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.Role;
+import com.storix.domain.domains.user.exception.auth.AlreadyWithDrawUserException;
+import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.infrastructure.global.TokenProvider;
 import com.storix.infrastructure.global.dto.AccessTokenInfo;
 import jakarta.servlet.FilterChain;
@@ -26,6 +30,7 @@ import static com.storix.common.utils.STORIXStatic.BEARER;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
+    private final UserAdaptor userAdaptor;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -65,6 +70,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public Authentication getAuthentication(String token) {
         AccessTokenInfo accessTokenInfo = tokenProvider.parseAccessToken(token);
+
+        AccountState accountState = userAdaptor.findAccountStateById(accessTokenInfo.userId());
+        if (accountState == AccountState.SUSPENDED) {
+            throw SuspendedUserException.EXCEPTION;
+        }
+        if (accountState == AccountState.DELETED) {
+            throw AlreadyWithDrawUserException.EXCEPTION;
+        }
 
         AuthUserDetails userDetails = new AuthUserDetails(
                 accessTokenInfo.userId(), Role.fromValue(accessTokenInfo.role()));
