@@ -89,10 +89,11 @@ public class AdminReportQueryService {
                 .map(StandardProfileInfo::nickName)
                 .orElse(null);
 
-        long total = reportCaseAdaptor.countByReportedUserId(userId);
-        long received = reportCaseAdaptor.countByReportedUserIdAndStatus(userId, ReportStatus.RECEIVED);
-        long completed = reportCaseAdaptor.countByReportedUserIdAndStatus(userId, ReportStatus.COMPLETED);
-        long rejected = reportCaseAdaptor.countByReportedUserIdAndStatus(userId, ReportStatus.REJECTED);
+        Map<ReportStatus, Long> counts = reportCaseAdaptor.countGroupByStatus(userId);
+        long received = counts.getOrDefault(ReportStatus.RECEIVED, 0L);
+        long completed = counts.getOrDefault(ReportStatus.COMPLETED, 0L);
+        long rejected = counts.getOrDefault(ReportStatus.REJECTED, 0L);
+        long total = received + completed + rejected;
 
         AdminReportSearchCondition condition = new AdminReportSearchCondition(null, null, null, null, userId);
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));

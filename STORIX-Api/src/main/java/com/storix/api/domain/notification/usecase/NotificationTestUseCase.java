@@ -27,9 +27,9 @@ public class NotificationTestUseCase {
     private final FcmSender fcmSender;
 
 
-    // [test] FCM 환경변수 검증용 (data-only)
+    // [test] FCM 환경변수 검증용
     public CustomResponse<String> sendTestPush(FcmSendRequest request) {
-        // 1. data payload — title/body 도 data 에 담아 보냄 (data-only 정책)
+        // 1. notification 표시와 앱 라우팅에 같이 쓸 title/body payload
         Map<String, String> data = new HashMap<>();
         data.put("title", request.title());
         data.put("body", request.body());

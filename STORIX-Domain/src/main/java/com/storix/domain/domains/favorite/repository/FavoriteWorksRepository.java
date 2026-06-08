@@ -1,6 +1,7 @@
 package com.storix.domain.domains.favorite.repository;
 
 import com.storix.domain.domains.favorite.domain.FavoriteWorks;
+import com.storix.domain.domains.favorite.dto.FavoriteWorksWithCreatedAt;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,5 +35,10 @@ public interface FavoriteWorksRepository extends JpaRepository<FavoriteWorks, Lo
     @Query("SELECT f.worksId FROM FavoriteWorks f " +
             "WHERE f.userId = :userId")
     List<Long> findAllWorksIdsByUserId(Long userId);
+
+    @Query("SELECT new com.storix.domain.domains.favorite.dto.FavoriteWorksWithCreatedAt(f.worksId, f.createdAt) " +
+            "FROM FavoriteWorks f " +
+            "WHERE f.userId = :userId")
+    List<FavoriteWorksWithCreatedAt> findAllWithCreatedAtByUserId(@Param("userId") Long userId);
 
 }

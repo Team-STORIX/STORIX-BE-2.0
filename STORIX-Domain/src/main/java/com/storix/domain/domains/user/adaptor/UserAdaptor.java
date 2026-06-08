@@ -1,5 +1,6 @@
 package com.storix.domain.domains.user.adaptor;
 
+import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
@@ -15,6 +16,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -114,6 +116,11 @@ public class UserAdaptor {
                         (a, b) -> a,
                         LinkedHashMap::new
                 ));
+    }
+
+    // suspendedAt 기준으로 정지 만료된 유저 일괄 조회 — ReportCase 상태와 독립적
+    public List<User> findExpiredSuspensions(LocalDateTime threshold) {
+        return userRepository.findByAccountStateAndSuspendedAtBefore(AccountState.SUSPENDED, threshold);
     }
 
 }

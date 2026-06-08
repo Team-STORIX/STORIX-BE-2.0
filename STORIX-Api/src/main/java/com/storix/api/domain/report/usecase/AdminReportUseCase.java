@@ -1,9 +1,9 @@
 package com.storix.api.domain.report.usecase;
 
+import com.storix.api.domain.report.controller.dto.AdminReportProcessRequest;
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
-import com.storix.domain.domains.report.domain.ReportAction;
 import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
@@ -38,7 +38,6 @@ public class AdminReportUseCase {
             Pageable pageable
     ) {
         validateAdmin(authUserDetails);
-
         Page<AdminReportListResponse> result = adminReportQueryService.getReports(
                 new AdminReportSearchCondition(targetType, status, startAt, endAt, reportedUserId),
                 pageable
@@ -56,25 +55,23 @@ public class AdminReportUseCase {
 
     public CustomResponse<Long> getUnprocessedCount(AuthUserDetails authUserDetails) {
         validateAdmin(authUserDetails);
-
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminReportQueryService.countUnprocessedReports());
     }
 
     public CustomResponse<AdminReportDetailResponse> getReportDetail(AuthUserDetails authUserDetails, Long reportCaseId) {
         validateAdmin(authUserDetails);
-
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminReportQueryService.getReportDetail(reportCaseId));
     }
 
     public CustomResponse<Void> processReport(
             AuthUserDetails authUserDetails,
             Long reportCaseId,
-            ReportStatus status,
-            ReportAction processAction,
-            String processMemo
+            AdminReportProcessRequest request
     ) {
         validateAdmin(authUserDetails);
-        adminReportCommandService.processReport(authUserDetails.getUserId(), reportCaseId, status, processAction, processMemo);
+        adminReportCommandService.processReport(
+                authUserDetails.getUserId(), reportCaseId,
+                request.status(), request.processAction(), request.processMemo());
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
     }
 

@@ -3,6 +3,7 @@ package com.storix.domain.domains.report.adaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.repository.StatusCountProjection;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
 import com.storix.domain.domains.report.exception.UnknownReportCaseException;
 import com.storix.domain.domains.report.repository.ReportCaseRepository;
@@ -11,6 +12,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -31,6 +35,13 @@ public class ReportCaseAdaptor {
                 });
     }
 
+    // report 저장 성공 후 같은 트랜잭션 안에서 호출 — reopen은 부모 트랜잭션과 함께 커밋/롤백
+    public void reopenIfClosed(ReportCase reportCase) {
+        if (reportCase.getStatus() != ReportStatus.RECEIVED) {
+            reportCase.reopen();
+        }
+    }
+
     public ReportCase findById(Long reportCaseId) {
         return reportCaseRepository.findById(reportCaseId)
                 .orElseThrow(() -> UnknownReportCaseException.EXCEPTION);
@@ -44,11 +55,11 @@ public class ReportCaseAdaptor {
         return reportCaseRepository.countByStatus(status);
     }
 
-    public long countByReportedUserId(Long reportedUserId) {
-        return reportCaseRepository.countByReportedUserId(reportedUserId);
-    }
-
-    public long countByReportedUserIdAndStatus(Long reportedUserId, ReportStatus status) {
-        return reportCaseRepository.countByReportedUserIdAndStatus(reportedUserId, status);
+    public Map<ReportStatus, Long> countGroupByStatus(Long reportedUserId) {
+        return reportCaseRepository.countGroupByStatusAndReportedUserId(reportedUserId).stream()
+                .collect(Collectors.toMap(
+                        StatusCountProjection::getStatus,
+                        StatusCountProjection::getCount
+                ));
     }
 }

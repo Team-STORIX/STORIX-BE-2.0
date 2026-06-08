@@ -63,6 +63,11 @@ public class ReportCase extends BaseTimeEntity {
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 
+    public void reopen() {
+        this.status = ReportStatus.RECEIVED;
+        // processAction / processMemo / processedByAdminId / processedAt 는 감사 이력으로 보존
+    }
+
     public void process(ReportStatus status, ReportAction processAction, String processMemo, Long adminId) {
         this.status = status;
         this.processAction = processAction;
