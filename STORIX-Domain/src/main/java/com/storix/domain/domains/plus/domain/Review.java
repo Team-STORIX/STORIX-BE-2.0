@@ -65,8 +65,10 @@ public class Review extends BaseTimeEntity {
         this.content = content;
     }
 
-    public void softDeleteByAdmin() {
+    public boolean softDeleteByAdmin() {
+        if (this.deleted) return false;
         this.deleted = true;
+        return true;
     }
 
     public boolean isDeleted() {

@@ -1,9 +1,9 @@
 package com.storix.infrastructure.global.security;
 
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
-import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.user.domain.AccountState;
+import com.storix.domain.domains.user.adaptor.UserBlacklistAdaptor;
 import com.storix.domain.domains.user.domain.Role;
+import com.storix.domain.domains.user.domain.UserBlacklist.BlockReason;
 import com.storix.domain.domains.user.exception.auth.AlreadyWithDrawUserException;
 import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.infrastructure.global.TokenProvider;
@@ -30,7 +30,7 @@ import static com.storix.common.utils.STORIXStatic.BEARER;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
-    private final UserAdaptor userAdaptor;
+    private final UserBlacklistAdaptor userBlacklistAdaptor;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -71,13 +71,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public Authentication getAuthentication(String token) {
         AccessTokenInfo accessTokenInfo = tokenProvider.parseAccessToken(token);
 
-        AccountState accountState = userAdaptor.findAccountStateById(accessTokenInfo.userId());
-        if (accountState == AccountState.SUSPENDED) {
-            throw SuspendedUserException.EXCEPTION;
-        }
-        if (accountState == AccountState.DELETED) {
-            throw AlreadyWithDrawUserException.EXCEPTION;
-        }
+        userBlacklistAdaptor.getBlockReason(accessTokenInfo.userId()).ifPresent(reason -> {
+            if (reason == BlockReason.SUSPENDED) throw SuspendedUserException.EXCEPTION;
+            if (reason == BlockReason.DELETED) throw AlreadyWithDrawUserException.EXCEPTION;
+        });
 
         AuthUserDetails userDetails = new AuthUserDetails(
                 accessTokenInfo.userId(), Role.fromValue(accessTokenInfo.role()));

@@ -16,6 +16,7 @@ import com.storix.domain.domains.report.exception.InvalidReportProcessRequestExc
 import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.adaptor.UserBlacklistAdaptor;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.domain.WithdrawReason;
 import com.storix.domain.domains.user.service.AuthService;
@@ -44,6 +45,7 @@ public class AdminReportCommandService {
     private final LoadWorksPort loadWorksPort;
     private final TokenAdaptor tokenAdaptor;
     private final UserAdaptor userAdaptor;
+    private final UserBlacklistAdaptor userBlacklistAdaptor;
     private final AuthService authService;
 
     @Transactional
@@ -88,7 +90,7 @@ public class AdminReportCommandService {
         switch (targetType) {
             case FEED -> {
                 Long ownerId = boardAdaptor.adminDeleteReaderBoard(targetId);
-                libraryAdaptor.decrementBoardCount(ownerId);
+                if (ownerId != null) libraryAdaptor.decrementBoardCount(ownerId);
             }
             case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(targetId);
             case REVIEW -> deleteReview(targetId);
@@ -97,19 +99,21 @@ public class AdminReportCommandService {
     }
 
     private void deleteReview(Long reviewId) {
+        if (!reviewAdaptor.adminDeleteReview(reviewId)) return;
+
         Long reviewerId = reviewAdaptor.findReviewerIdById(reviewId);
         ReviewedWorksIdAndRatingInfo info = reviewAdaptor.getReviewedWorksIdAndRatingInfo(reviewId);
-
         reviewLikeAdaptor.deleteAllRelatedReviewLike(reviewId);
         loadWorksPort.updateDecrementingReviewInfoToWorks(info.worksId(), info.rating().getRatingValue());
         libraryAdaptor.decrementReviewCount(reviewerId);
-        reviewAdaptor.adminDeleteReview(reviewId);
     }
 
     private void suspendUser(Long userId) {
+        LocalDateTime suspendedUntil = LocalDateTime.now().plusDays(SUSPENSION_DAYS);
         User user = userAdaptor.findUserById(userId);
-        user.suspend(LocalDateTime.now().plusDays(SUSPENSION_DAYS));
+        user.suspend(suspendedUntil);
         tokenAdaptor.deleteRefreshTokenByUserIdIfPresent(userId);
+        userBlacklistAdaptor.blockSuspended(userId, suspendedUntil);
     }
 
     private void withdrawUserByAdminAction(Long userId) {

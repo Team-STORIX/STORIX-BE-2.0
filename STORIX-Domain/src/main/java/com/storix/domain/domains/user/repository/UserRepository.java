@@ -24,6 +24,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u.accountState FROM User u WHERE u.id = :userId")
     Optional<AccountState> findAccountStateById(@Param("userId") Long userId);
 
+    @Query("SELECT u.suspendedUntil FROM User u WHERE u.id = :userId")
+    Optional<LocalDateTime> findSuspendedUntilById(@Param("userId") Long userId);
+
     @Query("""
         SELECT (COUNT(u) > 0)
         FROM User u

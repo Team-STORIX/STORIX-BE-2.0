@@ -119,11 +119,12 @@ public class ReviewAdaptor {
         }
     }
 
-    // 관리자 리뷰 강제 삭제 (소유권 검증 없음, 원문 보존 soft delete)
-    public void adminDeleteReview(Long reviewId) {
+    // 관리자 리뷰 강제 삭제 (소유권 검증 없음, 원문 보존 soft delete, idempotent)
+    // 이미 삭제된 경우 false 반환 → 호출자에서 카운트 감소 등 부수 효과 건너뜀
+    public boolean adminDeleteReview(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> UnknownReviewException.EXCEPTION);
-        review.softDeleteByAdmin();
+        return review.softDeleteByAdmin();
     }
 
     // 프로필 탭

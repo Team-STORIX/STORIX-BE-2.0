@@ -20,4 +20,9 @@ public record AdminReportProcessRequest(
     private boolean isActionRequiredWhenCompleted() {
         return status != ReportStatus.COMPLETED || processAction != null;
     }
+
+    @AssertTrue(message = "REJECTED 처리 시 processAction은 허용되지 않습니다")
+    private boolean isNoActionWhenRejected() {
+        return status != ReportStatus.REJECTED || processAction == null;
+    }
 }

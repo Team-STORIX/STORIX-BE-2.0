@@ -35,6 +35,10 @@ public class UserAdaptor {
                 .orElseThrow(() -> UnknownUserException.EXCEPTION);
     }
 
+    public LocalDateTime findSuspendedUntilById(Long userId) {
+        return userRepository.findSuspendedUntilById(userId).orElse(null);
+    }
+
     public Role findUserRoleByUserId(Long userId) {
         Optional<Role> role = userRepository.findRoleByUserId(userId);
         if (role.isEmpty()) {
