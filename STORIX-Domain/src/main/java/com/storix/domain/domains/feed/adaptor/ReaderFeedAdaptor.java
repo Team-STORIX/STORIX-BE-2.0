@@ -230,8 +230,7 @@ public class ReaderFeedAdaptor {
     }
 
     // 관리자 댓글 강제 삭제 (소유권 검증 없음)
-    public void adminDeleteReaderBoardReply(Long boardId, Long replyId) {
-
+    public void adminDeleteReaderBoardReply(Long replyId) {
         ReaderBoardReply reply = readerBoardReplyRepository.findById(replyId)
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
 
@@ -247,7 +246,7 @@ public class ReaderFeedAdaptor {
             }
         }
 
-        readerBoardRepository.decrementReplyCount(boardId);
+        readerBoardRepository.decrementReplyCount(reply.getBoardId());
     }
 
     // 답댓글 조회

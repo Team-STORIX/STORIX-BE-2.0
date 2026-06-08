@@ -22,8 +22,8 @@ public class GenreScoreAggregationScheduler {
     private final GenreScoreAggregationService aggregationService;
 
 
-    // 매일 자정, 미처리 로그 청크 단위로 집계
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    // 매 시간 정각, 미처리 로그 청크 단위로 집계
+    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
     public void run() {
         long started = System.currentTimeMillis();
         Set<Long> touchedUsers = new HashSet<>();

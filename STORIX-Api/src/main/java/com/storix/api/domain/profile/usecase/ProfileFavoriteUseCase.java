@@ -51,10 +51,10 @@ public class ProfileFavoriteUseCase {
         return CustomResponse.onSuccess(SuccessCode.PROFILE_FAVORITE_HASHTAGS_LOAD_SUCCESS, result);
     }
 
-    // 선호 장르 통계 조회 (비율 정규화)
+    // 선호 장르 통계 조회
     public CustomResponse<List<GenreScoreInfo>> getGenreStats(Long userId) {
 
-        List<GenreScoreInfo> result = genreScoreQueryService.getRatioNormalized(userId);
+        List<GenreScoreInfo> result = genreScoreQueryService.getRawScores(userId);
         return CustomResponse.onSuccess(SuccessCode.PROFILE_GENRE_STATS_LOAD_SUCCESS, result);
     }
 }

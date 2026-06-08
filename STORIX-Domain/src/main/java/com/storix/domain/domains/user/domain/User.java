@@ -151,6 +151,12 @@ public class User extends BaseTimeEntity {
         this.suspendedUntil = until;
     }
 
+    // 계정 정지 해제
+    public void restore() {
+        this.accountState = AccountState.NORMAL;
+        this.suspendedUntil = null;
+    }
+
     // 계정 탈퇴
     public void withdraw() {
         if (accountState.equals(AccountState.DELETED)) {

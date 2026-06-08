@@ -277,6 +277,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .reportCaseId(reportCase.getId())
                 .build();
         recordTopicRoomPort.saveReport(report);
+        reportCaseAdaptor.reopenIfClosed(reportCase);
     }
 
 

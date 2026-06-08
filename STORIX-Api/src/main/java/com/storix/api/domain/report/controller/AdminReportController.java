@@ -88,12 +88,6 @@ public class AdminReportController {
             @PathVariable Long reportCaseId,
             @Valid @RequestBody AdminReportProcessRequest request
     ) {
-        return adminReportUseCase.processReport(
-                authUserDetails,
-                reportCaseId,
-                request.status(),
-                request.processAction(),
-                request.processMemo()
-        );
+        return adminReportUseCase.processReport(authUserDetails, reportCaseId, request);
     }
 }

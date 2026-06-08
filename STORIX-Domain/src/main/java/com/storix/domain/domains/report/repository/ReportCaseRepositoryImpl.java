@@ -15,11 +15,16 @@ import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.storix.domain.domains.report.domain.QReportCase.reportCase;
 
 @RequiredArgsConstructor
 public class ReportCaseRepositoryImpl implements ReportCaseRepositoryCustom {
+
+    private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
+            "createdAt", "processedAt", "status", "targetType"
+    );
 
     private final JPAQueryFactory queryFactory;
 
@@ -86,10 +91,16 @@ public class ReportCaseRepositoryImpl implements ReportCaseRepositoryCustom {
         PathBuilder<ReportCase> entityPath = new PathBuilder<>(ReportCase.class, "reportCase");
 
         for (Sort.Order order : sort) {
+            if (!ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
+                continue; // 허용되지 않은 필드는 무시 → 기본 정렬로 폴백
+            }
             Order direction = order.isAscending() ? Order.ASC : Order.DESC;
             orderSpecifiers.add(new OrderSpecifier(direction, entityPath.get(order.getProperty())));
         }
 
+        if (orderSpecifiers.isEmpty()) {
+            return new OrderSpecifier[]{new OrderSpecifier<>(Order.DESC, reportCase.createdAt)};
+        }
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
     }
 }

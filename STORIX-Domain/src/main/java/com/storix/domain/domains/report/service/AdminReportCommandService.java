@@ -84,10 +84,7 @@ public class AdminReportCommandService {
                 Long ownerId = boardAdaptor.adminDeleteReaderBoard(targetId);
                 libraryAdaptor.decrementBoardCount(ownerId);
             }
-            case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(
-                    readerFeedAdaptor.findReplyById(targetId).getBoardId(),
-                    targetId
-            );
+            case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(targetId);
             case REVIEW -> deleteReview(targetId);
             case TOPIC_ROOM -> {
                 // 채팅 메시지 삭제 미구현 — 처리 기록만 남김
