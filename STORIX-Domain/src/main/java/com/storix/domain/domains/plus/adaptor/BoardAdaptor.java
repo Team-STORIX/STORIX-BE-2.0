@@ -56,12 +56,11 @@ public class BoardAdaptor {
 
     }
 
-    // 관리자 게시글 강제 삭제 (소유권 검증 없음, 서재 카운트 감소용 ownerId 반환)
+    // 관리자 게시글 강제 삭제 — 이미 삭제된 경우 null 반환 (idempotent)
     public Long adminDeleteReaderBoard(Long boardId) {
         ReaderBoard board = readerBoardRepository.findById(boardId)
                 .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
-        board.softDeleteByAdmin();
-        return board.getUserId();
+        return board.softDeleteByAdmin() ? board.getUserId() : null;
     }
 
     // 피드 작품 관련 게시글 조회

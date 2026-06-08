@@ -32,6 +32,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             Pageable pageable
     );
 
+    // 관리자 신고 상세용 — soft delete된 메시지도 포함해 원문 보존 (deleted 필터 의도적으로 제외)
     @Query("SELECT new com.storix.domain.domains.chat.dto.ChatMessageResponseDto(" +
             "   m.id, " +
             "   m.roomId, " +

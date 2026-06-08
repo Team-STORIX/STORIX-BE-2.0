@@ -6,7 +6,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 
 @Getter
 @MappedSuperclass
@@ -39,8 +38,10 @@ public abstract class BoardReply extends BaseTimeEntity {
         return deleted ? "삭제된 댓글입니다" : comment;
     }
 
-    public void softDeleteByAdmin() {
+    public boolean softDeleteByAdmin() {
+        if (this.deleted) return false;
         this.deleted = true;
+        return true;
     }
 
     public abstract Long getBoardId();

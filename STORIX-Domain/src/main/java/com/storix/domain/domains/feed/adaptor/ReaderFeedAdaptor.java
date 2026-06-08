@@ -229,14 +229,15 @@ public class ReaderFeedAdaptor {
 
     }
 
-    // 관리자 댓글 강제 삭제 (소유권 검증 없음, 원문 보존 soft delete)
+    // 관리자 댓글 강제 삭제 (소유권 검증 없음, 원문 보존 soft delete, idempotent)
     public void adminDeleteReaderBoardReply(Long replyId) {
         ReaderBoardReply reply = readerBoardReplyRepository.findById(replyId)
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
 
-        reply.softDeleteByAdmin();
-        readerBoardReplyRepository.save(reply);
-        readerBoardRepository.decrementReplyCount(reply.getBoardId());
+        if (reply.softDeleteByAdmin()) {
+            readerBoardReplyRepository.save(reply);
+            readerBoardRepository.decrementReplyCount(reply.getBoardId());
+        }
     }
 
     // 답댓글 조회

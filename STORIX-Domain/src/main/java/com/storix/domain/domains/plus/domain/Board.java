@@ -32,8 +32,10 @@ public abstract class Board extends BaseTimeEntity {
     @Column(nullable = false)
     protected boolean deleted = false;
 
-    public void softDeleteByAdmin() {
+    public boolean softDeleteByAdmin() {
+        if (this.deleted) return false;
         this.deleted = true;
+        return true;
     }
 
     public boolean isDeleted() {

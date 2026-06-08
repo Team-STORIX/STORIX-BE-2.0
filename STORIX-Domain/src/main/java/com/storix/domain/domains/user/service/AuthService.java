@@ -16,6 +16,7 @@ import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.adaptor.UserBlacklistAdaptor;
 import com.storix.domain.domains.user.adaptor.UserHistoryAdaptor;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
@@ -37,6 +38,7 @@ public class AuthService {
 
     private final UserAdaptor userAdaptor;
     private final TokenAdaptor tokenAdaptor;
+    private final UserBlacklistAdaptor userBlacklistAdaptor;
     private final LibraryAdaptor libraryAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
 
@@ -142,8 +144,9 @@ public class AuthService {
         User user = userAdaptor.findUserById(userId);
         user.withdraw();
 
-        // 2. 유저 관련 정보 (refresh 토큰, 관심 작품, 서재) 삭제
+        // 2. 유저 관련 정보 (refresh 토큰, 관심 작품, 서재) 삭제 + Redis blacklist 등록
         tokenAdaptor.deleteRefreshTokenByUserIdIfPresent(userId);
+        userBlacklistAdaptor.blockDeleted(userId);
         favoriteWorksAdaptor.deleteFavoriteWorks(userId);
         libraryAdaptor.deleteLibrary(userId);
 
