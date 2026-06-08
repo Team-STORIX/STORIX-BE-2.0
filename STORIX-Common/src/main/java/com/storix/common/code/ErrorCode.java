@@ -159,7 +159,14 @@ public enum ErrorCode {
     SPOILER_SCRIPT_REQUIRED(HttpStatus.BAD_REQUEST, "SPOILER_ERROR_001", "스포일러 설정 시 스포일러 문구를 입력해주세요."),
 
     // Preference error
-    PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다.");
+    PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다."),
+
+    // Report error
+    REPORT_CASE_ALREADY_PROCESSED(HttpStatus.CONFLICT, "REPORT_ERROR_001", "이미 처리된 신고 케이스입니다."),
+    INVALID_REPORT_PROCESS_REQUEST(HttpStatus.BAD_REQUEST, "REPORT_ERROR_002", "신고 처리 요청이 올바르지 않습니다."),
+
+    // Suspended user error
+    SUSPENDED_USER(HttpStatus.FORBIDDEN, "USER_ERROR_003", "정지된 계정입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

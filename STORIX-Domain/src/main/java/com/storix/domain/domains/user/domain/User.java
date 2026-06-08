@@ -75,6 +75,9 @@ public class User extends BaseTimeEntity {
     @Column(name = "deletedSuffix", length = 36)
     private String deletedSuffix;
 
+    @Column(name = "suspended_until")
+    private LocalDateTime suspendedUntil;
+
     @Column(name = "active_nick_name", insertable = false, updatable = false, length = 50)
     private String activeNickName;
 
@@ -140,6 +143,12 @@ public class User extends BaseTimeEntity {
 //            throw new IllegalArgumentException("포인트 부족"); -> 커스텀 에러
 //        }
         this.point -= point;
+    }
+
+    // 계정 정지 (기간 지정)
+    public void suspend(LocalDateTime until) {
+        this.accountState = AccountState.SUSPENDED;
+        this.suspendedUntil = until;
     }
 
     // 계정 탈퇴

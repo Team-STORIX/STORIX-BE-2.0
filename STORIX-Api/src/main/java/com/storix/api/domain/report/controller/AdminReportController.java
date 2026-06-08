@@ -1,5 +1,6 @@
 package com.storix.api.domain.report.controller;
 
+import com.storix.api.domain.report.controller.dto.AdminReportProcessRequest;
 import com.storix.api.domain.report.usecase.AdminReportUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.report.domain.ReportStatus;
@@ -10,6 +11,7 @@ import com.storix.domain.domains.report.dto.AdminUserReportSummaryResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -19,7 +21,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -72,5 +76,24 @@ public class AdminReportController {
             @PathVariable Long reportCaseId
     ) {
         return adminReportUseCase.getReportDetail(authUserDetails, reportCaseId);
+    }
+
+    @PatchMapping("/{reportCaseId}")
+    @Operation(
+            summary = "관리자 신고 처리",
+            description = "신고 케이스를 처리합니다. status=REJECTED: 반려 / status=COMPLETED + processAction: 처리 완료 및 액션 실행 (CONTENT_DELETED | ACCOUNT_SUSPENDED(7일) | ACCOUNT_DELETED)"
+    )
+    public CustomResponse<Void> processReport(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @PathVariable Long reportCaseId,
+            @Valid @RequestBody AdminReportProcessRequest request
+    ) {
+        return adminReportUseCase.processReport(
+                authUserDetails,
+                reportCaseId,
+                request.status(),
+                request.processAction(),
+                request.processMemo()
+        );
     }
 }

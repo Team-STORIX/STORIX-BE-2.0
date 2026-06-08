@@ -119,6 +119,14 @@ public class ReviewAdaptor {
         }
     }
 
+    // 관리자 리뷰 강제 삭제 (소유권 검증 없음)
+    public void adminDeleteReview(Long reviewId) {
+        if (!reviewRepository.existsById(reviewId)) {
+            throw UnknownReviewException.EXCEPTION;
+        }
+        reviewRepository.deleteById(reviewId);
+    }
+
     // 프로필 탭
     public List<RatingCountInfo> countByRating(Long userId) {
         return reviewRepository.countByRating(userId);

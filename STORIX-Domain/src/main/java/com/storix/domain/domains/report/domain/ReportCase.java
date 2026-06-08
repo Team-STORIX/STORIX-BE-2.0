@@ -63,6 +63,14 @@ public class ReportCase extends BaseTimeEntity {
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 
+    public void process(ReportStatus status, ReportAction processAction, String processMemo, Long adminId) {
+        this.status = status;
+        this.processAction = processAction;
+        this.processMemo = processMemo;
+        this.processedByAdminId = adminId;
+        this.processedAt = LocalDateTime.now();
+    }
+
     @Builder
     public ReportCase(
             ReportTargetType targetType,

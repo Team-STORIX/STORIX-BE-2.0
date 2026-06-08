@@ -229,6 +229,27 @@ public class ReaderFeedAdaptor {
 
     }
 
+    // 관리자 댓글 강제 삭제 (소유권 검증 없음)
+    public void adminDeleteReaderBoardReply(Long boardId, Long replyId) {
+
+        ReaderBoardReply reply = readerBoardReplyRepository.findById(replyId)
+                .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
+
+        if (reply.getChildReplyCount() > 0) {
+            reply.softDelete();
+            readerBoardReplyRepository.save(reply);
+        } else {
+            readerBoardReplyRepository.deleteById(replyId);
+            readerBoardReplyRepository.flush();
+
+            if (reply.getParentReply() != null) {
+                readerBoardReplyRepository.decrementChildReplyCount(reply.getParentReply().getId());
+            }
+        }
+
+        readerBoardRepository.decrementReplyCount(boardId);
+    }
+
     // 답댓글 조회
     public Slice<ReaderBoardReply> findAllByParentReplyId(Long parentReplyId, Pageable pageable) {
         return readerBoardReplyRepository.findAllByParentReplyId(parentReplyId, pageable);
