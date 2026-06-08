@@ -24,15 +24,31 @@ public class ReportCaseAdaptor {
     private final ReportCaseTransactionAdaptor reportCaseTransactionAdaptor;
 
     public ReportCase findOrCreate(ReportTargetType targetType, Long targetId, Long reportedUserId) {
-        ReportCase existing = reportCaseTransactionAdaptor.findByTargetAndReopen(targetType, targetId);
+        ReportCase existing = findAndReopenIfClosed(targetType, targetId, reportedUserId);
         if (existing != null) return existing;
         try {
             return reportCaseTransactionAdaptor.create(targetType, targetId, reportedUserId);
         } catch (DataIntegrityViolationException e) {
-            ReportCase retried = reportCaseTransactionAdaptor.findByTargetAndReopen(targetType, targetId);
+            ReportCase retried = findAndReopenIfClosed(targetType, targetId, reportedUserId);
             if (retried == null) throw e;
             return retried;
         }
+    }
+
+    /**
+     * 호출자(신고 저장 흐름)의 트랜잭션에 그대로 참여한다.
+     * SELECT + reopen()의 dirty checking만 발생하므로 별도 트랜잭션이 필요 없고,
+     * 같은 트랜잭션에서 묶여야 신고 저장 실패 시 reopen도 함께 롤백되어 원자성이 보장된다.
+     */
+    private ReportCase findAndReopenIfClosed(ReportTargetType targetType, Long targetId, Long reportedUserId) {
+        return reportCaseRepository.findByTargetTypeAndTargetIdAndReportedUserId(targetType, targetId, reportedUserId)
+                .map(rc -> {
+                    if (rc.getStatus() != ReportStatus.RECEIVED) {
+                        rc.reopen();
+                    }
+                    return rc;
+                })
+                .orElse(null);
     }
 
     public ReportCase findById(Long reportCaseId) {

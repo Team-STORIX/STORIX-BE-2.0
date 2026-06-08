@@ -8,6 +8,6 @@ public class UnknownReportCaseException extends STORIXCodeException {
     public static final STORIXCodeException EXCEPTION = new UnknownReportCaseException();
 
     private UnknownReportCaseException() {
-        super(ErrorCode.NOT_FOUND);
+        super(ErrorCode.UNKNOWN_REPORT_CASE);
     }
 }

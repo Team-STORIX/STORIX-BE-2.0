@@ -1,5 +1,6 @@
 package com.storix.domain.domains.report.service;
 
+import com.storix.domain.domains.chat.application.port.RecordChatPort;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
@@ -16,6 +17,7 @@ import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.domain.WithdrawReason;
 import com.storix.domain.domains.user.service.AuthService;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +25,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class AdminReportCommandService {
 
     private static final int SUSPENSION_DAYS = 7;
+    private static final String ACCOUNT_DELETION_DETAIL = "관리자 신고 처리로 인한 계정 삭제";
 
     private final ReportCaseAdaptor reportCaseAdaptor;
+    private final RecordChatPort recordChatPort;
     private final BoardAdaptor boardAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final ReviewAdaptor reviewAdaptor;
@@ -51,7 +56,8 @@ public class AdminReportCommandService {
             throw AlreadyProcessedReportCaseException.EXCEPTION;
         }
 
-        reportCase.process(status, processAction, processMemo, adminId);
+        ReportAction effectiveAction = (status == ReportStatus.REJECTED) ? null : processAction;
+        reportCase.process(status, effectiveAction, processMemo, adminId);
 
         if (status == ReportStatus.COMPLETED && processAction != null) {
             executeAction(reportCase, processAction);
@@ -71,7 +77,7 @@ public class AdminReportCommandService {
         switch (action) {
             case CONTENT_DELETED -> deleteContent(reportCase);
             case ACCOUNT_SUSPENDED -> suspendUser(reportCase.getReportedUserId());
-            case ACCOUNT_DELETED -> authService.withDrawUser(reportCase.getReportedUserId());
+            case ACCOUNT_DELETED -> withdrawUserByAdminAction(reportCase.getReportedUserId());
         }
     }
 
@@ -86,9 +92,7 @@ public class AdminReportCommandService {
             }
             case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(targetId);
             case REVIEW -> deleteReview(targetId);
-            case TOPIC_ROOM -> {
-                // 채팅 메시지 삭제 미구현 — 처리 기록만 남김
-            }
+            case TOPIC_ROOM -> recordChatPort.softDeleteTalkMessagesBySender(targetId, reportCase.getReportedUserId());
         }
     }
 
@@ -106,5 +110,9 @@ public class AdminReportCommandService {
         User user = userAdaptor.findUserById(userId);
         user.suspend(LocalDateTime.now().plusDays(SUSPENSION_DAYS));
         tokenAdaptor.deleteRefreshTokenByUserIdIfPresent(userId);
+    }
+
+    private void withdrawUserByAdminAction(Long userId) {
+        authService.withDrawUser(userId, Set.of(WithdrawReason.OTHER), ACCOUNT_DELETION_DETAIL);
     }
 }

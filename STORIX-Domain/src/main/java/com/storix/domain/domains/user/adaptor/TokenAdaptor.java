@@ -6,7 +6,6 @@ import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.repository.OnboardingTokenRepository;
 import com.storix.domain.domains.user.repository.RefreshTokenRepository;
 import com.storix.domain.domains.user.exception.auth.InvalidLogoutException;
-import com.storix.domain.domains.user.exception.auth.InvalidWithdrawException;
 import com.storix.domain.domains.user.exception.token.InvalidTokenException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,14 +36,6 @@ public class TokenAdaptor {
     public void deleteRefreshTokenByUserIdIfPresent(Long userId) {
         refreshTokenRepository.findById(userId)
                 .ifPresent(refreshTokenRepository::delete);
-    }
-
-    public void deleteRefreshTokenForWithdrawByUserId(Long userId) {
-        Optional<RefreshToken> refreshTokenInfo = refreshTokenRepository.findById(userId);
-        if (refreshTokenInfo.isEmpty()) {
-            throw InvalidWithdrawException.EXCEPTION;
-        }
-        refreshTokenRepository.deleteById(userId);
     }
 
     public void deleteRefreshToken(String refreshToken) {

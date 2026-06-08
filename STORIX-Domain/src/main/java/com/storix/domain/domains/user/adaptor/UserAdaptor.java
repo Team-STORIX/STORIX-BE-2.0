@@ -30,6 +30,11 @@ public class UserAdaptor {
 
     private final UserRepository userRepository;
 
+    public AccountState findAccountStateById(Long userId) {
+        return userRepository.findAccountStateById(userId)
+                .orElseThrow(() -> UnknownUserException.EXCEPTION);
+    }
+
     public Role findUserRoleByUserId(Long userId) {
         Optional<Role> role = userRepository.findRoleByUserId(userId);
         if (role.isEmpty()) {
@@ -118,9 +123,9 @@ public class UserAdaptor {
                 ));
     }
 
-    // suspendedUntil 기준으로 정지 만료된 유저 일괄 조회 — ReportCase 상태와 독립적
-    public List<User> findExpiredSuspensions(LocalDateTime now) {
-        return userRepository.findExpiredSuspensions(AccountState.SUSPENDED, now);
+    // suspendedUntil 기준으로 정지 만료된 유저 일괄 복구 — ReportCase 상태와 독립적
+    public int restoreExpiredSuspensions(LocalDateTime now) {
+        return userRepository.restoreExpiredSuspensions(AccountState.SUSPENDED, now);
     }
 
 }

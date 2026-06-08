@@ -1,6 +1,6 @@
 package com.storix.domain.domains.report.service;
 
-import com.storix.domain.domains.chat.adaptor.ChatPersistenceAdapter;
+import com.storix.domain.domains.chat.application.port.LoadChatPort;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
@@ -57,7 +57,7 @@ public class AdminReportQueryService {
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final TopicRoomPersistenceAdapter topicRoomPersistenceAdapter;
-    private final ChatPersistenceAdapter chatPersistenceAdapter;
+    private final LoadChatPort loadChatPort;
     private final UserAdaptor userAdaptor;
 
     public Page<AdminReportListResponse> getReports(AdminReportSearchCondition condition, Pageable pageable) {
@@ -144,7 +144,7 @@ public class AdminReportQueryService {
     private AdminReportDetailResponse getFeedReportDetail(ReportCase reportCase) {
         List<FeedReport> reports = feedReportAdaptor.findFeedReportsByReportCaseId(reportCase.getId());
         ReaderBoard board = readerFeedAdaptor.findReaderBoardById(reportCase.getTargetId());
-        Long reportedUserId = reports.isEmpty() ? board.getUserId() : reports.get(0).getReportedUserId();
+        Long reportedUserId = reports.isEmpty() ? reportCase.getReportedUserId() : reports.get(0).getReportedUserId();
 
         Map<Long, String> nickNames = loadNickNames(collectUserIds(
                 reports.stream().map(FeedReport::getReporterId).toList(),
@@ -185,7 +185,7 @@ public class AdminReportQueryService {
     private AdminReportDetailResponse getFeedReplyReportDetail(ReportCase reportCase) {
         List<FeedReplyReport> reports = feedReportAdaptor.findFeedReplyReportsByReportCaseId(reportCase.getId());
         ReaderBoardReply reply = readerFeedAdaptor.findReplyById(reportCase.getTargetId());
-        Long reportedUserId = reports.isEmpty() ? reply.getUserId() : reports.get(0).getReportedUserId();
+        Long reportedUserId = reports.isEmpty() ? reportCase.getReportedUserId() : reports.get(0).getReportedUserId();
 
         Map<Long, String> nickNames = loadNickNames(collectUserIds(
                 reports.stream().map(FeedReplyReport::getReporterId).toList(),
@@ -226,7 +226,7 @@ public class AdminReportQueryService {
     private AdminReportDetailResponse getReviewReportDetail(ReportCase reportCase) {
         List<ReviewReport> reports = reviewReportAdaptor.findAllByReportCaseId(reportCase.getId());
         ReviewInfo review = reviewAdaptor.findReviewById(reportCase.getTargetId());
-        Long reportedUserId = reports.isEmpty() ? review.reviewerId() : reports.get(0).getReportedUserId();
+        Long reportedUserId = reports.isEmpty() ? reportCase.getReportedUserId() : reports.get(0).getReportedUserId();
 
         Map<Long, String> nickNames = loadNickNames(collectUserIds(
                 reports.stream().map(ReviewReport::getReporterId).toList(),
@@ -274,11 +274,11 @@ public class AdminReportQueryService {
     private AdminReportDetailResponse getTopicRoomReportDetail(ReportCase reportCase) {
         List<TopicRoomReport> reports = topicRoomReportAdaptor.findAllByReportCaseId(reportCase.getId());
         TopicRoom room = topicRoomPersistenceAdapter.findById(reportCase.getTargetId());
-        Long reportedUserId = reports.isEmpty() ? null : reports.get(0).getReportedUserId();
+        Long reportedUserId = reports.isEmpty() ? reportCase.getReportedUserId() : reports.get(0).getReportedUserId();
 
         List<ChatMessageResponseDto> chatMessages = reportedUserId == null
                 ? List.of()
-                : chatPersistenceAdapter.loadRecentMessagesBySender(room.getId(), reportedUserId, PageRequest.of(0, 20));
+                : loadChatPort.loadRecentMessagesBySender(room.getId(), reportedUserId, PageRequest.of(0, 20));
 
         Map<Long, String> nickNames = loadNickNames(collectUserIds(
                 reports.stream().map(TopicRoomReport::getReporterId).toList(),
@@ -353,6 +353,7 @@ public class AdminReportQueryService {
                 reportCase.getProcessAction(),
                 reportCase.getCreatedAt(),
                 reportCase.getProcessedAt(),
+                reportCase.hasPreviousProcessHistory(),
                 summary,
                 reports,
                 reportedContent

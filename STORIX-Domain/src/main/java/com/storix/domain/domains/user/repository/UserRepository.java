@@ -6,6 +6,7 @@ import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.storix.domain.domains.user.domain.User;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,6 +20,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.role FROM User u WHERE u.id = :userId ")
     Optional<Role> findRoleByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT u.accountState FROM User u WHERE u.id = :userId")
+    Optional<AccountState> findAccountStateById(@Param("userId") Long userId);
 
     @Query("""
         SELECT (COUNT(u) > 0)
@@ -52,9 +56,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "WHERE u.id IN :userIds ")
     List<StandardProfileInfo> findStandardProfileInfoByUserIds(@Param("userIds") List<Long> userIds);
 
-    // 정지 만료 대상 유저 배치 조회 — suspendedUntil 기준 (ReportCase 독립적)
-    @Query("SELECT u FROM User u WHERE u.accountState = :state AND u.suspendedUntil < :now")
-    List<User> findExpiredSuspensions(
+    // 정지 만료 유저 일괄 복구 — suspendedUntil 기준 (ReportCase 독립적)
+    // restore()는 accountState/suspendedUntil 변경 외 부수효과가 없으므로 엔티티 로딩 없이 벌크 UPDATE로 처리
+    @Modifying
+    @Query("UPDATE User u SET u.accountState = com.storix.domain.domains.user.domain.AccountState.NORMAL, u.suspendedUntil = null " +
+            "WHERE u.accountState = :state AND u.suspendedUntil < :now")
+    int restoreExpiredSuspensions(
             @Param("state") AccountState state,
             @Param("now") LocalDateTime now);
 
