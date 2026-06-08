@@ -18,4 +18,6 @@ public interface FeedReportRepository extends JpaRepository<FeedReport, Long> {
     List<ReportCaseCountProjection> countByReportCaseIds(@Param("reportCaseIds") List<Long> reportCaseIds);
 
     List<FeedReport> findAllByReportCaseIdOrderByCreatedAtAsc(Long reportCaseId);
+
+    boolean existsByReporterIdAndBoardId(Long reporterId, Long boardId);
 }

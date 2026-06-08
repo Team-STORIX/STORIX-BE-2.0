@@ -118,6 +118,7 @@ public enum ErrorCode {
     TOPIC_ROOM_ALREADY_EXISTS(HttpStatus.CONFLICT, "TOPIC_ROOM_ERROR_007", "이미 해당 작품에 대한 토픽룸이 존재합니다."),
     TOPIC_ROOM_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_008", "해당 토픽룸에 참여하지 않은 유저입니다."),
     TODAY_TOPIC_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_009", "오늘의 토픽룸이 없습니다."),
+    DUPLICATE_TOPIC_ROOM_REPORT(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_010", "이미 신고한 사용자입니다."),
 
     // Search error
     SEARCH_NO_TOPIC_ROOM_FOUND(HttpStatus.NOT_FOUND, "SEARCH_ERROR_001", "검색한 키워드로 조회되는 토픽룸이 없습니다."),

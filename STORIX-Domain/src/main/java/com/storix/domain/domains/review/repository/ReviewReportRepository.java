@@ -18,4 +18,6 @@ public interface ReviewReportRepository extends JpaRepository<ReviewReport, Long
     List<ReportCaseCountProjection> countByReportCaseIds(@Param("reportCaseIds") List<Long> reportCaseIds);
 
     List<ReviewReport> findAllByReportCaseIdOrderByCreatedAtAsc(Long reportCaseId);
+
+    boolean existsByReporterIdAndReviewId(Long reporterId, Long reviewId);
 }

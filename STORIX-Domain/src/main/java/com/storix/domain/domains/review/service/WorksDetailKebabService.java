@@ -14,6 +14,7 @@ import com.storix.domain.domains.topicroom.domain.enums.ReportReason;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.topicroom.exception.SelfReportException;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
+import com.storix.domain.domains.works.exception.DuplicateReviewReportException;
 import com.storix.domain.domains.works.exception.InvalidReviewReportException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -72,6 +73,10 @@ public class WorksDetailKebabService {
 
         if (userId.equals(actualReviewerId)) {
             throw SelfReportException.EXCEPTION;
+        }
+
+        if (reviewReportAdaptor.hasAlreadyReported(userId, reviewId)) {
+            throw DuplicateReviewReportException.EXCEPTION;
         }
 
         ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.REVIEW, reviewId, actualReviewerId);

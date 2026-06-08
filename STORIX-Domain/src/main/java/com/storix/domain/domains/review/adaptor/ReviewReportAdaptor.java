@@ -19,6 +19,10 @@ public class ReviewReportAdaptor {
 
     private final ReviewReportRepository reviewReportRepository;
 
+    public boolean hasAlreadyReported(Long userId, Long reviewId) {
+        return reviewReportRepository.existsByReporterIdAndReviewId(userId, reviewId);
+    }
+
     public void saveReport(CreateWorksDetailReportCommand cmd) {
         try {
             ReviewReport reviewReport = cmd.toEntity();
