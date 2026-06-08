@@ -56,6 +56,16 @@ public class BoardAdaptor {
 
     }
 
+    // 관리자 게시글 강제 삭제 (소유권 검증 없음)
+    public Long adminDeleteReaderBoard(Long boardId) {
+        ReaderBoard board = readerBoardRepository.findById(boardId)
+                .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
+        Long ownerId = board.getUserId();
+        readerBoardRepository.deleteById(boardId);
+        readerBoardRepository.flush();
+        return ownerId;
+    }
+
     // 피드 작품 관련 게시글 조회
     public Slice<ReaderBoard> findAllReaderBoardListByWorksId(Long worksId, Pageable pageable) {
         if (worksId == null) {
