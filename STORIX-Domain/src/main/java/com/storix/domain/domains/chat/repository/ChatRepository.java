@@ -52,7 +52,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
     );
 
     @Modifying
-    @Query("UPDATE ChatMessage m SET m.deleted = true, m.deletedAt = CURRENT_TIMESTAMP " +
+    @Query("UPDATE ChatMessage m SET m.deleted = true " +
             "WHERE m.roomId = :roomId AND m.senderId = :senderId " +
             "AND m.messageType = :messageType AND m.deleted = false")
     int softDeleteByRoomIdAndSenderId(

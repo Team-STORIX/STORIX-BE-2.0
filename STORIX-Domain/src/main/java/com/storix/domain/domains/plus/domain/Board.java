@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 
-import java.time.LocalDateTime;
-
 @Getter
 @MappedSuperclass
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -34,12 +32,8 @@ public abstract class Board extends BaseTimeEntity {
     @Column(nullable = false)
     protected boolean deleted = false;
 
-    @Column(name = "deleted_at")
-    protected LocalDateTime deletedAt;
-
     public void softDeleteByAdmin() {
         this.deleted = true;
-        this.deletedAt = LocalDateTime.now();
     }
 
     public boolean isDeleted() {

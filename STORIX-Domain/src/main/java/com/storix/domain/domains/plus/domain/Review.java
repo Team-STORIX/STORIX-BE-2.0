@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -55,9 +54,6 @@ public class Review extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean deleted = false;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     /** 생성자 로직 **/
     @Builder
     public Review (Long libraryUserId, Long worksId, boolean isSpoiler, String spoilerScript, Rating rating, String content) {
@@ -71,7 +67,6 @@ public class Review extends BaseTimeEntity {
 
     public void softDeleteByAdmin() {
         this.deleted = true;
-        this.deletedAt = LocalDateTime.now();
     }
 
     public boolean isDeleted() {
