@@ -27,6 +27,11 @@ public class TopicRoomReportAdaptor {
                 ));
     }
 
+    public boolean hasAlreadyReported(Long reporterId, Long reportedUserId, Long topicRoomId) {
+        return topicRoomReportRepository.existsByReporterIdAndReportedUserIdAndTopicRoomId(
+                reporterId, reportedUserId, topicRoomId);
+    }
+
     public List<TopicRoomReport> findAllByReportCaseId(Long reportCaseId) {
         return topicRoomReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCaseId);
     }

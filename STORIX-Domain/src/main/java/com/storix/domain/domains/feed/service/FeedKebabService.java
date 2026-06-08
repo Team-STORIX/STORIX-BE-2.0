@@ -3,6 +3,8 @@ package com.storix.domain.domains.feed.service;
 import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.dto.CreateFeedReportCommand;
+import com.storix.domain.domains.feed.exception.DuplicateFeedReplyReportException;
+import com.storix.domain.domains.feed.exception.DuplicateFeedReportException;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
@@ -40,6 +42,10 @@ public class FeedKebabService {
             throw SelfReportException.EXCEPTION;
         }
 
+        if (feedReportAdaptor.hasAlreadyReported(userId, boardId)) {
+            throw DuplicateFeedReportException.EXCEPTION;
+        }
+
         ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED, boardId, reportedUserId);
 
         CreateFeedReportCommand cmd = new CreateFeedReportCommand(
@@ -66,6 +72,10 @@ public class FeedKebabService {
 
         if (userId.equals(reportedUserId)) {
             throw SelfReportException.EXCEPTION;
+        }
+
+        if (feedReportAdaptor.hasAlreadyReplyReported(userId, replyId)) {
+            throw DuplicateFeedReplyReportException.EXCEPTION;
         }
 
         ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED_REPLY, replyId, reportedUserId);

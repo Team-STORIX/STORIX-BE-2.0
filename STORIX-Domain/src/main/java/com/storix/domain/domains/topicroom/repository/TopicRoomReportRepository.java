@@ -18,4 +18,6 @@ public interface TopicRoomReportRepository extends JpaRepository<TopicRoomReport
     List<ReportCaseCountProjection> countByReportCaseIds(@Param("reportCaseIds") List<Long> reportCaseIds);
 
     List<TopicRoomReport> findAllByReportCaseIdOrderByCreatedAtAsc(Long reportCaseId);
+
+    boolean existsByReporterIdAndReportedUserIdAndTopicRoomId(Long reporterId, Long reportedUserId, Long topicRoomId);
 }

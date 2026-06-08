@@ -41,6 +41,14 @@ public class FeedReportAdaptor {
         }
     }
 
+    public boolean hasAlreadyReported(Long userId, Long boardId) {
+        return feedReportRepository.existsByReporterIdAndBoardId(userId, boardId);
+    }
+
+    public boolean hasAlreadyReplyReported(Long userId, Long replyId) {
+        return feedReplyReportRepository.existsByReporterIdAndReplyId(userId, replyId);
+    }
+
     public Map<Long, Long> countFeedReportsByReportCaseIds(List<Long> reportCaseIds) {
         if (reportCaseIds == null || reportCaseIds.isEmpty()) {
             return Map.of();

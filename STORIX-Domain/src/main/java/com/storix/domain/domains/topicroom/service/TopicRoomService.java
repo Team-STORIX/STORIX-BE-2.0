@@ -5,6 +5,8 @@ import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
+import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
@@ -56,6 +58,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
     private final GenreScorePublisher genreScorePublisher;
     private final ReportCaseAdaptor reportCaseAdaptor;
+    private final TopicRoomReportAdaptor topicRoomReportAdaptor;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -260,6 +263,10 @@ public class TopicRoomService implements TopicRoomUseCase {
 
         if (reporterId.equals(request.getReportedUserId())) {
             throw SelfReportException.EXCEPTION;
+        }
+
+        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId)) {
+            throw DuplicateTopicRoomReportException.EXCEPTION;
         }
 
         ReportCase reportCase = reportCaseAdaptor.findOrCreate(

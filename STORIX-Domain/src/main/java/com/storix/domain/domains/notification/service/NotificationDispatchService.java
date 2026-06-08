@@ -63,12 +63,14 @@ public class NotificationDispatchService {
             return DispatchResult.inAppOnly(saved.getId());
         }
 
-        // 4-2. 푸시 알림 수신 동의 체크 (NORMAL/SUSPENDED 공통)
-        NotificationSetting setting = notificationSettingAdaptor.getByUserId(event.recipientUserId());
-        if (!setting.acceptsType(event.notificationType())) {
-            log.debug(">>> [Notification] push skipped (type disabled) userId={}, type={}",
-                    event.recipientUserId(), event.notificationType());
-            return DispatchResult.inAppOnly(saved.getId());
+        // 4-2. 푸시 알림 수신 동의 체크 — 제재/신고 안내(transactional) 타입은 동의 여부와 무관하게 발송
+        if (!event.notificationType().deliverableToSuspendedUser()) {
+            NotificationSetting setting = notificationSettingAdaptor.getByUserId(event.recipientUserId());
+            if (!setting.acceptsType(event.notificationType())) {
+                log.debug(">>> [Notification] push skipped (type disabled) userId={}, type={}",
+                        event.recipientUserId(), event.notificationType());
+                return DispatchResult.inAppOnly(saved.getId());
+            }
         }
 
         return DispatchResult.pushTo(saved.getId(), tokens);
