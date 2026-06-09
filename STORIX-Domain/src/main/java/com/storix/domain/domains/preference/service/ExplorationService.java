@@ -141,7 +141,8 @@ public class ExplorationService implements ExplorationUseCase {
                         w.getOriginalAuthor(),
                         w.getThumbnailUrl(),
                         w.getWorksType(),
-                        w.getGenre()
+                        w.getGenre(),
+                        w.getAvgRating()
                 ))
                 .toList();
     }
