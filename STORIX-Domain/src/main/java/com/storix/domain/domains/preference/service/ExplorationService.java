@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExplorationService implements ExplorationUseCase {
 
+    public static final int DAILY_EXPLORATION_LIMIT = 10;
+
     private final ExplorationRepository explorationRepository;
     private final LoadWorksPort loadWorksPort;
     private final ExplorationCacheHelper cacheHelper;
@@ -47,7 +49,7 @@ public class ExplorationService implements ExplorationUseCase {
         int sessionCount = explorationRepository.countByUserIdAndCreatedAtAfter(userId, threshold)
                 + pendingIds.size();
 
-        int needed = 10 - sessionCount;
+        int needed = DAILY_EXPLORATION_LIMIT - sessionCount;
         if (needed <= 0) return Collections.emptyList();
 
         return loadWorksPort.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed)
@@ -72,7 +74,7 @@ public class ExplorationService implements ExplorationUseCase {
                 .isLiked(request.isLiked())
                 .build();
 
-        Long result = cacheHelper.submitWithLua(userId, pendingDto);
+        Long result = cacheHelper.submitWithLua(userId, pendingDto, DAILY_EXPLORATION_LIMIT);
 
         if (result == -1 || result == -2) {
             cacheHelper.markAsParticipatedToday(userId);
@@ -87,7 +89,7 @@ public class ExplorationService implements ExplorationUseCase {
             throw new STORIXCodeException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
-        if (result == 15) {
+        if (result == DAILY_EXPLORATION_LIMIT) {
             cacheHelper.markAsParticipatedToday(userId);
             cacheHelper.deleteChartCache(userId);
         }
