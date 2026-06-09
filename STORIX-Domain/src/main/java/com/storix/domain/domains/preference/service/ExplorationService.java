@@ -3,6 +3,7 @@ package com.storix.domain.domains.preference.service;
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.ErrorCode;
 import com.storix.common.exception.STORIXCodeException;
+import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.preference.application.ExplorationUseCase;
 import com.storix.domain.domains.preference.dto.*;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
@@ -28,6 +29,7 @@ public class ExplorationService implements ExplorationUseCase {
     private final LoadWorksPort loadWorksPort;
     private final ExplorationCacheHelper cacheHelper;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
+    private final ReviewAdaptor reviewAdaptor;
 
     @Override
     @Transactional(readOnly = true)
@@ -41,10 +43,12 @@ public class ExplorationService implements ExplorationUseCase {
         List<Long> dbHistoryIds = explorationRepository.findRespondedWorksIdsByUserId(userId);
         Set<Long> pendingIds = cacheHelper.getPendingWorksIds(userId);
         List<Long> favoriteWorksIds = favoriteWorksAdaptor.findAllFavoriteWorksIdsByUserId(userId);
+        List<Long> reviewedWorksIds = reviewAdaptor.findAllReviewedWorksIdsByUserId(userId);
 
         Set<Long> allHistoryIds = new HashSet<>(dbHistoryIds);
         allHistoryIds.addAll(pendingIds);
         allHistoryIds.addAll(favoriteWorksIds);
+        allHistoryIds.addAll(reviewedWorksIds);
 
         int sessionCount = explorationRepository.countByUserIdAndCreatedAtAfter(userId, threshold)
                 + pendingIds.size();
