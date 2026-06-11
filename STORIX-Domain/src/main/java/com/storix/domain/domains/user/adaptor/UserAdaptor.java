@@ -13,6 +13,7 @@ import com.storix.domain.domains.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,6 +97,18 @@ public class UserAdaptor {
             throw UnknownUserException.EXCEPTION;
         }
         return user.get();
+    }
+
+    public List<User> findUsersByIds(Collection<Long> userIds) {
+        return userRepository.findAllById(userIds);
+    }
+
+    public int clearAllTitles() {
+        return userRepository.clearAllTitles();
+    }
+
+    public List<Long> findUntitledUserIdsHavingRawScore(Pageable pageable) {
+        return userRepository.findUntitledUserIdsHavingRawScore(pageable);
     }
 
     public Map<Long, StandardProfileInfo> findStandardProfileInfoByUserIds(List<Long> userIds) {
