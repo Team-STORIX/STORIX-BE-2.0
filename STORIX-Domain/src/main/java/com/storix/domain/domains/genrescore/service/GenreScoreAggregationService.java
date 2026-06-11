@@ -2,6 +2,7 @@ package com.storix.domain.domains.genrescore.service;
 
 import com.storix.domain.domains.genrescore.adaptor.GenreScoreAdaptor;
 import com.storix.domain.domains.genrescore.dto.UnprocessedLogRow;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +25,7 @@ public class GenreScoreAggregationService {
     public static final int LOG_RETENTION_DAYS = 30;
 
     private final GenreScoreAdaptor genreScoreAdaptor;
+    private final UserAdaptor userAdaptor;
 
     // 미처리 로그를 청크 단위로 처리
     @Transactional
@@ -62,6 +64,7 @@ public class GenreScoreAggregationService {
     @Transactional
     public void resetAllRawScores() {
         genreScoreAdaptor.deleteAllRawScores();
+        userAdaptor.clearAllTitles();
     }
 
     public record ChunkResult(int processedLogs, int groups, Set<Long> users) {

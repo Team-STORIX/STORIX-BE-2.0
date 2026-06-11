@@ -102,6 +102,10 @@ public class UserAdaptor {
         return userRepository.findAllById(userIds);
     }
 
+    public int clearAllTitles() {
+        return userRepository.clearAllTitles();
+    }
+
     public Map<Long, StandardProfileInfo> findStandardProfileInfoByUserIds(List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyMap();
