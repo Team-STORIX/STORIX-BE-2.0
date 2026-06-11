@@ -2,21 +2,24 @@ package com.storix.domain.domains.genrescore.service;
 
 import com.storix.domain.domains.genrescore.adaptor.GenreScoreAdaptor;
 import com.storix.domain.domains.genrescore.domain.UserGenreRawScore;
+import com.storix.domain.domains.genrescore.dto.RecentGenreScore;
 import com.storix.domain.domains.genrescore.dto.TopGenreInfo;
 import com.storix.domain.domains.user.domain.Title;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 // 유저의 대표 장르(가장 점수가 높은 장르)와 그 점수를 해석
@@ -33,7 +36,29 @@ public class TopGenreResolver {
 
     @Transactional(readOnly = true)
     public Optional<TopGenreInfo> resolve(Long userId) {
-        Map<Genre, Long> scoreByGenre = genreScoreAdaptor.findRawScoresByUserId(userId).stream()
+        return resolve(userId, genreScoreAdaptor.findRawScoresByUserId(userId));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, Optional<TopGenreInfo>> resolveAll(Collection<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) return Collections.emptyMap();
+
+        Map<Long, List<UserGenreRawScore>> scoresByUser = genreScoreAdaptor.findRawScoresByUserIds(userIds).stream()
+                .filter(s -> TITLED_GENRES.contains(s.getGenre()))
+                .collect(Collectors.groupingBy(UserGenreRawScore::getUserId));
+
+        return userIds.stream()
+                .distinct()
+                .collect(Collectors.toMap(
+                        userId -> userId,
+                        userId -> resolve(userId, scoresByUser.getOrDefault(userId, List.of())),
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+    }
+
+    private Optional<TopGenreInfo> resolve(Long userId, List<UserGenreRawScore> rawScores) {
+        Map<Genre, Long> scoreByGenre = rawScores.stream()
                 .filter(s -> TITLED_GENRES.contains(s.getGenre()))
                 .collect(Collectors.toMap(UserGenreRawScore::getGenre, UserGenreRawScore::getRawScore));
 
@@ -51,13 +76,30 @@ public class TopGenreResolver {
         return Optional.of(new TopGenreInfo(representative, max));
     }
 
-    // 동점 장르의 대표 선택: 최근 N일 점수 합 -> 최신 획득 시각 순 1위 (DB에서 정렬·LIMIT)
+    // 동점 장르 대표 선택
     private Genre breakTie(Long userId, List<Genre> candidates) {
         LocalDateTime since = LocalDateTime.now().minusDays(TIE_BREAK_WINDOW_DAYS);
 
-        return genreScoreAdaptor.findTopGenresByRecentScore(userId, candidates, since, PageRequest.of(0, 1)).stream()
+        Map<Genre, RecentGenreScore> recentByGenre = genreScoreAdaptor.findRecentScoresByGenres(userId, candidates, since).stream()
+                .collect(Collectors.toMap(RecentGenreScore::genre, Function.identity()));
+
+        return candidates.stream()
+                .sorted(Comparator
+                        .comparingLong((Genre genre) -> recentScore(recentByGenre.get(genre))).reversed()
+                        .thenComparing(
+                                genre -> latestAt(recentByGenre.get(genre)),
+                                Comparator.nullsLast(Comparator.reverseOrder())
+                        )
+                        .thenComparingInt(Enum::ordinal))
                 .findFirst()
-                // 최근 활동 로그가 없으면 enum 선언 순서가 빠른 장르로 결정 (결정적)
-                .orElseGet(() -> candidates.stream().min(Comparator.comparingInt(Enum::ordinal)).orElseThrow());
+                .orElseThrow();
+    }
+
+    private long recentScore(RecentGenreScore recent) {
+        return recent == null || recent.score() == null ? 0L : recent.score();
+    }
+
+    private LocalDateTime latestAt(RecentGenreScore recent) {
+        return recent == null ? null : recent.latestAt();
     }
 }

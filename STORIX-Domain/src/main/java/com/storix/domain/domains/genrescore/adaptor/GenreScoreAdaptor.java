@@ -2,6 +2,7 @@ package com.storix.domain.domains.genrescore.adaptor;
 
 import com.storix.domain.domains.genrescore.domain.UserGenreRawScore;
 import com.storix.domain.domains.genrescore.domain.UserGenreScoreLog;
+import com.storix.domain.domains.genrescore.dto.RecentGenreScore;
 import com.storix.domain.domains.genrescore.dto.UnprocessedLogRow;
 import com.storix.domain.domains.genrescore.repository.UserGenreRawScoreRepository;
 import com.storix.domain.domains.genrescore.repository.UserGenreScoreLogRepository;
@@ -28,15 +29,22 @@ public class GenreScoreAdaptor {
         return rawScoreRepository.findAllByIdUserId(userId);
     }
 
+    // 여러 유저의 장르별 raw_score 조회
+    public List<UserGenreRawScore> findRawScoresByUserIds(Collection<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) return List.of();
+        return rawScoreRepository.findAllByIdUserIdIn(userIds);
+    }
+
     // 미처리 로그 청크 조회
     public List<UnprocessedLogRow> findUnprocessedLogChunk(Pageable pageable) {
         return logRepository.findUnprocessedChunk(pageable);
     }
 
-    // 동점처리용 최근 점수 상위 장르 조회
-    public List<Genre> findTopGenresByRecentScore(Long userId, Collection<Genre> genres,
-                                                  LocalDateTime since, Pageable pageable) {
-        return logRepository.findTopGenresByRecentScore(userId, genres, since, pageable);
+    // 동점처리용 최근 점수 조회
+    public List<RecentGenreScore> findRecentScoresByGenres(Long userId, Collection<Genre> genres,
+                                                           LocalDateTime since) {
+        if (genres == null || genres.isEmpty()) return List.of();
+        return logRepository.findRecentScoresByGenres(userId, genres, since);
     }
 
 

@@ -6,6 +6,7 @@ import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.user.dto.UserNicknameInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.storix.domain.domains.user.domain.User;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -57,5 +58,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
         WHERE u.id IN :userIds
     """)
     List<UserNicknameInfo> findNicknameInfoByUserIds(@Param("userIds") List<Long> userIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User u SET u.title = null")
+    int clearAllTitles();
 
 }
