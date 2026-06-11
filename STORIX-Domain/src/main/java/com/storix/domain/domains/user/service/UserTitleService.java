@@ -1,17 +1,25 @@
 package com.storix.domain.domains.user.service;
 
+import com.storix.domain.domains.genrescore.dto.TopGenreInfo;
 import com.storix.domain.domains.genrescore.service.TopGenreResolver;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.adaptor.UserTitleHistoryAdaptor;
 import com.storix.domain.domains.user.domain.Title;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.domain.UserTitleHistory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -26,6 +34,7 @@ public class UserTitleService {
 
     private final TopGenreResolver topGenreResolver;
     private final UserAdaptor userAdaptor;
+    private final UserTitleHistoryAdaptor userTitleHistoryAdaptor;
 
     // 여러 유저의 칭호 일괄 갱신
     @Transactional
@@ -44,23 +53,58 @@ public class UserTitleService {
         }
     }
 
+    // 미부여 칭호 보정
+    @Transactional
+    public int assignMissingTitles() {
+        int assigned = 0;
+
+        while (true) {
+            List<Long> userIds = userAdaptor.findUntitledUserIdsHavingRawScore(PageRequest.of(0, TITLE_ASSIGN_CHUNK_SIZE));
+            if (userIds.isEmpty()) break;
+
+            assignTitleChunk(userIds);
+            assigned += userIds.size();
+
+            if (userIds.size() < TITLE_ASSIGN_CHUNK_SIZE) break;
+        }
+
+        return assigned;
+    }
+
     private void assignTitleChunk(List<Long> userIds) {
         // 1. 칭호 계산
         Map<Long, Title> titleByUser = new HashMap<>();
-        topGenreResolver.resolveAll(userIds)
-                .forEach((userId, top) -> titleByUser.put(userId, top
-                        .flatMap(t -> Title.resolve(t.genre(), t.score()))
-                        .orElse(null)));
+        List<UserTitleHistory> acquiredTitleHistories = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        topGenreResolver.resolveAll(userIds).forEach((userId, top) -> {
+            titleByUser.put(userId, resolveTitle(top));
+            acquiredTitleHistories.addAll(resolveAcquiredTitles(userId, top, now));
+        });
 
         // 2. 유저 조회
         Map<Long, User> users = userAdaptor.findUsersByIds(userIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        // 3. 칭호 반영 (dirty checking)
+        // 3. 칭호 반영
         titleByUser.forEach((userId, title) -> {
             User user = users.get(userId);
             if (user != null) user.changeTitle(title);
         });
+
+        // 4. 획득 칭호 저장
+        userTitleHistoryAdaptor.saveNewTitles(acquiredTitleHistories);
+    }
+
+    private Title resolveTitle(Optional<TopGenreInfo> top) {
+        return top.flatMap(t -> Title.resolve(t.genre(), t.score())).orElse(null);
+    }
+
+    private Collection<UserTitleHistory> resolveAcquiredTitles(Long userId, Optional<TopGenreInfo> top, LocalDateTime acquiredAt) {
+        return top.stream()
+                .flatMap(info -> Title.resolveAcquired(info.genre(), info.score()).stream())
+                .map(title -> userTitleHistoryAdaptor.create(userId, title, acquiredAt))
+                .toList();
     }
 
 }

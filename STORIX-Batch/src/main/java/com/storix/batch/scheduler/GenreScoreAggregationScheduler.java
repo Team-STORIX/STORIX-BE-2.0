@@ -5,6 +5,9 @@ import com.storix.domain.domains.genrescore.service.GenreScoreAggregationService
 import com.storix.domain.domains.user.service.UserTitleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,9 +26,24 @@ public class GenreScoreAggregationScheduler {
     private final GenreScoreAggregationService aggregationService;
     private final UserTitleService userTitleService;
 
+    @Value("${storix.title.backfill-on-startup:false}")
+    private boolean backfillTitleOnStartup;
 
-    // 매 시간 정각, 미처리 로그 청크 단위로 집계
-    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
+    // 기동 시 미부여 칭호 보정
+    @EventListener(ApplicationReadyEvent.class)
+    public void assignTitlesOnStartup() {
+        if (!backfillTitleOnStartup) return;
+
+        try {
+            int assigned = userTitleService.assignMissingTitles();
+            log.info(">>> [UserTitle] startup backfill users={}", assigned);
+        } catch (Exception e) {
+            log.warn(">>> [UserTitle] startup backfill failed", e);
+        }
+    }
+
+    // 5분마다 미처리 로그 청크 단위로 집계
+    @Scheduled(cron = "0 */5 * * * *", zone = "Asia/Seoul")
     public void run() {
         long started = System.currentTimeMillis();
         Set<Long> touchedUsers = new HashSet<>();

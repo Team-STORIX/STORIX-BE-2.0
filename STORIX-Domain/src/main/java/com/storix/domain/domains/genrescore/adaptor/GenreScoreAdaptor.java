@@ -1,6 +1,7 @@
 package com.storix.domain.domains.genrescore.adaptor;
 
 import com.storix.domain.domains.genrescore.domain.UserGenreRawScore;
+import com.storix.domain.domains.genrescore.domain.UserGenreRawScoreId;
 import com.storix.domain.domains.genrescore.domain.UserGenreScoreLog;
 import com.storix.domain.domains.genrescore.dto.RecentGenreScore;
 import com.storix.domain.domains.genrescore.dto.UnprocessedLogRow;
@@ -29,6 +30,13 @@ public class GenreScoreAdaptor {
         return rawScoreRepository.findAllByIdUserId(userId);
     }
 
+    // 유저의 특정 장르 raw_score 조회
+    public long findRawScore(Long userId, Genre genre) {
+        return rawScoreRepository.findById(UserGenreRawScoreId.of(userId, genre))
+                .map(UserGenreRawScore::getRawScore)
+                .orElse(0L);
+    }
+
     // 여러 유저의 장르별 raw_score 조회
     public List<UserGenreRawScore> findRawScoresByUserIds(Collection<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) return List.of();
@@ -45,6 +53,13 @@ public class GenreScoreAdaptor {
                                                            LocalDateTime since) {
         if (genres == null || genres.isEmpty()) return List.of();
         return logRepository.findRecentScoresByGenres(userId, genres, since);
+    }
+
+    // 여러 유저의 동점처리용 최근 점수 조회
+    public List<RecentGenreScore> findRecentScoresByUsersAndGenres(Collection<Long> userIds, Collection<Genre> genres,
+                                                                   LocalDateTime since) {
+        if (userIds == null || userIds.isEmpty() || genres == null || genres.isEmpty()) return List.of();
+        return logRepository.findRecentScoresByUsersAndGenres(userIds, genres, since);
     }
 
 
