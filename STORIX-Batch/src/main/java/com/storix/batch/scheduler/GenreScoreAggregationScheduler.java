@@ -67,10 +67,12 @@ public class GenreScoreAggregationScheduler {
         }
 
         // 집계로 점수가 변동된 유저의 칭호 일괄 갱신 (단일 트랜잭션 + JDBC 배치)
+        // 실패해도 멱등 — 다음 재집계/기동 backfill 로 보정. 복구용으로 실패 userId 만 남긴다.
         try {
             userTitleService.assignTitles(touchedUsers);
         } catch (Exception e) {
-            log.warn(">>> [GenreScoreBatch] 칭호 일괄 갱신 실패 (users={})", touchedUsers.size(), e);
+            log.error(">>> [GenreScoreBatch] 칭호 일괄 갱신 실패 (count={}, userIds={})",
+                    touchedUsers.size(), touchedUsers, e);
         }
 
         int oldDeleted = aggregationService.cleanupOldProcessed();
