@@ -3,6 +3,8 @@ package com.storix.domain.domains.user.domain;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Optional;
+
 @Getter
 @RequiredArgsConstructor
 public enum TitleStage {
@@ -27,13 +29,13 @@ public enum TitleStage {
         return nextScore == null;
     }
 
-    // 다음 단계 (최고 단계면 null)
-    public TitleStage next() {
+    // 다음 단계
+    public Optional<TitleStage> next() {
         return switch (this) {
-            case NONE -> ENTRY;
-            case ENTRY -> EXPLORE;
-            case EXPLORE -> IMMERSE;
-            case IMMERSE -> null;
+            case NONE -> Optional.of(ENTRY);
+            case ENTRY -> Optional.of(EXPLORE);
+            case EXPLORE -> Optional.of(IMMERSE);
+            case IMMERSE -> Optional.empty();
         };
     }
 

@@ -28,6 +28,7 @@ public interface UserGenreScoreLogRepository extends JpaRepository<UserGenreScor
     // 동점 대표 장르 타이브레이크용 최근 N일 점수 합/최신 획득 시각 조회
     @Query("""
             SELECT new com.storix.domain.domains.genrescore.dto.RecentGenreScore(
+                l.userId,
                 l.genre,
                 SUM(l.weight),
                 MAX(l.createdAt)
@@ -41,6 +42,24 @@ public interface UserGenreScoreLogRepository extends JpaRepository<UserGenreScor
     List<RecentGenreScore> findRecentScoresByGenres(@Param("userId") Long userId,
                                                     @Param("genres") Collection<Genre> genres,
                                                     @Param("since") LocalDateTime since);
+
+    // 여러 유저의 동점 대표 장르 타이브레이크용 최근 점수 조회
+    @Query("""
+            SELECT new com.storix.domain.domains.genrescore.dto.RecentGenreScore(
+                l.userId,
+                l.genre,
+                SUM(l.weight),
+                MAX(l.createdAt)
+            )
+            FROM UserGenreScoreLog l
+            WHERE l.userId IN :userIds
+              AND l.genre IN :genres
+              AND l.createdAt >= :since
+            GROUP BY l.userId, l.genre
+    """)
+    List<RecentGenreScore> findRecentScoresByUsersAndGenres(@Param("userIds") Collection<Long> userIds,
+                                                            @Param("genres") Collection<Genre> genres,
+                                                            @Param("since") LocalDateTime since);
 
     // 미처리 로그 -> 처리 로그 (벌크 업데이트)
     @Modifying

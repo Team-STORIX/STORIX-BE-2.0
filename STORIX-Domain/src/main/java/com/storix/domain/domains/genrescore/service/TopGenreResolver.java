@@ -8,12 +8,14 @@ import com.storix.domain.domains.user.domain.Title;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +41,7 @@ public class TopGenreResolver {
         return resolve(userId, genreScoreAdaptor.findRawScoresByUserId(userId));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public Map<Long, Optional<TopGenreInfo>> resolveAll(Collection<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) return Collections.emptyMap();
 
@@ -47,17 +49,46 @@ public class TopGenreResolver {
                 .filter(s -> TITLED_GENRES.contains(s.getGenre()))
                 .collect(Collectors.groupingBy(UserGenreRawScore::getUserId));
 
-        return userIds.stream()
-                .distinct()
-                .collect(Collectors.toMap(
-                        userId -> userId,
-                        userId -> resolve(userId, scoresByUser.getOrDefault(userId, List.of())),
-                        (a, b) -> a,
-                        LinkedHashMap::new
-                ));
+        Map<Long, Optional<TopGenreInfo>> result = new LinkedHashMap<>();
+        Map<Long, TopGenreCandidate> tieCandidates = new LinkedHashMap<>();
+
+        userIds.stream().distinct().forEach(userId -> {
+            Optional<TopGenreCandidate> candidate = resolveCandidate(scoresByUser.getOrDefault(userId, List.of()));
+            if (candidate.isEmpty()) {
+                result.put(userId, Optional.empty());
+                return;
+            }
+
+            TopGenreCandidate top = candidate.get();
+            if (top.genres().size() == 1) {
+                result.put(userId, Optional.of(new TopGenreInfo(top.genres().get(0), top.score())));
+            } else {
+                tieCandidates.put(userId, top);
+            }
+        });
+
+        if (!tieCandidates.isEmpty()) {
+            Map<Long, Map<Genre, RecentGenreScore>> recentScores = findRecentScores(tieCandidates);
+            tieCandidates.forEach((userId, candidate) -> {
+                Genre genre = breakTie(candidate.genres(), recentScores.getOrDefault(userId, Collections.emptyMap()));
+                result.put(userId, Optional.of(new TopGenreInfo(genre, candidate.score())));
+            });
+        }
+
+        return result;
     }
 
     private Optional<TopGenreInfo> resolve(Long userId, List<UserGenreRawScore> rawScores) {
+        return resolveCandidate(rawScores)
+                .map(candidate -> {
+                    Genre representative = candidate.genres().size() == 1
+                            ? candidate.genres().get(0)
+                            : breakTie(userId, candidate.genres());
+                    return new TopGenreInfo(representative, candidate.score());
+                });
+    }
+
+    private Optional<TopGenreCandidate> resolveCandidate(List<UserGenreRawScore> rawScores) {
         Map<Genre, Long> scoreByGenre = rawScores.stream()
                 .filter(s -> TITLED_GENRES.contains(s.getGenre()))
                 .collect(Collectors.toMap(UserGenreRawScore::getGenre, UserGenreRawScore::getRawScore));
@@ -72,8 +103,20 @@ public class TopGenreResolver {
                 .map(Map.Entry::getKey)
                 .toList();
 
-        Genre representative = topGenres.size() == 1 ? topGenres.get(0) : breakTie(userId, topGenres);
-        return Optional.of(new TopGenreInfo(representative, max));
+        return Optional.of(new TopGenreCandidate(max, topGenres));
+    }
+
+    private Map<Long, Map<Genre, RecentGenreScore>> findRecentScores(Map<Long, TopGenreCandidate> tieCandidates) {
+        LocalDateTime since = LocalDateTime.now().minusDays(TIE_BREAK_WINDOW_DAYS);
+        Set<Genre> genres = tieCandidates.values().stream()
+                .flatMap(candidate -> candidate.genres().stream())
+                .collect(Collectors.toCollection(HashSet::new));
+
+        return genreScoreAdaptor.findRecentScoresByUsersAndGenres(tieCandidates.keySet(), genres, since).stream()
+                .collect(Collectors.groupingBy(
+                        RecentGenreScore::userId,
+                        Collectors.toMap(RecentGenreScore::genre, Function.identity())
+                ));
     }
 
     // 동점 장르 대표 선택
@@ -83,6 +126,10 @@ public class TopGenreResolver {
         Map<Genre, RecentGenreScore> recentByGenre = genreScoreAdaptor.findRecentScoresByGenres(userId, candidates, since).stream()
                 .collect(Collectors.toMap(RecentGenreScore::genre, Function.identity()));
 
+        return breakTie(candidates, recentByGenre);
+    }
+
+    private Genre breakTie(List<Genre> candidates, Map<Genre, RecentGenreScore> recentByGenre) {
         return candidates.stream()
                 .sorted(Comparator
                         .comparingLong((Genre genre) -> recentScore(recentByGenre.get(genre))).reversed()
@@ -102,4 +149,6 @@ public class TopGenreResolver {
     private LocalDateTime latestAt(RecentGenreScore recent) {
         return recent == null ? null : recent.latestAt();
     }
+
+    private record TopGenreCandidate(long score, List<Genre> genres) {}
 }

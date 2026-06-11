@@ -89,4 +89,14 @@ public enum Title {
                 .filter(t -> t.genre == genre && t.stage == stage)
                 .findFirst();
     }
+
+    // 장르와 점수로 획득 가능한 칭호 조회
+    public static Set<Title> resolveAcquired(Genre genre, long score) {
+        TitleStage currentStage = TitleStage.from(score);
+        return Arrays.stream(values())
+                .filter(t -> t.genre == genre)
+                .filter(t -> t.stage != TitleStage.NONE)
+                .filter(t -> t.stage.getStartScore() <= currentStage.getStartScore())
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(Title.class)));
+    }
 }
