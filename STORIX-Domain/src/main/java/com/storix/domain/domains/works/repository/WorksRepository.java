@@ -89,12 +89,12 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
     );
 
     // 서재 관련 작품 정보 조회
-    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre) " +
+    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds")
     List<LibraryWorksInfo> findLibraryWorksInfoByIds(@Param("worksIds") List<Long> worksIds);
 
-    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre) " +
+    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds " +
             "AND w.worksName LIKE %:keyword% ")

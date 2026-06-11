@@ -42,14 +42,14 @@ public class ExplorationCacheHelper {
                     "local q_len = redis.call('llen', KEYS[4]) " +
                     "if q_len > tonumber(ARGV[4]) then return -4 end " +
                     "local count = redis.call('incr', KEYS[2]) " +
-                    "if count > 15 then return -2 end " +
+                    "if count > tonumber(ARGV[5]) then return -2 end " +
                     "redis.call('rpush', KEYS[3], ARGV[1]) " +
                     "redis.call('rpush', KEYS[4], ARGV[1]) " +
                     "if count == 1 then redis.call('expire', KEYS[2], ARGV[2]) end " +
                     "redis.call('expire', KEYS[3], ARGV[3]) " +
                     "return count";
 
-    public Long submitWithLua(Long userId, PendingSwipeDto dto) {
+    public Long submitWithLua(Long userId, PendingSwipeDto dto, int dailyLimit) {
         try {
             String json = objectMapper.writeValueAsString(dto);
             String doneKey = DONE_KEY_PREFIX + userId;
@@ -65,7 +65,8 @@ public class ExplorationCacheHelper {
                     json,
                     "43200",
                     "43200",
-                    String.valueOf(MAX_QUEUE_SIZE)
+                    String.valueOf(MAX_QUEUE_SIZE),
+                    String.valueOf(dailyLimit)
             );
 
         } catch (Exception e) {
