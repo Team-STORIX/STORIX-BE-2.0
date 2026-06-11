@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -16,6 +17,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserTitleHistoryAdaptor {
+
+    private static final int MYSQL_DUPLICATE_ENTRY = 1062; // ER_DUP_ENTRY
 
     private final UserTitleHistoryRepository userTitleHistoryRepository;
 
@@ -41,9 +44,19 @@ public class UserTitleHistoryAdaptor {
 
         try {
             userTitleHistoryRepository.saveAll(newHistories);
-        } catch (DataIntegrityViolationException ignored) {
-            // 병렬 저장 시 unique key 로 중복 획득 방지
+        } catch (DataIntegrityViolationException e) {
+            // 중복 획득(unique 충돌)만 무시, 그 외는 전파
+            if (!isDuplicateKey(e)) throw e;
         }
+    }
+
+    private boolean isDuplicateKey(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof SQLException sql && sql.getErrorCode() == MYSQL_DUPLICATE_ENTRY) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public UserTitleHistory create(Long userId, Title title, LocalDateTime acquiredAt) {
