@@ -16,7 +16,10 @@ public record CreateDeveloperUserCommand(
         Set<Genre> favoriteGenreList
 ) {
     public User toEntity() {
-        OAuthInfo oauthInfo = new OAuthInfo(OAuthProvider.SLACK, oid);
+        OAuthInfo oauthInfo = OAuthInfo.builder()
+                .provider(OAuthProvider.SLACK)
+                .oid(oid)
+                .build();
         Set<Genre> genres = (favoriteGenreList == null) ?
                 Collections.emptySet() : new LinkedHashSet<>(favoriteGenreList);
 
