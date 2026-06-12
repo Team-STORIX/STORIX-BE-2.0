@@ -39,7 +39,7 @@ public class AuthUseCase {
             }
             case NAVER -> {
                 NaverTokenResponse naverToken = oauthHelper.getNaverOAuthToken(req.authCode(), req.state());
-                yield validateNaver(naverToken.accessToken());
+                yield validateNaver(naverToken.accessToken(), naverToken.refreshToken());
             }
             case X -> {
                 XTokenResponse xToken = oauthHelper.getXOAuthToken(req.authCode(), req.redirectUri(), req.codeVerifier());
@@ -56,10 +56,10 @@ public class AuthUseCase {
     public ValidAuthDTO checkAvailableRegisterNative(OAuthAuthorizationRequest req, OAuthProvider provider) {
         return switch (provider) {
             case KAKAO -> validateKakao(req.accessToken(), req.idToken(), true);
-            case NAVER -> validateNaver(req.accessToken());
+            case NAVER -> validateNaver(req.accessToken(), req.refreshToken());
             case APPLE -> {
                 AppleTokenResponse appleToken = oauthHelper.getAppleOAuthToken(req.authCode());
-                yield validateApple(appleToken.idToken());
+                yield validateApple(appleToken.idToken(), appleToken.refreshToken());
             }
             case X -> {
                 XTokenResponse xToken = oauthHelper.getXOAuthToken(req.authCode(), req.redirectUri(), req.codeVerifier());
@@ -104,20 +104,21 @@ public class AuthUseCase {
     }
 
     // Naver 공통 검증 로직
-    private ValidAuthDTO validateNaver(String accessToken) {
+    private ValidAuthDTO validateNaver(String accessToken, String refreshToken) {
         // accessToken으로 사용자 정보 조회
         NaverUserResponse naverUser = oauthHelper.getNaverInformation(accessToken);
 
         // token 간 정보 일치 확인 후 회원가입 여부 반환
         if (naverUser.id() == null) throw FeignClientServerErrorException.EXCEPTION;
-        return authService.validNaverSignup(naverUser.id());
+        return authService.validNaverSignup(naverUser.id(), refreshToken);
     }
 
     // Apple 공통 검증 로직
     // - Apple은 Web/Native 모두 동일한 clientId(서비스 ID) 를 aud 로 사용하므로 isNative 구분 불필요 → false.
-    private ValidAuthDTO validateApple(String idToken) {
+    // - refresh_token은 탈퇴 시 연동 해제(revoke)용으로 보관
+    private ValidAuthDTO validateApple(String idToken, String refreshToken) {
         OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, null, OAuthProvider.APPLE, false);
-        return authService.validAppleSignup(oauthInfo.getOid(), idToken);
+        return authService.validAppleSignup(oauthInfo.getOid(), idToken, refreshToken);
     }
 
     // X 공통 검증 로직
