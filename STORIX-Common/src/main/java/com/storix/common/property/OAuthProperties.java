@@ -10,11 +10,13 @@ public class OAuthProperties {
     private final KakaoProperties kakao;
     private final NaverProperties naver;
     private final AppleProperties apple;
+    private final XProperties x;
 
-    public OAuthProperties(KakaoProperties kakao, NaverProperties naver, AppleProperties apple) {
+    public OAuthProperties(KakaoProperties kakao, NaverProperties naver, AppleProperties apple, XProperties x) {
         this.kakao = kakao;
         this.naver = naver;
         this.apple = apple;
+        this.x = x;
     }
 
 }
