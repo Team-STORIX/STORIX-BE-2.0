@@ -26,6 +26,25 @@ public interface NaverOAuthClient {
             @RequestParam("state") String state
     );
 
+    // refresh_token으로 access_token 재발급
+    @PostMapping("/oauth2.0/token")
+    NaverTokenResponse naverRefresh(
+            @RequestParam("grant_type") String grantType,
+            @RequestParam("client_id") String clientId,
+            @RequestParam("client_secret") String clientSecret,
+            @RequestParam("refresh_token") String refreshToken
+    );
+
+    // 연동 해제 (회원 탈퇴)
+    @PostMapping("/oauth2.0/token")
+    void naverDelete(
+            @RequestParam("grant_type") String grantType,
+            @RequestParam("client_id") String clientId,
+            @RequestParam("client_secret") String clientSecret,
+            @RequestParam("access_token") String accessToken,
+            @RequestParam("service_provider") String serviceProvider
+    );
+
     // OIDC 공개키 목록 조회 (인증용)
     @Cacheable(cacheNames = "NaverOIDC", cacheManager = "oidcCacheManager")
     @GetMapping("/jwks")

@@ -25,6 +25,15 @@ public interface AppleOAuthClient {
             @RequestParam("code") String code
     );
 
+    // 토큰 폐기 (회원 탈퇴 시 연동 해제)
+    @PostMapping("/auth/revoke")
+    void appleRevoke(
+            @RequestParam("client_id") String clientId,
+            @RequestParam("client_secret") String clientSecret,
+            @RequestParam("token") String token,
+            @RequestParam("token_type_hint") String tokenTypeHint
+    );
+
     // OIDC 공개키 목록 조회 (id_token 서명 검증용)
     @Cacheable(cacheNames = "AppleOIDC", cacheManager = "oidcCacheManager")
     @GetMapping("/auth/keys")
