@@ -32,6 +32,7 @@ public class WithDrawUseCase {
             switch (oauthInfo.getProvider()) {
                 case KAKAO -> oauthHelper.unlinkKakaoUser(oauthInfo.getOid());
                 case NAVER -> oauthHelper.unlinkNaverUser(oauthInfo.getOid());
+                case X -> oauthHelper.unlinkXUser(oauthInfo.getOauthRefreshToken());
                 case SLACK -> {} // admin 만 해당 (연결 해제 불필요)
                 // TODO: Apple 은 refresh_token 저장 후 unlinkAppleUser 호출 필요
                 case APPLE -> {}

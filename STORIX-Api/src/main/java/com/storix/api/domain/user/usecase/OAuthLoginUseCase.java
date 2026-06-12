@@ -38,9 +38,9 @@ public class OAuthLoginUseCase {
             ValidAuthDTO valid, OAuthProvider provider, boolean isNative
     ) {
         if (valid.isRegistered()) {
-            return loginUseCase.readerLoginWithIdToken(valid.idToken(), provider, isNative);
+            return loginUseCase.readerLoginWithIdToken(valid.idToken(), valid.oid(), provider, isNative, valid.oauthRefreshToken());
         }
-        return loginUseCase.readerPreLoginWithIdToken(valid.idToken(), provider, isNative);
+        return loginUseCase.readerPreLoginWithIdToken(valid.idToken(), valid.oid(), provider, isNative, valid.oauthRefreshToken());
     }
 
 }

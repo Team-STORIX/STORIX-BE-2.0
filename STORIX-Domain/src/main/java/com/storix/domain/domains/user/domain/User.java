@@ -92,7 +92,8 @@ public class User extends BaseTimeEntity {
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "provider", column = @Column(name = "oauth_provider")),
-            @AttributeOverride(name = "oid", column = @Column(name = "oauth_oid"))
+            @AttributeOverride(name = "oid", column = @Column(name = "oauth_oid")),
+            @AttributeOverride(name = "oauthRefreshToken", column = @Column(name = "oauth_refresh_token", length = 1024))
     })
     private OAuthInfo oauthInfo;
 
@@ -113,6 +114,13 @@ public class User extends BaseTimeEntity {
     public void login() {
         // 계정 상태 = 정지 -> 로그인 제한 Exception
         lastLoginAt = LocalDateTime.now();
+    }
+
+    // refresh_token 갱신 (X 등 회전형)
+    public void updateOauthRefreshToken(String oauthRefreshToken) {
+        if (oauthRefreshToken != null) {
+            this.oauthInfo.updateOauthRefreshToken(oauthRefreshToken);
+        }
     }
 
     // 계정 정보 수정

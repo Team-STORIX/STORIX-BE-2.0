@@ -57,21 +57,28 @@ public class AuthService {
     @Transactional(readOnly = true)
     public ValidAuthDTO validKakaoSignup(String kakaoUserId, String idToken) {
         boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.KAKAO, kakaoUserId);
-        return new ValidAuthDTO(isRegistered, idToken);
+        return ValidAuthDTO.ofIdToken(isRegistered, idToken);
     }
 
     // - 네이버
     @Transactional(readOnly = true)
     public ValidAuthDTO validNaverSignup(String naverUserId) {
         boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.NAVER, naverUserId);
-        return new ValidAuthDTO(isRegistered, naverUserId);
+        return ValidAuthDTO.ofOid(isRegistered, naverUserId, null);
     }
 
     // - 애플
     @Transactional(readOnly = true)
     public ValidAuthDTO validAppleSignup(String appleUserId, String idToken) {
         boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.APPLE, appleUserId);
-        return new ValidAuthDTO(isRegistered, idToken);
+        return ValidAuthDTO.ofIdToken(isRegistered, idToken);
+    }
+
+    // - X
+    @Transactional(readOnly = true)
+    public ValidAuthDTO validXSignup(String xUserId, String oauthRefreshToken) {
+        boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.X, xUserId);
+        return ValidAuthDTO.ofOid(isRegistered, xUserId, oauthRefreshToken);
     }
 
     // 독자 회원 가입 (소셜 로그인)
@@ -81,6 +88,7 @@ public class AuthService {
         // 1. 온보딩 토큰 정보 조회
         OnboardingPrincipal principal = tokenAdaptor.findOnboardingPrincipalByJti(jti);
         OAuthProvider provider = principal.provider(); String oid = principal.oid();
+        String oauthRefreshToken = principal.oauthRefreshToken();
 
         // 2. 회원 가입 관련 검증
         boolean isUserPresent = userAdaptor.isUserPresentWithProviderAndOid(provider, oid);
@@ -97,6 +105,7 @@ public class AuthService {
                 cmd.ageOver14(),
                 provider,
                 oid,
+                oauthRefreshToken,
                 cmd.nickName(),
                 cmd.favoriteGenreList(),
                 cmd.profileDescription()
