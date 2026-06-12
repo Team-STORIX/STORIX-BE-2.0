@@ -13,12 +13,17 @@ public record CreateReaderUserCommand(
         Boolean ageOver14,
         OAuthProvider provider,
         String oid,
+        String oauthRefreshToken,
         String nickName,
         Set<Genre> favoriteGenreList,
         String profileDescription
 ) {
     public User toEntity() {
-        OAuthInfo oauthInfo = new OAuthInfo(provider, oid);
+        OAuthInfo oauthInfo = OAuthInfo.builder()
+                .provider(provider)
+                .oid(oid)
+                .oauthRefreshToken(oauthRefreshToken)
+                .build();
         Set<Genre> genres = (favoriteGenreList == null) ?
                         Collections.emptySet() : new LinkedHashSet<>(favoriteGenreList);
 

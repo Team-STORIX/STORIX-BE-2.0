@@ -5,6 +5,8 @@ import com.storix.infrastructure.external.oauth.client.KakaoInfoClient;
 import com.storix.infrastructure.external.oauth.client.KakaoOAuthClient;
 import com.storix.infrastructure.external.oauth.client.NaverInfoClient;
 import com.storix.infrastructure.external.oauth.client.NaverOAuthClient;
+import com.storix.infrastructure.external.oauth.client.XInfoClient;
+import com.storix.infrastructure.external.oauth.client.XOAuthClient;
 import feign.codec.Encoder;
 import feign.form.FormEncoder;
 import org.springframework.cloud.openfeign.EnableFeignClients;
@@ -17,7 +19,9 @@ import org.springframework.context.annotation.Configuration;
         KakaoOAuthClient.class,
         NaverInfoClient.class,
         NaverOAuthClient.class,
-        AppleOAuthClient.class
+        AppleOAuthClient.class,
+        XOAuthClient.class,
+        XInfoClient.class
 })
 public class FeignClientConfig {
 
