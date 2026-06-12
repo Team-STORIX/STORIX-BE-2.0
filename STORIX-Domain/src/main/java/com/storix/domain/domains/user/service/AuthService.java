@@ -62,16 +62,16 @@ public class AuthService {
 
     // - 네이버
     @Transactional(readOnly = true)
-    public ValidAuthDTO validNaverSignup(String naverUserId) {
+    public ValidAuthDTO validNaverSignup(String naverUserId, String oauthRefreshToken) {
         boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.NAVER, naverUserId);
-        return ValidAuthDTO.ofOid(isRegistered, naverUserId, null);
+        return ValidAuthDTO.ofOid(isRegistered, naverUserId, oauthRefreshToken);
     }
 
     // - 애플
     @Transactional(readOnly = true)
-    public ValidAuthDTO validAppleSignup(String appleUserId, String idToken) {
+    public ValidAuthDTO validAppleSignup(String appleUserId, String idToken, String oauthRefreshToken) {
         boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.APPLE, appleUserId);
-        return ValidAuthDTO.ofIdToken(isRegistered, idToken);
+        return ValidAuthDTO.ofIdToken(isRegistered, idToken, oauthRefreshToken);
     }
 
     // - X

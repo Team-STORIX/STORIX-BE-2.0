@@ -31,11 +31,10 @@ public class WithDrawUseCase {
         try {
             switch (oauthInfo.getProvider()) {
                 case KAKAO -> oauthHelper.unlinkKakaoUser(oauthInfo.getOid());
-                case NAVER -> oauthHelper.unlinkNaverUser(oauthInfo.getOid());
+                case NAVER -> oauthHelper.unlinkNaverUser(oauthInfo.getOauthRefreshToken());
                 case X -> oauthHelper.unlinkXUser(oauthInfo.getOauthRefreshToken());
+                case APPLE -> oauthHelper.unlinkAppleUser(oauthInfo.getOauthRefreshToken());
                 case SLACK -> {} // admin 만 해당 (연결 해제 불필요)
-                // TODO: Apple 은 refresh_token 저장 후 unlinkAppleUser 호출 필요
-                case APPLE -> {}
             }
         } catch (Exception e) {
             log.warn("OAuth unlink failed; continuing withdraw. userId={}, provider={}",

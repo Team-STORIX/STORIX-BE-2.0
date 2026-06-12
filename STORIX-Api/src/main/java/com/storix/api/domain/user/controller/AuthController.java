@@ -108,7 +108,7 @@ public class AuthController {
     public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> naverNativeLogin(
             @Valid @RequestBody NaverNativeLoginRequest body
     ) {
-        OAuthAuthorizationRequest req = OAuthAuthorizationRequest.forNaverNative(body.accessToken());
+        OAuthAuthorizationRequest req = OAuthAuthorizationRequest.forNaverNative(body.accessToken(), body.refreshToken());
         return oauthLoginUseCase.readerOAuthNativeLogin(req, OAuthProvider.NAVER);
     }
 
