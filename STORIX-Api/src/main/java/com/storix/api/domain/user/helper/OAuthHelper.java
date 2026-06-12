@@ -93,10 +93,14 @@ public class OAuthHelper {
         return naverInfoClient.getUserInfo(BEARER + accessToken).response();
     }
 
-    // 네이버: 사용자 연결 해제
-    public void unlinkNaverUser(String oid) {
+    // 네이버: 연동 해제 (refresh_token으로 access 재발급 후 delete, best-effort)
+    public void unlinkNaverUser(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) return;
         var naver = oauthProperties.getNaver();
-        // 네이버는 토큰 캐싱 및 주기적 갱신 필요
+        NaverTokenResponse refreshed = naverOauthClient.naverRefresh(
+                "refresh_token", naver.getClientId(), naver.getClientSecret(), refreshToken);
+        naverOauthClient.naverDelete(
+                "delete", naver.getClientId(), naver.getClientSecret(), refreshed.accessToken(), "NAVER");
     }
 
     // 애플: 인가 코드로 토큰 발급 요청 -> accessToken, idToken (네이티브 전용)
@@ -108,6 +112,19 @@ public class OAuthHelper {
                 apple.getClientId(),
                 clientSecret,
                 code
+        );
+    }
+
+    // 애플: 연동 해제 (refresh_token revoke, best-effort)
+    public void unlinkAppleUser(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) return;
+        var apple = oauthProperties.getApple();
+        String clientSecret = appleClientSecretHelper.generateClientSecret();
+        appleOauthClient.appleRevoke(
+                apple.getClientId(),
+                clientSecret,
+                refreshToken,
+                "refresh_token"
         );
     }
 
