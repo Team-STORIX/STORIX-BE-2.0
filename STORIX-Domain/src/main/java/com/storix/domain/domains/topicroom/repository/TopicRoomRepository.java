@@ -1,5 +1,6 @@
 package com.storix.domain.domains.topicroom.repository;
 
+import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import org.springframework.data.domain.*;
@@ -46,6 +47,23 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
     @Modifying(clearAutomatically = true)
     @Query("UPDATE TopicRoom t SET t.lastChatTime = :lastChatTime WHERE t.id = :roomId")
     void updateLastChatTime(@Param("roomId") Long roomId, @Param("lastChatTime") LocalDateTime lastChatTime);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+        UPDATE TopicRoom t
+        SET t.lastMessage = :message,
+            t.lastMessageType = :messageType,
+            t.lastMessageSenderId = :senderId,
+            t.lastChatTime = :lastChatTime
+        WHERE t.id = :roomId
+    """)
+    void updateLastMessage(
+            @Param("roomId") Long roomId,
+            @Param("message") String message,
+            @Param("messageType") MessageType messageType,
+            @Param("senderId") Long senderId,
+            @Param("lastChatTime") LocalDateTime lastChatTime
+    );
 
     // 인기도 순으로 조회
     List<TopicRoom> findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();

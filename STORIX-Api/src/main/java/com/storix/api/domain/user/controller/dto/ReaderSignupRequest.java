@@ -30,8 +30,8 @@ public record ReaderSignupRequest(
     Set<Long> favoriteWorksIdList
 
 ) {
-    // [v1] marketingAgree 를 termsAgree 로 매핑
+    // [v1-deprecated]
     public ReaderSignUpData toData() {
-        return new ReaderSignUpData(marketingAgree, nickName, profileDescription, favoriteGenreList, favoriteWorksIdList);
+        return new ReaderSignUpData(null, null, null, nickName, profileDescription, favoriteGenreList, favoriteWorksIdList);
     }
 }

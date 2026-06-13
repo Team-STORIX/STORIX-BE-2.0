@@ -34,10 +34,10 @@ public class LoginUseCase {
      * 독자용
      * */
     // 회원가입한 경우 로그인
-    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerLoginWithIdToken(String idToken, OAuthProvider provider, boolean isNative) {
-        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider, isNative);
+    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerLoginWithIdToken(String idToken, String oid, OAuthProvider provider, boolean isNative, String oauthRefreshToken) {
+        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, oid, provider, isNative);
 
-        AuthUserDetails userDetails = readerLoginService.execute(oauthInfo);
+        AuthUserDetails userDetails = readerLoginService.execute(oauthInfo, oauthRefreshToken);
         LoginWithTokenResponse loginToken = tokenGenerateHelper.generateLoginWithToken(userDetails);
 
         // Native: body로 access/refresh 둘 다 반환
@@ -59,10 +59,10 @@ public class LoginUseCase {
     }
 
     // 회원가입하지 않은 경우 로그인
-    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerPreLoginWithIdToken(String idToken, OAuthProvider provider, boolean isNative) {
-        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, provider, isNative);
+    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerPreLoginWithIdToken(String idToken, String oid, OAuthProvider provider, boolean isNative, String oauthRefreshToken) {
+        OAuthInfo oauthInfo = oauthHelper.getOauthInfoByIdToken(idToken, oid, provider, isNative);
 
-        OAuthLoginWithTokenResponse onboardingToken = tokenGenerateHelper.generateOAuthLoginWithToken(oauthInfo);
+        OAuthLoginWithTokenResponse onboardingToken = tokenGenerateHelper.generateOAuthLoginWithToken(oauthInfo, oauthRefreshToken);
 
         ReaderPreLoginResponse readerPreLoginResponse = new ReaderPreLoginResponse(
                 onboardingToken.onboardingToken()
