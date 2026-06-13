@@ -84,7 +84,10 @@ public class DeveloperAuthService {
     public AuthUserDetails loginDeveloper(String pendingId) {
         try {
             User user = userAdaptor.findReaderUserByOAuthInfo(
-                    new OAuthInfo(OAuthProvider.SLACK, pendingId));
+                    OAuthInfo.builder()
+                            .provider(OAuthProvider.SLACK)
+                            .oid(pendingId)
+                            .build());
             user.login();
             return new AuthUserDetails(user.getId(), user.getRole());
         } catch (Exception e) {

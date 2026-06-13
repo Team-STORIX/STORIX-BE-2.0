@@ -7,11 +7,13 @@ import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.dto.CreateDeveloperUserCommand;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
+import com.storix.domain.domains.user.dto.UserNicknameInfo;
 import com.storix.domain.domains.user.exception.me.*;
 import com.storix.domain.domains.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,6 +99,18 @@ public class UserAdaptor {
         return user.get();
     }
 
+    public List<User> findUsersByIds(Collection<Long> userIds) {
+        return userRepository.findAllById(userIds);
+    }
+
+    public int clearAllTitles() {
+        return userRepository.clearAllTitles();
+    }
+
+    public List<Long> findUntitledUserIdsHavingRawScore(Pageable pageable) {
+        return userRepository.findUntitledUserIdsHavingRawScore(pageable);
+    }
+
     public Map<Long, StandardProfileInfo> findStandardProfileInfoByUserIds(List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyMap();
@@ -111,6 +125,20 @@ public class UserAdaptor {
                 .collect(Collectors.toMap(
                         StandardProfileInfo::userId,
                         Function.identity(),
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+    }
+
+    public Map<Long, String> findNicknameMapByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return userRepository.findNicknameInfoByUserIds(userIds).stream()
+                .collect(Collectors.toMap(
+                        UserNicknameInfo::userId,
+                        UserNicknameInfo::nickName,
                         (a, b) -> a,
                         LinkedHashMap::new
                 ));

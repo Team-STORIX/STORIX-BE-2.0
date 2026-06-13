@@ -30,6 +30,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "WHERE r.libraryUserId = :userId")
     List<ReviewedWorksIdAndRatingInfo> findAllWorksIdsByUserId(@Param("userId") Long userId);
 
+    @Query("SELECT r.worksId " +
+            "FROM Review r " +
+            "WHERE r.libraryUserId = :userId")
+    List<Long> findAllReviewedWorksIdsByUserId(@Param("userId") Long userId);
+
     @Query("SELECT new com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo(r.worksId, r.id, r.rating) " +
             "FROM Review r " +
             "WHERE r.libraryUserId = :userId AND r.worksId IN :worksIds")
