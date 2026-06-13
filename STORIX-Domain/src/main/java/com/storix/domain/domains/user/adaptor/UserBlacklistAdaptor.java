@@ -6,8 +6,8 @@ import com.storix.domain.domains.user.repository.UserBlacklistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Optional;
 
 @Component
@@ -18,8 +18,7 @@ public class UserBlacklistAdaptor {
 
     // 정지 유저 등록 — TTL = 정지 만료까지 남은 초, 자동 소멸 시 차단 해제
     public void blockSuspended(Long userId, LocalDateTime suspendedUntil) {
-        long remainingSeconds = suspendedUntil.toEpochSecond(ZoneOffset.UTC)
-                - LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
+        long remainingSeconds = Duration.between(LocalDateTime.now(), suspendedUntil).getSeconds();
         if (remainingSeconds <= 0) return;
 
         userBlacklistRepository.save(UserBlacklist.builder()

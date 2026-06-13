@@ -7,8 +7,6 @@ import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.OnboardingTokenInfo;
-import com.storix.domain.domains.user.exception.auth.AlreadyWithDrawUserException;
-import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.domain.domains.user.exception.token.ExpiredTokenException;
 import com.storix.domain.domains.user.exception.token.InvalidRefreshTokenException;
 import com.storix.domain.domains.user.exception.token.InvalidTokenException;
@@ -62,13 +60,7 @@ public class TokenGenerateHelper {
 
         Long userId = tokenProvider.parseRefreshToken(refreshToken);
         User user = userAdaptor.findUserById(userId);
-
-        if (user.getAccountState() == AccountState.DELETED) {
-            throw AlreadyWithDrawUserException.EXCEPTION;
-        }
-        if (user.getAccountState() == AccountState.SUSPENDED) {
-            throw SuspendedUserException.EXCEPTION;
-        }
+        user.checkActiveOrThrow();
 
         tokenAdaptor.deleteRefreshToken(refreshToken);
 

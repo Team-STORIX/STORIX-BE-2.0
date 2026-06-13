@@ -1,6 +1,7 @@
 package com.storix.domain.domains.report.domain;
 
 import com.storix.common.model.BaseTimeEntity;
+import com.storix.domain.domains.report.exception.InvalidReportProcessRequestException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -77,11 +78,25 @@ public class ReportCase extends BaseTimeEntity {
     }
 
     public void process(ReportStatus status, ReportAction processAction, String processMemo, Long adminId) {
+        validateProcessRequest(status, processAction, adminId);
+
         this.status = status;
         this.processAction = processAction;
         this.processMemo = processMemo;
         this.processedByAdminId = adminId;
         this.processedAt = LocalDateTime.now();
+    }
+
+    private void validateProcessRequest(ReportStatus status, ReportAction processAction, Long adminId) {
+        if (status == null || status == ReportStatus.RECEIVED || adminId == null) {
+            throw InvalidReportProcessRequestException.EXCEPTION;
+        }
+        if (status == ReportStatus.REJECTED && processAction != null) {
+            throw InvalidReportProcessRequestException.EXCEPTION;
+        }
+        if (status == ReportStatus.COMPLETED && processAction == null) {
+            throw InvalidReportProcessRequestException.EXCEPTION;
+        }
     }
 
     @Builder

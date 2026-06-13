@@ -35,7 +35,7 @@ public class ReviewAdaptor {
     }
 
     public void existsByUserAndWorks(Long userId, Long worksId) {
-        boolean isReviewExist = reviewRepository.existsByLibraryUserIdAndWorksId(userId, worksId);
+        boolean isReviewExist = reviewRepository.existsByLibraryUserIdAndWorksIdAndDeletedFalse(userId, worksId);
         if (isReviewExist) {
             throw DuplicateReviewUploadException.EXCEPTION;
         }
