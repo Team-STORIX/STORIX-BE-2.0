@@ -20,6 +20,7 @@ public class TopicRoomReport extends BaseTimeEntity {
     private Long reporterId;
     private Long reportedUserId;
     private Long topicRoomId;
+    private Long chatMessageId;
 
     @Enumerated(EnumType.STRING)
     private ReportReason reason;
@@ -28,10 +29,11 @@ public class TopicRoomReport extends BaseTimeEntity {
     private String otherReason;
 
     @Builder
-    public TopicRoomReport(Long reporterId, Long reportedUserId, Long topicRoomId, ReportReason reason, String otherReason) {
+    public TopicRoomReport(Long reporterId, Long reportedUserId, Long topicRoomId, Long chatMessageId, ReportReason reason, String otherReason) {
         this.reporterId = reporterId;
         this.reportedUserId = reportedUserId;
         this.topicRoomId = topicRoomId;
+        this.chatMessageId = chatMessageId;
         this.reason = reason;
         this.otherReason = otherReason;
     }
