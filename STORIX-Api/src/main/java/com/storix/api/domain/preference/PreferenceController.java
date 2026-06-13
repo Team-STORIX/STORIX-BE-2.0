@@ -49,7 +49,7 @@ public class PreferenceController {
         return CustomResponse.onSuccess(SuccessCode.SUCCESS);
     }
 
-    // 결과 페이지 조회 (오늘 진행한 15개)
+    // 결과 페이지 조회 (오늘 진행한 10개)
     @Operation(summary = "취향 분석 결과", description = "취향 분석 결과에 대해 조회합니다.")
     @GetMapping("/results")
     public CustomResponse<ExplorationResultResponseDto> getResults(

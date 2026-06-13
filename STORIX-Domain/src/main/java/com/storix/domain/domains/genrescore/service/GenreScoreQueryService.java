@@ -1,7 +1,7 @@
 package com.storix.domain.domains.genrescore.service;
 
+import com.storix.domain.domains.genrescore.adaptor.GenreScoreAdaptor;
 import com.storix.domain.domains.genrescore.domain.UserGenreRawScore;
-import com.storix.domain.domains.genrescore.repository.UserGenreRawScoreRepository;
 import com.storix.domain.domains.preference.dto.GenreScoreInfo;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +27,11 @@ public class GenreScoreQueryService {
             Genre.SENTIMENTAL
     );
 
-    private final UserGenreRawScoreRepository rawScoreRepository;
+    private final GenreScoreAdaptor genreScoreAdaptor;
 
     // 장르별 raw_score 반환
     public List<GenreScoreInfo> getRawScores(Long userId) {
-        List<UserGenreRawScore> scores = rawScoreRepository.findAllByIdUserId(userId);
+        List<UserGenreRawScore> scores = genreScoreAdaptor.findRawScoresByUserId(userId);
 
         Map<Genre, Long> rawByGenre = scores.stream()
                 .collect(Collectors.toMap(UserGenreRawScore::getGenre, UserGenreRawScore::getRawScore));

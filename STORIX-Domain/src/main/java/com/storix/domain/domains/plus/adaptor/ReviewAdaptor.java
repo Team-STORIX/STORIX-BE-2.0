@@ -50,6 +50,10 @@ public class ReviewAdaptor {
         return reviewRepository.findAllWorksIdsByUserId(userId);
     }
 
+    public List<Long> findAllReviewedWorksIdsByUserId(Long userId) {
+        return reviewRepository.findAllReviewedWorksIdsByUserId(userId);
+    }
+
     public List<ReviewedWorksIdAndRatingInfo> findAllReviewInfoByFavoriteWorks(Long userId, List<Long> worksIds) {
         if (worksIds == null || worksIds.isEmpty()) {
             return Collections.emptyList();

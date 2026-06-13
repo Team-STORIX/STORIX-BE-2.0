@@ -113,6 +113,7 @@ public class SecurityConfig {
                                 // [Auth]
                                 .requestMatchers("/api/v1/auth/oauth/**").permitAll()
                                 .requestMatchers("/api/v1/auth/users/reader/signup").hasRole("ONBOARDING")
+                                .requestMatchers("/api/v2/auth/users/reader/signup").hasRole("ONBOARDING")
                                 .requestMatchers("/api/v1/auth/nickname/valid").permitAll()
                                 .requestMatchers("/api/v1/auth/tokens/refresh").permitAll()
                                 .requestMatchers("/api/v1/auth/developer/signup").permitAll()
@@ -128,6 +129,9 @@ public class SecurityConfig {
 
                                 // [Notification] 테스트 엔드포인트는 ADMIN 만
                                 .requestMatchers("/api/v1/notifications/admin/**").hasRole("ADMIN")
+
+                                // [Terms] 약관 등록/관리는 ADMIN 만
+                                .requestMatchers("/api/v1/terms/**").hasRole("ADMIN")
 
                                 .anyRequest().hasRole("READER")
                 )

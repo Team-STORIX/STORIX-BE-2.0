@@ -54,16 +54,18 @@ public class User extends BaseTimeEntity {
     @Column(length = 30)
     private String profileDescription;
 
-    @Column(nullable = false)
-    private int level = 1;
+    // 칭호
+    @Enumerated(EnumType.STRING)
+    @Column(name = "title", length = 40)
+    private Title title;
 
     @Min(0)
     @Column(nullable = false)
     private int point = 0;
 
-    // 이용약관 동의 여부
-    @Column(name = "terms_agree")
-    private Boolean termsAgree;
+    // 만 14세 이상 동의 여부
+    @Column(name = "age_over_14")
+    private Boolean ageOver14;
 
     @Column(name = "is_adult_verified")
     private Boolean isAdultVerified = false;
@@ -94,7 +96,8 @@ public class User extends BaseTimeEntity {
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "provider", column = @Column(name = "oauth_provider")),
-            @AttributeOverride(name = "oid", column = @Column(name = "oauth_oid"))
+            @AttributeOverride(name = "oid", column = @Column(name = "oauth_oid")),
+            @AttributeOverride(name = "oauthRefreshToken", column = @Column(name = "oauth_refresh_token", length = 1024))
     })
     private OAuthInfo oauthInfo;
 
@@ -102,8 +105,8 @@ public class User extends BaseTimeEntity {
     protected User() {}
 
     @Builder
-    public User(Boolean termsAgree, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList, String profileDescription, Role role) {
-        this.termsAgree = termsAgree;
+    public User(Boolean ageOver14, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList, String profileDescription, Role role) {
+        this.ageOver14 = ageOver14;
         this.oauthInfo = oauthInfo;
         this.nickName = nickName;
         this.favoriteGenreList = favoriteGenreList;
@@ -131,6 +134,13 @@ public class User extends BaseTimeEntity {
         }
     }
 
+    // refresh_token 갱신 (X 등 회전형)
+    public void updateOauthRefreshToken(String oauthRefreshToken) {
+        if (oauthRefreshToken != null) {
+            this.oauthInfo.updateOauthRefreshToken(oauthRefreshToken);
+        }
+    }
+
     // 계정 정보 수정
     public void changeNickName(String nickName) {
         this.nickName = nickName;
@@ -142,11 +152,8 @@ public class User extends BaseTimeEntity {
 
     public void changeProfileImage(String objectKey) { this.profileObjectKey = objectKey; }
 
-    public void changeLevel(int level) {
-//        if (level < 1 || level > 5) {
-//            throw new IllegalArgumentException("레벨 범위 오류");
-//        }
-        this.level = level;
+    public void changeTitle(Title title) {
+        this.title = title;
     }
 
     public void increasePoint(int point) {
@@ -186,7 +193,7 @@ public class User extends BaseTimeEntity {
         profileObjectKey = null;
         nickName = "탈퇴한 유저";
         oauthInfo = oauthInfo.withDrawOauthInfo();
-        termsAgree = null;
+        ageOver14 = null;
         isAdultVerified = null;
     }
 

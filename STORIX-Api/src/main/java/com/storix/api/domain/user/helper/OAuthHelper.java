@@ -7,6 +7,8 @@ import com.storix.infrastructure.external.oauth.client.KakaoInfoClient;
 import com.storix.infrastructure.external.oauth.client.KakaoOAuthClient;
 import com.storix.infrastructure.external.oauth.client.NaverInfoClient;
 import com.storix.infrastructure.external.oauth.client.NaverOAuthClient;
+import com.storix.infrastructure.external.oauth.client.XInfoClient;
+import com.storix.infrastructure.external.oauth.client.XOAuthClient;
 import com.storix.domain.domains.user.dto.*;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
@@ -16,6 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import static com.storix.common.utils.STORIXStatic.BEARER;
 
@@ -38,6 +43,10 @@ public class OAuthHelper {
     // 애플
     private final AppleOAuthClient appleOauthClient;
     private final AppleClientSecretHelper appleClientSecretHelper;
+
+    // X
+    private final XOAuthClient xOauthClient;
+    private final XInfoClient xInfoClient;
 
     // 카카오: 인가 코드로 토큰 발급 요청 -> accessToken, idToken
     public KakaoTokenResponse getKakaoOAuthToken(String code, String redirectUri) {
@@ -84,10 +93,14 @@ public class OAuthHelper {
         return naverInfoClient.getUserInfo(BEARER + accessToken).response();
     }
 
-    // 네이버: 사용자 연결 해제
-    public void unlinkNaverUser(String oid) {
+    // 네이버: 연동 해제 (refresh_token으로 access 재발급 후 delete, best-effort)
+    public void unlinkNaverUser(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) return;
         var naver = oauthProperties.getNaver();
-        // 네이버는 토큰 캐싱 및 주기적 갱신 필요
+        NaverTokenResponse refreshed = naverOauthClient.naverRefresh(
+                "refresh_token", naver.getClientId(), naver.getClientSecret(), refreshToken);
+        naverOauthClient.naverDelete(
+                "delete", naver.getClientId(), naver.getClientSecret(), refreshed.accessToken(), "NAVER");
     }
 
     // 애플: 인가 코드로 토큰 발급 요청 -> accessToken, idToken (네이티브 전용)
@@ -102,13 +115,64 @@ public class OAuthHelper {
         );
     }
 
+    // 애플: 연동 해제 (refresh_token revoke, best-effort)
+    public void unlinkAppleUser(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) return;
+        var apple = oauthProperties.getApple();
+        String clientSecret = appleClientSecretHelper.generateClientSecret();
+        appleOauthClient.appleRevoke(
+                apple.getClientId(),
+                clientSecret,
+                refreshToken,
+                "refresh_token"
+        );
+    }
+
+    // X: 인가 코드 -> accessToken (PKCE, Basic 인증)
+    public XTokenResponse getXOAuthToken(String code, String redirectUri, String codeVerifier) {
+        var x = oauthProperties.getX();
+        return xOauthClient.xAuth(
+                buildBasicAuthHeader(x.getClientId(), x.getClientSecret()),
+                "authorization_code",
+                x.getClientId(),
+                redirectUri,
+                code,
+                codeVerifier
+        );
+    }
+
+    // X: 사용자 정보 조회 (accessToken)
+    public XUserResponse getXInformation(String accessToken) {
+        return xInfoClient.getUserInfo(BEARER + accessToken).data();
+    }
+
+    // X: 연동 해제 (refresh_token revoke, best-effort)
+    public void unlinkXUser(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) return;
+        var x = oauthProperties.getX();
+        xOauthClient.xRevoke(
+                buildBasicAuthHeader(x.getClientId(), x.getClientSecret()),
+                refreshToken,
+                "refresh_token",
+                x.getClientId()
+        );
+    }
+
+    // Base64 인코딩
+    private String buildBasicAuthHeader(String clientId, String clientSecret) {
+        String credentials = clientId + ":" + clientSecret;
+        String encoded = Base64.getEncoder()
+                .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+        return "Basic " + encoded;
+    }
+
     // OIDC 스펙: OIDC 공개키 목록 조회
     public OIDCPublicKeysResponse getOIDCPublicKeys(OAuthProvider provider) {
         return switch (provider) {
             case KAKAO -> kakaoOauthClient.getKakaoOIDCOpenKeys();
             case NAVER -> naverOauthClient.getNaverOIDCOpenKeys();
             case APPLE -> appleOauthClient.getAppleOIDCOpenKeys();
-            case SLACK -> throw UnsupportedOAuthProviderException.EXCEPTION;
+            case X, SLACK -> throw UnsupportedOAuthProviderException.EXCEPTION;
         };
     }
 
@@ -165,14 +229,15 @@ public class OAuthHelper {
     }
 
     // OIDC 스펙: 검증된 idToken으로 OAuthInfo 반환 (provider, oid)
-    public OAuthInfo getOauthInfoByIdToken(String idToken, OAuthProvider provider, boolean isNative) {
+    public OAuthInfo getOauthInfoByIdToken(String idToken, String oid, OAuthProvider provider, boolean isNative) {
         if (provider == OAuthProvider.SLACK) {
             throw UnsupportedOAuthProviderException.EXCEPTION;
         }
-        if (provider == OAuthProvider.NAVER) {
+        // 비OIDC(Naver/X): oid를 직접 전달받음
+        if (oid != null) {
             return OAuthInfo.builder()
                     .provider(provider)
-                    .oid(idToken) // 네이버인 경우, 일시적으로 idToken 값에 oid 값 반환
+                    .oid(oid)
                     .build();
         }
         // KAKAO, APPLE: OIDC idToken에서 sub 클레임 추출

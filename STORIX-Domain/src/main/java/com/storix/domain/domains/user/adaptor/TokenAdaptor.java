@@ -53,7 +53,10 @@ public class TokenAdaptor {
             throw InvalidTokenException.EXCEPTION;
         }
 
-        return new OnboardingPrincipal(onboardingToken.get().getProvider(), onboardingToken.get().getOid());
+        return new OnboardingPrincipal(
+                onboardingToken.get().getProvider(),
+                onboardingToken.get().getOid(),
+                onboardingToken.get().getOauthRefreshToken());
     }
 
     public void deleteOnboardingTokenByJti(String jti) { onboardingTokenRepository.deleteById(jti);}

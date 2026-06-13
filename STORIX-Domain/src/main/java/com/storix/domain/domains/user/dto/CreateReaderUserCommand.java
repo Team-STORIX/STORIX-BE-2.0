@@ -10,20 +10,25 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public record CreateReaderUserCommand(
-        Boolean termsAgree,
+        Boolean ageOver14,
         OAuthProvider provider,
         String oid,
+        String oauthRefreshToken,
         String nickName,
         Set<Genre> favoriteGenreList,
         String profileDescription
 ) {
     public User toEntity() {
-        OAuthInfo oauthInfo = new OAuthInfo(provider, oid);
+        OAuthInfo oauthInfo = OAuthInfo.builder()
+                .provider(provider)
+                .oid(oid)
+                .oauthRefreshToken(oauthRefreshToken)
+                .build();
         Set<Genre> genres = (favoriteGenreList == null) ?
                         Collections.emptySet() : new LinkedHashSet<>(favoriteGenreList);
 
         return User.builder()
-                .termsAgree(termsAgree)
+                .ageOver14(ageOver14)
                 .oauthInfo(oauthInfo)
                 .nickName(nickName)
                 .favoriteGenreList(genres)

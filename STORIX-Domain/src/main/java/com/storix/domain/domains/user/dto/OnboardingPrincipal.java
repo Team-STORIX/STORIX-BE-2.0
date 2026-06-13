@@ -4,5 +4,6 @@ import com.storix.domain.domains.user.domain.OAuthProvider;
 
 public record OnboardingPrincipal(
         OAuthProvider provider,
-        String oid
+        String oid,
+        String oauthRefreshToken
 ) {}

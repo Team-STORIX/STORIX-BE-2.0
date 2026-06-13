@@ -24,9 +24,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -116,27 +114,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     }
 
     @Override
-    public void updateLastChatTime(Long roomId, LocalDateTime lastChatTime) {
-        topicRoomRepository.updateLastChatTime(roomId, lastChatTime);
-    }
-
-    @Override
-    public List<TopicRoom> loadTop5PopularRooms() {
-        return topicRoomRepository.findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();
-    }
-
-    @Override
-    public Set<Long> loadJoinedRoomIds(Long userId, List<Long> roomIds) {
-
-        // 빈 리스트일 경우 -> 빈 Set 반환
-        if (roomIds == null || roomIds.isEmpty()) {
-            return Collections.emptySet();
-        }
-
-        return topicRoomUserRepository.findJoinedRoomIdsByUserIdAndRoomIds(userId, roomIds);
-    }
-
-    @Override
     public List<Long> findAllJoinedRoomIdsByUserId(Long userId) {
         return topicRoomUserRepository.findAllJoinedRoomIdsByUserId(userId);
     }
@@ -152,11 +129,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     @Override
     public boolean existsById(Long roomId) {
         return topicRoomRepository.existsById(roomId);
-    }
-
-    @Override
-    public boolean existsByUserIdAndRoomId(Long userId, Long roomId) {
-        return topicRoomUserRepository.existsByUserIdAndTopicRoomId(userId, roomId);
     }
 
     @Override
