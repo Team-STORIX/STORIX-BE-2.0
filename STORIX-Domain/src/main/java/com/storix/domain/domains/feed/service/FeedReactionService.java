@@ -46,7 +46,7 @@ public class FeedReactionService {
     @Transactional
     public ReaderBoardReplyResponse uploadReaderBoardReply(Long userId, Long boardId, String comment) {
 
-        ReaderBoard readerBoard = readerFeedAdaptor.findReaderBoardById(boardId);
+        ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardById(boardId);
 
         CreateFeedReplyCommand cmd =
                 new CreateFeedReplyCommand(readerBoard, userId, comment, null);
@@ -70,7 +70,7 @@ public class FeedReactionService {
     @Transactional
     public ReaderBoardReplyResponse uploadReaderBoardChildReply(Long userId, Long boardId, Long parentReplyId, String comment) {
 
-        ReaderBoard readerBoard = readerFeedAdaptor.findReaderBoardById(boardId);
+        ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardById(boardId);
         ReaderBoardReply parentReply = readerFeedAdaptor.findReplyById(parentReplyId);
 
         // depth 1 제한 (답댓글에 대한 답댓글 불가)

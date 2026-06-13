@@ -14,11 +14,10 @@ import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.report.exception.AlreadyProcessedReportCaseException;
 import com.storix.domain.domains.report.exception.InvalidReportProcessRequestException;
 import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
-import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.user.adaptor.UserBlacklistAdaptor;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.domain.WithdrawReason;
+import com.storix.domain.domains.user.publisher.UserAccessRevokedPublisher;
 import com.storix.domain.domains.user.service.AuthService;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import lombok.RequiredArgsConstructor;
@@ -43,10 +42,9 @@ public class AdminReportCommandService {
     private final ReviewLikeAdaptor reviewLikeAdaptor;
     private final LibraryAdaptor libraryAdaptor;
     private final LoadWorksPort loadWorksPort;
-    private final TokenAdaptor tokenAdaptor;
     private final UserAdaptor userAdaptor;
-    private final UserBlacklistAdaptor userBlacklistAdaptor;
     private final AuthService authService;
+    private final UserAccessRevokedPublisher userAccessRevokedPublisher;
 
     @Transactional
     public void processReport(Long adminId, Long reportCaseId, ReportStatus status, ReportAction processAction, String processMemo) {
@@ -58,8 +56,7 @@ public class AdminReportCommandService {
             throw AlreadyProcessedReportCaseException.EXCEPTION;
         }
 
-        ReportAction effectiveAction = (status == ReportStatus.REJECTED) ? null : processAction;
-        reportCase.process(status, effectiveAction, processMemo, adminId);
+        reportCase.process(status, processAction, processMemo, adminId);
 
         if (status == ReportStatus.COMPLETED && processAction != null) {
             executeAction(reportCase, processAction);
@@ -68,6 +65,9 @@ public class AdminReportCommandService {
 
     private void validateRequest(ReportStatus status, ReportAction processAction) {
         if (status == ReportStatus.RECEIVED) {
+            throw InvalidReportProcessRequestException.EXCEPTION;
+        }
+        if (status == ReportStatus.REJECTED && processAction != null) {
             throw InvalidReportProcessRequestException.EXCEPTION;
         }
         if (status == ReportStatus.COMPLETED && processAction == null) {
@@ -112,8 +112,7 @@ public class AdminReportCommandService {
         LocalDateTime suspendedUntil = LocalDateTime.now().plusDays(SUSPENSION_DAYS);
         User user = userAdaptor.findUserById(userId);
         user.suspend(suspendedUntil);
-        tokenAdaptor.deleteRefreshTokenByUserIdIfPresent(userId);
-        userBlacklistAdaptor.blockSuspended(userId, suspendedUntil);
+        userAccessRevokedPublisher.publishSuspended(userId, suspendedUntil);
     }
 
     private void withdrawUserByAdminAction(Long userId) {

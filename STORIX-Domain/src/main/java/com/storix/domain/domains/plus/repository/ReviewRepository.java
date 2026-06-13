@@ -18,8 +18,6 @@ import java.util.Optional;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // 서재탭
-    boolean existsByLibraryUserIdAndWorksId(Long libraryUserId, Long worksId);
-
     boolean existsByLibraryUserIdAndWorksIdAndDeletedFalse(Long libraryUserId, Long worksId);
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo(r.worksId, r.id, r.rating) " +

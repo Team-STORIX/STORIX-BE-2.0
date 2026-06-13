@@ -52,6 +52,15 @@ public class ReaderFeedAdaptor {
         }
     }
 
+    // 게시글 확인 (삭제된 게시글에 대한 쓰기 작업 차단)
+    public ReaderBoard findActiveReaderBoardById(Long boardId) {
+        ReaderBoard readerBoard = findReaderBoardById(boardId);
+        if (readerBoard.isDeleted()) {
+            throw InvalidBoardRequestException.EXCEPTION;
+        }
+        return readerBoard;
+    }
+
     // 게시글 작성자 userId 조회
     public Long findBoardOwnerUserId(Long boardId) {
         return readerBoardRepository.findUserIdById(boardId)
@@ -234,8 +243,7 @@ public class ReaderFeedAdaptor {
         ReaderBoardReply reply = readerBoardReplyRepository.findById(replyId)
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
 
-        if (reply.softDeleteByAdmin()) {
-            readerBoardReplyRepository.save(reply);
+        if (readerBoardReplyRepository.softDeleteByAdminIfNotDeleted(replyId) > 0) {
             readerBoardRepository.decrementReplyCount(reply.getBoardId());
         }
     }

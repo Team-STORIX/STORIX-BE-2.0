@@ -2,6 +2,7 @@ package com.storix.domain.domains.user.domain;
 
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.user.exception.auth.AlreadyWithDrawUserException;
+import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.common.model.BaseTimeEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -112,8 +113,22 @@ public class User extends BaseTimeEntity {
 
     /** 비즈니스 로직 **/
     public void login() {
-        // 계정 상태 = 정지 -> 로그인 제한 Exception
+        checkActiveOrThrow();
         lastLoginAt = LocalDateTime.now();
+    }
+
+    // 계정 상태 검증 - 탈퇴 계정은 차단, 정지 기간이 만료된 계정은 자동 해제 후 통과
+    public void checkActiveOrThrow() {
+        if (accountState == AccountState.DELETED) {
+            throw AlreadyWithDrawUserException.EXCEPTION;
+        }
+        if (accountState == AccountState.SUSPENDED) {
+            if (suspendedUntil != null && suspendedUntil.isBefore(LocalDateTime.now())) {
+                restore();
+                return;
+            }
+            throw SuspendedUserException.EXCEPTION;
+        }
     }
 
     // 계정 정보 수정
@@ -147,6 +162,9 @@ public class User extends BaseTimeEntity {
 
     // 계정 정지 (기간 지정)
     public void suspend(LocalDateTime until) {
+        if (accountState == AccountState.DELETED) {
+            throw AlreadyWithDrawUserException.EXCEPTION;
+        }
         this.accountState = AccountState.SUSPENDED;
         this.suspendedUntil = until;
     }

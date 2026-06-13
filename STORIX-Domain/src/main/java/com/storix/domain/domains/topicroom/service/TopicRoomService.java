@@ -283,7 +283,12 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .otherReason(request.getOtherReason())
                 .reportCaseId(reportCase.getId())
                 .build();
-        recordTopicRoomPort.saveReport(report);
+
+        try {
+            recordTopicRoomPort.saveReport(report);
+        } catch (DataIntegrityViolationException e) {
+            throw DuplicateTopicRoomReportException.EXCEPTION;
+        }
     }
 
 
