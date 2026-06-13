@@ -70,7 +70,7 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     // 관리자 댓글 강제 삭제 (이미 삭제된 댓글이면 0건 반영, 중복 카운트 감소 방지)
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ReaderBoardReply r " +
-            "SET r.deleted = true " +
+            "SET r.deleted = true, r.deletedBy = com.storix.domain.domains.plus.domain.DeletedBy.ADMIN " +
             "WHERE r.id = :replyId AND r.deleted = false")
     int softDeleteByAdminIfNotDeleted(@Param("replyId") Long replyId);
 

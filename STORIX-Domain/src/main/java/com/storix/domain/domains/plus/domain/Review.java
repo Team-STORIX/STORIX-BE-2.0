@@ -54,6 +54,10 @@ public class Review extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean deleted = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deleted_by")
+    private DeletedBy deletedBy;
+
     /** 생성자 로직 **/
     @Builder
     public Review (Long libraryUserId, Long worksId, boolean isSpoiler, String spoilerScript, Rating rating, String content) {
@@ -68,11 +72,17 @@ public class Review extends BaseTimeEntity {
     public boolean softDeleteByAdmin() {
         if (this.deleted) return false;
         this.deleted = true;
+        this.deletedBy = DeletedBy.ADMIN;
         return true;
     }
 
     public boolean isDeleted() {
         return deleted;
+    }
+
+    // 필드 추가 이전 삭제 데이터는 deletedBy가 없으므로 USER로 간주
+    public DeletedBy getDeletedBy() {
+        return (deleted && deletedBy == null) ? DeletedBy.USER : deletedBy;
     }
 
 }

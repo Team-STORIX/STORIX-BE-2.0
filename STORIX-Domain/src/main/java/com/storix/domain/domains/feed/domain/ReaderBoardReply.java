@@ -1,5 +1,6 @@
 package com.storix.domain.domains.feed.domain;
 
+import com.storix.domain.domains.plus.domain.DeletedBy;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import jakarta.persistence.*;
 import lombok.*;
@@ -47,6 +48,7 @@ public class ReaderBoardReply extends BoardReply {
 
     public void softDelete() {
         this.deleted = true;
+        this.deletedBy = DeletedBy.USER;
         this.comment = "삭제된 댓글입니다";
     }
 
