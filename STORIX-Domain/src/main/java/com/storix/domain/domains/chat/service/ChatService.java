@@ -8,6 +8,7 @@ import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
+import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 
 @Slf4j
 @Service
@@ -31,6 +33,7 @@ public class ChatService implements ChatUseCase {
     private final LoadChatPort loadChatPort;
     private final ChatAsyncService chatAsyncService;
     private final LoadTopicRoomUserPort loadTopicRoomUserPort;
+    private final UserBlockAdaptor userBlockAdaptor;
 
     @Override
     @Transactional
@@ -64,7 +67,7 @@ public class ChatService implements ChatUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public Slice<ChatMessageResponseDto> getChatHistory(Long roomId,  Pageable pageable) {
+    public Slice<ChatMessageResponseDto> getChatHistory(Long userId, Long roomId, Pageable pageable) {
 
         log.info(">>>> [ChatService] 과거 내역 조회 요청 - RoomID: {}, Page: {}", roomId, pageable.getPageNumber());
 
@@ -73,6 +76,7 @@ public class ChatService implements ChatUseCase {
             throw UnknownTopicRoomException.EXCEPTION;
         }
 
-        return loadChatPort.loadMessages(roomId, pageable);
+        List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
+        return loadChatPort.loadMessages(roomId, blockedIds, pageable);
     }
 }

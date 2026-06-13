@@ -13,6 +13,8 @@ public class TopicRoomReportRequestDto {
     @NotNull
     private Long reportedUserId;
 
+    private Long chatMessageId;
+
     @NotNull
     private ReportReason reason;
 

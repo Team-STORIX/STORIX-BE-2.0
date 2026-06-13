@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class ChatPersistenceAdapter implements RecordChatPort, LoadChatPort {
@@ -19,6 +21,14 @@ public class ChatPersistenceAdapter implements RecordChatPort, LoadChatPort {
     @Override
     public Slice<ChatMessageResponseDto> loadMessages(Long roomId, Pageable pageable) {
         return chatRepository.findAllByRoomIdOrderByCreatedAtDesc(roomId, pageable);
+    }
+
+    @Override
+    public Slice<ChatMessageResponseDto> loadMessages(Long roomId, List<Long> blockedIds, Pageable pageable) {
+        if (blockedIds.isEmpty()) {
+            return chatRepository.findAllByRoomIdOrderByCreatedAtDesc(roomId, pageable);
+        }
+        return chatRepository.findAllByRoomIdExcludingBlockedOrderByCreatedAtDesc(roomId, blockedIds, pageable);
     }
 
     @Override

@@ -262,6 +262,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .reporterId(reporterId)
                 .reportedUserId(request.getReportedUserId())
                 .topicRoomId(roomId)
+                .chatMessageId(request.getChatMessageId())
                 .reason(request.getReason())
                 .otherReason(request.getOtherReason())
                 .build();
