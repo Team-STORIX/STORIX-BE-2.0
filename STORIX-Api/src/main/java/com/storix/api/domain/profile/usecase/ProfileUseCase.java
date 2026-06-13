@@ -4,6 +4,7 @@ import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.image.service.S3CacheHelper;
 import com.storix.domain.domains.profile.service.ProfileService;
 import com.storix.domain.domains.profile.dto.UserInfo;
+import com.storix.domain.domains.profile.dto.UserInfoV2;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
@@ -21,6 +22,13 @@ public class ProfileUseCase {
     public CustomResponse<UserInfo> getUserProfile(AuthUserDetails authUserDetails) {
         Long userId = authUserDetails.getUserId();
         UserInfo readerProfileInfo = profileService.getReaderProfileInfo(userId);
+        return CustomResponse.onSuccess(SuccessCode.PROFILE_LOAD_SUCCESS, readerProfileInfo);
+    }
+
+    // 기본 프로필 조회 V2 (칭호/진행도 포함)
+    public CustomResponse<UserInfoV2> getUserProfileV2(AuthUserDetails authUserDetails) {
+        Long userId = authUserDetails.getUserId();
+        UserInfoV2 readerProfileInfo = profileService.getReaderProfileInfoV2(userId);
         return CustomResponse.onSuccess(SuccessCode.PROFILE_LOAD_SUCCESS, readerProfileInfo);
     }
 

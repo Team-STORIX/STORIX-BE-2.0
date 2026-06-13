@@ -4,6 +4,8 @@ import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
+import com.storix.domain.domains.user.dto.UserNicknameInfo;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.storix.domain.domains.user.domain.User;
 import org.springframework.data.jpa.repository.Modifying;
@@ -67,5 +69,29 @@ public interface UserRepository extends JpaRepository<User, Long> {
     int restoreExpiredSuspensions(
             @Param("state") AccountState state,
             @Param("now") LocalDateTime now);
+
+    @Query("""
+        SELECT new com.storix.domain.domains.user.dto.UserNicknameInfo(u.id, u.nickName)
+        FROM User u
+        WHERE u.id IN :userIds
+    """)
+    List<UserNicknameInfo> findNicknameInfoByUserIds(@Param("userIds") List<Long> userIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User u SET u.title = null")
+    int clearAllTitles();
+
+    @Query("""
+        SELECT u.id
+        FROM User u
+        WHERE u.title IS NULL
+          AND EXISTS (
+              SELECT s.id.userId
+              FROM UserGenreRawScore s
+              WHERE s.id.userId = u.id
+          )
+        ORDER BY u.id ASC
+    """)
+    List<Long> findUntitledUserIdsHavingRawScore(Pageable pageable);
 
 }

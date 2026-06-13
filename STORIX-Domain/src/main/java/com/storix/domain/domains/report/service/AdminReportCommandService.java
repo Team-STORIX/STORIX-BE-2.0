@@ -1,6 +1,6 @@
 package com.storix.domain.domains.report.service;
 
-import com.storix.domain.domains.chat.application.port.RecordChatPort;
+import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
@@ -35,7 +35,7 @@ public class AdminReportCommandService {
     private static final String ACCOUNT_DELETION_DETAIL = "관리자 신고 처리로 인한 계정 삭제";
 
     private final ReportCaseAdaptor reportCaseAdaptor;
-    private final RecordChatPort recordChatPort;
+    private final ChatAdaptor chatAdaptor;
     private final BoardAdaptor boardAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final ReviewAdaptor reviewAdaptor;
@@ -94,7 +94,7 @@ public class AdminReportCommandService {
             }
             case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(targetId);
             case REVIEW -> deleteReview(targetId);
-            case TOPIC_ROOM -> recordChatPort.softDeleteTalkMessagesBySender(targetId, reportCase.getReportedUserId());
+            case TOPIC_ROOM -> chatAdaptor.softDeleteTalkMessagesBySender(targetId, reportCase.getReportedUserId());
         }
     }
 

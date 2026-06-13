@@ -1,6 +1,6 @@
 package com.storix.domain.domains.report.service;
 
-import com.storix.domain.domains.chat.application.port.LoadChatPort;
+import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
@@ -57,7 +57,7 @@ public class AdminReportQueryService {
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final TopicRoomPersistenceAdapter topicRoomPersistenceAdapter;
-    private final LoadChatPort loadChatPort;
+    private final ChatAdaptor chatAdaptor;
     private final UserAdaptor userAdaptor;
 
     public Page<AdminReportListResponse> getReports(AdminReportSearchCondition condition, Pageable pageable) {
@@ -278,7 +278,7 @@ public class AdminReportQueryService {
 
         List<ChatMessageResponseDto> chatMessages = reportedUserId == null
                 ? List.of()
-                : loadChatPort.loadRecentMessagesBySender(room.getId(), reportedUserId, PageRequest.of(0, 20));
+                : chatAdaptor.loadRecentMessagesBySender(room.getId(), reportedUserId, PageRequest.of(0, 20));
 
         Map<Long, String> nickNames = loadNickNames(collectUserIds(
                 reports.stream().map(TopicRoomReport::getReporterId).toList(),

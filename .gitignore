@@ -53,3 +53,4 @@ out/
 .omc/state
 /storix-db-tunnel.sh
 .claude
+/tools

@@ -4,9 +4,12 @@ import com.storix.domain.domains.works.domain.Genre;
 
 import java.util.Set;
 
-// 회원가입 내부 명령 (v1/v2 API DTO -> 공통 변환 후 AuthService 에 전달)
+// v2: 약관별 동의(서비스 이용약관/개인정보 수집·이용) + 만 14세 이상 동의를 개별로 수신
+// v1(deprecated): 약관/연령 동의 필드 사용 X
 public record ReaderSignUpData(
-        Boolean termsAgree,
+        Boolean serviceTermsAgree,
+        Boolean privacyPolicyAgree,
+        Boolean ageOver14,
         String nickName,
         String profileDescription,
         Set<Genre> favoriteGenreList,

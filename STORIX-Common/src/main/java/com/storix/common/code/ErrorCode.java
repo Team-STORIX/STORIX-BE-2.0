@@ -168,7 +168,11 @@ public enum ErrorCode {
     UNKNOWN_REPORT_CASE(HttpStatus.NOT_FOUND, "REPORT_ERROR_003", "해당 신고 케이스를 찾을 수 없습니다."),
 
     // Suspended user error
-    SUSPENDED_USER(HttpStatus.FORBIDDEN, "USER_ERROR_003", "정지된 계정입니다.");
+    SUSPENDED_USER(HttpStatus.FORBIDDEN, "USER_ERROR_003", "정지된 계정입니다."),
+
+    // Terms error
+    DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다."),
+    CURRENT_TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_ERROR_002", "현재 시행 중인 약관이 없습니다. 약관 등록 여부를 확인해주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

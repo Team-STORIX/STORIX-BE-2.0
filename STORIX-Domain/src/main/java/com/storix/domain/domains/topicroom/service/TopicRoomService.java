@@ -11,6 +11,7 @@ import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
 import com.storix.domain.domains.search.service.SearchHistoryService;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.RecordTopicRoomPort;
@@ -20,11 +21,14 @@ import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
+import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
@@ -41,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -59,6 +64,9 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final GenreScorePublisher genreScorePublisher;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
+    private final UserAdaptor userAdaptor;
+    private final TopicRoomAdaptor topicRoomAdaptor;
+    private final WorksAdaptor worksAdaptor;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -72,7 +80,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .toList();
 
         // works 정보를 한 번에 조회하여 Map으로 변환
-        Map<Long, TopicRoomWorksInfo> worksMap = loadWorksPort.loadWorksMapByIds(worksIds);
+        Map<Long, TopicRoomWorksInfo> worksMap = worksAdaptor.loadWorksMapByIds(worksIds);
 
         return participations.map(participation -> {
             TopicRoom room = participation.getTopicRoom();
@@ -108,27 +116,34 @@ public class TopicRoomService implements TopicRoomUseCase {
     }
 
     @Override
-    public List<TopicRoomResponseDto> getPopularRooms(Long userId) {
+    public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
         // 1. 상위 5개 토픽룸 가져오기
-        List<TopicRoom> rooms = loadTopicRoomPort.loadTop5PopularRooms();
+        List<TopicRoom> rooms = topicRoomAdaptor.loadTop5PopularRooms();
         if (rooms.isEmpty()) return Collections.emptyList();
 
         List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
         List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
+        List<Long> senderIds = rooms.stream()
+                .map(TopicRoom::getLastMessageSenderId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
 
-        Map<Long, TopicRoomWorksInfo> worksMap = loadWorksPort.loadWorksMapByIds(worksIds);
+        Map<Long, TopicRoomWorksInfo> worksMap = worksAdaptor.loadWorksMapByIds(worksIds);
+        Map<Long, String> nicknameMap = userAdaptor.findNicknameMapByUserIds(senderIds);
 
         // 포트를 통해 Set<Long> 형태의 가입된 방 ID 목록 수신
         Set<Long> joinedRoomIds = (userId != null)
-                ? loadTopicRoomMemberPort.loadJoinedRoomIds(userId, roomIds)
+                ? topicRoomAdaptor.loadJoinedRoomIds(userId, roomIds)
                 : Collections.emptySet();
 
         return rooms.stream()
                 .map(room -> {
                     TopicRoomWorksInfo worksInfo = worksMap.get(room.getWorksId());
                     boolean isJoined = joinedRoomIds.contains(room.getId());
+                    String lastMessageSenderNickname = nicknameMap.get(room.getLastMessageSenderId());
 
-                    return TopicRoomResponseDto.from(room, worksInfo, isJoined);
+                    return TopicRoomPreviewResponseDto.from(room, worksInfo, lastMessageSenderNickname, isJoined);
                 })
                 .toList();
     }

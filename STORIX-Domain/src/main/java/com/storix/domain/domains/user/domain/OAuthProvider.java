@@ -10,6 +10,7 @@ public enum OAuthProvider {
     KAKAO("카카오"),
     NAVER("네이버"),
     APPLE("애플"),
+    X("X"),
     SLACK("슬랙");
 
     private final String dbValue;
