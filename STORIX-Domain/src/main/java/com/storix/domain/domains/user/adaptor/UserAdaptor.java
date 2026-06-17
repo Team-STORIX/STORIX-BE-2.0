@@ -1,5 +1,6 @@
 package com.storix.domain.domains.user.adaptor;
 
+import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,6 +31,15 @@ public class UserAdaptor {
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
     private final UserRepository userRepository;
+
+    public AccountState findAccountStateById(Long userId) {
+        return userRepository.findAccountStateById(userId)
+                .orElseThrow(() -> UnknownUserException.EXCEPTION);
+    }
+
+    public LocalDateTime findSuspendedUntilById(Long userId) {
+        return userRepository.findSuspendedUntilById(userId).orElse(null);
+    }
 
     public Role findUserRoleByUserId(Long userId) {
         Optional<Role> role = userRepository.findRoleByUserId(userId);
@@ -128,6 +139,15 @@ public class UserAdaptor {
                         (a, b) -> a,
                         LinkedHashMap::new
                 ));
+    }
+
+    // suspendedUntil 기준으로 정지 만료된 유저 일괄 복구 — ReportCase 상태와 독립적
+    public int restoreExpiredSuspensions(LocalDateTime now) {
+        return userRepository.restoreExpiredSuspensions(AccountState.SUSPENDED, now);
+    }
+
+    public int hardDeleteBefore(LocalDateTime cutoff) {
+        return userRepository.hardDeleteBefore(cutoff);
     }
 
     public Map<Long, String> findNicknameMapByUserIds(List<Long> userIds) {

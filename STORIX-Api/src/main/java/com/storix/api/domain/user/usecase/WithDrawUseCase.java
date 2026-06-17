@@ -42,7 +42,6 @@ public class WithDrawUseCase {
             // TODO: best-effort + 재시도 워커 처리 고려중
         }
 
-
         // 2. 유저 탈퇴 처리 (RefreshToken / 관심작품 / 서재 삭제 + 푸시 알림 발송 대상 제외 + 탈퇴 사유 로그)
         authService.withDrawUser(userId, reasons, detail);
 

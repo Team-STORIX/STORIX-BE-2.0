@@ -39,6 +39,15 @@ public enum NotificationType {
         };
     }
 
+    // 수신 동의 설정과 무관하게 무조건 발송해야 하는 필수 고지 타입인지 (제재/약관·정책 변경 등 법적·정책상 필수 안내)
+    public boolean bypassConsent() {
+        return switch (this) {
+            case RESTRICTION_7D, RESTRICTION_30D,
+                 TOS_UPDATE, PRIVACY_UPDATE -> true;
+            default -> false;
+        };
+    }
+
     // FE 아이콘 분기용 카테고리 (13개 type -> 6개 category)
     public NotificationCategory category() {
         return switch (this) {

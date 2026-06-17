@@ -26,4 +26,5 @@ public class LogoutUseCase {
         return ResponseEntity.ok()
                     .body(CustomResponse.onSuccess(SuccessCode.AUTH_LOGOUT_SUCCESS));
     }
+
 }
