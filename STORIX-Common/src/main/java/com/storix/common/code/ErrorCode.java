@@ -163,7 +163,8 @@ public enum ErrorCode {
 
     // Block error
     SELF_BLOCK_ERROR(HttpStatus.BAD_REQUEST, "BLOCK_ERROR_001", "자기 자신은 차단할 수 없습니다."),
-    DUPLICATE_USER_BLOCK(HttpStatus.CONFLICT, "BLOCK_ERROR_002", "이미 차단한 사용자입니다.");
+    DUPLICATE_USER_BLOCK(HttpStatus.CONFLICT, "BLOCK_ERROR_002", "이미 차단한 사용자입니다."),
+    BLOCKED_USER_CONTENT(HttpStatus.FORBIDDEN, "BLOCK_ERROR_003", "차단한 사용자의 콘텐츠에 접근할 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

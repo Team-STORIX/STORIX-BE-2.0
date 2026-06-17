@@ -16,6 +16,7 @@ import com.storix.domain.domains.review.dto.StandardReviewInfo;
 import com.storix.domain.domains.review.dto.StandardSliceReviewInfo;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
+import com.storix.domain.domains.user.exception.block.BlockedUserContentException;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
@@ -141,6 +142,10 @@ public class ReviewService {
 
         // 1) 리뷰 정보
         ReviewInfo reviewInfo = reviewAdaptor.findReviewById(reviewId);
+
+        if (userId != null && userBlockAdaptor.isBlocked(userId, reviewInfo.reviewerId())) {
+            throw BlockedUserContentException.EXCEPTION;
+        }
         boolean isLiked = reviewLikeAdaptor.isAlreadyLiked(userId, reviewId);
         StandardReviewInfo review = StandardReviewInfo.fromReviewInfo(reviewInfo, isLiked);
 

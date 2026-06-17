@@ -12,6 +12,7 @@ import com.storix.domain.domains.plus.dto.ReaderBoardInfo;
 import com.storix.domain.domains.profile.dto.ReaderBoardWithProfileInfo;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
+import com.storix.domain.domains.user.exception.block.BlockedUserContentException;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
@@ -132,6 +133,10 @@ public class FeedService {
 
         // 1) 게시글 단건 정보
         ReaderBoardInfo boardInfo = readerBoardHelper.findSingleReaderBoardInfo(userId, boardId, true);
+
+        if (blockedIds.contains(boardInfo.userId())) {
+            throw BlockedUserContentException.EXCEPTION;
+        }
 
         StandardProfileInfo writerProfile =
                 userAdaptor.findStandardProfileInfoByUserId(boardInfo.userId());
