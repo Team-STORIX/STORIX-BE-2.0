@@ -146,6 +146,10 @@ public class UserAdaptor {
         return userRepository.restoreExpiredSuspensions(AccountState.SUSPENDED, now);
     }
 
+    public int hardDeleteBefore(LocalDateTime cutoff) {
+        return userRepository.hardDeleteBefore(cutoff);
+    }
+
     public Map<Long, String> findNicknameMapByUserIds(List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyMap();

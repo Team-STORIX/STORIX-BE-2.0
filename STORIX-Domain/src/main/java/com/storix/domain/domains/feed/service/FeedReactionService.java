@@ -35,10 +35,10 @@ public class FeedReactionService {
             return readerFeedAdaptor.deleteReaderBoardLike(boardId);
         }
 
-        // like > 알림 발행을 위해 게시글 작성자 조회
-        Long boardOwnerUserId = readerFeedAdaptor.findBoardOwnerUserId(boardId);
+        // like > 삭제된 게시글 차단 + 작성자 조회
+        ReaderBoard board = readerFeedAdaptor.findActiveReaderBoardById(boardId);
         LikeToggleResponse response = readerFeedAdaptor.insertReaderBoardLike(userId, boardId);
-        publishFeedLikeNotification(userId, boardOwnerUserId, boardId);
+        publishFeedLikeNotification(userId, board.getUserId(), boardId);
         return response;
     }
 

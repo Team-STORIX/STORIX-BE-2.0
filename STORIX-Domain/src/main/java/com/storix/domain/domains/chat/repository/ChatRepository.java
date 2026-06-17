@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
@@ -53,12 +54,17 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
     );
 
     @Modifying
-    @Query("UPDATE ChatMessage m SET m.deleted = true " +
+    @Query("UPDATE ChatMessage m SET m.deleted = true, m.deletedAt = :now " +
             "WHERE m.roomId = :roomId AND m.senderId = :senderId " +
             "AND m.messageType = :messageType AND m.deleted = false")
     int softDeleteByRoomIdAndSenderId(
             @Param("roomId") Long roomId,
             @Param("senderId") Long senderId,
-            @Param("messageType") MessageType messageType
+            @Param("messageType") MessageType messageType,
+            @Param("now") LocalDateTime now
     );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ChatMessage m WHERE m.deleted = true AND m.deletedAt < :cutoff")
+    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
 }

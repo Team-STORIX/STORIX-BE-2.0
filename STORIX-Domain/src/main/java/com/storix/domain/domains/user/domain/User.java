@@ -78,6 +78,9 @@ public class User extends BaseTimeEntity {
     @Column(name = "deletedSuffix", length = 36)
     private String deletedSuffix;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Column(name = "suspended_until")
     private LocalDateTime suspendedUntil;
 
@@ -172,6 +175,9 @@ public class User extends BaseTimeEntity {
         if (accountState == AccountState.DELETED) {
             throw AlreadyWithDrawUserException.EXCEPTION;
         }
+        if (until == null || !until.isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("정지 만료 시각은 현재 이후여야 합니다");
+        }
         this.accountState = AccountState.SUSPENDED;
         this.suspendedUntil = until;
     }
@@ -195,6 +201,7 @@ public class User extends BaseTimeEntity {
         oauthInfo = oauthInfo.withDrawOauthInfo();
         ageOver14 = null;
         isAdultVerified = null;
+        deletedAt = LocalDateTime.now();
     }
 
 }

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardReply, Long> {
@@ -51,10 +52,15 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             "WHERE r.id = :id AND r.childReplyCount > 0")
     void decrementChildReplyCount(@Param("id") Long id);
 
-    // 피드 댓글 조회 (최상위 댓글 + 답댓글 fetch join)
+    boolean existsByIdAndBoard_IdAndDeletedFalse(Long id, Long boardId);
+
+    @Query("SELECT r.userId FROM ReaderBoardReply r WHERE r.id = :replyId AND r.board.id = :boardId AND r.deleted = false")
+    Optional<Long> findActiveUserIdByIdAndBoardId(@Param("replyId") Long replyId, @Param("boardId") Long boardId);
+
+    // 피드 댓글 조회 (최상위 댓글 + 답댓글 fetch join) — 삭제된 댓글 제외
     @Query("SELECT DISTINCT r FROM ReaderBoardReply r " +
-            "LEFT JOIN FETCH r.childReplies c " +
-            "WHERE r.board.id = :boardId AND r.parentReply IS NULL")
+            "LEFT JOIN FETCH r.childReplies c ON c.deleted = false " +
+            "WHERE r.board.id = :boardId AND r.parentReply IS NULL AND r.deleted = false")
     Slice<ReaderBoardReply> findAllByBoard_Id(@Param("boardId") Long boardId, Pageable pageable);
 
     // 답댓글 조회
@@ -70,8 +76,12 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     // 관리자 댓글 강제 삭제 (이미 삭제된 댓글이면 0건 반영, 중복 카운트 감소 방지)
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ReaderBoardReply r " +
-            "SET r.deleted = true, r.deletedBy = com.storix.domain.domains.plus.domain.DeletedBy.ADMIN " +
+            "SET r.deleted = true, r.deletedBy = com.storix.domain.domains.plus.domain.DeletedBy.ADMIN, r.deletedAt = :now " +
             "WHERE r.id = :replyId AND r.deleted = false")
-    int softDeleteByAdminIfNotDeleted(@Param("replyId") Long replyId);
+    int softDeleteByAdminIfNotDeleted(@Param("replyId") Long replyId, @Param("now") LocalDateTime now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ReaderBoardReply r WHERE r.deleted = true AND r.deletedAt < :cutoff")
+    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
 
 }
