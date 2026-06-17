@@ -17,6 +17,7 @@ public class OnboardingToken {
 
     private final OAuthProvider provider;
     private final String oid;
+    private final String oauthRefreshToken;
 
     @Indexed
     private final String onboardingToken;
@@ -25,10 +26,11 @@ public class OnboardingToken {
     private final Long ttl;
 
     @Builder
-    public OnboardingToken(String jti, OAuthProvider provider, String oid, String onboardingToken, Long ttl) {
+    public OnboardingToken(String jti, OAuthProvider provider, String oid, String oauthRefreshToken, String onboardingToken, Long ttl) {
         this.jti = jti;
         this.provider = provider;
         this.oid = oid;
+        this.oauthRefreshToken = oauthRefreshToken;
         this.onboardingToken = onboardingToken;
         this.ttl = ttl;
     }

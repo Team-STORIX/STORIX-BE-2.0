@@ -164,7 +164,11 @@ public enum ErrorCode {
     // Block error
     SELF_BLOCK_ERROR(HttpStatus.BAD_REQUEST, "BLOCK_ERROR_001", "자기 자신은 차단할 수 없습니다."),
     DUPLICATE_USER_BLOCK(HttpStatus.CONFLICT, "BLOCK_ERROR_002", "이미 차단한 사용자입니다."),
-    BLOCKED_USER_CONTENT(HttpStatus.FORBIDDEN, "BLOCK_ERROR_003", "차단한 사용자의 콘텐츠에 접근할 수 없습니다.");
+    BLOCKED_USER_CONTENT(HttpStatus.FORBIDDEN, "BLOCK_ERROR_003", "차단한 사용자의 콘텐츠에 접근할 수 없습니다."),
+
+    // Terms error
+    DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다."),
+    CURRENT_TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_ERROR_002", "현재 시행 중인 약관이 없습니다. 약관 등록 여부를 확인해주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

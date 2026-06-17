@@ -12,6 +12,7 @@ public record LibraryWorksInfo(
         String originalAuthor,
         String thumbnailUrl,
         WorksType worksType,
-        Genre genre
+        Genre genre,
+        Double rating
 ) {
 }
