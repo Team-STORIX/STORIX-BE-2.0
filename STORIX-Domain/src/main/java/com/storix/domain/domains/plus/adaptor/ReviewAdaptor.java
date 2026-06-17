@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +36,7 @@ public class ReviewAdaptor {
     }
 
     public void existsByUserAndWorks(Long userId, Long worksId) {
-        boolean isReviewExist = reviewRepository.existsByLibraryUserIdAndWorksId(userId, worksId);
+        boolean isReviewExist = reviewRepository.existsByLibraryUserIdAndWorksIdAndDeletedFalse(userId, worksId);
         if (isReviewExist) {
             throw DuplicateReviewUploadException.EXCEPTION;
         }
@@ -68,7 +69,7 @@ public class ReviewAdaptor {
     }
 
     public boolean isMyReviewExist(Long userId, Long worksId) {
-        return reviewRepository.existsByLibraryUserIdAndWorksId(userId, worksId);
+        return reviewRepository.existsByLibraryUserIdAndWorksIdAndDeletedFalse(userId, worksId);
     }
 
     public SliceReviewInfo getMyReviewInfo(Long userId, Long worksId) {
@@ -80,13 +81,9 @@ public class ReviewAdaptor {
     }
 
     public ReviewInfo findReviewById(Long reviewId) {
-        Optional<Review> optionalReview = reviewRepository.findById(reviewId);
-        if (optionalReview.isPresent()) {
-            Review review = optionalReview.get();
-            return ReviewInfo.of(review);
-        } else {
-            throw UnknownReviewException.EXCEPTION;
-        }
+        Review review = reviewRepository.findByIdAndDeletedFalse(reviewId)
+                .orElseThrow(() -> UnknownReviewException.EXCEPTION);
+        return ReviewInfo.of(review);
     }
 
     public Long findReviewerIdById(Long reviewId) {
@@ -123,6 +120,14 @@ public class ReviewAdaptor {
         }
     }
 
+    // 관리자 리뷰 강제 삭제 (소유권 검증 없음, 원문 보존 soft delete, idempotent)
+    // 이미 삭제된 경우 false 반환 → 호출자에서 카운트 감소 등 부수 효과 건너뜀
+    public boolean adminDeleteReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> UnknownReviewException.EXCEPTION);
+        return review.softDeleteByAdmin();
+    }
+
     // 프로필 탭
     public List<RatingCountInfo> countByRating(Long userId) {
         return reviewRepository.countByRating(userId);
@@ -131,6 +136,10 @@ public class ReviewAdaptor {
     public List<Long> findWorksIdsByHighRatings(Long userId) {
         return reviewRepository.findWorksIdsByRatings(
                 userId, List.of(Rating.FIVE, Rating.FOUR_POINT_FIVE));
+    }
+
+    public int hardDeleteBefore(LocalDateTime cutoff) {
+        return reviewRepository.hardDeleteBefore(cutoff);
     }
 
 }

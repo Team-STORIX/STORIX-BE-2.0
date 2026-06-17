@@ -55,7 +55,7 @@ public class NotificationDispatchService {
             return DispatchResult.inAppOnly(saved.getId());
         }
 
-        // 4-1. [SUSPENDED 유저] 제재/신고 안내만 푸시 발송
+        // 4-1. [SUSPENDED 유저] 제재/신고 안내 타입만 발송 허용
         if (user.getAccountState() == AccountState.SUSPENDED
                 && !event.notificationType().deliverableToSuspendedUser()) {
             log.debug(">>> [Notification] push skipped (user suspended) userId={}, type={}",
@@ -63,12 +63,14 @@ public class NotificationDispatchService {
             return DispatchResult.inAppOnly(saved.getId());
         }
 
-        // 4-2. [NORMAL 유저] 푸시 알림 수신 동의 체크
-        NotificationSetting setting = notificationSettingAdaptor.getByUserId(event.recipientUserId());
-        if (!setting.acceptsType(event.notificationType())) {
-            log.debug(">>> [Notification] push skipped (type disabled) userId={}, type={}",
-                    event.recipientUserId(), event.notificationType());
-            return DispatchResult.inAppOnly(saved.getId());
+        // 4-2. 푸시 알림 수신 동의 체크 — 제재/약관·정책(법적 필수 고지) 타입은 동의 여부와 무관하게 발송
+        if (!event.notificationType().bypassConsent()) {
+            NotificationSetting setting = notificationSettingAdaptor.getByUserId(event.recipientUserId());
+            if (!setting.acceptsType(event.notificationType())) {
+                log.debug(">>> [Notification] push skipped (type disabled) userId={}, type={}",
+                        event.recipientUserId(), event.notificationType());
+                return DispatchResult.inAppOnly(saved.getId());
+            }
         }
 
         return DispatchResult.pushTo(saved.getId(), tokens);

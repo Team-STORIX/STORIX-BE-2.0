@@ -13,10 +13,12 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
+import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
 import com.storix.domain.domains.topicroom.exception.TodayTopicRoomNotFoundException;
 import org.springframework.cache.annotation.Cacheable;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
@@ -94,7 +96,11 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     }
 
     @Override public void saveReport(TopicRoomReport report) {
-        topicRoomReportRepository.save(report);
+        try {
+            topicRoomReportRepository.saveAndFlush(report);
+        } catch (DataIntegrityViolationException e) {
+            throw DuplicateTopicRoomReportException.EXCEPTION;
+        }
     }
 
     @Override

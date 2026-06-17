@@ -109,7 +109,7 @@ public class SecurityConfig {
 
                                 // [Onboarding]
                                 .requestMatchers("/api/v1/onboarding/**").permitAll()
-          
+
                                 // [Auth]
                                 .requestMatchers("/api/v1/auth/oauth/**").permitAll()
                                 .requestMatchers("/api/v1/auth/users/reader/signup").hasRole("ONBOARDING")
@@ -123,6 +123,9 @@ public class SecurityConfig {
 
                                 // [TopicRoom]
                                 .requestMatchers("/ws-stomp/**").permitAll()
+
+                                // [Admin]
+                                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
                                 // [Notification] 테스트 엔드포인트는 ADMIN 만
                                 .requestMatchers("/api/v1/notifications/admin/**").hasRole("ADMIN")

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 
+import java.time.LocalDateTime;
+
 @Getter
 @MappedSuperclass
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,5 +30,40 @@ public abstract class Board extends BaseTimeEntity {
 
     @Column(name = "reply_count", nullable = false)
     protected int replyCount = 0;
+
+    @Column(nullable = false)
+    protected boolean deleted = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deleted_by")
+    protected DeletedBy deletedBy;
+
+    @Column(name = "deleted_at")
+    protected LocalDateTime deletedAt;
+
+    public boolean softDeleteByAdmin() {
+        if (this.deleted) return false;
+        this.deleted = true;
+        this.deletedBy = DeletedBy.ADMIN;
+        this.deletedAt = LocalDateTime.now();
+        return true;
+    }
+
+    public boolean softDeleteByUser() {
+        if (this.deleted) return false;
+        this.deleted = true;
+        this.deletedBy = DeletedBy.USER;
+        this.deletedAt = LocalDateTime.now();
+        return true;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    // 필드 추가 이전 삭제 데이터는 deletedBy가 없으므로 USER로 간주
+    public DeletedBy getDeletedBy() {
+        return (deleted && deletedBy == null) ? DeletedBy.USER : deletedBy;
+    }
 
 }

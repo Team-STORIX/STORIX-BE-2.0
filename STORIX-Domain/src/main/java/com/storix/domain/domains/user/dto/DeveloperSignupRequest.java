@@ -24,5 +24,6 @@ public record DeveloperSignupRequest(
 
     @Size(min = 2, max = 18, message = "관심 작품은 2개 이상 18개 이하로 선택해야 합니다.")
     Set<Long> favoriteWorksIdList
+
 ) {
 }
