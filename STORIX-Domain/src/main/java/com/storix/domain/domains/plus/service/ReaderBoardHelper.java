@@ -42,15 +42,19 @@ public class ReaderBoardHelper {
 
     // 게시글 리스트 조회
     public Slice<ReaderBoardInfo> findReaderBoardInfo(Long userId, Long worksId, Pageable pageable) {
+        return findReaderBoardInfo(userId, worksId, List.of(), pageable);
+    }
+
+    public Slice<ReaderBoardInfo> findReaderBoardInfo(Long userId, Long worksId, List<Long> blockedIds, Pageable pageable) {
 
         Slice<ReaderBoard> boards;
 
         // 작품 관련 게시글 조회
         if (worksId != null) {
-            // 피드 관련
-            boards = boardAdaptor.findAllReaderBoardListByWorksId(worksId, pageable);
+            // 피드 관련 (차단 유저 제외)
+            boards = boardAdaptor.findAllReaderBoardListByWorksIdExcludingBlocked(worksId, blockedIds, pageable);
         } else {
-            // 프로필 관련
+            // 프로필 관련 (내 게시글 — 차단 필터 불필요)
             boards = boardAdaptor.findAllReaderBoardList(userId, pageable);
         }
 
@@ -241,10 +245,20 @@ public class ReaderBoardHelper {
             Long userId,
             Slice<ReaderBoardReply> replies
     ) {
+        return mapRepliesWithProfileAndLike(userId, replies, List.of());
+    }
+
+    public Slice<ReaderBoardReplyInfoWithProfile> mapRepliesWithProfileAndLike(
+            Long userId,
+            Slice<ReaderBoardReply> replies,
+            List<Long> blockedIds
+    ) {
         List<ReaderBoardReply> content = replies.getContent();
         if (content.isEmpty()) {
             return replies.map(r -> null);
         }
+
+        Set<Long> blockedSet = new HashSet<>(blockedIds);
 
         // 1) 부모 댓글 + 답댓글 작성자 userIds 전부 수집
         List<Long> userIds = new ArrayList<>();
@@ -271,7 +285,7 @@ public class ReaderBoardHelper {
                 ? readerFeedAdaptor.findLikedReplyIds(userId, allReplyIds)
                 : Collections.emptySet();
 
-        // 4) 최종 매핑 (답댓글 embed)
+        // 4) 최종 매핑 (답댓글 embed, 차단 유저 답댓글 제외)
         return replies.map(reply -> {
             StandardProfileInfo profile = profileMap.get(reply.getUserId());
             if (profile == null) return null;
@@ -279,8 +293,9 @@ public class ReaderBoardHelper {
             ReaderBoardReplyInfo replyInfo = ReaderBoardReplyInfo.from(reply);
             boolean isLiked = likedReplyIds.contains(reply.getId());
 
-            // 답댓글 매핑
+            // 답댓글 매핑 (차단 유저 제외)
             List<ReaderBoardReplyInfoWithProfile> childRepliesDto = reply.getChildReplies().stream()
+                    .filter(child -> !blockedSet.contains(child.getUserId()))
                     .sorted(Comparator.comparing(ReaderBoardReply::getCreatedAt))
                     .map(child -> {
                         StandardProfileInfo childProfile = profileMap.get(child.getUserId());
@@ -312,7 +327,7 @@ public class ReaderBoardHelper {
     ) {
         List<ReaderBoardReply> content = replies.getContent();
         if (content.isEmpty()) {
-            return new SliceImpl<>(List.of(), replies.getPageable(), replies.hasNext());
+            return new SliceImpl<>(new ArrayList<>(), replies.getPageable(), replies.hasNext());
         }
 
         // 1) 댓글 ids

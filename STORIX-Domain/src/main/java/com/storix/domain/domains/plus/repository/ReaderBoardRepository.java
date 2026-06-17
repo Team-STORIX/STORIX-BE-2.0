@@ -59,8 +59,21 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
             "WHERE rb.worksId = :worksId AND rb.deleted = false")
     Slice<ReaderBoard> findAllReaderBoardByWorksId(Long worksId, Pageable pageable);
 
+    @Query("SELECT rb " +
+            "FROM ReaderBoard rb " +
+            "WHERE rb.worksId = :worksId AND rb.userId NOT IN :blockedIds")
+    Slice<ReaderBoard> findAllReaderBoardByWorksIdExcludingBlocked(
+            @Param("worksId") Long worksId,
+            @Param("blockedIds") List<Long> blockedIds,
+            Pageable pageable);
+
     @Query("SELECT rb FROM ReaderBoard rb WHERE rb.deleted = false ORDER BY rb.createdAt DESC")
     Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    @Query("SELECT rb FROM ReaderBoard rb WHERE rb.userId NOT IN :blockedIds ORDER BY rb.createdAt DESC")
+    Slice<ReaderBoard> findAllExcludingBlockedOrderByCreatedAtDesc(
+            @Param("blockedIds") List<Long> blockedIds,
+            Pageable pageable);
 
     // 피드 댓글
     @Modifying(clearAutomatically = true, flushAutomatically = true)

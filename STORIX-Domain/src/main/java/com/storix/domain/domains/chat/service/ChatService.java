@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-
+import java.util.List;
 
 @Slf4j
 @Service
@@ -47,19 +47,19 @@ public class ChatService {
         return user.getNickName();
     }
 
-    public void validateRoomExistence(Long roomId){
+    public void validateRoomExistence(Long roomId) {
         if (!topicRoomAdaptor.existsById(roomId)) {
             throw UnknownTopicRoomException.EXCEPTION;
         }
     }
 
     public void publishRedis(ChatMessage chatMessage, String nickname) {
-        // Redis 발행
         publishChatPort.publish(ChatMessageResponseDto.of(chatMessage, nickname));
     }
 
-    public Slice<ChatMessageResponseDto> getChatMessages(Long roomId,  Pageable pageable) {
-        return chatAdaptor.loadMessages(roomId, pageable);
+    @Transactional(readOnly = true)
+    public Slice<ChatMessageResponseDto> getChatMessages(Long roomId, List<Long> blockedIds, Pageable pageable) {
+        return chatAdaptor.loadMessages(roomId, blockedIds, pageable);
     }
 
     public LocalDateTime getRoomJoinedAt(Long userId, Long roomId) {

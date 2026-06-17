@@ -162,6 +162,11 @@ public enum ErrorCode {
     // Preference error
     PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다."),
 
+    // Block error
+    SELF_BLOCK_ERROR(HttpStatus.BAD_REQUEST, "BLOCK_ERROR_001", "자기 자신은 차단할 수 없습니다."),
+    DUPLICATE_USER_BLOCK(HttpStatus.CONFLICT, "BLOCK_ERROR_002", "이미 차단한 사용자입니다."),
+    BLOCKED_USER_CONTENT(HttpStatus.FORBIDDEN, "BLOCK_ERROR_003", "차단한 사용자의 콘텐츠에 접근할 수 없습니다."),
+
     // Report error
     REPORT_CASE_ALREADY_PROCESSED(HttpStatus.CONFLICT, "REPORT_ERROR_001", "이미 처리된 신고 케이스입니다."),
     INVALID_REPORT_PROCESS_REQUEST(HttpStatus.BAD_REQUEST, "REPORT_ERROR_002", "신고 처리 요청이 올바르지 않습니다."),
