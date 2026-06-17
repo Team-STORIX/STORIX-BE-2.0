@@ -22,10 +22,18 @@ public class OAuthInfo {
 
     private String oid;
 
+    private String oauthRefreshToken;
+
     @Builder
-    public OAuthInfo(OAuthProvider provider, String oid) {
+    public OAuthInfo(OAuthProvider provider, String oid, String oauthRefreshToken) {
         this.provider = provider;
         this.oid = oid;
+        this.oauthRefreshToken = oauthRefreshToken;
+    }
+
+    // refresh_token 갱신
+    public void updateOauthRefreshToken(String oauthRefreshToken) {
+        this.oauthRefreshToken = oauthRefreshToken;
     }
 
     // 회원 탈퇴 시

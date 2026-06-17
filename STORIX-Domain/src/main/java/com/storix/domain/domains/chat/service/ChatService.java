@@ -1,14 +1,12 @@
 package com.storix.domain.domains.chat.service;
 
-import com.storix.domain.domains.chat.application.port.LoadChatPort;
+import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.chat.application.port.PublishChatPort;
-import com.storix.domain.domains.chat.application.usecase.ChatUseCase;
 import com.storix.domain.domains.chat.domain.ChatMessage;
-import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
-import com.storix.domain.domains.user.application.port.LoadUserPort;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
+import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
+import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomUserException;
@@ -19,60 +17,53 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ChatService implements ChatUseCase {
+public class ChatService {
 
     private final PublishChatPort publishChatPort;
-    private final LoadUserPort loadUserPort;
-    private final LoadTopicRoomPort loadTopicRoomPort;
-    private final LoadChatPort loadChatPort;
-    private final ChatAsyncService chatAsyncService;
-    private final LoadTopicRoomUserPort loadTopicRoomUserPort;
+    private final TopicRoomAdaptor topicRoomAdaptor;
+    private final UserAdaptor userAdaptor;
+    private final ChatAdaptor chatAdaptor;
 
-    @Override
-    @Transactional
-    public void sendMessage(Long userId, ChatMessageRequestDto request) {
-
-
-        log.info(">>>> [ChatService] 메시지 전송 시도 - UserID: {}, RoomID: {}", userId, request.roomId());
+    public String validateRoomMemberAndGetNickname(Long userId, Long roomId) {
 
         // 토픽룸 존재 여부 검증
-        if (!loadTopicRoomPort.existsById(request.roomId())) {
+        if (!topicRoomAdaptor.existsById(roomId)){
             throw UnknownTopicRoomException.EXCEPTION;
         }
 
         // 해당 토픽룸에 참여 중인 유저인지 검증
-        if (!loadTopicRoomUserPort.existsByUserIdAndRoomId(userId, request.roomId())) {
+        if (!topicRoomAdaptor.existsByUserIdAndRoomId(userId, roomId)) {
             throw UnknownTopicRoomUserException.EXCEPTION;
         }
 
-        User user = loadUserPort.findById(userId);
-        String nickname = user.getNickName();
+        User user = userAdaptor.findUserById(userId);
 
-        ChatMessage chatMessage = request.toEntity(userId);
-
-        // Redis 발행
-        publishChatPort.publish(ChatMessageResponseDto.of(chatMessage, nickname));
-
-        chatAsyncService.processAfterMessageSent(chatMessage);
-
-        log.info(">>>> [ChatService] 처리 완료 - Sender: {}, Content: {}", nickname, chatMessage.getMessage());
+        return user.getNickName();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Slice<ChatMessageResponseDto> getChatHistory(Long roomId,  Pageable pageable) {
-
-        log.info(">>>> [ChatService] 과거 내역 조회 요청 - RoomID: {}, Page: {}", roomId, pageable.getPageNumber());
-
-        // 토픽룸 존재 여부 검증
-        if (!loadTopicRoomPort.existsById(roomId)) {
+    public void validateRoomExistence(Long roomId) {
+        if (!topicRoomAdaptor.existsById(roomId)) {
             throw UnknownTopicRoomException.EXCEPTION;
         }
+    }
 
-        return loadChatPort.loadMessages(roomId, pageable);
+    public void publishRedis(ChatMessage chatMessage, String nickname) {
+        publishChatPort.publish(ChatMessageResponseDto.of(chatMessage, nickname));
+    }
+
+    @Transactional(readOnly = true)
+    public Slice<ChatMessageResponseDto> getChatMessages(Long roomId, List<Long> blockedIds, Pageable pageable) {
+        return chatAdaptor.loadMessages(roomId, blockedIds, pageable);
+    }
+
+    public LocalDateTime getRoomJoinedAt(Long userId, Long roomId) {
+        TopicRoomUser participation = topicRoomAdaptor.findByUserIdAndRoomId(userId, roomId);
+        return participation.getCreatedAt();
     }
 }

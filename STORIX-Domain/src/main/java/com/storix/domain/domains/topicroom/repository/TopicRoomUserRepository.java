@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface TopicRoomUserRepository extends JpaRepository<TopicRoomUser, Long> {
@@ -39,4 +40,6 @@ public interface TopicRoomUserRepository extends JpaRepository<TopicRoomUser, Lo
             "FROM TopicRoomUser tu " +
             "WHERE tu.topicRoom.id = :roomId")
     List<Long> findMemberIdsByRoomId(@Param("roomId") Long roomId);
+
+    Optional<TopicRoomUser> findByUserIdAndTopicRoomId(Long userId, Long topicRoomId);
 }

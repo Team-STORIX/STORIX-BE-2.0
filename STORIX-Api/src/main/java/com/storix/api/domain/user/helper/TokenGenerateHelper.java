@@ -69,7 +69,7 @@ public class TokenGenerateHelper {
     }
 
     @Transactional
-    public OAuthLoginWithTokenResponse generateOAuthLoginWithToken(OAuthInfo oAuthInfo) {
+    public OAuthLoginWithTokenResponse generateOAuthLoginWithToken(OAuthInfo oAuthInfo, String oauthRefreshToken) {
 
         OAuthProvider provider = oAuthInfo.getProvider();
         String oid = oAuthInfo.getOid();
@@ -81,6 +81,7 @@ public class TokenGenerateHelper {
                 .jti(oti.jti())
                 .provider(provider)
                 .oid(oid)
+                .oauthRefreshToken(oauthRefreshToken)
                 .onboardingToken(oti.onboardingToken())
                 .ttl(ttlSeconds)
                 .build();

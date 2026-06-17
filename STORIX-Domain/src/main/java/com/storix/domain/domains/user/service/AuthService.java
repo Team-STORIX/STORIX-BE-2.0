@@ -7,6 +7,10 @@ import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
+import com.storix.domain.domains.user.adaptor.TermsAdaptor;
+import com.storix.domain.domains.user.domain.Terms;
+import com.storix.domain.domains.user.domain.TermsType;
+import com.storix.domain.domains.user.domain.UserTermHistory;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
 import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.dto.ReaderSignUpData;
@@ -43,6 +47,7 @@ public class AuthService {
     private final PushDeviceAdaptor pushDeviceAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
     private final UserHistoryAdaptor userHistoryAdaptor;
+    private final TermsAdaptor termsAdaptor;
 
     private final OnboardingWorksHelper onboardingWorksHelper; // -> usecase 리팩토링 필요
     private final GenreScorePublisher genreScorePublisher;
@@ -52,30 +57,40 @@ public class AuthService {
     @Transactional(readOnly = true)
     public ValidAuthDTO validKakaoSignup(String kakaoUserId, String idToken) {
         boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.KAKAO, kakaoUserId);
-        return new ValidAuthDTO(isRegistered, idToken);
+        return ValidAuthDTO.ofIdToken(isRegistered, idToken);
     }
 
     // - 네이버
     @Transactional(readOnly = true)
-    public ValidAuthDTO validNaverSignup(String naverUserId) {
+    public ValidAuthDTO validNaverSignup(String naverUserId, String oauthRefreshToken) {
         boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.NAVER, naverUserId);
-        return new ValidAuthDTO(isRegistered, naverUserId);
+        return ValidAuthDTO.ofOid(isRegistered, naverUserId, oauthRefreshToken);
     }
 
     // - 애플
     @Transactional(readOnly = true)
-    public ValidAuthDTO validAppleSignup(String appleUserId, String idToken) {
+    public ValidAuthDTO validAppleSignup(String appleUserId, String idToken, String oauthRefreshToken) {
         boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.APPLE, appleUserId);
-        return new ValidAuthDTO(isRegistered, idToken);
+        return ValidAuthDTO.ofIdToken(isRegistered, idToken, oauthRefreshToken);
+    }
+
+    // - X
+    @Transactional(readOnly = true)
+    public ValidAuthDTO validXSignup(String xUserId, String oauthRefreshToken) {
+        boolean isRegistered = userAdaptor.isUserPresentWithProviderAndOid(OAuthProvider.X, xUserId);
+        return ValidAuthDTO.ofOid(isRegistered, xUserId, oauthRefreshToken);
     }
 
     // 독자 회원 가입 (소셜 로그인)
     @Transactional
     public AuthUserDetails signUpReaderUser(ReaderSignUpData cmd, String jti) {
 
+        // 1. 온보딩 토큰 정보 조회
         OnboardingPrincipal principal = tokenAdaptor.findOnboardingPrincipalByJti(jti);
         OAuthProvider provider = principal.provider(); String oid = principal.oid();
+        String oauthRefreshToken = principal.oauthRefreshToken();
 
+        // 2. 회원 가입 관련 검증
         boolean isUserPresent = userAdaptor.isUserPresentWithProviderAndOid(provider, oid);
         if (isUserPresent) throw DuplicateUserException.EXCEPTION;
 
@@ -85,17 +100,21 @@ public class AuthService {
 
         userAdaptor.checkNicknameDuplicate(cmd.nickName());
 
+        // 3. 회원 가입 정보 DB 저장
         CreateReaderUserCommand m = new CreateReaderUserCommand(
-                cmd.termsAgree(),
+                cmd.ageOver14(),
                 provider,
                 oid,
+                oauthRefreshToken,
                 cmd.nickName(),
                 cmd.favoriteGenreList(),
                 cmd.profileDescription()
         );
-
         AuthUserDetails authUserDetails = userAdaptor.saveReaderUser(m);
+
         tokenAdaptor.deleteOnboardingTokenByJti(jti);
+
+        saveSignupTermsAgreements(authUserDetails.getUserId(), cmd);
 
         if (cmd.favoriteWorksIdList() != null && !cmd.favoriteWorksIdList().isEmpty()) {
             favoriteWorksAdaptor.saveFavoriteWorks(authUserDetails.getUserId(), cmd.favoriteWorksIdList());
@@ -104,6 +123,7 @@ public class AuthService {
                     cmd.favoriteWorksIdList(),
                     GenreScoreEventType.ONBOARDING_SELECT);
         }
+
         libraryAdaptor.initLibrary(authUserDetails.getUserId());
 
         // 알림 설정 기본값 생성 (마케팅만 OFF, 나머지 ON)
@@ -157,6 +177,29 @@ public class AuthService {
         saveWithdrawHistory(userId, reasons, detail);
     }
 
+
+    // 회원 가입 시 필수 약관(서비스 이용약관/개인정보 수집·이용) 동의 이력 저장
+    private void saveSignupTermsAgreements(Long userId, ReaderSignUpData cmd) {
+        if (Boolean.TRUE.equals(cmd.serviceTermsAgree())) {
+            recordTermAgreement(userId, TermsType.SERVICE);
+        }
+        if (Boolean.TRUE.equals(cmd.privacyPolicyAgree())) {
+            recordTermAgreement(userId, TermsType.PRIVACY);
+        }
+    }
+
+    // 해당 종류의 현재 약관에 대한 동의 이력 저장
+    private void recordTermAgreement(Long userId, TermsType termsType) {
+        Terms terms = termsAdaptor.findCurrentByType(termsType);
+        userHistoryAdaptor.saveUserTermHistory(UserTermHistory.builder()
+                .userId(userId)
+                .terms(terms)
+                .isAgreed(true)
+                .agreedAt(LocalDateTime.now())
+                .build());
+    }
+
+    // 회원탈퇴 사유 저장
     private void saveWithdrawHistory(Long userId, Set<WithdrawReason> reasons, String detail) {
         String otherDetail = (detail == null) ? null : detail.trim();
         LocalDateTime processedAt = LocalDateTime.now();

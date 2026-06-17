@@ -32,7 +32,9 @@ public class OnboardingAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !("/api/v1/auth/users/reader/signup".equals(request.getRequestURI()));
+        String uri = request.getRequestURI();
+        return !(uri.equals("/api/v1/auth/users/reader/signup")
+                || uri.equals("/api/v2/auth/users/reader/signup"));
     }
 
     @Override

@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
 
     @Query("SELECT new com.storix.domain.domains.chat.dto.ChatMessageResponseDto(" +
@@ -25,6 +27,26 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "ORDER BY m.createdAt DESC, m.id DESC")
     Slice<ChatMessageResponseDto> findAllByRoomIdOrderByCreatedAtDesc(
             @Param("roomId") Long roomId,
+            Pageable pageable
+    );
+
+    @Query("SELECT new com.storix.domain.domains.chat.dto.ChatMessageResponseDto(" +
+            "   m.id, " +
+            "   m.roomId, " +
+            "   m.senderId, " +
+            "   COALESCE(u.nickName, '알 수 없음'), " +
+            "   m.message, " +
+            "   m.messageType, " +
+            "   m.createdAt " +
+            ") " +
+            "FROM ChatMessage m " +
+            "LEFT JOIN User u ON m.senderId = u.id " +
+            "WHERE m.roomId = :roomId " +
+            "AND m.senderId NOT IN :blockedIds " +
+            "ORDER BY m.createdAt DESC, m.id DESC")
+    Slice<ChatMessageResponseDto> findAllByRoomIdExcludingBlockedOrderByCreatedAtDesc(
+            @Param("roomId") Long roomId,
+            @Param("blockedIds") List<Long> blockedIds,
             Pageable pageable
     );
 }
