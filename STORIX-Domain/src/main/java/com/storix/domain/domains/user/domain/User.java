@@ -2,6 +2,7 @@ package com.storix.domain.domains.user.domain;
 
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.user.exception.auth.AlreadyWithDrawUserException;
+import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.common.model.BaseTimeEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -77,6 +78,12 @@ public class User extends BaseTimeEntity {
     @Column(name = "deletedSuffix", length = 36)
     private String deletedSuffix;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "suspended_until")
+    private LocalDateTime suspendedUntil;
+
     @Column(name = "active_nick_name", insertable = false, updatable = false, length = 50)
     private String activeNickName;
 
@@ -112,8 +119,22 @@ public class User extends BaseTimeEntity {
 
     /** 비즈니스 로직 **/
     public void login() {
-        // 계정 상태 = 정지 -> 로그인 제한 Exception
+        checkActiveOrThrow();
         lastLoginAt = LocalDateTime.now();
+    }
+
+    // 계정 상태 검증 - 탈퇴 계정은 차단, 정지 기간이 만료된 계정은 자동 해제 후 통과
+    public void checkActiveOrThrow() {
+        if (accountState == AccountState.DELETED) {
+            throw AlreadyWithDrawUserException.EXCEPTION;
+        }
+        if (accountState == AccountState.SUSPENDED) {
+            if (suspendedUntil != null && suspendedUntil.isBefore(LocalDateTime.now())) {
+                restore();
+                return;
+            }
+            throw SuspendedUserException.EXCEPTION;
+        }
     }
 
     // refresh_token 갱신 (X 등 회전형)
@@ -149,6 +170,24 @@ public class User extends BaseTimeEntity {
         this.point -= point;
     }
 
+    // 계정 정지 (기간 지정)
+    public void suspend(LocalDateTime until) {
+        if (accountState == AccountState.DELETED) {
+            throw AlreadyWithDrawUserException.EXCEPTION;
+        }
+        if (until == null || !until.isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("정지 만료 시각은 현재 이후여야 합니다");
+        }
+        this.accountState = AccountState.SUSPENDED;
+        this.suspendedUntil = until;
+    }
+
+    // 계정 정지 해제
+    public void restore() {
+        this.accountState = AccountState.NORMAL;
+        this.suspendedUntil = null;
+    }
+
     // 계정 탈퇴
     public void withdraw() {
         if (accountState.equals(AccountState.DELETED)) {
@@ -162,6 +201,7 @@ public class User extends BaseTimeEntity {
         oauthInfo = oauthInfo.withDrawOauthInfo();
         ageOver14 = null;
         isAdultVerified = null;
+        deletedAt = LocalDateTime.now();
     }
 
 }

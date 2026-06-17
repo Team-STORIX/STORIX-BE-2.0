@@ -8,15 +8,27 @@ public record CreateWorksDetailReportCommand(
         Long reportedUserId,
         Long reviewId,
         ReportReason reason,
-        String otherReason
+        String otherReason,
+        Long reportCaseId
 ) {
+    public CreateWorksDetailReportCommand(
+            Long reporterId,
+            Long reportedUserId,
+            Long reviewId,
+            ReportReason reason,
+            String otherReason
+    ) {
+        this(reporterId, reportedUserId, reviewId, reason, otherReason, null);
+    }
+
     public ReviewReport toEntity() {
         return new ReviewReport(
                 reporterId,
                 reportedUserId,
                 reviewId,
                 reason,
-                otherReason
+                otherReason,
+                reportCaseId
         );
     }
 }

@@ -6,20 +6,27 @@ import com.storix.domain.domains.feed.domain.FeedReport;
 public record CreateFeedReportCommand (
         Long reporterId,
         Long reportedUserId,
-        Long boardId
+        Long targetId,
+        Long reportCaseId
 ) {
+    public CreateFeedReportCommand(Long reporterId, Long reportedUserId, Long targetId) {
+        this(reporterId, reportedUserId, targetId, null);
+    }
+
     public FeedReport toEntity() {
         return new FeedReport(
                 reporterId,
                 reportedUserId,
-                boardId
+                targetId,
+                reportCaseId
         );
     }
     public FeedReplyReport toReplyEntity() {
         return new FeedReplyReport(
                 reporterId,
                 reportedUserId,
-                boardId
+                targetId,
+                reportCaseId
         );
     }
 }

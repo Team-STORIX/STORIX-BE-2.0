@@ -27,6 +27,7 @@ import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.domain.UserHistory;
 import com.storix.domain.domains.user.domain.UserHistoryType;
 import com.storix.domain.domains.user.domain.WithdrawReason;
+import com.storix.domain.domains.user.publisher.UserAccessRevokedPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +52,7 @@ public class AuthService {
 
     private final OnboardingWorksHelper onboardingWorksHelper; // -> usecase 리팩토링 필요
     private final GenreScorePublisher genreScorePublisher;
+    private final UserAccessRevokedPublisher userAccessRevokedPublisher;
 
     // 독자 회원 가입 가능 여부 (토큰 검증, 계정 정보 유무)
     // - 카카오
@@ -162,8 +164,8 @@ public class AuthService {
         User user = userAdaptor.findUserById(userId);
         user.withdraw();
 
-        // 2. 유저 관련 정보 (refresh 토큰, 관심 작품, 서재) 삭제
-        tokenAdaptor.deleteRefreshTokenForWithdrawByUserId(userId);
+        // 2. 유저 관련 정보 (관심 작품, 서재) 삭제 + Redis 반영(refreshToken 삭제, blacklist 등록)은 커밋 후 처리
+        userAccessRevokedPublisher.publishWithdrawn(userId);
         favoriteWorksAdaptor.deleteFavoriteWorks(userId);
         libraryAdaptor.deleteLibrary(userId);
 
@@ -201,6 +203,7 @@ public class AuthService {
 
     // 회원탈퇴 사유 저장
     private void saveWithdrawHistory(Long userId, Set<WithdrawReason> reasons, String detail) {
+        if (reasons == null || reasons.isEmpty()) return;
         String otherDetail = (detail == null) ? null : detail.trim();
         LocalDateTime processedAt = LocalDateTime.now();
 

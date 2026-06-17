@@ -7,7 +7,6 @@ import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.OnboardingTokenInfo;
-
 import com.storix.domain.domains.user.exception.token.ExpiredTokenException;
 import com.storix.domain.domains.user.exception.token.InvalidRefreshTokenException;
 import com.storix.domain.domains.user.exception.token.InvalidTokenException;
@@ -60,12 +59,13 @@ public class TokenGenerateHelper {
         }
 
         Long userId = tokenProvider.parseRefreshToken(refreshToken);
-        Role role = userAdaptor.findUserRoleByUserId(userId);
+        User user = userAdaptor.findUserById(userId);
+        user.checkActiveOrThrow();
 
         tokenAdaptor.deleteRefreshToken(refreshToken);
 
         // AccessToken, RefreshToken 재발급
-        return generateLoginWithToken(new AuthUserDetails(userId, role));
+        return generateLoginWithToken(new AuthUserDetails(userId, user.getRole()));
     }
 
     @Transactional

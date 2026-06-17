@@ -12,7 +12,6 @@ import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,10 +35,10 @@ public class FeedReactionService {
             return readerFeedAdaptor.deleteReaderBoardLike(boardId);
         }
 
-        // like > 알림 발행을 위해 게시글 작성자 조회
-        Long boardOwnerUserId = readerFeedAdaptor.findBoardOwnerUserId(boardId);
+        // like > 삭제된 게시글 차단 + 작성자 조회
+        ReaderBoard board = readerFeedAdaptor.findActiveReaderBoardById(boardId);
         LikeToggleResponse response = readerFeedAdaptor.insertReaderBoardLike(userId, boardId);
-        publishFeedLikeNotification(userId, boardOwnerUserId, boardId);
+        publishFeedLikeNotification(userId, board.getUserId(), boardId);
         return response;
     }
 
@@ -47,7 +46,7 @@ public class FeedReactionService {
     @Transactional
     public ReaderBoardReplyResponse uploadReaderBoardReply(Long userId, Long boardId, String comment) {
 
-        ReaderBoard readerBoard = readerFeedAdaptor.findReaderBoardById(boardId);
+        ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardById(boardId);
 
         CreateFeedReplyCommand cmd =
                 new CreateFeedReplyCommand(readerBoard, userId, comment, null);
@@ -71,7 +70,7 @@ public class FeedReactionService {
     @Transactional
     public ReaderBoardReplyResponse uploadReaderBoardChildReply(Long userId, Long boardId, Long parentReplyId, String comment) {
 
-        ReaderBoard readerBoard = readerFeedAdaptor.findReaderBoardById(boardId);
+        ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardById(boardId);
         ReaderBoardReply parentReply = readerFeedAdaptor.findReplyById(parentReplyId);
 
         // depth 1 제한 (답댓글에 대한 답댓글 불가)
