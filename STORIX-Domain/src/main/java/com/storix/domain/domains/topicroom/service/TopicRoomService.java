@@ -2,6 +2,11 @@ package com.storix.domain.domains.topicroom.service;
 
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
+import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
+import com.storix.domain.domains.report.domain.ReportCase;
+import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
+import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
@@ -57,6 +62,8 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final ProfanityFilterService profanityFilterService;
     private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
     private final GenreScorePublisher genreScorePublisher;
+    private final ReportCaseAdaptor reportCaseAdaptor;
+    private final TopicRoomReportAdaptor topicRoomReportAdaptor;
     private final UserAdaptor userAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
@@ -273,6 +280,16 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw SelfReportException.EXCEPTION;
         }
 
+        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId)) {
+            throw DuplicateTopicRoomReportException.EXCEPTION;
+        }
+
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(
+                ReportTargetType.TOPIC_ROOM,
+                roomId,
+                request.getReportedUserId()
+        );
+
         TopicRoomReport report = TopicRoomReport.builder()
                 .reporterId(reporterId)
                 .reportedUserId(request.getReportedUserId())
@@ -280,8 +297,14 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .chatMessageId(request.getChatMessageId())
                 .reason(request.getReason())
                 .otherReason(request.getOtherReason())
+                .reportCaseId(reportCase.getId())
                 .build();
-        recordTopicRoomPort.saveReport(report);
+
+        try {
+            recordTopicRoomPort.saveReport(report);
+        } catch (DataIntegrityViolationException e) {
+            throw DuplicateTopicRoomReportException.EXCEPTION;
+        }
     }
 
 

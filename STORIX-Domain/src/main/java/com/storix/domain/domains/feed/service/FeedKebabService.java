@@ -3,8 +3,13 @@ package com.storix.domain.domains.feed.service;
 import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.dto.CreateFeedReportCommand;
+import com.storix.domain.domains.feed.exception.DuplicateFeedReplyReportException;
+import com.storix.domain.domains.feed.exception.DuplicateFeedReportException;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
+import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
+import com.storix.domain.domains.report.domain.ReportCase;
+import com.storix.domain.domains.report.domain.ReportTargetType;
 import com.storix.domain.domains.topicroom.exception.SelfReportException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +23,7 @@ public class FeedKebabService {
     private final LibraryAdaptor libraryAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final FeedReportAdaptor feedReportAdaptor;
+    private final ReportCaseAdaptor reportCaseAdaptor;
 
     // 내 게시물 삭제
     @Transactional
@@ -36,10 +42,17 @@ public class FeedKebabService {
             throw SelfReportException.EXCEPTION;
         }
 
+        if (feedReportAdaptor.hasAlreadyReported(userId, boardId)) {
+            throw DuplicateFeedReportException.EXCEPTION;
+        }
+
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED, boardId, reportedUserId);
+
         CreateFeedReportCommand cmd = new CreateFeedReportCommand(
                 userId,
                 reportedUserId,
-                boardId
+                boardId,
+                reportCase.getId()
         );
 
         feedReportAdaptor.saveReport(cmd);
@@ -61,10 +74,17 @@ public class FeedKebabService {
             throw SelfReportException.EXCEPTION;
         }
 
+        if (feedReportAdaptor.hasAlreadyReplyReported(userId, replyId)) {
+            throw DuplicateFeedReplyReportException.EXCEPTION;
+        }
+
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED_REPLY, replyId, reportedUserId);
+
         CreateFeedReportCommand cmd = new CreateFeedReportCommand(
                 userId,
                 reportedUserId,
-                replyId
+                replyId,
+                reportCase.getId()
         );
 
         feedReportAdaptor.saveReplyReport(cmd);

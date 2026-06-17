@@ -29,10 +29,18 @@ public class FeedReport extends BaseTimeEntity {
     private Long reportedUserId;
     private Long boardId;
 
-    @Builder
+    @Column(name = "report_case_id")
+    private Long reportCaseId;
+
     public FeedReport(Long reporterId, Long reportedUserId, Long boardId) {
+        this(reporterId, reportedUserId, boardId, null);
+    }
+
+    @Builder
+    public FeedReport(Long reporterId, Long reportedUserId, Long boardId, Long reportCaseId) {
         this.reporterId = reporterId;
         this.reportedUserId = reportedUserId;
         this.boardId = boardId;
+        this.reportCaseId = reportCaseId;
     }
 }

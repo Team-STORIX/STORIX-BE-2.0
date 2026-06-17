@@ -1,5 +1,6 @@
 package com.storix.domain.domains.user.repository;
 
+import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +22,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.role FROM User u WHERE u.id = :userId ")
     Optional<Role> findRoleByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT u.accountState FROM User u WHERE u.id = :userId")
+    Optional<AccountState> findAccountStateById(@Param("userId") Long userId);
+
+    @Query("SELECT u.suspendedUntil FROM User u WHERE u.id = :userId")
+    Optional<LocalDateTime> findSuspendedUntilById(@Param("userId") Long userId);
 
     @Query("""
         SELECT (COUNT(u) > 0)
@@ -53,12 +61,25 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "WHERE u.id IN :userIds ")
     List<StandardProfileInfo> findStandardProfileInfoByUserIds(@Param("userIds") List<Long> userIds);
 
+    // 정지 만료 유저 일괄 복구 — suspendedUntil 기준 (ReportCase 독립적)
+    // restore()는 accountState/suspendedUntil 변경 외 부수효과가 없으므로 엔티티 로딩 없이 벌크 UPDATE로 처리
+    @Modifying
+    @Query("UPDATE User u SET u.accountState = com.storix.domain.domains.user.domain.AccountState.NORMAL, u.suspendedUntil = null " +
+            "WHERE u.accountState = :state AND u.suspendedUntil < :now")
+    int restoreExpiredSuspensions(
+            @Param("state") AccountState state,
+            @Param("now") LocalDateTime now);
+
     @Query("""
         SELECT new com.storix.domain.domains.user.dto.UserNicknameInfo(u.id, u.nickName)
         FROM User u
         WHERE u.id IN :userIds
     """)
     List<UserNicknameInfo> findNicknameInfoByUserIds(@Param("userIds") List<Long> userIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM User u WHERE u.accountState = com.storix.domain.domains.user.domain.AccountState.DELETED AND u.deletedAt < :cutoff")
+    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE User u SET u.title = null")

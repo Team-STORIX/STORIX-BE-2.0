@@ -8,6 +8,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
+
 @Entity
 @Getter
 @Table(
@@ -50,6 +53,16 @@ public class Review extends BaseTimeEntity {
 
     private int likeCount = 0;
 
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deleted_by")
+    private DeletedBy deletedBy;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     /** 생성자 로직 **/
     @Builder
     public Review (Long libraryUserId, Long worksId, boolean isSpoiler, String spoilerScript, Rating rating, String content) {
@@ -59,6 +72,23 @@ public class Review extends BaseTimeEntity {
         this.spoilerScript = isSpoiler ? spoilerScript : null;
         this.rating = rating;
         this.content = content;
+    }
+
+    public boolean softDeleteByAdmin() {
+        if (this.deleted) return false;
+        this.deleted = true;
+        this.deletedBy = DeletedBy.ADMIN;
+        this.deletedAt = LocalDateTime.now();
+        return true;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    // 필드 추가 이전 삭제 데이터는 deletedBy가 없으므로 USER로 간주
+    public DeletedBy getDeletedBy() {
+        return (deleted && deletedBy == null) ? DeletedBy.USER : deletedBy;
     }
 
 }
