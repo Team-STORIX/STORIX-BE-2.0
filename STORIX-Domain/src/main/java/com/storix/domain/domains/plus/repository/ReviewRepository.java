@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,6 +61,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Optional<Review> findById(Long reviewId);
 
+    Optional<Review> findByIdAndDeletedFalse(Long id);
+
     @Query("SELECT r.libraryUserId " +
             "FROM Review r " +
             "WHERE r.id = :reviewId")
@@ -85,6 +88,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "WHERE r.id = :reviewId AND r.libraryUserId = :userId")
     int deleteByIdAndUserId(@Param("reviewId") Long reviewId,
                             @Param("userId") Long userId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Review r WHERE r.deleted = true AND r.deletedAt < :cutoff")
+    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Review r " +

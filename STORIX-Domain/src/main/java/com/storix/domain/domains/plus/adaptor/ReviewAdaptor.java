@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -80,13 +81,9 @@ public class ReviewAdaptor {
     }
 
     public ReviewInfo findReviewById(Long reviewId) {
-        Optional<Review> optionalReview = reviewRepository.findById(reviewId);
-        if (optionalReview.isPresent()) {
-            Review review = optionalReview.get();
-            return ReviewInfo.of(review);
-        } else {
-            throw UnknownReviewException.EXCEPTION;
-        }
+        Review review = reviewRepository.findByIdAndDeletedFalse(reviewId)
+                .orElseThrow(() -> UnknownReviewException.EXCEPTION);
+        return ReviewInfo.of(review);
     }
 
     public Long findReviewerIdById(Long reviewId) {
@@ -139,6 +136,10 @@ public class ReviewAdaptor {
     public List<Long> findWorksIdsByHighRatings(Long userId) {
         return reviewRepository.findWorksIdsByRatings(
                 userId, List.of(Rating.FIVE, Rating.FOUR_POINT_FIVE));
+    }
+
+    public int hardDeleteBefore(LocalDateTime cutoff) {
+        return reviewRepository.hardDeleteBefore(cutoff);
     }
 
 }

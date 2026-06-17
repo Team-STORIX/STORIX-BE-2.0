@@ -97,7 +97,7 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
 
     @Override public void saveReport(TopicRoomReport report) {
         try {
-            topicRoomReportRepository.save(report);
+            topicRoomReportRepository.saveAndFlush(report);
         } catch (DataIntegrityViolationException e) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }

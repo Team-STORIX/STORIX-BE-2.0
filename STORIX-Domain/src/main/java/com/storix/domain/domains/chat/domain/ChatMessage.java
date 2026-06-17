@@ -4,6 +4,8 @@ import com.storix.common.model.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 
 @Entity
 @Getter
@@ -41,8 +43,12 @@ public class ChatMessage extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean deleted = false;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public void softDelete() {
         this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 
 }

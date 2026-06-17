@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+
 public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>, ReaderBoardRankingRepository {
 
     // 작성자 userId 단건 조회
@@ -91,5 +92,13 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
             "SET r.likeCount = r.likeCount - 1 " +
             "WHERE r.id = :id AND r.likeCount > 0")
     void decrementLikeCount(@Param("id") Long id);
+
+    Optional<ReaderBoard> findByIdAndDeletedFalse(Long id);
+
+    boolean existsByIdAndDeletedFalse(Long id);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ReaderBoard r WHERE r.deleted = true AND r.deletedAt < :cutoff")
+    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
 
 }

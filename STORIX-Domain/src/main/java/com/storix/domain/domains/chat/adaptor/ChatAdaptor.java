@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -30,6 +31,10 @@ public class ChatAdaptor {
     }
 
     public int softDeleteTalkMessagesBySender(Long roomId, Long senderId) {
-        return chatRepository.softDeleteByRoomIdAndSenderId(roomId, senderId, MessageType.TALK);
+        return chatRepository.softDeleteByRoomIdAndSenderId(roomId, senderId, MessageType.TALK, LocalDateTime.now());
+    }
+
+    public int hardDeleteBefore(LocalDateTime cutoff) {
+        return chatRepository.hardDeleteBefore(cutoff);
     }
 }

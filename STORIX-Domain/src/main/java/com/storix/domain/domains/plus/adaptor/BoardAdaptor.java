@@ -72,19 +72,19 @@ public class BoardAdaptor {
         return readerBoardRepository.findAllReaderBoardByWorksId(worksId, pageable);
     }
 
-    // 피드 게시글 단건 조회
+    // 피드 게시글 단건 조회 (삭제된 게시글 차단)
     public ReaderBoard findReaderBoard(Long boardId) {
-        Optional<ReaderBoard> readerBoard = readerBoardRepository.findById(boardId);
-        if (readerBoard.isPresent()) {
-            return readerBoard.get();
-        } else {
-            throw InvalidBoardRequestException.EXCEPTION;
-        }
+        return readerBoardRepository.findByIdAndDeletedFalse(boardId)
+                .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
     }
 
     // 홈 오늘의 토픽룸 점수 갱신
     public int updateAllPopularityScoresRecentDays(LocalDateTime threshold) {
         return readerBoardRepository.updatePopularityScoresRecentDays(threshold);
+    }
+
+    public int hardDeleteBefore(LocalDateTime cutoff) {
+        return readerBoardRepository.hardDeleteBefore(cutoff);
     }
 
 }

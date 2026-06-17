@@ -7,6 +7,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 
 @Getter
 @MappedSuperclass
@@ -39,6 +41,9 @@ public abstract class BoardReply extends BaseTimeEntity {
     @Column(name = "deleted_by")
     protected DeletedBy deletedBy;
 
+    @Column(name = "deleted_at")
+    protected LocalDateTime deletedAt;
+
     public String getDisplayComment() {
         return deleted ? "삭제된 댓글입니다" : comment;
     }
@@ -47,6 +52,15 @@ public abstract class BoardReply extends BaseTimeEntity {
         if (this.deleted) return false;
         this.deleted = true;
         this.deletedBy = DeletedBy.ADMIN;
+        this.deletedAt = LocalDateTime.now();
+        return true;
+    }
+
+    public boolean softDeleteByUser() {
+        if (this.deleted) return false;
+        this.deleted = true;
+        this.deletedBy = DeletedBy.USER;
+        this.deletedAt = LocalDateTime.now();
         return true;
     }
 

@@ -35,9 +35,9 @@ public class ReaderFeedAdaptor {
     private final ReaderBoardReplyRepository readerBoardReplyRepository;
     private final ReaderBoardReplyLikeRepository readerBoardReplyLikeRepository;
 
-    // 게시물 존재 여부 확인
+    // 게시물 존재 여부 확인 (삭제된 게시글 차단)
     public void checkReaderBoardExist(Long boardId) {
-        if (!readerBoardRepository.existsById(boardId)) {
+        if (!readerBoardRepository.existsByIdAndDeletedFalse(boardId)) {
             throw InvalidBoardRequestException.EXCEPTION;
         }
     }
@@ -156,9 +156,9 @@ public class ReaderFeedAdaptor {
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
     }
 
-    // 댓글 존재 여부 확인
+    // 댓글 존재 여부 확인 (삭제된 댓글 차단)
     public void checkReplyExist(Long boardId, Long replyId) {
-        if (!readerBoardReplyRepository.existsByIdAndBoard_Id(replyId, boardId)) {
+        if (!readerBoardReplyRepository.existsByIdAndBoard_IdAndDeletedFalse(replyId, boardId)) {
             throw BoardReplyNotFoundException.EXCEPTION;
         }
     }
@@ -169,9 +169,9 @@ public class ReaderFeedAdaptor {
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
     }
 
-    // 댓글 작성자 userId 조회 (boardId 일치 검증 포함)
+    // 댓글 작성자 userId 조회 (boardId 일치 검증 + 삭제된 댓글 차단)
     public Long findReplyOwnerUserId(Long boardId, Long replyId) {
-        return readerBoardReplyRepository.findUserIdByIdAndBoardId(replyId, boardId)
+        return readerBoardReplyRepository.findActiveUserIdByIdAndBoardId(replyId, boardId)
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
     }
 
@@ -243,7 +243,7 @@ public class ReaderFeedAdaptor {
         ReaderBoardReply reply = readerBoardReplyRepository.findById(replyId)
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
 
-        if (readerBoardReplyRepository.softDeleteByAdminIfNotDeleted(replyId) > 0) {
+        if (readerBoardReplyRepository.softDeleteByAdminIfNotDeleted(replyId, LocalDateTime.now()) > 0) {
             readerBoardRepository.decrementReplyCount(reply.getBoardId());
         }
     }
@@ -293,6 +293,10 @@ public class ReaderFeedAdaptor {
             return readerBoardRepository.findSteadyTrendingFeed(threshold, pageable);
         }
         return readerBoardRepository.findSteadyTrendingFeedNotToday(excludeIds, threshold, pageable);
+    }
+
+    public int hardDeleteRepliesBefore(LocalDateTime cutoff) {
+        return readerBoardReplyRepository.hardDeleteBefore(cutoff);
     }
 
 }
