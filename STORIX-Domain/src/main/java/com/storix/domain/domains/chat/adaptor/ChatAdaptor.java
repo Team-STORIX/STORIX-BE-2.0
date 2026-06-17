@@ -37,4 +37,11 @@ public class ChatAdaptor {
     public int hardDeleteBefore(LocalDateTime cutoff) {
         return chatRepository.hardDeleteBefore(cutoff);
     }
+
+    public Slice<ChatMessageResponseDto> loadMessages(Long roomId, List<Long> blockedIds, Pageable pageable) {
+        if (blockedIds.isEmpty()) {
+            return chatRepository.findAllByRoomIdOrderByCreatedAtDesc(roomId, pageable);
+        }
+        return chatRepository.findAllByRoomIdExcludingBlockedOrderByCreatedAtDesc(roomId, blockedIds, pageable);
+    }
 }

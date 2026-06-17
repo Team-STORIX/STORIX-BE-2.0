@@ -59,6 +59,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
                                                     @Param("worksId") Long worksId,
                                                     Pageable pageable);
 
+    @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating, r.likeCount) " +
+            "FROM Review r " +
+            "WHERE (:userId IS NULL OR r.libraryUserId <> :userId) AND r.worksId = :worksId AND r.libraryUserId NOT IN :blockedIds")
+    Slice<SliceReviewInfo> findOtherSliceReviewInfoExcludingBlocked(@Param("userId") Long userId,
+                                                                    @Param("worksId") Long worksId,
+                                                                    @Param("blockedIds") List<Long> blockedIds,
+                                                                    Pageable pageable);
+
     Optional<Review> findById(Long reviewId);
 
     Optional<Review> findByIdAndDeletedFalse(Long id);
