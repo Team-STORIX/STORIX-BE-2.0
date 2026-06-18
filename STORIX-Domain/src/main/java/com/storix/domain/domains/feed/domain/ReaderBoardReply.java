@@ -4,6 +4,7 @@ import com.storix.domain.domains.plus.domain.DeletedBy;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class ReaderBoardReply extends BoardReply {
 
     @ToString.Exclude
     @OneToMany(mappedBy = "parentReply")
+    @SQLRestriction("deleted = false")
     private List<ReaderBoardReply> childReplies = new ArrayList<>();
 
     @ToString.Exclude

@@ -59,8 +59,9 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     Optional<Long> findActiveUserIdByIdAndBoardId(@Param("replyId") Long replyId, @Param("boardId") Long boardId);
 
     // 피드 댓글 조회 (최상위 댓글 + 답댓글 fetch join) — 삭제된 댓글 제외
-    @Query("SELECT DISTINCT r FROM ReaderBoardReply r " +
-            "LEFT JOIN FETCH r.childReplies c ON c.deleted = false " +
+    // FETCH JOIN with ON clause is invalid in JPQL; deleted filter applied via @SQLRestriction on childReplies
+    @Query("SELECT r FROM ReaderBoardReply r " +
+            "LEFT JOIN FETCH r.childReplies " +
             "WHERE r.board.id = :boardId AND r.parentReply IS NULL AND r.deleted = false")
     Slice<ReaderBoardReply> findAllByBoard_Id(@Param("boardId") Long boardId, Pageable pageable);
 
