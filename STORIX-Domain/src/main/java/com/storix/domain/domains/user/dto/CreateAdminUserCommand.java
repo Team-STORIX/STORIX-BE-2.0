@@ -23,6 +23,7 @@ public record CreateAdminUserCommand(
                 .build();
 
         return User.builder()
+                .ageOver14(true)
                 .oauthInfo(oauthInfo)
                 .nickName(nickName)
                 .favoriteGenreList(Collections.emptySet())
