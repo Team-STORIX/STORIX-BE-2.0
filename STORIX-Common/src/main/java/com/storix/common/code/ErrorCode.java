@@ -96,6 +96,11 @@ public enum ErrorCode {
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "DEV_AUTH_ERROR_003", "지원하지 않는 OAuth Provider입니다."),
     DEVELOPER_IDENTIFIER_MISMATCH(HttpStatus.FORBIDDEN, "DEV_AUTH_ERROR_004", "개발자 식별자가 일치하지 않습니다."),
 
+    // Admin Auth error
+    ADMIN_SIGNUP_PENDING_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN_AUTH_ERROR_001", "관리자 회원가입 대기 요청을 찾을 수 없습니다."),
+    ADMIN_IDENTIFIER_MISMATCH(HttpStatus.FORBIDDEN, "ADMIN_AUTH_ERROR_002", "관리자 식별자가 일치하지 않습니다."),
+    ADMIN_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "ADMIN_AUTH_ERROR_003", "ID 또는 비밀번호가 올바르지 않습니다."),
+
     // OIDC error
     OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),
 

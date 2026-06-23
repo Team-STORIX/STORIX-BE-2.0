@@ -116,22 +116,23 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v2/auth/users/reader/signup").hasRole("ONBOARDING")
                                 .requestMatchers("/api/v1/auth/nickname/valid").permitAll()
                                 .requestMatchers("/api/v1/auth/tokens/refresh").permitAll()
+
                                 .requestMatchers("/api/v1/auth/developer/signup").permitAll()
                                 .requestMatchers("/api/v1/auth/developer/login").permitAll()
                                 .requestMatchers("/api/v1/auth/developer/slack/callback").permitAll()
-                                .requestMatchers("/api/v1/auth/developer/**").hasRole("ADMIN")
+
+                                .requestMatchers("/api/v1/auth/admin/signup").permitAll()
+                                .requestMatchers("/api/v1/auth/admin/login").permitAll()
+                                .requestMatchers("/api/v1/auth/admin/slack/callback").permitAll()
 
                                 // [TopicRoom]
                                 .requestMatchers("/ws-stomp/**").permitAll()
 
-                                // [Admin]
-                                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                                // [Admin] 관리자 페이지 (신고/약관) — 관리자(SUPER_ADMIN) 전용
+                                .requestMatchers("/api/v1/admin/**").hasRole("SUPER_ADMIN")
 
-                                // [Notification] 테스트 엔드포인트는 ADMIN 만
-                                .requestMatchers("/api/v1/notifications/admin/**").hasRole("ADMIN")
-
-                                // [Terms] 약관 등록/관리는 ADMIN 만
-                                .requestMatchers("/api/v1/terms/**").hasRole("ADMIN")
+                                // [Notification] 테스트 엔드포인트는 개발자(ADMIN) 만
+                                .requestMatchers("/api/v1/notifications/developer/**").hasRole("ADMIN")
 
                                 .anyRequest().hasRole("READER")
                 )
@@ -179,7 +180,7 @@ public class SecurityConfig {
 
     @Bean
     public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_READER");
+        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_READER");
     }
 
     @Bean

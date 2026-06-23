@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.storix.common.utils.STORIXStatic;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -38,16 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-
-        return uri.startsWith("/api/v1/auth/oauth/")
-                || uri.equals("/api/v1/auth/nickname/valid")
-                || uri.equals("/api/v1/auth/users/reader/signup")
-                || uri.equals("/api/v2/auth/users/reader/signup")
-                || uri.equals("/api/v1/auth/tokens/refresh")
-                || uri.equals("/api/v1/auth/developer/signup")
-                || uri.equals("/api/v1/auth/developer/login")
-                || uri.equals("/api/v1/auth/developer/slack/callback")
-                || uri.startsWith("/api/v1/onboarding/");
+        return STORIXStatic.PERMIT_ALL_URI.stream().anyMatch(uri::startsWith);
     }
 
     @Override

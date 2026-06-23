@@ -3,8 +3,8 @@ package com.storix.domain.domains.user.adaptor;
 import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
-import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.dto.CreateAdminUserCommand;
 import com.storix.domain.domains.user.dto.CreateDeveloperUserCommand;
 import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
@@ -31,24 +31,6 @@ public class UserAdaptor {
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
     private final UserRepository userRepository;
-
-    public AccountState findAccountStateById(Long userId) {
-        return userRepository.findAccountStateById(userId)
-                .orElseThrow(() -> UnknownUserException.EXCEPTION);
-    }
-
-    public LocalDateTime findSuspendedUntilById(Long userId) {
-        return userRepository.findSuspendedUntilById(userId).orElse(null);
-    }
-
-    public Role findUserRoleByUserId(Long userId) {
-        Optional<Role> role = userRepository.findRoleByUserId(userId);
-        if (role.isEmpty()) {
-            throw UnknownUserException.EXCEPTION;
-        } else {
-            return role.get();
-        }
-    }
 
     public StandardProfileInfo findStandardProfileInfoByUserId(Long userId) {
         StandardProfileInfo info = userRepository.findStandardProfileInfoById(userId);
@@ -90,6 +72,21 @@ public class UserAdaptor {
         } catch (DataIntegrityViolationException e) {
             throw DuplicateUserException.EXCEPTION;
         }
+    }
+
+    // 관리자 회원 가입
+    public AuthUserDetails saveAdminUser(CreateAdminUserCommand cmd) {
+        try {
+            User user = userRepository.save(cmd.toEntity());
+            return new AuthUserDetails(user.getId(), user.getRole());
+        } catch (DataIntegrityViolationException e) {
+            throw DuplicateUserException.EXCEPTION;
+        }
+    }
+
+    public User findAdminByEmail(String email) {
+        return userRepository.findByOauthInfoEmail(email)
+                .orElseThrow(() -> UnknownUserException.EXCEPTION);
     }
 
     // 독자 회원 가입

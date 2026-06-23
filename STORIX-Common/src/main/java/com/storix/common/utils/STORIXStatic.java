@@ -23,6 +23,24 @@ public class STORIXStatic {
             new String[]{"/swagger-resources/", "/swagger-ui/", "/v3/api-docs"}
     );
 
+    // JWT 인증 필터를 타지 않는 URI
+    public static final List<String> PERMIT_ALL_URI = List.of(
+            "/api/v1/onboarding/",
+            "/api/v1/auth/oauth/",
+            "/api/v1/auth/nickname/valid",
+            "/api/v1/auth/users/reader/signup",
+            "/api/v2/auth/users/reader/signup",
+            "/api/v1/auth/tokens/refresh",
+
+            "/api/v1/auth/developer/signup",
+            "/api/v1/auth/developer/login",
+            "/api/v1/auth/developer/slack/callback",
+
+            "/api/v1/auth/admin/signup",
+            "/api/v1/auth/admin/login",
+            "/api/v1/auth/admin/slack/callback"
+    );
+
     // 알림 메시지 타이틀/본문 템플릿
     public static class Notification {
 

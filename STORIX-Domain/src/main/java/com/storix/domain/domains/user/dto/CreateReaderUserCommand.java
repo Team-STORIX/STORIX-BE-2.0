@@ -5,10 +5,13 @@ import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.domain.Genre;
+import lombok.Builder;
+
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Builder
 public record CreateReaderUserCommand(
         Boolean ageOver14,
         OAuthProvider provider,
