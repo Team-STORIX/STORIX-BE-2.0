@@ -1,12 +1,12 @@
 package com.storix.api.domain.user.controller;
 
+import com.storix.api.domain.user.controller.dto.AdminSignupPendingResponse;
 import com.storix.api.domain.user.controller.dto.AuthorizationResponse;
-import com.storix.api.domain.user.controller.dto.DeveloperSignupPendingResponse;
-import com.storix.api.domain.user.usecase.DeveloperAuthUseCase;
+import com.storix.api.domain.user.usecase.AdminAuthUseCase;
 import com.storix.api.domain.user.usecase.SlackCallbackUseCase;
 import com.storix.common.payload.CustomResponse;
-import com.storix.domain.domains.user.dto.DeveloperLoginRequest;
-import com.storix.domain.domains.user.dto.DeveloperSignupRequest;
+import com.storix.domain.domains.user.dto.AdminLoginRequest;
+import com.storix.domain.domains.user.dto.AdminSignupRequest;
 import com.storix.infrastructure.external.slack.SlackInteractionDto;
 import com.storix.infrastructure.external.slack.SlackSignatureVerifier;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,29 +20,30 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/v1/auth/developer")
+@RequestMapping("/api/v1/auth/admin")
 @RequiredArgsConstructor
-@Tag(name = "개발자 인증", description = "개발자용 인증 API")
-public class DeveloperAuthController {
+@Tag(name = "관리자 인증", description = "관리자용 인증 API")
+public class AdminAuthController {
 
-    private final DeveloperAuthUseCase developerAuthUseCase;
+    private final AdminAuthUseCase adminAuthUseCase;
     private final SlackCallbackUseCase slackCallbackUseCase;
     private final SlackSignatureVerifier slackSignatureVerifier;
 
-    @Operation(summary = "개발자 회원가입 요청", description = "개발자 회원가입을 요청합니다. Slack 채널에 승인 요청이 전송됩니다.\n반환된 pendingId로 로그인 API를 호출하세요.")
+    @Operation(summary = "관리자 회원가입 요청", description = "관리자 회원가입을 요청합니다. Slack 채널에 승인 요청이 전송됩니다.")
     @PostMapping("/signup")
-    public ResponseEntity<CustomResponse<DeveloperSignupPendingResponse>> developerSignup(
-            @Valid @RequestBody DeveloperSignupRequest req
+    public ResponseEntity<CustomResponse<AdminSignupPendingResponse>> adminSignup(
+            @Valid @RequestBody AdminSignupRequest req
     ) {
-        return developerAuthUseCase.developerSignup(req);
+        return adminAuthUseCase.adminSignup(req);
     }
 
-    @Operation(summary = "개발자 로그인", description = "Slack 승인 완료 후 pendingId로 로그인합니다.\n액세스 토큰과 리프레쉬 토큰 쿠키를 반환합니다.")
+    @Operation(summary = "관리자 로그인", description = "Slack 승인 완료 후 email(ID)과 password로 로그인합니다.    \n" +
+            "액세스 토큰과 리프레쉬 토큰 쿠키를 반환합니다.")
     @PostMapping("/login")
-    public ResponseEntity<CustomResponse<AuthorizationResponse>> developerLogin(
-            @Valid @RequestBody DeveloperLoginRequest req
+    public ResponseEntity<CustomResponse<AuthorizationResponse>> adminLogin(
+            @Valid @RequestBody AdminLoginRequest req
     ) {
-        return developerAuthUseCase.developerLogin(req);
+        return adminAuthUseCase.adminLogin(req);
     }
 
     @Operation(hidden = true)

@@ -103,15 +103,15 @@ public class AuthService {
         userAdaptor.checkNicknameDuplicate(cmd.nickName());
 
         // 3. 회원 가입 정보 DB 저장
-        CreateReaderUserCommand m = new CreateReaderUserCommand(
-                cmd.ageOver14(),
-                provider,
-                oid,
-                oauthRefreshToken,
-                cmd.nickName(),
-                cmd.favoriteGenreList(),
-                cmd.profileDescription()
-        );
+        CreateReaderUserCommand m = CreateReaderUserCommand.builder()
+                .ageOver14(cmd.ageOver14())
+                .provider(provider)
+                .oid(oid)
+                .oauthRefreshToken(oauthRefreshToken)
+                .nickName(cmd.nickName())
+                .favoriteGenreList(cmd.favoriteGenreList())
+                .profileDescription(cmd.profileDescription())
+                .build();
         AuthUserDetails authUserDetails = userAdaptor.saveReaderUser(m);
 
         tokenAdaptor.deleteOnboardingTokenByJti(jti);
