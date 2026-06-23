@@ -76,7 +76,7 @@ public class AdminReportUseCase {
     }
 
     private void validateAdmin(AuthUserDetails authUserDetails) {
-        if (authUserDetails == null || authUserDetails.getRole() != Role.ADMIN) {
+        if (authUserDetails == null || authUserDetails.getRole() != Role.SUPER_ADMIN) {
             throw ForbiddenApproachException.EXCEPTION;
         }
     }

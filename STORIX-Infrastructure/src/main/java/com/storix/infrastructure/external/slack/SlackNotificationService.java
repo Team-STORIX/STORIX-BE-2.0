@@ -28,13 +28,14 @@ public class SlackNotificationService {
 
         Map<String, Object> body = Map.of(
                 "channel", slackProperties.getChannelId(),
-                "text", "어드민 회원가입 승인 요청: " + nickName,
+                "text", "개발자 회원가입 승인 요청: " + nickName,
                 "blocks", List.of(
                         Map.of(
                                 "type", "section",
                                 "text", Map.of(
                                         "type", "mrkdwn",
-                                        "text", "*[어드민 회원가입 승인 요청]*\n"
+                                        "text", "*[👨‍💻 개발자 회원가입 승인 요청]*\n"
+                                                + "- 권한: `ADMIN`\n"
                                                 + "- 10분 이내로 승인해야 합니다.\n\n"
                                                 + ":bust_in_silhouette: *닉네임:* " + nickName + "\n"
                                                 + ":key: *요청 ID:* `" + pendingId + "`"
@@ -68,6 +69,59 @@ public class SlackNotificationService {
             ResponseEntity<String> response = slackRestTemplate.postForEntity(
                     SLACK_POST_MESSAGE_URL, request, String.class);
             log.info(">>>> [Slack] 개발자 승인 요청 전송 완료");
+        } catch (Exception e) {
+            log.error(">>>> [Slack] 메시지 전송 실패", e);
+        }
+    }
+
+    public void sendAdminSignupApproval(String pendingId, String nickName, String email) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(slackProperties.getBotToken());
+
+        Map<String, Object> body = Map.of(
+                "channel", slackProperties.getChannelId(),
+                "text", "관리자 회원가입 승인 요청: " + nickName,
+                "blocks", List.of(
+                        Map.of(
+                                "type", "section",
+                                "text", Map.of(
+                                        "type", "mrkdwn",
+                                        "text", "*[🛡️ 관리자 회원가입 승인 요청]*\n"
+                                                + "- 권한: `SUPER_ADMIN`\n"
+                                                + "- 10분 이내로 승인해야 합니다.\n\n"
+                                                + ":bust_in_silhouette: *닉네임:* " + nickName + "\n"
+                                                + ":email: *로그인 ID:* `" + email + "`\n"
+                                                + ":key: *요청 ID:* `" + pendingId + "`"
+                                )
+                        ),
+                        Map.of(
+                                "type", "actions",
+                                "elements", List.of(
+                                        Map.of(
+                                                "type", "button",
+                                                "text", Map.of("type", "plain_text", "text", "승인"),
+                                                "style", "primary",
+                                                "action_id", "approve_admin_signup",
+                                                "value", pendingId
+                                        ),
+                                        Map.of(
+                                                "type", "button",
+                                                "text", Map.of("type", "plain_text", "text", "거절"),
+                                                "style", "danger",
+                                                "action_id", "reject_admin_signup",
+                                                "value", pendingId
+                                        )
+                                )
+                        )
+                )
+        );
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+        try {
+            slackRestTemplate.postForEntity(SLACK_POST_MESSAGE_URL, request, String.class);
+            log.info(">>>> [Slack] 관리자 승인 요청 전송 완료");
         } catch (Exception e) {
             log.error(">>>> [Slack] 메시지 전송 실패", e);
         }

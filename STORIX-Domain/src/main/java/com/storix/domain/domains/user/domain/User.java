@@ -95,12 +95,17 @@ public class User extends BaseTimeEntity {
     @Column(name = "role", nullable = false)
     private Role role;
 
+    // 관리자 비밀번호
+    @Column(name = "password", length = 100)
+    private String password;
+
     // 소셜 로그인
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "provider", column = @Column(name = "oauth_provider")),
             @AttributeOverride(name = "oid", column = @Column(name = "oauth_oid")),
-            @AttributeOverride(name = "oauthRefreshToken", column = @Column(name = "oauth_refresh_token", length = 1024))
+            @AttributeOverride(name = "oauthRefreshToken", column = @Column(name = "oauth_refresh_token", length = 1024)),
+            @AttributeOverride(name = "email", column = @Column(name = "oauth_email"))
     })
     private OAuthInfo oauthInfo;
 
@@ -108,13 +113,14 @@ public class User extends BaseTimeEntity {
     protected User() {}
 
     @Builder
-    public User(Boolean ageOver14, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList, String profileDescription, Role role) {
+    public User(Boolean ageOver14, OAuthInfo oauthInfo, String nickName, Set<Genre> favoriteGenreList, String profileDescription, Role role, String password) {
         this.ageOver14 = ageOver14;
         this.oauthInfo = oauthInfo;
         this.nickName = nickName;
         this.favoriteGenreList = favoriteGenreList;
         this.profileDescription = profileDescription;
         if (role != null) this.role = role;
+        this.password = password;
     }
 
     /** 비즈니스 로직 **/

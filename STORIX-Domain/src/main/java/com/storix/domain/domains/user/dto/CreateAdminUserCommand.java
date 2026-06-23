@@ -4,32 +4,30 @@ import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.domain.User;
-import com.storix.domain.domains.works.domain.Genre;
 import lombok.Builder;
 
 import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @Builder
-public record CreateDeveloperUserCommand(
+public record CreateAdminUserCommand(
         String oid,
-        String nickName,
-        Set<Genre> favoriteGenreList
+        String email,
+        String encodedPassword,
+        String nickName
 ) {
     public User toEntity() {
         OAuthInfo oauthInfo = OAuthInfo.builder()
                 .provider(OAuthProvider.SLACK)
                 .oid(oid)
+                .email(email)
                 .build();
-        Set<Genre> genres = (favoriteGenreList == null) ?
-                Collections.emptySet() : new LinkedHashSet<>(favoriteGenreList);
 
         return User.builder()
                 .oauthInfo(oauthInfo)
                 .nickName(nickName)
-                .favoriteGenreList(genres)
-                .role(Role.ADMIN)
+                .favoriteGenreList(Collections.emptySet())
+                .password(encodedPassword)
+                .role(Role.SUPER_ADMIN)
                 .build();
     }
 }
