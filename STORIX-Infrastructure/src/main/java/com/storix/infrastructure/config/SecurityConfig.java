@@ -16,7 +16,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -42,6 +41,7 @@ public class SecurityConfig {
     private final SecurityEntryPoint securityEntryPoint;
     private final SecurityDeniedHandler securityDeniedHandler;
     private final Environment environment;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${swagger.user:}")
     private String swaggerUser;
@@ -68,12 +68,12 @@ public class SecurityConfig {
         } else {
             InMemoryUserDetailsManager swaggerUserDetailsManager = new InMemoryUserDetailsManager(
                     User.withUsername(swaggerUser)
-                            .password(passwordEncoder().encode(swaggerPassword))
+                            .password(passwordEncoder.encode(swaggerPassword))
                             .roles("SWAGGER")
                             .build()
             );
             DaoAuthenticationProvider swaggerAuthProvider = new DaoAuthenticationProvider(swaggerUserDetailsManager);
-            swaggerAuthProvider.setPasswordEncoder(passwordEncoder());
+            swaggerAuthProvider.setPasswordEncoder(passwordEncoder);
 
             http
                     .authenticationProvider(swaggerAuthProvider)
@@ -181,11 +181,6 @@ public class SecurityConfig {
     @Bean
     public RoleHierarchy roleHierarchy() {
         return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_READER");
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
 }
