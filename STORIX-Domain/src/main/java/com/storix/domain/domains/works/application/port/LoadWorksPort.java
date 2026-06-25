@@ -1,12 +1,10 @@
 package com.storix.domain.domains.works.application.port;
 
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
-import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
-import com.storix.domain.domains.works.domain.WorksSortType;
 import com.storix.domain.domains.works.domain.WorksType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
