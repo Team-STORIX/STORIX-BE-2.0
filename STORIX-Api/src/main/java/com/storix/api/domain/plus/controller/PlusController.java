@@ -5,13 +5,12 @@ import com.storix.api.domain.plus.usecase.ReviewUseCase;
 import com.storix.api.domain.plus.controller.dto.ReaderBoardUploadRequest;
 import com.storix.domain.domains.plus.dto.ReaderReviewRedirectResponse;
 import com.storix.api.domain.plus.controller.dto.ReaderReviewUploadRequest;
-import com.storix.domain.domains.search.application.SearchUseCase;
+import com.storix.api.domain.search.usecase.SearchUseCase;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.works.domain.WorksPlusSortType;
 import com.storix.common.payload.CustomResponse;
-import com.storix.common.code.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -60,10 +59,7 @@ public class PlusController {
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
 
-        return CustomResponse.onSuccess(
-                SuccessCode.PLUS_WORKS_LOAD_SUCCESS,
-                searchUseCase.searchWorksForWriting(keyword, pageable)
-        );
+        return searchUseCase.searchWorksForWriting(keyword, pageable);
     }
 
     @Operation(summary = "리뷰 중복 여부 조회", description = "리뷰 중복 여부를 조회하는 api 입니다.")

@@ -1,12 +1,10 @@
 package com.storix.domain.domains.works.adaptor;
 
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
-import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
-import com.storix.domain.domains.works.domain.WorksSortType;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.repository.WorksRepository;
@@ -32,6 +30,7 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
 
     private final WorksRepository worksRepository;
 
+    // 작품 검색
     @Override
     public Slice<Works> searchWorks(String keyword, Pageable pageable) {
         return worksRepository.findBySearchKeyword(keyword, pageable);
@@ -42,6 +41,12 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
         return worksRepository.searchWithFilters(keyword, worksTypes, genres, pageable);
     }
 
+    @Override
+    public Slice<Works> searchWorksByHashtagWithFilters(String hashtagKeyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        return worksRepository.searchByHashtagWithFilters(hashtagKeyword, worksTypes, genres, pageable);
+    }
+
+    // 작품 조회
     @Override
     public Works findById(Long worksId) {
         return worksRepository.findById(worksId)

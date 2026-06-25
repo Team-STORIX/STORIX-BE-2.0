@@ -58,6 +58,38 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
     }
 
     @Override
+    public Slice<Works> searchByHashtagWithFilters(
+            String hashtagKeyword,
+            List<WorksType> worksTypes,
+            List<Genre> genres,
+            Pageable pageable
+    ) {
+        if (hashtagKeyword == null || hashtagKeyword.isBlank()) {
+            return new SliceImpl<>(List.of(), pageable, false);
+        }
+
+        BooleanBuilder builder = buildFilterCondition(worksTypes, genres);
+
+        // 해시태그명 접두 검색 (#~로 시작하는 해시태그를 가진 작품)
+        builder.and(works.hashtags.any().name.startsWith(hashtagKeyword));
+
+        List<Works> results = queryFactory
+                .selectFrom(works)
+                .where(builder)
+                .orderBy(getOrderSpecifiers(pageable.getSort()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize() + 1)
+                .fetch();
+
+        boolean hasNext = results.size() > pageable.getPageSize();
+        if (hasNext) {
+            results.remove(results.size() - 1);
+        }
+
+        return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    @Override
     public List<Long> searchIdsWithFilters(
             String keyword,
             List<WorksType> worksTypes,
