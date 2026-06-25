@@ -1,15 +1,14 @@
 package com.storix.api.domain.search;
 
-import com.storix.domain.domains.search.application.SearchUseCase;
+import com.storix.api.domain.search.usecase.SearchHistoryUseCase;
+import com.storix.api.domain.search.usecase.SearchUseCase;
 import com.storix.domain.domains.search.dto.RecentResponseDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingResponseDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
-import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.works.domain.WorksSortType;
 import com.storix.common.payload.CustomResponse;
-import com.storix.common.code.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class SearchController {
 
     private final SearchUseCase searchUseCase;
-    private final SearchHistoryService searchHistoryService;
+    private final SearchHistoryUseCase searchHistoryUseCase;
 
     @GetMapping("/works")
     @Operation(summary = "작품 검색", description = "작품명 검색합니다. 결과값은 무한 스크롤로 구성됩니다.", deprecated = true)
@@ -40,21 +39,13 @@ public class SearchController {
 
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
 
-        return CustomResponse.onSuccess(
-                SuccessCode.SUCCESS,
-                searchUseCase.searchWorks(userId, keyword, pageable)
-        );
+        return searchUseCase.searchWorks(userId, keyword, pageable);
     }
 
     @GetMapping("/trending")
     @Operation(summary = "급상승 검색어 조회", description = "인기 검색어 1~10위와 순위 변동을 조회합니다.")
     public CustomResponse<TrendingResponseDto> getTrending() {
-        return CustomResponse.onSuccess(
-                SuccessCode.SUCCESS,
-                TrendingResponseDto.builder()
-                        .trendingKeywords(searchHistoryService.getTrendingKeywords())
-                        .build()
-        );
+        return searchHistoryUseCase.getTrending();
     }
 
     @GetMapping("/recent")
@@ -62,12 +53,7 @@ public class SearchController {
     public CustomResponse<RecentResponseDto> getRecent(
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
-        return CustomResponse.onSuccess(
-                SuccessCode.SUCCESS,
-                RecentResponseDto.builder()
-                        .recentKeywords(searchHistoryService.getRecentKeywords(authUser.getUserId()))
-                        .build()
-        );
+        return searchHistoryUseCase.getRecent(authUser.getUserId());
     }
 
     @DeleteMapping("/recent")
@@ -76,9 +62,7 @@ public class SearchController {
             @RequestParam String keyword,
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
-
-        searchHistoryService.deleteRecentKeyword(authUser.getUserId(), keyword);
-        return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
+        return searchHistoryUseCase.deleteRecent(authUser.getUserId(), keyword);
     }
 
     @DeleteMapping("/recent/all")
@@ -86,7 +70,6 @@ public class SearchController {
     public CustomResponse<Void> deleteAllRecent(
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
-        searchHistoryService.deleteAllRecentKeywords(authUser.getUserId());
-        return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
+        return searchHistoryUseCase.deleteAllRecent(authUser.getUserId());
     }
 }

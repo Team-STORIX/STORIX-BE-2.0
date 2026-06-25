@@ -1,6 +1,6 @@
 package com.storix.api.domain.search;
 
-import com.storix.domain.domains.search.application.SearchUseCase;
+import com.storix.api.domain.search.usecase.SearchUseCase;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
@@ -54,10 +54,7 @@ public class SearchV2Controller {
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
 
-        return CustomResponse.onSuccess(
-                SuccessCode.SUCCESS,
-                searchUseCase.searchWorksWithFilters(authUser.getUserId(), keyword, worksTypes, genres, pageable)
-        );
+        return searchUseCase.searchWorksWithFilters(authUser.getUserId(), keyword, worksTypes, genres, pageable);
     }
 
     // 토픽룸 다중 필터 검색

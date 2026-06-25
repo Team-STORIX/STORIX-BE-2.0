@@ -1,6 +1,5 @@
 package com.storix.domain.domains.search.service;
 
-import com.storix.domain.domains.search.application.SearchUseCase;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
@@ -21,12 +20,11 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class SearchService implements SearchUseCase {
+public class SearchService {
 
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
 
-    @Override
     @Transactional
     public SearchResponseWrapperDto<WorksSearchResponseDto> searchWorks(Long userId, String keyword, Pageable pageable) {
 
@@ -47,7 +45,6 @@ public class SearchService implements SearchUseCase {
                 .build();
     }
 
-    @Override
     @Transactional
     public SearchResponseWrapperDto<WorksSearchResponseDto> searchWorksWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
@@ -69,7 +66,6 @@ public class SearchService implements SearchUseCase {
                 .build();
     }
 
-    @Override
     @Transactional
     public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(String keyword, Pageable pageable) {
 
