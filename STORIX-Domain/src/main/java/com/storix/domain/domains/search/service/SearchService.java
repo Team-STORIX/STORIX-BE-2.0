@@ -6,7 +6,6 @@ import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
-import com.storix.domain.domains.works.domain.WorksSortType;
 import com.storix.domain.domains.works.domain.WorksType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
