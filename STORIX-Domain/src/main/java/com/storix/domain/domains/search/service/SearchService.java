@@ -1,7 +1,6 @@
 package com.storix.domain.domains.search.service;
 
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
-import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
@@ -25,7 +24,7 @@ public class SearchService {
     private final SearchHistoryService searchHistoryService;
 
     @Transactional
-    public SearchResponseWrapperDto<WorksSearchResponseDto> searchWorks(Long userId, String keyword, Pageable pageable) {
+    public Slice<WorksSearchResponseDto> searchWorks(Long userId, String keyword, Pageable pageable) {
 
         // 1. 검색어 저장
         if (keyword != null && pageable.getPageNumber() == 0) {
@@ -33,19 +32,11 @@ public class SearchService {
         }
 
         // 2. 작품 조회
-        Slice<Works> worksSlice = loadWorksPort.searchWorks(keyword, pageable);
-
-        // 3. 결과 없으면 추천 검색어 조회
-        String fallbackKeyword = worksSlice.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
-
-        return SearchResponseWrapperDto.<WorksSearchResponseDto>builder()
-                .result(worksSlice.map(this::toWorkDto))
-                .fallbackRecommendation(fallbackKeyword)
-                .build();
+        return loadWorksPort.searchWorks(keyword, pageable).map(this::toWorkDto);
     }
 
     @Transactional
-    public SearchResponseWrapperDto<WorksSearchResponseDto> searchWorksWithFilters(
+    public Slice<WorksSearchResponseDto> searchWorksWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
 
         // 1. 검색어 저장
@@ -53,16 +44,18 @@ public class SearchService {
             searchHistoryService.addSearchLog(userId, keyword);
         }
 
-        // 2. 작품 조회 (다중 필터링)
-        Slice<Works> worksSlice = loadWorksPort.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
+        // 2. 작품 조회
+        Slice<Works> worksSlice;
+        if (keyword != null && keyword.startsWith("#")) {
+            // 2-1. 해시태그 검색
+            String hashtagKeyword = keyword.substring(1).strip(); // # 제거
+            worksSlice = loadWorksPort.searchWorksByHashtagWithFilters(hashtagKeyword, worksTypes, genres, pageable);
+        } else {
+            // 2-2. 작품명 검색
+            worksSlice = loadWorksPort.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
+        }
 
-        // 3. 결과 없으면 추천 검색어 제공
-        String fallbackKeyword = worksSlice.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
-
-        return SearchResponseWrapperDto.<WorksSearchResponseDto>builder()
-                .result(worksSlice.map(this::toWorkDto))
-                .fallbackRecommendation(fallbackKeyword)
-                .build();
+        return worksSlice.map(this::toWorkDto);
     }
 
     @Transactional

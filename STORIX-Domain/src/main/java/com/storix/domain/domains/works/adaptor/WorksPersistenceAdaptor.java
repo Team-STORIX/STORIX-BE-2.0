@@ -32,6 +32,7 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
 
     private final WorksRepository worksRepository;
 
+    // 작품 검색
     @Override
     public Slice<Works> searchWorks(String keyword, Pageable pageable) {
         return worksRepository.findBySearchKeyword(keyword, pageable);
@@ -42,6 +43,12 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
         return worksRepository.searchWithFilters(keyword, worksTypes, genres, pageable);
     }
 
+    @Override
+    public Slice<Works> searchWorksByHashtagWithFilters(String hashtagKeyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        return worksRepository.searchByHashtagWithFilters(hashtagKeyword, worksTypes, genres, pageable);
+    }
+
+    // 작품 조회
     @Override
     public Works findById(Long worksId) {
         return worksRepository.findById(worksId)

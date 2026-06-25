@@ -16,10 +16,15 @@ import java.util.Map;
 
 public interface LoadWorksPort {
 
+    // 작품명으로 작품 검색
     Slice<Works> searchWorks(String keyword, Pageable pageable);
 
+    // 다중 필터 + 작품명으로 작품 검색
     Slice<Works> searchWorksWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable);
-  
+
+    // 다중 필터 + 해시태그명으로 작품 검색
+    Slice<Works> searchWorksByHashtagWithFilters(String hashtagKeyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable);
+
     Works findById(Long worksId);
 
     // 키워드로 작품 ID 리스트만 조회 (검색용)
