@@ -67,9 +67,9 @@ public enum Title {
 
     // 스릴러
     THRILLER_NONE(Genre.THRILLER, TitleStage.NONE, null),
-    THRILLER_ENTRY(Genre.THRILLER, TitleStage.ENTRY, "최초 목격자"),
-    THRILLER_EXPLORE(Genre.THRILLER, TitleStage.EXPLORE, "진실 추격자"),
-    THRILLER_IMMERSE(Genre.THRILLER, TitleStage.IMMERSE, "최후 생존자");
+    THRILLER_ENTRY(Genre.THRILLER, TitleStage.ENTRY, "등골 서늘러"),
+    THRILLER_EXPLORE(Genre.THRILLER, TitleStage.EXPLORE, "머리 쭈뼛러"),
+    THRILLER_IMMERSE(Genre.THRILLER, TitleStage.IMMERSE, "동공 확장러");
 
     private final Genre genre;
     private final TitleStage stage;
