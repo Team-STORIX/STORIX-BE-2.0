@@ -20,4 +20,8 @@ public interface ReviewReportRepository extends JpaRepository<ReviewReport, Long
     List<ReviewReport> findAllByReportCaseIdOrderByCreatedAtAsc(Long reportCaseId);
 
     boolean existsByReporterIdAndReviewId(Long reporterId, Long reviewId);
+
+    long countByReporterId(Long reporterId);
+
+    long countByReportedUserId(Long reportedUserId);
 }

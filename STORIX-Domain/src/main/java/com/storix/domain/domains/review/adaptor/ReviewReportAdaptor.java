@@ -46,4 +46,12 @@ public class ReviewReportAdaptor {
     public List<ReviewReport> findAllByReportCaseId(Long reportCaseId) {
         return reviewReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCaseId);
     }
+
+    public long countByReporterId(Long userId) {
+        return reviewReportRepository.countByReporterId(userId);
+    }
+
+    public long countByReportedUserId(Long userId) {
+        return reviewReportRepository.countByReportedUserId(userId);
+    }
 }

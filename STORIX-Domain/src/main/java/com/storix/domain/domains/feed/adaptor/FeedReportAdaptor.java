@@ -71,6 +71,16 @@ public class FeedReportAdaptor {
         return feedReplyReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCaseId);
     }
 
+    public long countAllByReporterId(Long userId) {
+        return feedReportRepository.countByReporterId(userId)
+                + feedReplyReportRepository.countByReporterId(userId);
+    }
+
+    public long countAllByReportedUserId(Long userId) {
+        return feedReportRepository.countByReportedUserId(userId)
+                + feedReplyReportRepository.countByReportedUserId(userId);
+    }
+
     private Map<Long, Long> toCountMap(List<ReportCaseCountProjection> rows) {
         return rows.stream()
                 .collect(Collectors.toMap(

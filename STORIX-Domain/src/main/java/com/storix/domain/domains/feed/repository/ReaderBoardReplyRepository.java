@@ -84,6 +84,8 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     @Query("SELECT r FROM ReaderBoardReply r WHERE r.userId = :userId AND r.deleted = false ORDER BY r.createdAt DESC")
     Slice<ReaderBoardReply> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
 
+    long countByUserIdAndDeletedFalse(Long userId);
+
     // 관리자 댓글 강제 삭제 (이미 삭제된 댓글이면 0건 반영, 중복 카운트 감소 방지)
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ReaderBoardReply r " +

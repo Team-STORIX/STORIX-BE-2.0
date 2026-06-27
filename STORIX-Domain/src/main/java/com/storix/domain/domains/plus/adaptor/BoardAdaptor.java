@@ -98,4 +98,8 @@ public class BoardAdaptor {
         return readerBoardRepository.hardDeleteBefore(cutoff);
     }
 
+    public long countActiveBoardsByUserId(Long userId) {
+        return readerBoardRepository.countByUserIdAndDeletedFalse(userId);
+    }
+
 }

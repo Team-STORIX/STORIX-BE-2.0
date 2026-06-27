@@ -110,6 +110,8 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
 
     boolean existsByIdAndDeletedFalse(Long id);
 
+    long countByUserIdAndDeletedFalse(Long userId);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ReaderBoard r WHERE r.deleted = true AND r.deletedAt < :cutoff")
     int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);

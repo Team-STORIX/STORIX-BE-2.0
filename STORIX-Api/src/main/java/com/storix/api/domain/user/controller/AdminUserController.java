@@ -6,6 +6,7 @@ import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.dto.AdminUserPageResponse;
+import com.storix.domain.domains.user.dto.AdminUserSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,6 +48,17 @@ public class AdminUserController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sort));
         AdminUserPageResponse response = adminUserUseCase.searchUsers(authUserDetails, userId, nickName, state, pageable);
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
+    }
+
+    @GetMapping("/{userId}")
+    @Operation(summary = "관리자 개별 유저 조회", description = "특정 유저의 기본 정보, 활동 통계, 신고 통계, 제재 이력을 조회합니다.")
+    public CustomResponse<AdminUserSummaryResponse> getUserSummary(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @Parameter(description = "조회할 유저 ID")
+            @PathVariable Long userId
+    ) {
+        AdminUserSummaryResponse response = adminUserUseCase.getUserSummary(authUserDetails, userId);
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
     }
 }

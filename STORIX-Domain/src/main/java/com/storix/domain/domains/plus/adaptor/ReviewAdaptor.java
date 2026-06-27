@@ -68,6 +68,10 @@ public class ReviewAdaptor {
         return reviewRepository.countByWorksId(worksId);
     }
 
+    public long countActiveReviewsByUserId(Long userId) {
+        return reviewRepository.countByLibraryUserIdAndDeletedFalse(userId);
+    }
+
     public boolean isMyReviewExist(Long userId, Long worksId) {
         return reviewRepository.existsByLibraryUserIdAndWorksIdAndDeletedFalse(userId, worksId);
     }

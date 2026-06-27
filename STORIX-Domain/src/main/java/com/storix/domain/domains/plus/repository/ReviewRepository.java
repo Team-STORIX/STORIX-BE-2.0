@@ -46,6 +46,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT COUNT(r) FROM Review r WHERE r.worksId = :worksId AND r.deleted = false")
     long countByWorksId(@Param("worksId") Long worksId);
 
+    long countByLibraryUserIdAndDeletedFalse(Long libraryUserId);
+
     @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating, r.likeCount) " +
             "FROM Review r " +
             "WHERE r.libraryUserId = :userId AND r.worksId = :worksId AND r.deleted = false")

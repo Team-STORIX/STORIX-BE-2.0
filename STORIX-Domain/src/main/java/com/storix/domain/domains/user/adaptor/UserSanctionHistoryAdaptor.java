@@ -5,6 +5,8 @@ import com.storix.domain.domains.user.repository.UserSanctionHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class UserSanctionHistoryAdaptor {
@@ -13,5 +15,9 @@ public class UserSanctionHistoryAdaptor {
 
     public UserSanctionHistory save(UserSanctionHistory history) {
         return userSanctionHistoryRepository.save(history);
+    }
+
+    public List<UserSanctionHistory> findAllByUserId(Long userId) {
+        return userSanctionHistoryRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
     }
 }

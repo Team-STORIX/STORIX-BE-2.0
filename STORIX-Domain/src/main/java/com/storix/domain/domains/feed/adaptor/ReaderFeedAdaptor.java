@@ -286,6 +286,10 @@ public class ReaderFeedAdaptor {
         return readerBoardReplyRepository.findAllByUserId(userId, pageable);
     }
 
+    public long countActiveRepliesByUserId(Long userId) {
+        return readerBoardReplyRepository.countByUserIdAndDeletedFalse(userId);
+    }
+
     // 프로필 좋아요한 게시글 정보 확인
     public Slice<ReaderBoard> findAllLikedReaderBoards(Long userId, Pageable pageable) {
         return readerBoardRepository.findAllLikedReaderBoards(userId, pageable);

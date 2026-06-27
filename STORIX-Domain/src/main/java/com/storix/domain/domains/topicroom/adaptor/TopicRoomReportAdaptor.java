@@ -35,4 +35,12 @@ public class TopicRoomReportAdaptor {
     public List<TopicRoomReport> findAllByReportCaseId(Long reportCaseId) {
         return topicRoomReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCaseId);
     }
+
+    public long countByReporterId(Long userId) {
+        return topicRoomReportRepository.countByReporterId(userId);
+    }
+
+    public long countByReportedUserId(Long userId) {
+        return topicRoomReportRepository.countByReportedUserId(userId);
+    }
 }
