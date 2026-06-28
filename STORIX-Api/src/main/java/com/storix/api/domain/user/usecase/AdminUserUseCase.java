@@ -1,5 +1,6 @@
 package com.storix.api.domain.user.usecase;
 
+import com.storix.api.domain.user.controller.dto.AdminUserSanctionRequest;
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.AccountState;
@@ -62,6 +63,20 @@ public class AdminUserUseCase {
         List<AdminUserSanctionHistoryResponse> sanctions = adminUserService.getSanctionHistories(userId);
 
         return AdminUserSummaryResponse.of(basicInfo, activityStats, reportStats, sanctions);
+    }
+
+    public void createUserSanction(AuthUserDetails authUserDetails, Long userId, AdminUserSanctionRequest request) {
+
+        // 관리자 권한 검증
+        validateAdmin(authUserDetails);
+
+        // 유저 제재 처리
+        adminUserService.processManualSanction(
+                authUserDetails.getUserId(),
+                userId,
+                request.type(),
+                request.memo()
+        );
     }
 
     private void validateAdmin(AuthUserDetails authUserDetails) {

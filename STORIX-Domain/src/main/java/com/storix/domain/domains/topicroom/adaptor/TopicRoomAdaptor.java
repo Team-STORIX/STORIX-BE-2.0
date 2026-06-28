@@ -52,4 +52,8 @@ public class TopicRoomAdaptor {
         return topicRoomUserRepository.findByUserIdAndTopicRoomId(userId, roomId)
                 .orElseThrow(() -> UnknownTopicRoomUserException.EXCEPTION);
     }
+
+    public long countJoinedRooms(Long userId) {
+        return topicRoomUserRepository.countByUserId(userId);
+    }
 }

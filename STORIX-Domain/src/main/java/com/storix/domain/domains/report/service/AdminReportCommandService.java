@@ -27,6 +27,7 @@ import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -123,7 +124,11 @@ public class AdminReportCommandService {
     }
 
     private void withdrawUserByAdminAction(ReportCase reportCase) {
-        authService.withDrawUser(reportCase.getReportedUserId(), Set.of(WithdrawReason.OTHER), ACCOUNT_DELETION_DETAIL);
+        authService.withDrawUser(
+                reportCase.getReportedUserId(),
+                Set.of(WithdrawReason.OTHER),
+                StringUtils.hasText(reportCase.getProcessMemo()) ? reportCase.getProcessMemo().trim() : ACCOUNT_DELETION_DETAIL
+        );
         saveSanctionHistory(reportCase, UserSanctionType.WITHDRAWN, LocalDateTime.now(), null);
     }
 

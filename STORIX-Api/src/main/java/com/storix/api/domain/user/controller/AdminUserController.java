@@ -1,5 +1,6 @@
 package com.storix.api.domain.user.controller;
 
+import com.storix.api.domain.user.controller.dto.AdminUserSanctionRequest;
 import com.storix.api.domain.user.usecase.AdminUserUseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
@@ -10,6 +11,7 @@ import com.storix.domain.domains.user.dto.AdminUserSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,7 +19,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -60,5 +64,17 @@ public class AdminUserController {
     ) {
         AdminUserSummaryResponse response = adminUserUseCase.getUserSummary(authUserDetails, userId);
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
+    }
+
+    @PostMapping("/{userId}/sanctions")
+    @Operation(summary = "관리자 유저 제재 생성", description = "특정 유저에게 수동 제재를 생성하고 계정 상태를 변경합니다. type=SUSPENDED는 days 필수, WITHDRAWN/RESTORED는 days를 사용하지 않습니다.")
+    public CustomResponse<Void> createUserSanction(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @Parameter(description = "제재할 유저 ID")
+            @PathVariable Long userId,
+            @Valid @RequestBody AdminUserSanctionRequest request
+    ) {
+        adminUserUseCase.createUserSanction(authUserDetails, userId, request);
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
     }
 }
