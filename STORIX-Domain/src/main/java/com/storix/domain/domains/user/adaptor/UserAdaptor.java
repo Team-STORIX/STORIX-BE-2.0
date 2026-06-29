@@ -4,16 +4,13 @@ import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.User;
-import com.storix.domain.domains.user.dto.CreateAdminUserCommand;
-import com.storix.domain.domains.user.dto.CreateDeveloperUserCommand;
-import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
-import com.storix.domain.domains.user.dto.StandardProfileInfo;
-import com.storix.domain.domains.user.dto.UserNicknameInfo;
+import com.storix.domain.domains.user.dto.*;
 import com.storix.domain.domains.user.exception.me.*;
 import com.storix.domain.domains.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,6 +106,10 @@ public class UserAdaptor {
 
     public List<User> findUsersByIds(Collection<Long> userIds) {
         return userRepository.findAllById(userIds);
+    }
+
+    public Page<AdminUserListResponse> findAdminUsers(Long userId, String nickname, AccountState accountState, Pageable pageable) {
+        return userRepository.searchAdminUsers(userId, nickname,accountState, pageable);
     }
 
     public int clearAllTitles() {

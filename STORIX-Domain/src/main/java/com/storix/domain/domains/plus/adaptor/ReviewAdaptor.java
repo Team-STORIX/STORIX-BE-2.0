@@ -6,11 +6,13 @@ import com.storix.domain.domains.plus.dto.*;
 import com.storix.domain.domains.plus.repository.ReviewRepository;
 import com.storix.domain.domains.review.dto.ModifyReviewRequest;
 import com.storix.domain.domains.plus.exception.DuplicateReviewUploadException;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import com.storix.domain.domains.works.exception.InvalidReviewDeleteRequestException;
 import com.storix.domain.domains.works.exception.InvalidReviewUpdateRequestException;
 import com.storix.domain.domains.works.exception.UnknownReviewException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
@@ -66,6 +68,14 @@ public class ReviewAdaptor {
     // 작품 상세탭
     public long getReviewCount(Long worksId) {
         return reviewRepository.countByWorksId(worksId);
+    }
+
+    public long countActiveReviewsByUserId(Long userId) {
+        return reviewRepository.countByLibraryUserIdAndDeletedFalse(userId);
+    }
+
+    public Page<AdminUserContentItemResponse> findAdminReviewContentsByUserId(Long userId, Pageable pageable) {
+        return reviewRepository.findAdminReviewContentsByUserId(userId, pageable);
     }
 
     public boolean isMyReviewExist(Long userId, Long worksId) {

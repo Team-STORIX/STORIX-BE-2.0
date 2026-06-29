@@ -3,6 +3,7 @@ package com.storix.domain.domains.topicroom.adaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.repository.ReportCaseCountProjection;
 import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
+import com.storix.domain.domains.user.dto.AdminUserReportItemResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -34,5 +35,21 @@ public class TopicRoomReportAdaptor {
 
     public List<TopicRoomReport> findAllByReportCaseId(Long reportCaseId) {
         return topicRoomReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCaseId);
+    }
+
+    public long countByReporterId(Long userId) {
+        return topicRoomReportRepository.countByReporterId(userId);
+    }
+
+    public long countByReportedUserId(Long userId) {
+        return topicRoomReportRepository.countByReportedUserId(userId);
+    }
+
+    public List<AdminUserReportItemResponse> findAdminReportsByReporterId(Long userId) {
+        return topicRoomReportRepository.findAdminReportsByReporterId(userId);
+    }
+
+    public List<AdminUserReportItemResponse> findAdminReportsByReportedUserId(Long userId) {
+        return topicRoomReportRepository.findAdminReportsByReportedUserId(userId);
     }
 }

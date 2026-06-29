@@ -2,8 +2,10 @@ package com.storix.domain.domains.user.repository;
 
 import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthProvider;
+import com.storix.domain.domains.user.dto.AdminUserListResponse;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.user.dto.UserNicknameInfo;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.storix.domain.domains.user.domain.User;
@@ -34,6 +36,28 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByOauthInfoProviderAndOauthInfoOid(
             OAuthProvider provider,
             String oid
+    );
+
+    @Query("""
+        SELECT new com.storix.domain.domains.user.dto.AdminUserListResponse(
+            u.id,
+            u.nickName,
+            u.oauthInfo.email,
+            u.createdAt,
+            u.accountState,
+            u.suspendedUntil,
+            u.lastLoginAt
+        )
+        FROM User u
+        WHERE (:userId IS NULL OR u.id = :userId)
+          AND (:nickName IS NULL OR u.nickName LIKE CONCAT('%', :nickName, '%'))
+          AND (:accountState IS NULL OR u.accountState = :accountState)
+    """)
+    Page<AdminUserListResponse> searchAdminUsers(
+            @Param("userId") Long userId,
+            @Param("nickName") String nickName,
+            @Param("accountState") AccountState accountState,
+            Pageable pageable
     );
 
     // 관리자 이메일 검증

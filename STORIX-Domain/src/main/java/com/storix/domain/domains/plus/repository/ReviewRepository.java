@@ -5,6 +5,8 @@ import com.storix.domain.domains.plus.domain.Review;
 import com.storix.domain.domains.plus.dto.RatingCountInfo;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.plus.dto.SliceReviewInfo;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -45,6 +47,31 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // 작품 상세탭
     @Query("SELECT COUNT(r) FROM Review r WHERE r.worksId = :worksId AND r.deleted = false")
     long countByWorksId(@Param("worksId") Long worksId);
+
+    long countByLibraryUserIdAndDeletedFalse(Long libraryUserId);
+
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                r.id,
+                com.storix.domain.domains.user.dto.AdminUserContentType.REVIEW,
+                null,
+                null,
+                null,
+                r.worksId,
+                r.content,
+                r.rating,
+                null,
+                r.likeCount,
+                0,
+                r.createdAt
+            )
+            FROM Review r
+            WHERE r.libraryUserId = :userId AND r.deleted = false
+            """)
+    Page<AdminUserContentItemResponse> findAdminReviewContentsByUserId(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating, r.likeCount) " +
             "FROM Review r " +
