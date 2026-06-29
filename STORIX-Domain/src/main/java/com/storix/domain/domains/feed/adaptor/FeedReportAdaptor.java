@@ -8,6 +8,7 @@ import com.storix.domain.domains.feed.exception.DuplicateFeedReportException;
 import com.storix.domain.domains.feed.repository.FeedReplyReportRepository;
 import com.storix.domain.domains.feed.repository.FeedReportRepository;
 import com.storix.domain.domains.feed.repository.ReportCaseCountProjection;
+import com.storix.domain.domains.user.dto.AdminUserReportItemResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
@@ -79,6 +80,20 @@ public class FeedReportAdaptor {
     public long countAllByReportedUserId(Long userId) {
         return feedReportRepository.countByReportedUserId(userId)
                 + feedReplyReportRepository.countByReportedUserId(userId);
+    }
+
+    public List<AdminUserReportItemResponse> findAdminReportsByReporterId(Long userId) {
+        List<AdminUserReportItemResponse> reports = new java.util.ArrayList<>();
+        reports.addAll(feedReportRepository.findAdminReportsByReporterId(userId));
+        reports.addAll(feedReplyReportRepository.findAdminReportsByReporterId(userId));
+        return reports;
+    }
+
+    public List<AdminUserReportItemResponse> findAdminReportsByReportedUserId(Long userId) {
+        List<AdminUserReportItemResponse> reports = new java.util.ArrayList<>();
+        reports.addAll(feedReportRepository.findAdminReportsByReportedUserId(userId));
+        reports.addAll(feedReplyReportRepository.findAdminReportsByReportedUserId(userId));
+        return reports;
     }
 
     private Map<Long, Long> toCountMap(List<ReportCaseCountProjection> rows) {

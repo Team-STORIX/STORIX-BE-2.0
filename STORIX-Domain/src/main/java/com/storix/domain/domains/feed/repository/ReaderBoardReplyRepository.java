@@ -1,6 +1,8 @@
 package com.storix.domain.domains.feed.repository;
 
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -83,6 +85,30 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     // 프로필 댓글 조회 (삭제된 댓글 제외)
     @Query("SELECT r FROM ReaderBoardReply r WHERE r.userId = :userId AND r.deleted = false ORDER BY r.createdAt DESC")
     Slice<ReaderBoardReply> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                r.id,
+                com.storix.domain.domains.user.dto.AdminUserContentType.REPLY,
+                r.board.id,
+                parent.id,
+                null,
+                null,
+                r.comment,
+                null,
+                null,
+                r.likeCount,
+                0,
+                r.createdAt
+            )
+            FROM ReaderBoardReply r
+            LEFT JOIN r.parentReply parent
+            WHERE r.userId = :userId AND r.deleted = false
+            """)
+    Page<AdminUserContentItemResponse> findAdminReplyContentsByUserId(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
 
     long countByUserIdAndDeletedFalse(Long userId);
 

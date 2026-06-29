@@ -60,6 +60,7 @@ public class TokenGenerateHelper {
 
         Long userId = tokenProvider.parseRefreshToken(refreshToken);
         User user = userAdaptor.findUserById(userId);
+        user.login();
         user.checkActiveOrThrow();
 
         tokenAdaptor.deleteRefreshToken(refreshToken);

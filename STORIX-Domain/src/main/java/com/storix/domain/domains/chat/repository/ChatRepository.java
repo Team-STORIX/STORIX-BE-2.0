@@ -3,6 +3,8 @@ package com.storix.domain.domains.chat.repository;
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -50,6 +52,29 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
     List<ChatMessageResponseDto> findRecentByRoomIdAndSenderId(
             @Param("roomId") Long roomId,
             @Param("senderId") Long senderId,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                m.id,
+                com.storix.domain.domains.user.dto.AdminUserContentType.CHAT,
+                null,
+                null,
+                m.roomId,
+                null,
+                m.message,
+                null,
+                m.messageType,
+                0,
+                0,
+                m.createdAt
+            )
+            FROM ChatMessage m
+            WHERE m.senderId = :userId AND m.deleted = false
+            """)
+    Page<AdminUserContentItemResponse> findAdminChatContentsByUserId(
+            @Param("userId") Long userId,
             Pageable pageable
     );
 

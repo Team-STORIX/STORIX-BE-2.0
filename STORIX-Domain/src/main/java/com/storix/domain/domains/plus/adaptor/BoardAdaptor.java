@@ -5,9 +5,11 @@ import com.storix.domain.domains.plus.dto.CreateReaderBoardCommand;
 import com.storix.domain.domains.plus.repository.ReaderBoardRepository;
 import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
 import com.storix.domain.domains.plus.exception.DuplicateBoardUploadException;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
@@ -100,6 +102,10 @@ public class BoardAdaptor {
 
     public long countActiveBoardsByUserId(Long userId) {
         return readerBoardRepository.countByUserIdAndDeletedFalse(userId);
+    }
+
+    public Page<AdminUserContentItemResponse> findAdminBoardContentsByUserId(Long userId, Pageable pageable) {
+        return readerBoardRepository.findAdminBoardContentsByUserId(userId, pageable);
     }
 
 }

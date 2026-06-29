@@ -54,3 +54,4 @@ out/
 /storix-db-tunnel.sh
 .claude
 /tools
+*.sql

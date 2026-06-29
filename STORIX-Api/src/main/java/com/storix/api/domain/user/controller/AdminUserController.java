@@ -6,16 +6,21 @@ import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.AccountState;
+import com.storix.domain.domains.user.dto.AdminUserContentPageResponse;
+import com.storix.domain.domains.user.dto.AdminUserContentType;
 import com.storix.domain.domains.user.dto.AdminUserPageResponse;
+import com.storix.domain.domains.user.dto.AdminUserReportPageResponse;
+import com.storix.domain.domains.user.dto.AdminUserSanctionPageResponse;
 import com.storix.domain.domains.user.dto.AdminUserSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,14 +48,8 @@ public class AdminUserController {
             @RequestParam(required = false) String nickName,
             @Parameter(description = "계정 상태")
             @RequestParam(required = false) AccountState state,
-            @Parameter(description = "페이지 번호")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기")
-            @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "정렬 기준")
-            @RequestParam(defaultValue = "createdAt") String sort
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sort));
         AdminUserPageResponse response = adminUserUseCase.searchUsers(authUserDetails, userId, nickName, state, pageable);
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
     }
@@ -66,8 +65,34 @@ public class AdminUserController {
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
     }
 
+    @GetMapping("/{userId}/contents")
+    @Operation(summary = "관리자 유저 작성 콘텐츠 조회", description = "특정 유저가 작성한 게시글, 댓글, 채팅, 리뷰를 타입별로 페이지 조회합니다.")
+    public CustomResponse<AdminUserContentPageResponse> getUserContents(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @Parameter(description = "조회할 유저 ID")
+            @PathVariable Long userId,
+            @Parameter(description = "콘텐츠 타입")
+            @RequestParam AdminUserContentType type,
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        AdminUserContentPageResponse response = adminUserUseCase.getUserContents(authUserDetails, userId, type, pageable);
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
+    }
+
+    @GetMapping("/{userId}/reports")
+    @Operation(summary = "관리자 유저 신고 내역 조회", description = "특정 유저가 작성했거나 신고받은 내역을 날짜순으로 페이지 조회합니다.")
+    public CustomResponse<AdminUserReportPageResponse> getUserReportHistories(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @Parameter(description = "조회할 유저 ID")
+            @PathVariable Long userId,
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        AdminUserReportPageResponse response = adminUserUseCase.getUserReportHistories(authUserDetails, userId, pageable);
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
+    }
+
     @PostMapping("/{userId}/sanctions")
-    @Operation(summary = "관리자 유저 제재 생성", description = "특정 유저에게 수동 제재를 생성하고 계정 상태를 변경합니다. type=SUSPENDED는 days 필수, WITHDRAWN/RESTORED는 days를 사용하지 않습니다.")
+    @Operation(summary = "관리자 유저 제재 생성", description = "특정 유저에게 수동 제재를 가하고 계정 상태를 변경합니다. type은 SUSPENDED(정지)/WITHDRAWN(탈퇴)/RESTORED(복구)입니다.")
     public CustomResponse<Void> createUserSanction(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @Parameter(description = "제재할 유저 ID")
@@ -76,5 +101,17 @@ public class AdminUserController {
     ) {
         adminUserUseCase.createUserSanction(authUserDetails, userId, request);
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
+    }
+
+    @GetMapping("/{userId}/sanctions")
+    @Operation(summary = "관리자 유저 제재 내역 조회", description = "특정 유저의 제재 내역과 제재를 처리한 관리자 정보를 조회합니다.")
+    public CustomResponse<AdminUserSanctionPageResponse> getUserSanctions(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @Parameter(description = "조회할 유저 ID")
+            @PathVariable Long userId,
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        AdminUserSanctionPageResponse response = adminUserUseCase.getUserSanctions(authUserDetails, userId, pageable);
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
     }
 }

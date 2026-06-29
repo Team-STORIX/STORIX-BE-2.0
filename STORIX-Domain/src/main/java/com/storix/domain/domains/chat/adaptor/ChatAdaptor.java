@@ -4,7 +4,9 @@ import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.chat.repository.ChatRepository;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,10 @@ public class ChatAdaptor {
 
     public List<ChatMessageResponseDto> loadRecentMessagesBySender(Long roomId, Long senderId, Pageable pageable) {
         return chatRepository.findRecentByRoomIdAndSenderId(roomId, senderId, pageable);
+    }
+
+    public Page<AdminUserContentItemResponse> findAdminChatContentsByUserId(Long userId, Pageable pageable) {
+        return chatRepository.findAdminChatContentsByUserId(userId, pageable);
     }
 
     public ChatMessage saveMessage(ChatMessage message) {

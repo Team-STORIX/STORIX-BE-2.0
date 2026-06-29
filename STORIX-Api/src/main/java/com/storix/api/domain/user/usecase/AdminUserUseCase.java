@@ -7,10 +7,14 @@ import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.dto.AdminUserActivityStats;
 import com.storix.domain.domains.user.dto.AdminUserBasicInfo;
+import com.storix.domain.domains.user.dto.AdminUserContentPageResponse;
+import com.storix.domain.domains.user.dto.AdminUserContentType;
 import com.storix.domain.domains.user.dto.AdminUserListResponse;
 import com.storix.domain.domains.user.dto.AdminUserPageResponse;
+import com.storix.domain.domains.user.dto.AdminUserReportPageResponse;
 import com.storix.domain.domains.user.dto.AdminUserReportStats;
 import com.storix.domain.domains.user.dto.AdminUserSanctionHistoryResponse;
+import com.storix.domain.domains.user.dto.AdminUserSanctionPageResponse;
 import com.storix.domain.domains.user.dto.AdminUserSearchCondition;
 import com.storix.domain.domains.user.dto.AdminUserSummaryResponse;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
@@ -46,7 +50,6 @@ public class AdminUserUseCase {
     }
 
     public AdminUserSummaryResponse getUserSummary(AuthUserDetails authUserDetails, Long userId) {
-
         // 관리자 권한 검증
         validateAdmin(authUserDetails);
 
@@ -65,8 +68,36 @@ public class AdminUserUseCase {
         return AdminUserSummaryResponse.of(basicInfo, activityStats, reportStats, sanctions);
     }
 
-    public void createUserSanction(AuthUserDetails authUserDetails, Long userId, AdminUserSanctionRequest request) {
+    public AdminUserSanctionPageResponse getUserSanctions(AuthUserDetails authUserDetails, Long userId, Pageable pageable) {
+        // 관리자 권한 검증
+        validateAdmin(authUserDetails);
 
+        // 유저 제재 이력 상세 조회
+        return adminUserService.getSanctionDetails(userId, pageable);
+    }
+
+    public AdminUserContentPageResponse getUserContents(
+            AuthUserDetails authUserDetails,
+            Long userId,
+            AdminUserContentType type,
+            Pageable pageable
+    ) {
+        // 관리자 권한 검증
+        validateAdmin(authUserDetails);
+
+        // 유저 작성 콘텐츠 조회
+        return adminUserService.getUserContents(userId, type, pageable);
+    }
+
+    public AdminUserReportPageResponse getUserReportHistories(AuthUserDetails authUserDetails, Long userId, Pageable pageable) {
+        // 관리자 권한 검증
+        validateAdmin(authUserDetails);
+
+        // 유저 신고 내역 조회
+        return adminUserService.getUserReportHistories(userId, pageable);
+    }
+
+    public void createUserSanction(AuthUserDetails authUserDetails, Long userId, AdminUserSanctionRequest request) {
         // 관리자 권한 검증
         validateAdmin(authUserDetails);
 
