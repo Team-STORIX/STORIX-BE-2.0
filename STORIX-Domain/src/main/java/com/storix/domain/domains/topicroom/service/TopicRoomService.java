@@ -202,6 +202,11 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw TopicRoomAlreadyExistsException.EXCEPTION;
         }
 
+        // 토픽룸 참여 개수 제한
+        if (loadTopicRoomPort.countJoinedRooms(userId) >= 9) {
+            throw MaxLimitException.EXCEPTION;
+        }
+
         if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
             throw UnverifiedException.EXCEPTION;
 

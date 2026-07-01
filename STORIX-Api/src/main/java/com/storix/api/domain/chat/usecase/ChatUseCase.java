@@ -63,6 +63,6 @@ public class ChatUseCase {
         // 과거 메시지 조회 (차단 유저 제외)
         Slice<ChatMessageResponseDto> chatMessages = chatService.getChatMessages(roomId, blockedIds, pageable);
 
-        return new ChatHistoryResponseDto(joinedAt, chatMessages);
+        return ChatHistoryResponseDto.from(joinedAt, chatMessages);
     }
 }
