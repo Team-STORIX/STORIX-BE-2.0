@@ -58,7 +58,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
     @Query("""
             SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
                 m.id,
-                com.storix.domain.domains.user.dto.AdminUserContentType.CHAT,
+                com.storix.domain.domains.report.domain.TargetContentType.TOPIC_ROOM,
                 null,
                 null,
                 m.roomId,
@@ -84,6 +84,17 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "AND m.messageType = :messageType AND m.deleted = false")
     int softDeleteByRoomIdAndSenderId(
             @Param("roomId") Long roomId,
+            @Param("senderId") Long senderId,
+            @Param("messageType") MessageType messageType,
+            @Param("now") LocalDateTime now
+    );
+
+    @Modifying
+    @Query("UPDATE ChatMessage m SET m.deleted = true, m.deletedAt = :now " +
+            "WHERE m.id = :messageId AND m.senderId = :senderId " +
+            "AND m.messageType = :messageType AND m.deleted = false")
+    int softDeleteByIdAndSenderId(
+            @Param("messageId") Long messageId,
             @Param("senderId") Long senderId,
             @Param("messageType") MessageType messageType,
             @Param("now") LocalDateTime now

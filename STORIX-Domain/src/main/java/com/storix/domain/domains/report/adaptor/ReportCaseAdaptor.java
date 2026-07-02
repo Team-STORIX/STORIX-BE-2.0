@@ -2,7 +2,7 @@ package com.storix.domain.domains.report.adaptor;
 
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.report.repository.StatusCountProjection;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
 import com.storix.domain.domains.report.exception.UnknownReportCaseException;
@@ -23,7 +23,7 @@ public class ReportCaseAdaptor {
     private final ReportCaseRepository reportCaseRepository;
     private final ReportCaseTransactionAdaptor reportCaseTransactionAdaptor;
 
-    public ReportCase findOrCreate(ReportTargetType targetType, Long targetId, Long reportedUserId) {
+    public ReportCase findOrCreate(TargetContentType targetType, Long targetId, Long reportedUserId) {
         ReportCase existing = findAndReopenIfClosed(targetType, targetId, reportedUserId);
         if (existing != null) return existing;
         try {
@@ -40,7 +40,7 @@ public class ReportCaseAdaptor {
      * SELECT + reopen()의 dirty checking만 발생하므로 별도 트랜잭션이 필요 없고,
      * 같은 트랜잭션에서 묶여야 신고 저장 실패 시 reopen도 함께 롤백되어 원자성이 보장된다.
      */
-    private ReportCase findAndReopenIfClosed(ReportTargetType targetType, Long targetId, Long reportedUserId) {
+    private ReportCase findAndReopenIfClosed(TargetContentType targetType, Long targetId, Long reportedUserId) {
         return reportCaseRepository.findByTargetTypeAndTargetIdAndReportedUserId(targetType, targetId, reportedUserId)
                 .map(rc -> {
                     if (rc.getStatus() != ReportStatus.RECEIVED) {

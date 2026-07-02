@@ -31,7 +31,7 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
     @Query("""
             SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
                 rb.id,
-                com.storix.domain.domains.user.dto.AdminUserContentType.BOARD,
+                com.storix.domain.domains.report.domain.TargetContentType.FEED,
                 rb.id,
                 null,
                 null,

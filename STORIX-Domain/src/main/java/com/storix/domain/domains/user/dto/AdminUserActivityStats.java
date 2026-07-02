@@ -4,6 +4,7 @@ public record AdminUserActivityStats(
         long boardCount,
         long replyCount,
         long topicRoomParticipationCount,
-        long reviewCount
+        long reviewCount,
+        long reportedCount
 ) {
 }

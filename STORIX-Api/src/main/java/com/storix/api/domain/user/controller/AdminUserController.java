@@ -7,9 +7,7 @@ import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.dto.AdminUserContentPageResponse;
-import com.storix.domain.domains.user.dto.AdminUserContentType;
 import com.storix.domain.domains.user.dto.AdminUserPageResponse;
-import com.storix.domain.domains.user.dto.AdminUserReportPageResponse;
 import com.storix.domain.domains.user.dto.AdminUserSanctionPageResponse;
 import com.storix.domain.domains.user.dto.AdminUserSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -66,33 +64,26 @@ public class AdminUserController {
     }
 
     @GetMapping("/{userId}/contents")
-    @Operation(summary = "관리자 유저 작성 콘텐츠 조회", description = "특정 유저가 작성한 게시글, 댓글, 채팅, 리뷰를 타입별로 페이지 조회합니다.")
+    @Operation(summary = "관리자 유저 작성 콘텐츠 조회", description = "특정 유저가 작성한 게시글, 댓글, 채팅, 리뷰를 최신순으로 페이지 조회합니다.")
     public CustomResponse<AdminUserContentPageResponse> getUserContents(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @Parameter(description = "조회할 유저 ID")
             @PathVariable Long userId,
-            @Parameter(description = "콘텐츠 타입")
-            @RequestParam AdminUserContentType type,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        AdminUserContentPageResponse response = adminUserUseCase.getUserContents(authUserDetails, userId, type, pageable);
-        return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
-    }
-
-    @GetMapping("/{userId}/reports")
-    @Operation(summary = "관리자 유저 신고 내역 조회", description = "특정 유저가 작성했거나 신고받은 내역을 날짜순으로 페이지 조회합니다.")
-    public CustomResponse<AdminUserReportPageResponse> getUserReportHistories(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @Parameter(description = "조회할 유저 ID")
-            @PathVariable Long userId,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
-        AdminUserReportPageResponse response = adminUserUseCase.getUserReportHistories(authUserDetails, userId, pageable);
+        AdminUserContentPageResponse response = adminUserUseCase.getUserContents(authUserDetails, userId, pageable);
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, response);
     }
 
     @PostMapping("/{userId}/sanctions")
-    @Operation(summary = "관리자 유저 제재 생성", description = "특정 유저에게 수동 제재를 가하고 계정 상태를 변경합니다. type은 SUSPENDED(정지)/WITHDRAWN(탈퇴)/RESTORED(복구)입니다.")
+    @Operation(
+            summary = "관리자 유저 제재 생성",
+            description = """
+                특정 유저에게 수동 제재를 가하고 계정 상태를 변경합니다.
+                type : SUSPENDED(정지)/WITHDRAWN(탈퇴)/RESTORED(복구)/CONTENT_DELETED(콘텐츠 삭제)
+                CONTENT_DELETED 처리 시 targetType과 targetId는 필수이며, 그 외 타입에서는 null로 요청합니다.
+                """
+    )
     public CustomResponse<Void> createUserSanction(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @Parameter(description = "제재할 유저 ID")
@@ -104,7 +95,7 @@ public class AdminUserController {
     }
 
     @GetMapping("/{userId}/sanctions")
-    @Operation(summary = "관리자 유저 제재 내역 조회", description = "특정 유저의 제재 내역과 제재를 처리한 관리자 정보를 조회합니다.")
+    @Operation(summary = "관리자 유저 제재 이력 조회", description = "특정 유저의 제재 이력과 제재를 처리한 관리자 정보를 조회합니다.")
     public CustomResponse<AdminUserSanctionPageResponse> getUserSanctions(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @Parameter(description = "조회할 유저 ID")

@@ -3,8 +3,12 @@ package com.storix.domain.domains.user.service;
 import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
+import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
+import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
+import com.storix.domain.domains.report.domain.TargetContentType;
+import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
 import com.storix.domain.domains.review.adaptor.ReviewReportAdaptor;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
@@ -19,19 +23,19 @@ import com.storix.domain.domains.user.domain.UserSanctionType;
 import com.storix.domain.domains.user.domain.WithdrawReason;
 import com.storix.domain.domains.user.dto.AdminUserActivityStats;
 import com.storix.domain.domains.user.dto.AdminUserBasicInfo;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import com.storix.domain.domains.user.dto.AdminUserContentPageResponse;
-import com.storix.domain.domains.user.dto.AdminUserContentType;
 import com.storix.domain.domains.user.dto.AdminUserListResponse;
-import com.storix.domain.domains.user.dto.AdminUserReportItemResponse;
-import com.storix.domain.domains.user.dto.AdminUserReportPageResponse;
-import com.storix.domain.domains.user.dto.AdminUserReportStats;
 import com.storix.domain.domains.user.dto.AdminUserSanctionDetailResponse;
 import com.storix.domain.domains.user.dto.AdminUserSanctionHistoryResponse;
 import com.storix.domain.domains.user.dto.AdminUserSanctionPageResponse;
 import com.storix.domain.domains.user.dto.AdminUserSearchCondition;
+import com.storix.domain.domains.user.exception.admin.InvalidAdminUserSanctionRequestException;
+import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import com.storix.domain.domains.user.exception.auth.InvalidWithdrawException;
 import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.domain.domains.user.publisher.UserAccessRevokedPublisher;
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -41,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,6 +67,9 @@ public class AdminUserService {
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final ChatAdaptor chatAdaptor;
     private final ReviewAdaptor reviewAdaptor;
+    private final ReviewLikeAdaptor reviewLikeAdaptor;
+    private final LibraryAdaptor libraryAdaptor;
+    private final WorksAdaptor worksAdaptor;
     private final FeedReportAdaptor feedReportAdaptor;
     private final ReviewReportAdaptor reviewReportAdaptor;
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
@@ -75,7 +83,17 @@ public class AdminUserService {
                 nickName,
                 condition.accountState(),
                 pageable
-        );
+        ).map(user -> new AdminUserListResponse(
+                user.userId(),
+                user.nickName(),
+                user.email(),
+                user.oauthProvider(),
+                user.joinedAt(),
+                user.accountState(),
+                user.suspendedUntil(),
+                user.lastLoginAt(),
+                countReportedByUserId(user.userId())
+        ));
     }
 
     public AdminUserBasicInfo getBasicInfo(Long userId) {
@@ -88,18 +106,15 @@ public class AdminUserService {
                 boardAdaptor.countActiveBoardsByUserId(userId),
                 readerFeedAdaptor.countActiveRepliesByUserId(userId),
                 topicRoomAdaptor.countJoinedRooms(userId),
-                reviewAdaptor.countActiveReviewsByUserId(userId)
+                reviewAdaptor.countActiveReviewsByUserId(userId),
+                countReportedByUserId(userId)
         );
     }
 
-    public AdminUserReportStats getReportStats(Long userId) {
-        long reporterCount = feedReportAdaptor.countAllByReporterId(userId)
-                + reviewReportAdaptor.countByReporterId(userId)
-                + topicRoomReportAdaptor.countByReporterId(userId);
-        long reportedCount = feedReportAdaptor.countAllByReportedUserId(userId)
+    private long countReportedByUserId(Long userId) {
+        return feedReportAdaptor.countAllByReportedUserId(userId)
                 + reviewReportAdaptor.countByReportedUserId(userId)
                 + topicRoomReportAdaptor.countByReportedUserId(userId);
-        return new AdminUserReportStats(reporterCount, reportedCount);
     }
 
     public List<AdminUserSanctionHistoryResponse> getSanctionHistories(Long userId) {
@@ -122,36 +137,25 @@ public class AdminUserService {
         return AdminUserSanctionPageResponse.from(page, content);
     }
 
-    public AdminUserContentPageResponse getUserContents(Long userId, AdminUserContentType type, Pageable pageable) {
+    public AdminUserContentPageResponse getUserContents(Long userId, Pageable pageable) {
         userAdaptor.findUserById(userId);
-        Page<com.storix.domain.domains.user.dto.AdminUserContentItemResponse> page = switch (type) {
-            case BOARD -> boardAdaptor.findAdminBoardContentsByUserId(userId, pageable);
-            case REPLY -> readerFeedAdaptor.findAdminReplyContentsByUserId(userId, pageable);
-            case CHAT -> chatAdaptor.findAdminChatContentsByUserId(userId, pageable);
-            case REVIEW -> reviewAdaptor.findAdminReviewContentsByUserId(userId, pageable);
-        };
-        return AdminUserContentPageResponse.from(page);
-    }
+        List<AdminUserContentItemResponse> contents = new java.util.ArrayList<>();
+        Pageable unpaged = Pageable.unpaged();
+        contents.addAll(boardAdaptor.findAdminBoardContentsByUserId(userId, unpaged).getContent());
+        contents.addAll(readerFeedAdaptor.findAdminReplyContentsByUserId(userId, unpaged).getContent());
+        contents.addAll(chatAdaptor.findAdminChatContentsByUserId(userId, unpaged).getContent());
+        contents.addAll(reviewAdaptor.findAdminReviewContentsByUserId(userId, unpaged).getContent());
 
-    public AdminUserReportPageResponse getUserReportHistories(Long userId, Pageable pageable) {
-        userAdaptor.findUserById(userId);
-        List<AdminUserReportItemResponse> reports = new java.util.ArrayList<>();
-        reports.addAll(feedReportAdaptor.findAdminReportsByReporterId(userId));
-        reports.addAll(reviewReportAdaptor.findAdminReportsByReporterId(userId));
-        reports.addAll(topicRoomReportAdaptor.findAdminReportsByReporterId(userId));
-        reports.addAll(feedReportAdaptor.findAdminReportsByReportedUserId(userId));
-        reports.addAll(reviewReportAdaptor.findAdminReportsByReportedUserId(userId));
-        reports.addAll(topicRoomReportAdaptor.findAdminReportsByReportedUserId(userId));
-
-        List<AdminUserReportItemResponse> sortedReports = reports.stream()
-                .sorted(java.util.Comparator.comparing(AdminUserReportItemResponse::createdAt).reversed())
+        List<AdminUserContentItemResponse> sortedContents = contents.stream()
+                .sorted(Comparator.comparing(AdminUserContentItemResponse::createdAt).reversed())
                 .toList();
-        int start = Math.min((int) pageable.getOffset(), sortedReports.size());
-        int end = Math.min(start + pageable.getPageSize(), sortedReports.size());
-        return AdminUserReportPageResponse.from(new PageImpl<>(
-                sortedReports.subList(start, end),
+
+        int start = Math.min((int) pageable.getOffset(), sortedContents.size());
+        int end = Math.min(start + pageable.getPageSize(), sortedContents.size());
+        return AdminUserContentPageResponse.from(new PageImpl<>(
+                sortedContents.subList(start, end),
                 pageable,
-                sortedReports.size()
+                sortedContents.size()
         ));
     }
 
@@ -160,12 +164,15 @@ public class AdminUserService {
             Long adminId,
             Long userId,
             UserSanctionType type,
+            TargetContentType targetType,
+            Long targetId,
             String memo
     ) {
         switch (type) {
             case SUSPENDED -> suspendUserManually(adminId, userId, memo);
             case WITHDRAWN -> withdrawUserManually(adminId, userId, memo);
             case RESTORED -> restoreUserManually(adminId, userId, memo);
+            case CONTENT_DELETED -> deleteContentManually(adminId, userId, targetType, targetId, memo);
         }
     }
 
@@ -199,6 +206,72 @@ public class AdminUserService {
         user.restore();
         userBlacklistAdaptor.unblock(userId);
         saveManualSanctionHistory(userId, adminId, UserSanctionType.RESTORED, now, null, memo);
+    }
+
+    private void deleteContentManually(
+            Long adminId,
+            Long userId,
+            TargetContentType targetType,
+            Long targetId,
+            String memo
+    ) {
+        if (targetType == null || targetId == null) {
+            throw InvalidAdminUserSanctionRequestException.EXCEPTION;
+        }
+
+        userAdaptor.findUserById(userId);
+
+        switch (targetType) {
+            case FEED -> deleteFeedManually(userId, targetId);
+            case FEED_REPLY -> deleteFeedReplyManually(userId, targetId);
+            case REVIEW -> deleteReviewManually(userId, targetId);
+            case TOPIC_ROOM -> deleteChatMessageManually(userId, targetId);
+        }
+
+        saveManualSanctionHistory(
+                userId,
+                adminId,
+                UserSanctionType.CONTENT_DELETED,
+                LocalDateTime.now(),
+                null,
+                memo
+        );
+    }
+
+    private void deleteFeedManually(Long userId, Long boardId) {
+        validateContentOwner(userId, readerFeedAdaptor.findBoardOwnerUserId(boardId));
+        Long ownerId = boardAdaptor.adminDeleteReaderBoard(boardId);
+        if (ownerId != null) {
+            libraryAdaptor.decrementBoardCount(ownerId);
+        }
+    }
+
+    private void deleteFeedReplyManually(Long userId, Long replyId) {
+        validateContentOwner(userId, readerFeedAdaptor.findReplyOwnerUserId(replyId));
+        readerFeedAdaptor.adminDeleteReaderBoardReply(replyId);
+    }
+
+    private void deleteReviewManually(Long userId, Long reviewId) {
+        validateContentOwner(userId, reviewAdaptor.findReviewerIdById(reviewId));
+        if (!reviewAdaptor.adminDeleteReview(reviewId)) return;
+
+        ReviewedWorksIdAndRatingInfo info = reviewAdaptor.getReviewedWorksIdAndRatingInfo(reviewId);
+        reviewLikeAdaptor.deleteAllRelatedReviewLike(reviewId);
+        worksAdaptor.updateDecrementingReviewInfo(info.worksId(), info.rating().getRatingValue());
+        libraryAdaptor.decrementReviewCount(userId);
+    }
+
+    private void deleteChatMessageManually(Long userId, Long messageId) {
+        int deletedCount = chatAdaptor.softDeleteTalkMessageBySender(messageId, userId);
+        if (deletedCount == 0) {
+            throw InvalidAdminUserSanctionRequestException.EXCEPTION;
+        }
+    }
+
+    private void validateContentOwner(Long userId, Long ownerId) {
+        if (!userId.equals(ownerId)) {
+            throw ForbiddenApproachException.EXCEPTION;
+        }
     }
 
     private void saveManualSanctionHistory(

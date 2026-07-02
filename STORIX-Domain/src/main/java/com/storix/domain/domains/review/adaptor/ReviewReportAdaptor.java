@@ -4,7 +4,6 @@ import com.storix.domain.domains.review.domain.ReviewReport;
 import com.storix.domain.domains.review.dto.CreateWorksDetailReportCommand;
 import com.storix.domain.domains.review.repository.ReportCaseCountProjection;
 import com.storix.domain.domains.review.repository.ReviewReportRepository;
-import com.storix.domain.domains.user.dto.AdminUserReportItemResponse;
 import com.storix.domain.domains.works.exception.DuplicateReviewReportException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -56,11 +55,4 @@ public class ReviewReportAdaptor {
         return reviewReportRepository.countByReportedUserId(userId);
     }
 
-    public List<AdminUserReportItemResponse> findAdminReportsByReporterId(Long userId) {
-        return reviewReportRepository.findAdminReportsByReporterId(userId);
-    }
-
-    public List<AdminUserReportItemResponse> findAdminReportsByReportedUserId(Long userId) {
-        return reviewReportRepository.findAdminReportsByReportedUserId(userId);
-    }
 }

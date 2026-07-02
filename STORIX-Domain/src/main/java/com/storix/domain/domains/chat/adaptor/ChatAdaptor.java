@@ -40,6 +40,10 @@ public class ChatAdaptor {
         return chatRepository.softDeleteByRoomIdAndSenderId(roomId, senderId, MessageType.TALK, LocalDateTime.now());
     }
 
+    public int softDeleteTalkMessageBySender(Long messageId, Long senderId) {
+        return chatRepository.softDeleteByIdAndSenderId(messageId, senderId, MessageType.TALK, LocalDateTime.now());
+    }
+
     public int hardDeleteBefore(LocalDateTime cutoff) {
         return chatRepository.hardDeleteBefore(cutoff);
     }

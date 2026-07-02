@@ -3,13 +3,13 @@ package com.storix.domain.domains.report.dto;
 import com.storix.domain.domains.report.domain.ReportAction;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 
 import java.time.LocalDateTime;
 
 public record AdminReportListResponse(
         Long reportCaseId,
-        ReportTargetType targetType,
+        TargetContentType targetType,
         Long targetId,
         Long reportedUserId,
         String reportedUserNickName,

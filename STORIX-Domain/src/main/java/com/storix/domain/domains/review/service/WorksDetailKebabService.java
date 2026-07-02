@@ -5,7 +5,7 @@ import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
 import com.storix.domain.domains.review.adaptor.ReviewReportAdaptor;
 import com.storix.domain.domains.review.dto.ModifyReviewRequest;
@@ -79,7 +79,7 @@ public class WorksDetailKebabService {
             throw DuplicateReviewReportException.EXCEPTION;
         }
 
-        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.REVIEW, reviewId, actualReviewerId);
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(TargetContentType.REVIEW, reviewId, actualReviewerId);
 
         CreateWorksDetailReportCommand cmd = new CreateWorksDetailReportCommand(
                 userId,

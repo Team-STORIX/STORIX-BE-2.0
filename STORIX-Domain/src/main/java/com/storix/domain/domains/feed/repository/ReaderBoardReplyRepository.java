@@ -89,7 +89,7 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     @Query("""
             SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
                 r.id,
-                com.storix.domain.domains.user.dto.AdminUserContentType.REPLY,
+                com.storix.domain.domains.report.domain.TargetContentType.FEED_REPLY,
                 r.board.id,
                 parent.id,
                 null,

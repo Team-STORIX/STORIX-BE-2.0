@@ -39,7 +39,7 @@ public class ReportCase extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", nullable = false, length = 20)
-    private ReportTargetType targetType;
+    private TargetContentType targetType;
 
     @Column(name = "target_id", nullable = false)
     private Long targetId;
@@ -101,7 +101,7 @@ public class ReportCase extends BaseTimeEntity {
 
     @Builder
     public ReportCase(
-            ReportTargetType targetType,
+            TargetContentType targetType,
             Long targetId,
             Long reportedUserId,
             ReportStatus status,

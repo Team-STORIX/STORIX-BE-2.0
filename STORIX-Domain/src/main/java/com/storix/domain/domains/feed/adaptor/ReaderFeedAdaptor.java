@@ -184,6 +184,10 @@ public class ReaderFeedAdaptor {
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
     }
 
+    public Long findReplyOwnerUserId(Long replyId) {
+        return findReplyById(replyId).getUserId();
+    }
+
     // 댓글 좋아요 관련
     public int isReplyLikeDeleted(Long userId, Long replyId) {
         return readerBoardReplyLikeRepository.deleteLike(userId, replyId);

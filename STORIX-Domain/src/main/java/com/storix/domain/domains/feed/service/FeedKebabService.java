@@ -9,7 +9,7 @@ import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.topicroom.exception.SelfReportException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,7 +46,7 @@ public class FeedKebabService {
             throw DuplicateFeedReportException.EXCEPTION;
         }
 
-        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED, boardId, reportedUserId);
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(TargetContentType.FEED, boardId, reportedUserId);
 
         CreateFeedReportCommand cmd = new CreateFeedReportCommand(
                 userId,
@@ -78,7 +78,7 @@ public class FeedKebabService {
             throw DuplicateFeedReplyReportException.EXCEPTION;
         }
 
-        ReportCase reportCase = reportCaseAdaptor.findOrCreate(ReportTargetType.FEED_REPLY, replyId, reportedUserId);
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(TargetContentType.FEED_REPLY, replyId, reportedUserId);
 
         CreateFeedReportCommand cmd = new CreateFeedReportCommand(
                 userId,

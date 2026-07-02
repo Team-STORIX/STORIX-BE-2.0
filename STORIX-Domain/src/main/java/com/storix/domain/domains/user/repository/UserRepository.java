@@ -43,6 +43,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             u.id,
             u.nickName,
             u.oauthInfo.email,
+            u.oauthInfo.provider,
             u.createdAt,
             u.accountState,
             u.suspendedUntil,
@@ -52,6 +53,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         WHERE (:userId IS NULL OR u.id = :userId)
           AND (:nickName IS NULL OR u.nickName LIKE CONCAT('%', :nickName, '%'))
           AND (:accountState IS NULL OR u.accountState = :accountState)
+          AND u.role = com.storix.domain.domains.user.domain.Role.READER
     """)
     Page<AdminUserListResponse> searchAdminUsers(
             @Param("userId") Long userId,

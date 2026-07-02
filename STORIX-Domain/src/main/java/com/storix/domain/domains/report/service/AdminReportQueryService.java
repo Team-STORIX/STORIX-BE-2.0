@@ -13,7 +13,7 @@ import com.storix.domain.domains.plus.dto.ReviewInfo;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
@@ -120,21 +120,21 @@ public class AdminReportQueryService {
 
         Map<Long, Long> reportCounts = new HashMap<>();
         reportCounts.putAll(feedReportAdaptor.countFeedReportsByReportCaseIds(
-                reportCaseIdsByTargetType(reportCases, ReportTargetType.FEED)
+                reportCaseIdsByTargetType(reportCases, TargetContentType.FEED)
         ));
         reportCounts.putAll(feedReportAdaptor.countFeedReplyReportsByReportCaseIds(
-                reportCaseIdsByTargetType(reportCases, ReportTargetType.FEED_REPLY)
+                reportCaseIdsByTargetType(reportCases, TargetContentType.FEED_REPLY)
         ));
         reportCounts.putAll(reviewReportAdaptor.countByReportCaseIds(
-                reportCaseIdsByTargetType(reportCases, ReportTargetType.REVIEW)
+                reportCaseIdsByTargetType(reportCases, TargetContentType.REVIEW)
         ));
         reportCounts.putAll(topicRoomReportAdaptor.countByReportCaseIds(
-                reportCaseIdsByTargetType(reportCases, ReportTargetType.TOPIC_ROOM)
+                reportCaseIdsByTargetType(reportCases, TargetContentType.TOPIC_ROOM)
         ));
         return reportCounts;
     }
 
-    private List<Long> reportCaseIdsByTargetType(List<ReportCase> reportCases, ReportTargetType targetType) {
+    private List<Long> reportCaseIdsByTargetType(List<ReportCase> reportCases, TargetContentType targetType) {
         return reportCases.stream()
                 .filter(reportCase -> reportCase.getTargetType() == targetType)
                 .map(ReportCase::getId)

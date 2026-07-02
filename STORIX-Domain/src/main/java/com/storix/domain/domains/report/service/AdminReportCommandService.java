@@ -10,7 +10,7 @@ import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportAction;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.report.exception.AlreadyProcessedReportCaseException;
 import com.storix.domain.domains.report.exception.InvalidReportProcessRequestException;
 import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
@@ -91,7 +91,7 @@ public class AdminReportCommandService {
 
     private void deleteContent(ReportCase reportCase) {
         Long targetId = reportCase.getTargetId();
-        ReportTargetType targetType = reportCase.getTargetType();
+        TargetContentType targetType = reportCase.getTargetType();
 
         switch (targetType) {
             case FEED -> {
@@ -102,6 +102,7 @@ public class AdminReportCommandService {
             case REVIEW -> deleteReview(targetId);
             case TOPIC_ROOM -> chatAdaptor.softDeleteTalkMessagesBySender(targetId, reportCase.getReportedUserId());
         }
+        saveSanctionHistory(reportCase, UserSanctionType.CONTENT_DELETED, LocalDateTime.now(), null);
     }
 
     private void deleteReview(Long reviewId) {

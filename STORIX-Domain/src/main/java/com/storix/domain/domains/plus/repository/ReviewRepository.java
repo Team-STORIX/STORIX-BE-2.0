@@ -53,7 +53,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("""
             SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
                 r.id,
-                com.storix.domain.domains.user.dto.AdminUserContentType.REVIEW,
+                com.storix.domain.domains.report.domain.TargetContentType.REVIEW,
                 null,
                 null,
                 null,

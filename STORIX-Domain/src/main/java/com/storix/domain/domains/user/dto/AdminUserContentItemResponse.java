@@ -2,12 +2,13 @@ package com.storix.domain.domains.user.dto;
 
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.plus.domain.Rating;
+import com.storix.domain.domains.report.domain.TargetContentType;
 
 import java.time.LocalDateTime;
 
 public record AdminUserContentItemResponse(
         Long contentId,
-        AdminUserContentType type,
+        TargetContentType type,
         Long boardId,
         Long parentReplyId,
         Long roomId,
