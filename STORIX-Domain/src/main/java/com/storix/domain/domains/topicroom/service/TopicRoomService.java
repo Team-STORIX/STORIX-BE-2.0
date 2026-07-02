@@ -19,6 +19,7 @@ import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
+import com.storix.domain.domains.topicroom.domain.enums.ReportReason;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
@@ -290,13 +291,15 @@ public class TopicRoomService implements TopicRoomUseCase {
                 request.getReportedUserId()
         );
 
+        boolean isChatMessageReport = request.getChatMessageId() != null;
+
         TopicRoomReport report = TopicRoomReport.builder()
                 .reporterId(reporterId)
                 .reportedUserId(request.getReportedUserId())
                 .topicRoomId(roomId)
                 .chatMessageId(request.getChatMessageId())
-                .reason(request.getReason())
-                .otherReason(request.getOtherReason())
+                .reason(isChatMessageReport ? request.getReason() : ReportReason.DEFAULT)
+                .otherReason(isChatMessageReport ? request.getOtherReason() : null)
                 .reportCaseId(reportCase.getId())
                 .build();
 
