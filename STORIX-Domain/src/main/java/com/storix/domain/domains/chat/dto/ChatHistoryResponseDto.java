@@ -7,13 +7,18 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 public record ChatHistoryResponseDto(
-        String joinedAt,
+        String joinedDays,
+        Integer activeUserNumber,
         Slice<ChatMessageResponseDto> messages
 ) {
     private static final ZoneId KST_ZONE_ID = ZoneId.of("Asia/Seoul");
 
-    public static ChatHistoryResponseDto from(LocalDateTime joinedAt, Slice<ChatMessageResponseDto> messages) {
+    public static ChatHistoryResponseDto from(
+            LocalDateTime joinedAt,
+            Integer activeUserNumber,
+            Slice<ChatMessageResponseDto> messages
+    ) {
         long days = Duration.between(joinedAt, LocalDateTime.now(KST_ZONE_ID)).toDays() + 1;
-        return new ChatHistoryResponseDto(Math.max(days, 1) + "일", messages);
+        return new ChatHistoryResponseDto(Math.max(days, 1) + "일", activeUserNumber, messages);
     }
 }

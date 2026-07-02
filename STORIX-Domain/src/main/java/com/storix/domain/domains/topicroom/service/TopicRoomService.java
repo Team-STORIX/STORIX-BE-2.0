@@ -25,6 +25,7 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
+import com.storix.domain.domains.topicroom.publisher.TopicRoomActiveUserNumberPublisher;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
@@ -60,13 +61,13 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
     private final ProfanityFilterService profanityFilterService;
-    private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
     private final GenreScorePublisher genreScorePublisher;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
     private final UserAdaptor userAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
+    private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -246,6 +247,8 @@ public class TopicRoomService implements TopicRoomUseCase {
         try {
             recordTopicRoomPort.saveParticipation(userId, room, TopicRoomRole.MEMBER);
             recordTopicRoomPort.incrementActiveUserNumber(roomId);
+            Integer activeUserNumber = topicRoomAdaptor.findActiveUserNumberById(roomId);
+            publishActiveUserNumberChanged(roomId, activeUserNumber);
 
             genreScorePublisher.publishWithGenre(
                     userId, works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
@@ -267,6 +270,7 @@ public class TopicRoomService implements TopicRoomUseCase {
 
         try {
             TopicRoom room = loadTopicRoomPort.findById(roomId);
+            publishActiveUserNumberChanged(room.getId(), room.getActiveUserNumber());
 
             // 인원수가 0 이하면 방 삭제 로직 실행
             if (room.getActiveUserNumber() <= 0) {
@@ -323,5 +327,9 @@ public class TopicRoomService implements TopicRoomUseCase {
                 }
             });
         }
+    }
+
+    private void publishActiveUserNumberChanged(Long roomId, Integer activeUserNumber) {
+        activeUserNumberPublisher.publish(roomId, activeUserNumber);
     }
 }
