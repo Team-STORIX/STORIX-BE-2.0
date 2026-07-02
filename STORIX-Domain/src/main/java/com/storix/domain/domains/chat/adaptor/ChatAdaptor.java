@@ -28,6 +28,10 @@ public class ChatAdaptor {
         return chatRepository.findRecentByRoomIdAndSenderId(roomId, senderId, pageable);
     }
 
+    public ChatMessageResponseDto findAdminMessageById(Long messageId) {
+        return chatRepository.findAdminMessageById(messageId);
+    }
+
     public Page<AdminUserContentItemResponse> findAdminChatContentsByUserId(Long userId, Pageable pageable) {
         return chatRepository.findAdminChatContentsByUserId(userId, pageable);
     }

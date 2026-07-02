@@ -100,9 +100,17 @@ public class AdminReportCommandService {
             }
             case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(targetId);
             case REVIEW -> deleteReview(targetId);
-            case TOPIC_ROOM -> chatAdaptor.softDeleteTalkMessagesBySender(targetId, reportCase.getReportedUserId());
+            case TOPIC_ROOM -> throw InvalidReportProcessRequestException.EXCEPTION;
+            case CHAT -> deleteChatMessage(reportCase);
         }
         saveSanctionHistory(reportCase, UserSanctionType.CONTENT_DELETED, LocalDateTime.now(), null);
+    }
+
+    private void deleteChatMessage(ReportCase reportCase) {
+        int deletedCount = chatAdaptor.softDeleteTalkMessageBySender(reportCase.getTargetId(), reportCase.getReportedUserId());
+        if (deletedCount == 0) {
+            throw InvalidReportProcessRequestException.EXCEPTION;
+        }
     }
 
     private void deleteReview(Long reviewId) {

@@ -225,7 +225,8 @@ public class AdminUserService {
             case FEED -> deleteFeedManually(userId, targetId);
             case FEED_REPLY -> deleteFeedReplyManually(userId, targetId);
             case REVIEW -> deleteReviewManually(userId, targetId);
-            case TOPIC_ROOM -> deleteChatMessageManually(userId, targetId);
+            case TOPIC_ROOM -> throw InvalidAdminUserSanctionRequestException.EXCEPTION;
+            case CHAT -> deleteChatMessageManually(userId, targetId);
         }
 
         saveManualSanctionHistory(

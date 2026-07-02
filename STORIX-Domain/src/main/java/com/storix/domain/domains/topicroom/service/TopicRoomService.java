@@ -280,13 +280,16 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw SelfReportException.EXCEPTION;
         }
 
-        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId)) {
+        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId, request.getChatMessageId())) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
 
+        TargetContentType targetType = request.getChatMessageId() == null ? TargetContentType.TOPIC_ROOM : TargetContentType.CHAT;
+        Long targetId = request.getChatMessageId() == null ? roomId : request.getChatMessageId();
+
         ReportCase reportCase = reportCaseAdaptor.findOrCreate(
-                TargetContentType.TOPIC_ROOM,
-                roomId,
+                targetType,
+                targetId,
                 request.getReportedUserId()
         );
 

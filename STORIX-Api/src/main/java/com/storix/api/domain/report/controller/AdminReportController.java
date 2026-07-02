@@ -81,7 +81,7 @@ public class AdminReportController {
     @PatchMapping("/{reportCaseId}")
     @Operation(
             summary = "관리자 신고 처리",
-            description = "신고 케이스를 처리합니다. status=REJECTED: 반려 / status=COMPLETED + processAction: 처리 완료 및 액션 실행 (CONTENT_DELETED | ACCOUNT_SUSPENDED(7일) | ACCOUNT_DELETED)"
+            description = "신고 케이스를 처리합니다. status=REJECTED: 반려 / status=COMPLETED + processAction: 처리 완료 및 액션 실행 (CONTENT_DELETED | ACCOUNT_SUSPENDED(7일) | ACCOUNT_DELETED). CONTENT_DELETED는 FEED/FEED_REPLY/REVIEW/CHAT 대상 콘텐츠를 삭제하며, CHAT은 신고된 채팅 메시지 1건을 soft delete합니다."
     )
     public CustomResponse<Void> processReport(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,

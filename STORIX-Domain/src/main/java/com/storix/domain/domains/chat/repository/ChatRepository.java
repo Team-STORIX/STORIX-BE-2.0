@@ -55,10 +55,24 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             Pageable pageable
     );
 
+    @Query("SELECT new com.storix.domain.domains.chat.dto.ChatMessageResponseDto(" +
+            "   m.id, " +
+            "   m.roomId, " +
+            "   m.senderId, " +
+            "   COALESCE(u.nickName, '알 수 없음'), " +
+            "   m.message, " +
+            "   m.messageType, " +
+            "   m.createdAt " +
+            ") " +
+            "FROM ChatMessage m " +
+            "LEFT JOIN User u ON m.senderId = u.id " +
+            "WHERE m.id = :messageId")
+    ChatMessageResponseDto findAdminMessageById(@Param("messageId") Long messageId);
+
     @Query("""
             SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
                 m.id,
-                com.storix.domain.domains.report.domain.TargetContentType.TOPIC_ROOM,
+                com.storix.domain.domains.report.domain.TargetContentType.CHAT,
                 null,
                 null,
                 m.roomId,
