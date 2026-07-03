@@ -41,6 +41,13 @@ public class User extends BaseTimeEntity {
     @Column(name = "nick_name", nullable = false, length = 64)
     private String nickName;
 
+    // 외부 노출용 닉네임 — withdraw()는 원본 닉네임을 nickName 필드에 그대로 보존하므로(유니크 suffix 조합),
+    // 다른 유저에게 보여줄 땐 반드시 이 메서드를 거쳐야 함. getNickName()을 직접 노출하지 말 것.
+    // JPQL @Query에서는 엔티티 메서드를 호출할 수 없어 동일 로직을 CASE WHEN으로 별도 작성함 (UserRepository, ChatRepository 참고)
+    public String getDisplayNickName() {
+        return deletedAt != null ? STORIXStatic.WITHDRAWN_NICK_NAME : nickName;
+    }
+
     @ElementCollection(targetClass = Genre.class)
     @CollectionTable(
             name = "user_favorite_genre",
@@ -76,9 +83,6 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "account_state", nullable = false)
     private AccountState accountState = AccountState.NORMAL;
-
-    @Column(name = "deletedSuffix", length = 36)
-    private String deletedSuffix;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -199,10 +203,9 @@ public class User extends BaseTimeEntity {
             throw AlreadyWithDrawUserException.EXCEPTION;
         }
         accountState = AccountState.DELETED;
-        deletedSuffix = UUID.randomUUID().toString();
         favoriteGenreList = null;
         profileObjectKey = null;
-        nickName = STORIXStatic.WITHDRAW_PREFIX + deletedSuffix + ":" + nickName;
+        nickName = STORIXStatic.WITHDRAW_PREFIX + UUID.randomUUID() + ":" + nickName;
         oauthInfo = oauthInfo.withDrawOauthInfo();
         ageOver14 = null;
         isAdultVerified = null;
