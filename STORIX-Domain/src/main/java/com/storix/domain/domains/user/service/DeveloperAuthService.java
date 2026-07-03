@@ -55,9 +55,7 @@ public class DeveloperAuthService {
     public AuthUserDetails approveDeveloperSignup(String pendingId) {
         DeveloperSignupPending pending = internalSignupPendingAdaptor.getDeveloperPending(pendingId);
 
-        // Slack 승인까지 최대 10분 대기하는 동안 닉네임이 선점될 수 있어 재검증
-        // (그래도 남는 마지막 순간의 경합은 uk_nick_name 제약이 최종 방어선)
-        userAdaptor.checkNicknameDuplicate(pending.getNickName());
+        userAdaptor.checkNicknameDuplicateForApproval(pending.getNickName());
 
         CreateDeveloperUserCommand cmd = CreateDeveloperUserCommand.builder()
                 .oid(pendingId)

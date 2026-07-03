@@ -14,6 +14,11 @@ public class STORIXStatic {
     public static final String WITHDRAW_PREFIX = "DELETED:";
     public static final String WITHDRAWN_NICK_NAME = "탈퇴한 유저";
 
+    // JPQL @Query에서 탈퇴 유저 닉네임을 마스킹하는 CASE WHEN 조각 — User.getDisplayNickName()과 동일 규칙
+    // (JPQL은 엔티티 메서드를 호출할 수 없어 문자열로 중복 정의, 규칙 변경 시 이 상수만 고치면 전체 반영됨)
+    public static final String NICK_NAME_DISPLAY_CASE_WHEN =
+            "CASE WHEN u.deletedAt IS NOT NULL THEN '" + WITHDRAWN_NICK_NAME + "' ELSE u.nickName END";
+
     public static final int MILLI_TO_SECOND = 1000;
 
     // 인기 검색어 Redis 합산 키

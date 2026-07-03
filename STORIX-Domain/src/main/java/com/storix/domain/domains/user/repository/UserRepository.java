@@ -44,7 +44,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 단건 프로필 정보 조회 — 탈퇴 유저는 nick_name 대신 고정 표시 문구로 대체
     @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
             "   u.id, u.profileObjectKey, " +
-            "   CASE WHEN u.deletedAt IS NOT NULL THEN '" + com.storix.common.utils.STORIXStatic.WITHDRAWN_NICK_NAME + "' ELSE u.nickName END" +
+            "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +
             ") " +
             "FROM User u " +
             "WHERE u.id = :userId ")
@@ -53,7 +53,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 단체 프로필 정보 조회 — 탈퇴 유저는 nick_name 대신 고정 표시 문구로 대체
     @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
             "   u.id, u.profileObjectKey, " +
-            "   CASE WHEN u.deletedAt IS NOT NULL THEN '" + com.storix.common.utils.STORIXStatic.WITHDRAWN_NICK_NAME + "' ELSE u.nickName END" +
+            "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +
             ") " +
             "FROM User u " +
             "WHERE u.id IN :userIds ")
@@ -70,7 +70,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT new com.storix.domain.domains.user.dto.UserNicknameInfo(" +
             "   u.id, " +
-            "   CASE WHEN u.deletedAt IS NOT NULL THEN '" + com.storix.common.utils.STORIXStatic.WITHDRAWN_NICK_NAME + "' ELSE u.nickName END" +
+            "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +
             ") " +
             "FROM User u " +
             "WHERE u.id IN :userIds")

@@ -149,6 +149,13 @@ public class SlackNotificationService {
         return sb.toString();
     }
 
+    public void sendApprovalFailure(String pendingId, String responseUrl, String reason) {
+        String text = "*[⚠️ 승인 처리 실패]*\n" +
+                ":x: *오류:* " + reason + "\n\n" +
+                ":key: *요청 ID:* `" + pendingId + "`";
+        sendApprovalResult(text, responseUrl);
+    }
+
     private void sendApprovalResult(String text, String responseUrl) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
