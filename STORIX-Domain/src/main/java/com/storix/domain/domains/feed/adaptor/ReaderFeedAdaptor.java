@@ -309,8 +309,25 @@ public class ReaderFeedAdaptor {
         return readerBoardRepository.findSteadyTrendingFeedNotToday(excludeIds, threshold, pageable);
     }
 
+    // soft-delete 후 보존 기간이 경과한 댓글을 청크 단위로 하드 삭제한다.
+    // 벌크 DELETE 는 JPA cascade 를 타지 않으므로 좋아요 삭제 → 자식 답댓글 참조 해제 → 댓글 삭제 순으로 FK 위반을 방지한다.
     public int hardDeleteRepliesBefore(LocalDateTime cutoff) {
-        return readerBoardReplyRepository.hardDeleteBefore(cutoff);
+        final int chunkSize = 1000;
+        int total = 0;
+
+        while (true) {
+            List<Long> replyIds = readerBoardReplyRepository.findIdsForHardDelete(
+                    cutoff, PageRequest.of(0, chunkSize));
+            if (replyIds.isEmpty()) {
+                break;
+            }
+
+            readerBoardReplyLikeRepository.hardDeleteByReplyIds(replyIds);
+            readerBoardReplyRepository.detachChildRepliesOf(replyIds);
+            total += readerBoardReplyRepository.hardDeleteByIds(replyIds);
+        }
+
+        return total;
     }
 
 }

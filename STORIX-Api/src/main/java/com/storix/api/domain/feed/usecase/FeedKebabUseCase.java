@@ -13,7 +13,7 @@ public class FeedKebabUseCase {
 
     private final FeedKebabService feedKebabService;
 
-    // 내 게시물 삭제
+    // 내 게시물 삭제 (첨부 이미지는 커밋 후 S3에서 정리)
     public CustomResponse<Void> deleteOwnBoard(Long userId, Long readerBoardId) {
         feedKebabService.deleteReaderBoard(userId, readerBoardId);
         return CustomResponse.onSuccess(SuccessCode.FEED_READER_BOARD_DELETE_SUCCESS);

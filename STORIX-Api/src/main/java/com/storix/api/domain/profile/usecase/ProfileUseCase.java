@@ -51,12 +51,14 @@ public class ProfileUseCase {
         return CustomResponse.onSuccess(SuccessCode.PROFILE_UPDATE_DESCRIPTION_SUCCESS, newProfileDescription);
     }
 
-    // 프로필 사진 변경
+    // 프로필 사진 변경 (교체된 기존 이미지는 커밋 후 S3에서 정리)
     public CustomResponse<String> changeImage (String objectKey, Long userId) {
         if (!s3CacheHelper.isValidProfileKey(userId, objectKey)) {
             throw ProfileImageNotExistException.EXCEPTION;
         }
         String imageUrl = profileService.changeProfileImage(objectKey, userId);
+        // 소비된 키는 유효 키 캐시에서 제거 — 삭제된 S3 오브젝트로 재변경되는 것을 방지
+        s3CacheHelper.evictProfileKey(userId, objectKey);
         return CustomResponse.onSuccess(SuccessCode.PROFILE_UPDATE_IMAGE_SUCCESS, imageUrl);
     }
 }

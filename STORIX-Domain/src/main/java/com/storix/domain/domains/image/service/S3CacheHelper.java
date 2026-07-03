@@ -58,6 +58,12 @@ public class S3CacheHelper {
         );
     }
 
+    // 사용(소비)된 objectKey 를 유효 키 캐시에서 제거 — 이후 삭제된 S3 오브젝트로 재변경되는 것을 방지
+    public void evictProfileKey(Long userId, String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) return;
+        redisTemplate.opsForSet().remove(keyFor(userId, PROFILE_KEY_PREFIX), objectKey);
+    }
+
     // ObjectKeys 검증 로직
     public boolean isValidBoardKeys(Long userId, List<String> objectKeys) {
         return isValidAll(keyFor(userId, BOARD_KEY_PREFIX), objectKeys);

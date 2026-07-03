@@ -1,6 +1,7 @@
 package com.storix.domain.domains.profile.service;
 
 import com.storix.domain.domains.genrescore.adaptor.GenreScoreAdaptor;
+import com.storix.domain.domains.image.publisher.S3CleanupPublisher;
 import com.storix.domain.domains.profile.dto.UserInfo;
 import com.storix.domain.domains.profile.dto.UserInfoV2;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
@@ -21,6 +22,7 @@ public class ProfileService {
 
     private final UserAdaptor userAdaptor;
     private final GenreScoreAdaptor genreScoreAdaptor;
+    private final S3CleanupPublisher s3CleanupPublisher;
 
     // 독자 프로필 조회 (V1)
     @Transactional(readOnly = true)
@@ -97,11 +99,17 @@ public class ProfileService {
         return profileDescription;
     }
 
-    // 프로필 사진 변경
+    // 프로필 사진 변경 — 교체된 기존 이미지는 커밋 후 S3에서 정리된다 (S3CleanupEvent)
+    // 행 잠금 조회로 동시 변경을 직렬화해 교체 이미지가 정리 대상에서 누락되는 것을 방지한다
     @Transactional
     public String changeProfileImage(String objectKey, Long userId) {
-        User user = userAdaptor.findUserById(userId);
+        User user = userAdaptor.findUserByIdForUpdate(userId);
+        String previousObjectKey = user.getProfileObjectKey();
         user.changeProfileImage(objectKey);
+
+        if (previousObjectKey != null && !previousObjectKey.equals(objectKey)) {
+            s3CleanupPublisher.publish(previousObjectKey);
+        }
         return baseUrl + "/" + objectKey;
     }
 }

@@ -21,4 +21,14 @@ public interface ReaderBoardReplyLikeRepository extends JpaRepository<ReaderBoar
     List<Long> findLikedReplyIds(@Param("userId") Long userId,
                                  @Param("replyIds") List<Long> replyIds);
 
+    // 하드 삭제 배치용 — 댓글 벌크 삭제 전 해당 댓글의 좋아요를 정리한다 (cascade 미적용)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ReaderBoardReplyLike l WHERE l.reply.id IN :replyIds")
+    int hardDeleteByReplyIds(@Param("replyIds") List<Long> replyIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ReaderBoardReplyLike l WHERE l.reply.id IN " +
+            "(SELECT r.id FROM ReaderBoardReply r WHERE r.board.id IN :boardIds)")
+    int hardDeleteByBoardIds(@Param("boardIds") List<Long> boardIds);
+
 }

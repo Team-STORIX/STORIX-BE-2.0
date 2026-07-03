@@ -91,8 +91,27 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             "WHERE r.id = :replyId AND r.deleted = false")
     int softDeleteByAdminIfNotDeleted(@Param("replyId") Long replyId, @Param("now") LocalDateTime now);
 
+    // 하드 삭제 대상 선정 predicate 는 이 쿼리 한 곳에만 존재한다.
+    // 실제 삭제는 여기서 조회한 id 기반(hardDeleteByIds)으로 수행해 선정/삭제 기준이 어긋나지 않게 한다.
+    @Query("SELECT r.id FROM ReaderBoardReply r WHERE r.deleted = true AND r.deletedAt < :cutoff")
+    List<Long> findIdsForHardDelete(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);
+
+    // 삭제 대상 댓글을 부모로 참조하는 답댓글의 FK 참조 해제 (self-FK 위반 방지)
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM ReaderBoardReply r WHERE r.deleted = true AND r.deletedAt < :cutoff")
-    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
+    @Query("UPDATE ReaderBoardReply r SET r.parentReply = null WHERE r.parentReply.id IN :replyIds")
+    int detachChildRepliesOf(@Param("replyIds") List<Long> replyIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ReaderBoardReply r WHERE r.id IN :replyIds")
+    int hardDeleteByIds(@Param("replyIds") List<Long> replyIds);
+
+    // 하드 삭제 배치용 — 게시글 벌크 삭제 전 해당 게시글의 댓글을 정리한다 (cascade 미적용)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ReaderBoardReply r SET r.parentReply = null WHERE r.board.id IN :boardIds")
+    int detachChildRepliesByBoardIds(@Param("boardIds") List<Long> boardIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ReaderBoardReply r WHERE r.board.id IN :boardIds")
+    int hardDeleteByBoardIds(@Param("boardIds") List<Long> boardIds);
 
 }
