@@ -53,7 +53,7 @@ public class UserAdaptor {
     }
 
     public void checkNicknameDuplicate(String nickName) {
-        if (userRepository.existsByActiveNickName(nickName)) {
+        if (userRepository.existsByNickName(nickName)) {
             throw DuplicateNicknameException.EXCEPTION;
         }
     }

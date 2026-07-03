@@ -12,6 +12,7 @@ public class STORIXStatic {
     public static final String ONBOARDING_TOKEN = "onboarding_token";
     public static final String KID = "kid";
     public static final String WITHDRAW_PREFIX = "DELETED:";
+    public static final String WITHDRAWN_NICK_NAME = "탈퇴한 유저";
 
     public static final int MILLI_TO_SECOND = 1000;
 

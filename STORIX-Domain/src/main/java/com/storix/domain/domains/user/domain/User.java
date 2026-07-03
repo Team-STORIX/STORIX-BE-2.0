@@ -4,6 +4,7 @@ import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.user.exception.auth.AlreadyWithDrawUserException;
 import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.common.model.BaseTimeEntity;
+import com.storix.common.utils.STORIXStatic;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.Builder;
@@ -24,8 +25,8 @@ import java.util.UUID;
                         columnNames = {"oauth_provider", "oauth_oid"}
                 ),
                 @UniqueConstraint(
-                        name = "uk_active_nick_name",
-                        columnNames = "active_nick_name"
+                        name = "uk_nick_name",
+                        columnNames = "nick_name"
                 )
         }
 )
@@ -36,7 +37,8 @@ public class User extends BaseTimeEntity {
     private Long id;
 
     // 계정 정보
-    @Column(name = "nick_name", nullable = false, length = 10)
+    // 길이 10자는 실사용자 닉네임 기획 제약(요청 DTO의 @Size(max=10)에서 검증), 컬럼 자체는 탈퇴 시 원래 닉네임 뒤에 붙는 유니크 suffix까지 담기 위해 여유있게 잡음
+    @Column(name = "nick_name", nullable = false, length = 64)
     private String nickName;
 
     @ElementCollection(targetClass = Genre.class)
@@ -83,9 +85,6 @@ public class User extends BaseTimeEntity {
 
     @Column(name = "suspended_until")
     private LocalDateTime suspendedUntil;
-
-    @Column(name = "active_nick_name", insertable = false, updatable = false, length = 50)
-    private String activeNickName;
 
     // 계정 권한
     @Column(name = "last_login_at")
@@ -203,7 +202,7 @@ public class User extends BaseTimeEntity {
         deletedSuffix = UUID.randomUUID().toString();
         favoriteGenreList = null;
         profileObjectKey = null;
-        nickName = "탈퇴한 유저";
+        nickName = STORIXStatic.WITHDRAW_PREFIX + deletedSuffix + ":" + nickName;
         oauthInfo = oauthInfo.withDrawOauthInfo();
         ageOver14 = null;
         isAdultVerified = null;

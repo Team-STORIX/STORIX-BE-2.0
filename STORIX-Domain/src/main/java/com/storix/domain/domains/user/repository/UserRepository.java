@@ -17,14 +17,13 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    boolean existsByActiveNickName(String activeNickName);
+    boolean existsByNickName(String nickName);
 
     @Query("""
         SELECT (COUNT(u) > 0)
         FROM User u
-        WHERE u.activeNickName = :nickName
+        WHERE u.nickName = :nickName
           AND u.id <> :userId
-          AND u.accountState = com.storix.domain.domains.user.domain.AccountState.NORMAL
     """)
     boolean existsNickNameExceptSelf(
             @Param("nickName") String nickName,
@@ -42,14 +41,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u.isAdultVerified FROM User u WHERE u.id = :userId")
     Boolean findIsAdultVerifiedById(@Param("userId") Long userId);
 
-    // 단건 프로필 정보 조회
-    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(u.id, u.profileObjectKey, u.nickName)" +
+    // 단건 프로필 정보 조회 — 탈퇴 유저는 nick_name 대신 고정 표시 문구로 대체
+    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
+            "   u.id, u.profileObjectKey, " +
+            "   CASE WHEN u.deletedAt IS NOT NULL THEN '" + com.storix.common.utils.STORIXStatic.WITHDRAWN_NICK_NAME + "' ELSE u.nickName END" +
+            ") " +
             "FROM User u " +
             "WHERE u.id = :userId ")
     StandardProfileInfo findStandardProfileInfoById(@Param("userId") Long userId);
 
-    // 단체 프로필 정보 조회
-    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(u.id, u.profileObjectKey, u.nickName)" +
+    // 단체 프로필 정보 조회 — 탈퇴 유저는 nick_name 대신 고정 표시 문구로 대체
+    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
+            "   u.id, u.profileObjectKey, " +
+            "   CASE WHEN u.deletedAt IS NOT NULL THEN '" + com.storix.common.utils.STORIXStatic.WITHDRAWN_NICK_NAME + "' ELSE u.nickName END" +
+            ") " +
             "FROM User u " +
             "WHERE u.id IN :userIds ")
     List<StandardProfileInfo> findStandardProfileInfoByUserIds(@Param("userIds") List<Long> userIds);
@@ -63,11 +68,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("state") AccountState state,
             @Param("now") LocalDateTime now);
 
-    @Query("""
-        SELECT new com.storix.domain.domains.user.dto.UserNicknameInfo(u.id, u.nickName)
-        FROM User u
-        WHERE u.id IN :userIds
-    """)
+    @Query("SELECT new com.storix.domain.domains.user.dto.UserNicknameInfo(" +
+            "   u.id, " +
+            "   CASE WHEN u.deletedAt IS NOT NULL THEN '" + com.storix.common.utils.STORIXStatic.WITHDRAWN_NICK_NAME + "' ELSE u.nickName END" +
+            ") " +
+            "FROM User u " +
+            "WHERE u.id IN :userIds")
     List<UserNicknameInfo> findNicknameInfoByUserIds(@Param("userIds") List<Long> userIds);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
