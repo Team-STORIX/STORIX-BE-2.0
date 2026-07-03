@@ -51,6 +51,26 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
             Pageable pageable
     );
 
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                rb.id,
+                com.storix.domain.domains.report.domain.TargetContentType.FEED,
+                rb.id,
+                null,
+                null,
+                rb.worksId,
+                rb.content,
+                null,
+                null,
+                rb.likeCount,
+                rb.replyCount,
+                rb.createdAt
+            )
+            FROM ReaderBoard rb
+            WHERE rb.id IN :ids AND rb.deleted = false
+            """)
+    List<AdminUserContentItemResponse> findAdminBoardContentsByIds(@Param("ids") List<Long> ids);
+
     @Query("SELECT rb " +
             "FROM ReaderBoardLike rl " +
             "JOIN rl.board rb " +

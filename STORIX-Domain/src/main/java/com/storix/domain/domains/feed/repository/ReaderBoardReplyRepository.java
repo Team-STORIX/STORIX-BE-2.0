@@ -110,6 +110,27 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             Pageable pageable
     );
 
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                r.id,
+                com.storix.domain.domains.report.domain.TargetContentType.FEED_REPLY,
+                r.board.id,
+                parent.id,
+                null,
+                null,
+                r.comment,
+                null,
+                null,
+                r.likeCount,
+                0,
+                r.createdAt
+            )
+            FROM ReaderBoardReply r
+            LEFT JOIN r.parentReply parent
+            WHERE r.id IN :ids AND r.deleted = false
+            """)
+    List<AdminUserContentItemResponse> findAdminReplyContentsByIds(@Param("ids") List<Long> ids);
+
     long countByUserIdAndDeletedFalse(Long userId);
 
     // 관리자 댓글 강제 삭제 (이미 삭제된 댓글이면 0건 반영, 중복 카운트 감소 방지)

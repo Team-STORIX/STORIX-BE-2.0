@@ -108,4 +108,8 @@ public class BoardAdaptor {
         return readerBoardRepository.findAdminBoardContentsByUserId(userId, pageable);
     }
 
+    public List<AdminUserContentItemResponse> findAdminBoardContentsByIds(List<Long> ids) {
+        return readerBoardRepository.findAdminBoardContentsByIds(ids);
+    }
+
 }

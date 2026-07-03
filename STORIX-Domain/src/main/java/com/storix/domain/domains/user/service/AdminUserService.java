@@ -24,6 +24,7 @@ import com.storix.domain.domains.user.domain.WithdrawReason;
 import com.storix.domain.domains.user.dto.AdminUserActivityStats;
 import com.storix.domain.domains.user.dto.AdminUserBasicInfo;
 import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
+import com.storix.domain.domains.user.dto.AdminUserContentKey;
 import com.storix.domain.domains.user.dto.AdminUserContentPageResponse;
 import com.storix.domain.domains.user.dto.AdminUserListResponse;
 import com.storix.domain.domains.user.dto.AdminUserSanctionDetailResponse;
@@ -31,10 +32,11 @@ import com.storix.domain.domains.user.dto.AdminUserSanctionHistoryResponse;
 import com.storix.domain.domains.user.dto.AdminUserSanctionPageResponse;
 import com.storix.domain.domains.user.dto.AdminUserSearchCondition;
 import com.storix.domain.domains.user.exception.admin.InvalidAdminUserSanctionRequestException;
+import com.storix.domain.domains.user.exception.admin.UserNotSuspendedException;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import com.storix.domain.domains.user.exception.auth.InvalidWithdrawException;
-import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.domain.domains.user.publisher.UserAccessRevokedPublisher;
+import com.storix.domain.domains.user.repository.AdminUserContentQueryRepository;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -45,11 +47,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -75,15 +80,22 @@ public class AdminUserService {
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final UserSanctionHistoryAdaptor userSanctionHistoryAdaptor;
+    private final AdminUserContentQueryRepository adminUserContentQueryRepository;
 
     public Page<AdminUserListResponse> searchUsers(AdminUserSearchCondition condition, Pageable pageable) {
         String nickName = StringUtils.hasText(condition.nickName()) ? condition.nickName().trim() : null;
-        return userAdaptor.findAdminUsers(
+        Page<AdminUserListResponse> page = userAdaptor.findAdminUsers(
                 condition.userId(),
                 nickName,
                 condition.accountState(),
                 pageable
-        ).map(user -> new AdminUserListResponse(
+        );
+
+        Map<Long, Long> reportedCounts = countReportedByUserIds(page.getContent().stream()
+                .map(AdminUserListResponse::userId)
+                .toList());
+
+        return page.map(user -> new AdminUserListResponse(
                 user.userId(),
                 user.nickName(),
                 user.email(),
@@ -92,7 +104,7 @@ public class AdminUserService {
                 user.accountState(),
                 user.suspendedUntil(),
                 user.lastLoginAt(),
-                countReportedByUserId(user.userId())
+                reportedCounts.getOrDefault(user.userId(), 0L)
         ));
     }
 
@@ -117,6 +129,21 @@ public class AdminUserService {
                 + topicRoomReportAdaptor.countByReportedUserId(userId);
     }
 
+    private Map<Long, Long> countReportedByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> counts = new java.util.HashMap<>();
+        feedReportAdaptor.countAllByReportedUserIds(userIds)
+                .forEach((userId, count) -> counts.merge(userId, count, Long::sum));
+        reviewReportAdaptor.countByReportedUserIds(userIds)
+                .forEach((userId, count) -> counts.merge(userId, count, Long::sum));
+        topicRoomReportAdaptor.countByReportedUserIds(userIds)
+                .forEach((userId, count) -> counts.merge(userId, count, Long::sum));
+        return counts;
+    }
+
     public List<AdminUserSanctionHistoryResponse> getSanctionHistories(Long userId) {
         return userSanctionHistoryAdaptor.findAllByUserId(userId).stream()
                 .map(AdminUserSanctionHistoryResponse::from)
@@ -139,24 +166,75 @@ public class AdminUserService {
 
     public AdminUserContentPageResponse getUserContents(Long userId, Pageable pageable) {
         userAdaptor.findUserById(userId);
-        List<AdminUserContentItemResponse> contents = new java.util.ArrayList<>();
-        Pageable unpaged = Pageable.unpaged();
-        contents.addAll(boardAdaptor.findAdminBoardContentsByUserId(userId, unpaged).getContent());
-        contents.addAll(readerFeedAdaptor.findAdminReplyContentsByUserId(userId, unpaged).getContent());
-        contents.addAll(chatAdaptor.findAdminChatContentsByUserId(userId, unpaged).getContent());
-        contents.addAll(reviewAdaptor.findAdminReviewContentsByUserId(userId, unpaged).getContent());
 
-        List<AdminUserContentItemResponse> sortedContents = contents.stream()
-                .sorted(Comparator.comparing(AdminUserContentItemResponse::createdAt).reversed())
+        List<AdminUserContentKey> keys = adminUserContentQueryRepository.findContentKeys(userId, pageable);
+        Map<TargetContentType, List<Long>> idsByType = keys.stream()
+                .collect(Collectors.groupingBy(
+                        AdminUserContentKey::type,
+                        () -> new EnumMap<>(TargetContentType.class),
+                        Collectors.mapping(AdminUserContentKey::contentId, Collectors.toList())
+                ));
+        Map<ContentLookupKey, AdminUserContentItemResponse> contentsByKey = loadAdminUserContents(idsByType);
+        List<AdminUserContentItemResponse> contents = keys.stream()
+                .map(key -> contentsByKey.get(new ContentLookupKey(key.type(), key.contentId())))
+                .filter(Objects::nonNull)
                 .toList();
 
-        int start = Math.min((int) pageable.getOffset(), sortedContents.size());
-        int end = Math.min(start + pageable.getPageSize(), sortedContents.size());
+        long totalElements = countUserContents(userId);
         return AdminUserContentPageResponse.from(new PageImpl<>(
-                sortedContents.subList(start, end),
+                contents,
                 pageable,
-                sortedContents.size()
+                totalElements
         ));
+    }
+
+    private Map<ContentLookupKey, AdminUserContentItemResponse> loadAdminUserContents(
+            Map<TargetContentType, List<Long>> idsByType
+    ) {
+        Map<ContentLookupKey, AdminUserContentItemResponse> contents = new java.util.HashMap<>();
+        List<Long> feedIds = idsByType.getOrDefault(TargetContentType.FEED, Collections.emptyList());
+        if (!feedIds.isEmpty()) {
+            putAll(contents, TargetContentType.FEED, boardAdaptor.findAdminBoardContentsByIds(feedIds));
+        }
+
+        List<Long> replyIds = idsByType.getOrDefault(TargetContentType.FEED_REPLY, Collections.emptyList());
+        if (!replyIds.isEmpty()) {
+            putAll(contents, TargetContentType.FEED_REPLY, readerFeedAdaptor.findAdminReplyContentsByIds(replyIds));
+        }
+
+        List<Long> chatIds = idsByType.getOrDefault(TargetContentType.CHAT, Collections.emptyList());
+        if (!chatIds.isEmpty()) {
+            putAll(contents, TargetContentType.CHAT, chatAdaptor.findAdminChatContentsByIds(chatIds));
+        }
+
+        List<Long> reviewIds = idsByType.getOrDefault(TargetContentType.REVIEW, Collections.emptyList());
+        if (!reviewIds.isEmpty()) {
+            putAll(contents, TargetContentType.REVIEW, reviewAdaptor.findAdminReviewContentsByIds(reviewIds));
+        }
+        return contents;
+    }
+
+    private void putAll(
+            Map<ContentLookupKey, AdminUserContentItemResponse> contents,
+            TargetContentType type,
+            List<AdminUserContentItemResponse> items
+    ) {
+        items.stream()
+                .collect(Collectors.toMap(
+                        item -> new ContentLookupKey(type, item.contentId()),
+                        Function.identity()
+                ))
+                .forEach(contents::put);
+    }
+
+    private long countUserContents(Long userId) {
+        return boardAdaptor.countActiveBoardsByUserId(userId)
+                + readerFeedAdaptor.countActiveRepliesByUserId(userId)
+                + chatAdaptor.countActiveChatsByUserId(userId)
+                + reviewAdaptor.countActiveReviewsByUserId(userId);
+    }
+
+    private record ContentLookupKey(TargetContentType type, Long contentId) {
     }
 
     @Transactional
@@ -200,7 +278,7 @@ public class AdminUserService {
             throw InvalidWithdrawException.EXCEPTION;
         }
         if (user.getAccountState() != AccountState.SUSPENDED) {
-            throw SuspendedUserException.EXCEPTION;
+            throw UserNotSuspendedException.EXCEPTION;
         }
         LocalDateTime now = LocalDateTime.now();
         user.restore();

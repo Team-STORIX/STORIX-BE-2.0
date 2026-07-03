@@ -300,6 +300,10 @@ public class ReaderFeedAdaptor {
         return readerBoardReplyRepository.findAdminReplyContentsByUserId(userId, pageable);
     }
 
+    public List<AdminUserContentItemResponse> findAdminReplyContentsByIds(List<Long> ids) {
+        return readerBoardReplyRepository.findAdminReplyContentsByIds(ids);
+    }
+
     // 프로필 좋아요한 게시글 정보 확인
     public Slice<ReaderBoard> findAllLikedReaderBoards(Long userId, Pageable pageable) {
         return readerBoardRepository.findAllLikedReaderBoards(userId, pageable);

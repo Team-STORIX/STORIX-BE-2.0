@@ -78,6 +78,10 @@ public class ReviewAdaptor {
         return reviewRepository.findAdminReviewContentsByUserId(userId, pageable);
     }
 
+    public List<AdminUserContentItemResponse> findAdminReviewContentsByIds(List<Long> ids) {
+        return reviewRepository.findAdminReviewContentsByIds(ids);
+    }
+
     public boolean isMyReviewExist(Long userId, Long worksId) {
         return reviewRepository.existsByLibraryUserIdAndWorksIdAndDeletedFalse(userId, worksId);
     }

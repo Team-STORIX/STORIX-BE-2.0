@@ -36,6 +36,14 @@ public class ChatAdaptor {
         return chatRepository.findAdminChatContentsByUserId(userId, pageable);
     }
 
+    public List<AdminUserContentItemResponse> findAdminChatContentsByIds(List<Long> ids) {
+        return chatRepository.findAdminChatContentsByIds(ids);
+    }
+
+    public long countActiveChatsByUserId(Long userId) {
+        return chatRepository.countBySenderIdAndDeletedFalse(userId);
+    }
+
     public ChatMessage saveMessage(ChatMessage message) {
         return chatRepository.save(message);
     }

@@ -92,6 +92,28 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             Pageable pageable
     );
 
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                m.id,
+                com.storix.domain.domains.report.domain.TargetContentType.CHAT,
+                null,
+                null,
+                m.roomId,
+                null,
+                m.message,
+                null,
+                m.messageType,
+                0,
+                0,
+                m.createdAt
+            )
+            FROM ChatMessage m
+            WHERE m.id IN :ids AND m.deleted = false
+            """)
+    List<AdminUserContentItemResponse> findAdminChatContentsByIds(@Param("ids") List<Long> ids);
+
+    long countBySenderIdAndDeletedFalse(Long senderId);
+
     @Modifying
     @Query("UPDATE ChatMessage m SET m.deleted = true, m.deletedAt = :now " +
             "WHERE m.roomId = :roomId AND m.senderId = :senderId " +

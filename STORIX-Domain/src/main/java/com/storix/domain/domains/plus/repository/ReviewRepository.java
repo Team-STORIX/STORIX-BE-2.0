@@ -73,6 +73,26 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             Pageable pageable
     );
 
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                r.id,
+                com.storix.domain.domains.report.domain.TargetContentType.REVIEW,
+                null,
+                null,
+                null,
+                r.worksId,
+                r.content,
+                r.rating,
+                null,
+                r.likeCount,
+                0,
+                r.createdAt
+            )
+            FROM Review r
+            WHERE r.id IN :ids AND r.deleted = false
+            """)
+    List<AdminUserContentItemResponse> findAdminReviewContentsByIds(@Param("ids") List<Long> ids);
+
     @Query("SELECT new com.storix.domain.domains.plus.dto.SliceReviewInfo(r.libraryUserId, r.id, r.isSpoiler, r.spoilerScript, r.content, r.rating, r.likeCount) " +
             "FROM Review r " +
             "WHERE r.libraryUserId = :userId AND r.worksId = :worksId AND r.deleted = false")

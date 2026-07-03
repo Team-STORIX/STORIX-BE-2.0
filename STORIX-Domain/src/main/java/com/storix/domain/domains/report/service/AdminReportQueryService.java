@@ -50,6 +50,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class AdminReportQueryService {
 
+    private static final String DELETED_CHAT_MESSAGE = "삭제된 메시지입니다.";
+
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final FeedReportAdaptor feedReportAdaptor;
     private final ReviewReportAdaptor reviewReportAdaptor;
@@ -344,12 +346,12 @@ public class AdminReportQueryService {
     private AdminReportDetailResponse getChatReportDetail(ReportCase reportCase) {
         List<TopicRoomReport> reports = topicRoomReportAdaptor.findAllByReportCaseId(reportCase.getId());
         ChatMessageResponseDto message = chatAdaptor.findAdminMessageById(reportCase.getTargetId());
-        TopicRoom room = topicRoomPersistenceAdapter.findById(message.roomId());
         Long reportedUserId = reports.isEmpty() ? reportCase.getReportedUserId() : reports.get(0).getReportedUserId();
+        TopicRoom room = message == null ? null : topicRoomPersistenceAdapter.findById(message.roomId());
 
         Map<Long, String> nickNames = loadNickNames(collectUserIds(
                 reports.stream().map(TopicRoomReport::getReporterId).toList(),
-                List.of(reportedUserId, message.senderId())
+                List.of(reportedUserId, message == null ? null : message.senderId())
         ));
 
         List<AdminReportDetailResponse.ReportItem> reportItems = reports.stream()
@@ -366,22 +368,22 @@ public class AdminReportQueryService {
 
         AdminReportDetailResponse.ReportedChatMessage reportedChatMessage =
                 new AdminReportDetailResponse.ReportedChatMessage(
-                        message.id(),
-                        message.senderId(),
-                        message.senderName(),
-                        message.message(),
-                        message.messageType(),
-                        message.createdAt()
+                        message == null ? reportCase.getTargetId() : message.id(),
+                        message == null ? reportedUserId : message.senderId(),
+                        message == null ? nickName(reportedUserId, nickNames) : message.senderName(),
+                        message == null ? DELETED_CHAT_MESSAGE : message.message(),
+                        message == null ? null : message.messageType(),
+                        message == null ? null : message.createdAt()
                 );
 
         AdminReportDetailResponse.ReportedContent content = new AdminReportDetailResponse.ReportedContent(
                 reportCase.getTargetType(),
-                message.id(),
-                room.getId(),
+                message == null ? reportCase.getTargetId() : message.id(),
+                room == null ? null : room.getId(),
                 reportedUserId,
                 nickName(reportedUserId, nickNames),
-                room.getTopicRoomName(),
-                room.getCreatedAt(),
+                room == null ? DELETED_CHAT_MESSAGE : room.getTopicRoomName(),
+                room == null ? null : room.getCreatedAt(),
                 List.of(reportedChatMessage)
         );
 
@@ -390,7 +392,7 @@ public class AdminReportQueryService {
         return detailResponse(
                 reportCase,
                 summary(
-                        reportedUserId, nickNames, topicRoomLocation(room.getId()),
+                        reportedUserId, nickNames, room == null ? null : topicRoomLocation(room.getId()),
                         firstReport != null ? reasonName(firstReport.getReason()) : null,
                         firstReport != null ? firstReport.getOtherReason() : null,
                         reports.size(), firstReportedAt(reportItems)

@@ -1,6 +1,7 @@
 package com.storix.domain.domains.topicroom.adaptor;
 
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
+import com.storix.domain.domains.report.repository.ReportedUserCountProjection;
 import com.storix.domain.domains.topicroom.repository.ReportCaseCountProjection;
 import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,17 @@ public class TopicRoomReportAdaptor {
 
     public long countByReportedUserId(Long userId) {
         return topicRoomReportRepository.countByReportedUserId(userId);
+    }
+
+    public Map<Long, Long> countByReportedUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+        return topicRoomReportRepository.countByReportedUserIds(userIds).stream()
+                .collect(Collectors.toMap(
+                        ReportedUserCountProjection::getReportedUserId,
+                        ReportedUserCountProjection::getReportCount
+                ));
     }
 
 }
