@@ -41,7 +41,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u.isAdultVerified FROM User u WHERE u.id = :userId")
     Boolean findIsAdultVerifiedById(@Param("userId") Long userId);
 
-    // 단건 프로필 정보 조회 — 탈퇴 유저는 nick_name 대신 고정 표시 문구로 대체
+    // 단건 프로필 정보 조회
     @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
             "   u.id, u.profileObjectKey, " +
             "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +
@@ -50,7 +50,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "WHERE u.id = :userId ")
     StandardProfileInfo findStandardProfileInfoById(@Param("userId") Long userId);
 
-    // 단체 프로필 정보 조회 — 탈퇴 유저는 nick_name 대신 고정 표시 문구로 대체
+    // 단체 프로필 정보 조회
     @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
             "   u.id, u.profileObjectKey, " +
             "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +

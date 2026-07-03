@@ -38,14 +38,10 @@ public class User extends BaseTimeEntity {
     private Long id;
 
     // 계정 정보
-    // 길이 10자는 실사용자 닉네임 기획 제약(요청 DTO의 @Size(max=10)에서 검증), 컬럼 자체는 탈퇴 시 원래 닉네임 뒤에 붙는 유니크 suffix까지 담기 위해 여유있게 잡음
     @Getter(AccessLevel.NONE)
     @Column(name = "nick_name", nullable = false, length = 64)
     private String nickName;
 
-    // 외부 노출용 닉네임 — withdraw()는 원본 닉네임을 nickName 필드에 그대로 보존하므로(유니크 suffix 조합),
-    // 다른 유저에게 보여줄 땐 반드시 이 메서드를 거쳐야 함. nickName 필드의 getter는 의도적으로 막혀 있음(위 @Getter(AccessLevel.NONE)).
-    // JPQL @Query에서는 엔티티 메서드를 호출할 수 없어 STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN 상수로 동일 규칙을 공유함 (UserRepository, ChatRepository 참고)
     public String getDisplayNickName() {
         return deletedAt != null ? STORIXStatic.WITHDRAWN_NICK_NAME : nickName;
     }
