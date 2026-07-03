@@ -4,7 +4,6 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomActiveUserNumberResponse
 import com.storix.domain.domains.topicroom.event.TopicRoomActiveUserNumberChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -14,18 +13,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class TopicRoomActiveUserNumberEventListener {
 
-    private final SimpMessagingTemplate messagingTemplate;
+    private final RedisTopicRoomActiveUserNumberAdapter redisTopicRoomActiveUserNumberAdapter;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onEvent(TopicRoomActiveUserNumberChangedEvent event) {
-        try {
-            messagingTemplate.convertAndSend(
-                    "/sub/topic-rooms/" + event.topicRoomId() + "/active-users",
-                    new TopicRoomActiveUserNumberResponseDto(event.topicRoomId(), event.activeUserNumber())
-            );
-        } catch (Exception e) {
-            log.warn(">>> [TopicRoomActiveUserNumber] websocket publish failed event={}, cause={}",
-                    event, e.getMessage());
-        }
+        redisTopicRoomActiveUserNumberAdapter.publish(
+                new TopicRoomActiveUserNumberResponseDto(event.topicRoomId(), event.activeUserNumber()));
     }
 }

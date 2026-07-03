@@ -2,9 +2,10 @@ package com.storix.domain.domains.chat.dto;
 
 import org.springframework.data.domain.Slice;
 
-import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 
 public record ChatHistoryResponseDto(
         String joinedDays,
@@ -18,7 +19,10 @@ public record ChatHistoryResponseDto(
             Integer activeUserNumber,
             Slice<ChatMessageResponseDto> messages
     ) {
-        long days = Duration.between(joinedAt, LocalDateTime.now(KST_ZONE_ID)).toDays() + 1;
+        LocalDate joinedDate = joinedAt.toLocalDate();
+        LocalDate today = LocalDate.now(KST_ZONE_ID);
+        long days = ChronoUnit.DAYS.between(joinedDate, today) + 1;
+
         return new ChatHistoryResponseDto(Math.max(days, 1) + "일", activeUserNumber, messages);
     }
 }
