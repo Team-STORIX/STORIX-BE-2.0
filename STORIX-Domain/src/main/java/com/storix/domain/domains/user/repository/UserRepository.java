@@ -76,7 +76,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE User u SET u.title = null")
-    int clearAllTitles();
+    void clearAllTitles();
 
     @Query("""
         SELECT u.id

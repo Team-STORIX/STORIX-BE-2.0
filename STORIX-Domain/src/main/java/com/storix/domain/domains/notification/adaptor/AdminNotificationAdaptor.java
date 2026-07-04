@@ -80,8 +80,8 @@ public class AdminNotificationAdaptor {
         return adminNotificationRepository.startRebroadcast(id, now);
     }
 
-    public int touchProgress(Long id, LocalDateTime now) {
-        return adminNotificationRepository.touchProgress(id, now);
+    public void touchProgress(Long id, LocalDateTime now) {
+        adminNotificationRepository.touchProgress(id, now);
     }
 
     public int claimStaleForResume(Long id, LocalDateTime cutoff, LocalDateTime now) {

@@ -47,6 +47,7 @@ public class NotificationEventListener {
     // 일시 오류 재시도
     private void sendWithRetry(NotificationEvent event, DispatchResult result) {
         Map<String, String> data = buildData(event, result.notificationId());
+        FcmTransientException lastTransient = null;
         for (int attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
             try {
                 MulticastResult mc = fcmPushExecutor.sendAndApply(result.tokens(), data);
@@ -56,20 +57,21 @@ public class NotificationEventListener {
                 }
                 return;
             } catch (FcmTransientException e) {
-                if (attempt == MAX_SEND_ATTEMPTS) {
-                    log.error(">>> [Notification] FCM 일시오류 최종 실패 - 재시도 {}회 소진 notificationId={}, code={}",
-                            MAX_SEND_ATTEMPTS, result.notificationId(), e.getMessagingErrorCode());
-                    return;
+                lastTransient = e;
+                if (attempt < MAX_SEND_ATTEMPTS) {
+                    log.warn(">>> [Notification] FCM 일시오류 재시도 {}/{} notificationId={}, code={}",
+                            attempt, MAX_SEND_ATTEMPTS, result.notificationId(), e.getMessagingErrorCode());
+                    sleep(BASE_BACKOFF_MS << (attempt - 1)); // 0.5s, 1s
                 }
-                log.warn(">>> [Notification] FCM 일시오류 재시도 {}/{} notificationId={}, code={}",
-                        attempt, MAX_SEND_ATTEMPTS, result.notificationId(), e.getMessagingErrorCode());
-                sleep(BASE_BACKOFF_MS << (attempt - 1)); // 0.5s, 1s
             } catch (Exception e) {
                 log.error(">>> [Notification] FCM 영구 실패(재시도 안 함) notificationId={}, cause={}",
                         result.notificationId(), e.getMessage());
                 return;
             }
         }
+
+        log.error(">>> [Notification] FCM 일시오류 최종 실패 - 재시도 {}회 소진 notificationId={}, code={}",
+                MAX_SEND_ATTEMPTS, result.notificationId(), lastTransient.getMessagingErrorCode());
     }
 
     private void sleep(long ms) {

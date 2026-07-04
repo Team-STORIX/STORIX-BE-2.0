@@ -66,8 +66,8 @@ public class PushDeviceAdaptor {
     }
 
     // [PushDevice] 유저 탈퇴 시 모든 디바이스 일괄 비활성화
-    public int deactivateAllByUserId(Long userId) {
-        return pushDeviceRepository.deactivateAllByUserId(userId);
+    public void deactivateAllByUserId(Long userId) {
+        pushDeviceRepository.deactivateAllByUserId(userId);
     }
 
     // [PushDispatch] FCM invalid 토큰 일괄 비활성화

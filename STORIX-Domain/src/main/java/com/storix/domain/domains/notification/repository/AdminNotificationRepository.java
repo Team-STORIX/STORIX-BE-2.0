@@ -71,7 +71,7 @@ public interface AdminNotificationRepository extends JpaRepository<AdminNotifica
           AND e.status = com.storix.domain.domains.notification.domain.AdminNotificationStatus.SENDING
           AND e.isAllChunkPublished = true
     """)
-    int touchProgress(@Param("id") Long id, @Param("now") LocalDateTime now);
+    void touchProgress(@Param("id") Long id, @Param("now") LocalDateTime now);
 
     // 재개 원자적 선점
     @Modifying(clearAutomatically = true, flushAutomatically = true)

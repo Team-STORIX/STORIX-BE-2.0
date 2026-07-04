@@ -52,7 +52,7 @@ public interface PushDeviceRepository extends JpaRepository<PushDevice, Long> {
     // 유저 탈퇴 시 해당 유저의 모든 활성 디바이스 일괄 비활성화
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE PushDevice d SET d.isActive = false WHERE d.userId = :userId AND d.isActive = true")
-    int deactivateAllByUserId(@Param("userId") Long userId);
+    void deactivateAllByUserId(@Param("userId") Long userId);
 
     // 발송 성공한 토큰들의 lastSuccessAt 갱신
     @Modifying(clearAutomatically = true, flushAutomatically = true)

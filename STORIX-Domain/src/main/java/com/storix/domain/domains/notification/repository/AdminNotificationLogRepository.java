@@ -35,7 +35,7 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
         WHERE l.id IN :ids
           AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
     """)
-    int leaseRetry(@Param("ids") List<Long> ids, @Param("lease") LocalDateTime lease);
+    void leaseRetry(@Param("ids") List<Long> ids, @Param("lease") LocalDateTime lease);
 
     // 전체 로그 수
     long countByAdminNotificationId(Long adminNotificationId);
@@ -64,7 +64,7 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
           AND l.userId IN :userIds
           AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
     """)
-    int markSent(@Param("id") Long id, @Param("userIds") List<Long> userIds, @Param("now") LocalDateTime now);
+    void markSent(@Param("id") Long id, @Param("userIds") List<Long> userIds, @Param("now") LocalDateTime now);
 
     // 발송 대상 외 반영
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -76,7 +76,7 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
           AND l.userId IN :userIds
           AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
     """)
-    int markSkipped(@Param("id") Long id, @Param("userIds") List<Long> userIds);
+    void markSkipped(@Param("id") Long id, @Param("userIds") List<Long> userIds);
 
     // 영구·설정 오류 반영
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -89,7 +89,7 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
           AND l.userId IN :userIds
           AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
     """)
-    int markPermanentFailed(@Param("id") Long id, @Param("userIds") List<Long> userIds);
+    void markPermanentFailed(@Param("id") Long id, @Param("userIds") List<Long> userIds);
 
     // 수동 재발송 시 로그를 재시도 스캔 대상으로 전환
     @Modifying(clearAutomatically = true, flushAutomatically = true)

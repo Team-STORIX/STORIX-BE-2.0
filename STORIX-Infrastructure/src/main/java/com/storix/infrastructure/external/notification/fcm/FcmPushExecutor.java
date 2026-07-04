@@ -2,7 +2,6 @@ package com.storix.infrastructure.external.notification.fcm;
 
 import com.storix.domain.domains.pushdevice.service.PushDispatchService;
 import com.storix.infrastructure.external.notification.dto.MulticastResult;
-import com.storix.infrastructure.external.notification.exception.FcmTransientException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

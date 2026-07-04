@@ -111,8 +111,8 @@ public class UserAdaptor {
         return userRepository.findAllById(userIds);
     }
 
-    public int clearAllTitles() {
-        return userRepository.clearAllTitles();
+    public void clearAllTitles() {
+        userRepository.clearAllTitles();
     }
 
     public List<Long> findUntitledUserIdsHavingRawScore(Pageable pageable) {

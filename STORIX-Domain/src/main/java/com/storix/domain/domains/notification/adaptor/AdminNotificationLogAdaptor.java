@@ -50,20 +50,20 @@ public class AdminNotificationLogAdaptor {
         adminNotificationLogRepository.saveAll(logs);
     }
 
-    public int leaseRetry(List<Long> ids, LocalDateTime lease) {
-        return adminNotificationLogRepository.leaseRetry(ids, lease);
+    public void leaseRetry(List<Long> ids, LocalDateTime lease) {
+        adminNotificationLogRepository.leaseRetry(ids, lease);
     }
 
-    public int markSent(Long adminNotificationId, List<Long> userIds, LocalDateTime now) {
-        return adminNotificationLogRepository.markSent(adminNotificationId, userIds, now);
+    public void markSent(Long adminNotificationId, List<Long> userIds, LocalDateTime now) {
+        adminNotificationLogRepository.markSent(adminNotificationId, userIds, now);
     }
 
-    public int markSkipped(Long adminNotificationId, List<Long> userIds) {
-        return adminNotificationLogRepository.markSkipped(adminNotificationId, userIds);
+    public void markSkipped(Long adminNotificationId, List<Long> userIds) {
+        adminNotificationLogRepository.markSkipped(adminNotificationId, userIds);
     }
 
-    public int markPermanentFailed(Long adminNotificationId, List<Long> userIds) {
-        return adminNotificationLogRepository.markPermanentFailed(adminNotificationId, userIds);
+    public void markPermanentFailed(Long adminNotificationId, List<Long> userIds) {
+        adminNotificationLogRepository.markPermanentFailed(adminNotificationId, userIds);
     }
 
     public int reviveFailedLogs(Long adminNotificationId, LocalDateTime now) {
