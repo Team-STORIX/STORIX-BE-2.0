@@ -14,9 +14,15 @@ public class STORIXStatic {
     public static final String WITHDRAW_PREFIX = "DELETED:";
     public static final String WITHDRAWN_NICK_NAME = "탈퇴한 유저";
 
-    // JPQL @Query에서 탈퇴 유저 닉네임 마스킹용
+    // 관리자/개발자 닉네임 중복 우회용 suffix 구분자 (일반 유저 닉네임은 패턴상 ':' 포함 불가)
+    public static final String NICK_NAME_SUFFIX_DELIMITER = ":";
+
+    // JPQL @Query에서 탈퇴 유저 닉네임 마스킹 및 관리자/개발자 suffix 제거용
     public static final String NICK_NAME_DISPLAY_CASE_WHEN =
-            "CASE WHEN u.deletedAt IS NOT NULL THEN '" + WITHDRAWN_NICK_NAME + "' ELSE u.nickName END";
+            "CASE WHEN u.deletedAt IS NOT NULL THEN '" + WITHDRAWN_NICK_NAME + "' " +
+            "WHEN LOCATE('" + NICK_NAME_SUFFIX_DELIMITER + "', u.nickName) > 0 " +
+            "THEN SUBSTRING(u.nickName, 1, LOCATE('" + NICK_NAME_SUFFIX_DELIMITER + "', u.nickName) - 1) " +
+            "ELSE u.nickName END";
 
     public static final int MILLI_TO_SECOND = 1000;
 

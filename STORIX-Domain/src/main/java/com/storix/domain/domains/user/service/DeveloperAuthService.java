@@ -30,8 +30,6 @@ public class DeveloperAuthService {
 
     // 개발자 회원가입 요청 (Slack 승인 대기)
     public DeveloperSignupPending requestSignup(String nickName, Set<Genre> favoriteGenreList, Set<Long> favoriteWorksIdList) {
-        userAdaptor.checkNicknameDuplicate(nickName);
-
         if (favoriteWorksIdList != null && !favoriteWorksIdList.isEmpty()) {
             onboardingWorksHelper.checkReaderSignUpWithOnboardingWorksList(favoriteWorksIdList);
         }
@@ -54,8 +52,6 @@ public class DeveloperAuthService {
     @Transactional
     public AuthUserDetails approveDeveloperSignup(String pendingId) {
         DeveloperSignupPending pending = internalSignupPendingAdaptor.getDeveloperPending(pendingId);
-
-        userAdaptor.checkNicknameDuplicateForApproval(pending.getNickName());
 
         CreateDeveloperUserCommand cmd = CreateDeveloperUserCommand.builder()
                 .oid(pendingId)

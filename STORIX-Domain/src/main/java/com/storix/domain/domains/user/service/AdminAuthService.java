@@ -25,8 +25,6 @@ public class AdminAuthService {
 
     // 가입 요청 (Slack 승인 대기)
     public AdminSignupPending requestSignup(String email, String rawPassword, String nickName) {
-        userAdaptor.checkNicknameDuplicate(nickName);
-
         String pendingId = issuedKeyGenerator.generatePendingId();
 
         AdminSignupPending pending = AdminSignupPending.builder()
@@ -45,8 +43,6 @@ public class AdminAuthService {
     @Transactional
     public AuthUserDetails approveAdminSignup(String pendingId) {
         AdminSignupPending pending = internalSignupPendingAdaptor.getAdminPending(pendingId);
-
-        userAdaptor.checkNicknameDuplicateForApproval(pending.getNickName());
 
         CreateAdminUserCommand cmd = CreateAdminUserCommand.builder()
                 .oid(pendingId)

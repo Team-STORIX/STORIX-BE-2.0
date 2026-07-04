@@ -43,7 +43,11 @@ public class User extends BaseTimeEntity {
     private String nickName;
 
     public String getDisplayNickName() {
-        return deletedAt != null ? STORIXStatic.WITHDRAWN_NICK_NAME : nickName;
+        if (deletedAt != null) {
+            return STORIXStatic.WITHDRAWN_NICK_NAME;
+        }
+        int suffixIndex = nickName.indexOf(STORIXStatic.NICK_NAME_SUFFIX_DELIMITER);
+        return suffixIndex >= 0 ? nickName.substring(0, suffixIndex) : nickName;
     }
 
     @ElementCollection(targetClass = Genre.class)

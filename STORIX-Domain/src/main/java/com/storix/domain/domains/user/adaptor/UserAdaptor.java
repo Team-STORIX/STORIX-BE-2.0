@@ -58,11 +58,6 @@ public class UserAdaptor {
         }
     }
 
-    // 슬랙 승인 대기 동안의 닉네임 선정 검증용
-    public void checkNicknameDuplicateForApproval(String nickName) {
-        checkNicknameDuplicate(nickName);
-    }
-
     public void checkNicknameDuplicateExceptSelf(String nickName, Long userId) {
         if (userRepository.existsNickNameExceptSelf(nickName, userId)) {
             throw ProfileDuplicateNicknameException.EXCEPTION;
