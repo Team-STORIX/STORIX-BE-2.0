@@ -1,5 +1,6 @@
 package com.storix.domain.domains.user.adaptor;
 
+import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
@@ -53,13 +54,13 @@ public class UserAdaptor {
     }
 
     public void checkNicknameDuplicate(String nickName) {
-        if (userRepository.existsByNickName(nickName)) {
+        if (STORIXStatic.RESERVED_NICK_NAMES.contains(nickName) || userRepository.existsByNickName(nickName)) {
             throw DuplicateNicknameException.EXCEPTION;
         }
     }
 
     public void checkNicknameDuplicateExceptSelf(String nickName, Long userId) {
-        if (userRepository.existsNickNameExceptSelf(nickName, userId)) {
+        if (STORIXStatic.RESERVED_NICK_NAMES.contains(nickName) || userRepository.existsNickNameExceptSelf(nickName, userId)) {
             throw ProfileDuplicateNicknameException.EXCEPTION;
         }
     }
