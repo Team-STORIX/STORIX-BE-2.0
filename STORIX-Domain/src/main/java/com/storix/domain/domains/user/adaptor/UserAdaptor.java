@@ -119,6 +119,10 @@ public class UserAdaptor {
         return userRepository.findUntitledUserIdsHavingRawScore(pageable);
     }
 
+    public List<Long> findAdminNotificationTargetUserIds(Long lastUserId, LocalDateTime signupCutoff, Pageable pageable) {
+        return userRepository.findAdminNotificationTargetUserIds(lastUserId, signupCutoff, pageable);
+    }
+
     public Map<Long, StandardProfileInfo> findStandardProfileInfoByUserIds(List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyMap();

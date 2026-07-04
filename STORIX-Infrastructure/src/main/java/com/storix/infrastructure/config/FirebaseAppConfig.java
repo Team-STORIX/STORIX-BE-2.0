@@ -1,4 +1,4 @@
-package com.storix.infrastructure.external.fcm;
+package com.storix.infrastructure.config;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;

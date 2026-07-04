@@ -1,0 +1,107 @@
+package com.storix.domain.domains.notification.service;
+
+import com.storix.domain.domains.notification.adaptor.AdminNotificationAdaptor;
+import com.storix.domain.domains.notification.adaptor.AdminNotificationLogAdaptor;
+import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
+import com.storix.domain.domains.notification.domain.AdminNotificationDeliveryOutcome;
+import com.storix.domain.domains.notification.domain.AdminNotificationLog;
+import com.storix.domain.domains.notification.dto.AdminNotificationDispatchCounts;
+import com.storix.domain.domains.notification.domain.AdminNotificationLogStatus;
+import com.storix.domain.domains.notification.domain.AdminNotificationTargetType;
+import com.storix.domain.domains.notification.domain.Notification;
+import com.storix.domain.domains.notification.domain.NotificationType;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AdminNotificationDeliveryResultService {
+
+    private final AdminNotificationAdaptor adminNotificationAdaptor;
+    private final AdminNotificationLogAdaptor adminNotificationLogAdaptor;
+    private final NotificationAdaptor notificationAdaptor;
+    private final AdminNotificationLifecycleService lifecycleService;
+
+    // FCM 발송 전 인앱 알림 생성
+    @Transactional
+    public Map<Long, Long> prepareBroadcastNotifications(Long adminNotificationId, List<Long> userIds,
+                                                         NotificationType notificationType, AdminNotificationTargetType targetType,
+                                                         Long eventTargetId, String targetLink, String title, String content
+    ) {
+        Map<Long, AdminNotificationLog> logByUser = adminNotificationLogAdaptor.findByChunk(adminNotificationId, userIds).stream()
+                .collect(Collectors.toMap(AdminNotificationLog::getUserId, l -> l));
+
+        // 미처리(PENDING) 로그 기준 발송 대상 조회
+        List<Long> targets = userIds.stream()
+                .filter(u -> logByUser.containsKey(u) && logByUser.get(u).getStatus() == AdminNotificationLogStatus.PENDING)
+                .toList();
+
+        // 인앱 알림 생성
+        List<Long> needNotification = targets.stream()
+                .filter(u -> logByUser.get(u).getNotificationId() == null)
+                .toList();
+        if (!needNotification.isEmpty()) {
+            List<Notification> saved = notificationAdaptor.saveAll(needNotification.stream()
+                    .map(u -> switch (targetType) {
+                        case NONE -> Notification.ofBroadcast(u, notificationType, title, content);
+                        case APP_EVENT -> Notification.ofEventBroadcast(u, notificationType, title, content, eventTargetId);
+                        case EXTERNAL -> Notification.ofExternalBroadcast(u, notificationType, title, content, targetLink);
+                    })
+                    .toList());
+            for (int i = 0; i < needNotification.size(); i++) {
+                logByUser.get(needNotification.get(i)).assignNotification(saved.get(i).getId());
+            }
+        }
+        Map<Long, Long> notificationIdByUser = new LinkedHashMap<>();
+        targets.forEach(u -> notificationIdByUser.put(u, logByUser.get(u).getNotificationId()));
+        return notificationIdByUser;
+    }
+
+    // FCM 발송 결과 반영
+    @Transactional
+    public AdminNotificationDispatchCounts applyDispatchOutcomes(Long adminNotificationId,
+                                                                Map<Long, AdminNotificationDeliveryOutcome> outcomes,
+                                                                int maxAttempts, LocalDateTime now
+    ) {
+        if (outcomes.isEmpty()) return AdminNotificationDispatchCounts.empty();
+
+        // 0. FCM 발송 결과 정리
+        Map<AdminNotificationDeliveryOutcome, List<Long>> byOutcome = outcomes.entrySet().stream()
+                .collect(Collectors.groupingBy(Map.Entry::getValue,
+                        Collectors.mapping(Map.Entry::getKey, Collectors.toList())));
+        List<Long> sentUsers = byOutcome.getOrDefault(AdminNotificationDeliveryOutcome.SENT, List.of());
+        List<Long> skippedUsers = byOutcome.getOrDefault(AdminNotificationDeliveryOutcome.SKIPPED, List.of());
+        List<Long> permanentUsers = byOutcome.getOrDefault(AdminNotificationDeliveryOutcome.PERMANENT_FAILURE, List.of());
+        List<Long> transientUsers = byOutcome.getOrDefault(AdminNotificationDeliveryOutcome.TRANSIENT_FAILURE, List.of());
+
+        // 1. SENT(성공)/SKIPPED(스킵)/PERMANENT_FAILURE(영구 실패)는 벌크 처리
+        if (!sentUsers.isEmpty()) adminNotificationLogAdaptor.markSent(adminNotificationId, sentUsers, now);
+        if (!skippedUsers.isEmpty()) adminNotificationLogAdaptor.markSkipped(adminNotificationId, skippedUsers);
+        if (!permanentUsers.isEmpty()) adminNotificationLogAdaptor.markPermanentFailed(adminNotificationId, permanentUsers);
+
+        // 2. TRANSIENT_FAILURE(일시 실패)는 행마다 지수 백오프가 다르므로 엔티티로 처리
+        if (!transientUsers.isEmpty()) {
+            adminNotificationLogAdaptor.findByChunk(adminNotificationId, transientUsers)
+                    .forEach(log -> log.recordTransientFailure(maxAttempts, now));
+        }
+
+        // 3. 진행 집계 반환
+        return new AdminNotificationDispatchCounts(sentUsers.size(), permanentUsers.size() + transientUsers.size(), skippedUsers.size());
+    }
+
+    // FCM 발송 결과 누적 후 완료 시도
+    @Transactional
+    public void accumulateProgress(Long adminNotificationId, int sent, int failed, int skipped) {
+        adminNotificationAdaptor.addCounts(adminNotificationId, sent, failed, skipped, LocalDateTime.now());
+        lifecycleService.tryFinalize(adminNotificationId);
+    }
+}

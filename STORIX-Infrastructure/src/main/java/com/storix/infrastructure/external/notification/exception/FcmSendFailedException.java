@@ -1,4 +1,4 @@
-package com.storix.domain.domains.notification.exception;
+package com.storix.infrastructure.external.notification.exception;
 
 import com.storix.common.code.ErrorCode;
 import com.storix.common.exception.STORIXCodeException;

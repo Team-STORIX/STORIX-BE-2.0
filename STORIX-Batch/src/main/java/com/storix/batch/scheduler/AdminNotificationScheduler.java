@@ -1,0 +1,87 @@
+package com.storix.batch.scheduler;
+
+import com.storix.common.utils.STORIXStatic;
+import com.storix.domain.domains.notification.service.AdminNotificationBroadcastService;
+import com.storix.domain.domains.notification.service.AdminNotificationLifecycleService;
+import com.storix.infrastructure.external.notification.dispatcher.AdminNotificationRetryer;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.function.Consumer;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class AdminNotificationScheduler {
+
+    private static final int STALE_MINUTES = 30;
+    private static final int RESUME_GIVEUP_HOURS = 2;
+    private static final String MDC_KEY = STORIXStatic.Mdc.ADMIN_NOTIFICATION_ID;
+
+    private final AdminNotificationLifecycleService adminNotificationLifecycleService;
+    private final AdminNotificationBroadcastService adminNotificationBroadcastService;
+    private final AdminNotificationRetryer adminNotificationRetryer;
+
+    // 예약 시각이 된 발송 실행
+    @Scheduled(cron = "0 0/5 * * * *", zone = "Asia/Seoul")
+    public void broadcastDueNotifications() {
+        adminNotificationLifecycleService.findDueNotifications(LocalDateTime.now())
+                .forEach(notification -> {
+                    log.info(">>> [AdminNotificationScheduler] broadcast 예약 발송 id={}", notification.getId());
+                    adminNotificationBroadcastService.broadcast(notification.getId());
+                });
+    }
+
+    // 비동기 발송 상태 보정
+    @Scheduled(cron = "0 3/5 * * * *", zone = "Asia/Seoul")
+    public void reconcileSendingNotifications() {
+
+        // 1. 전체 청크 발행 완료이지만, SENDING 인 발송 종료
+        List<Long> completable = adminNotificationLifecycleService.findCompletableSendingIds();
+        completable.forEach(id -> withMdc(id, adminNotificationLifecycleService::tryFinalize));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 2. 2시간 넘게 진행 없는 발행 중단 건 강제 마감
+        List<Long> abandoned = adminNotificationLifecycleService.findStaleIncompleteSendingIds(now.minusHours(RESUME_GIVEUP_HOURS));
+        abandoned.forEach(id -> withMdc(id, adminNotificationLifecycleService::forceFinalize));
+
+        // 3. 발행 도중 멈춘 발송 -> 커서부터 재개
+        LocalDateTime resumeCutoff = now.minusMinutes(STALE_MINUTES);
+        List<Long> resumable = adminNotificationLifecycleService.findStaleIncompleteSendingIds(resumeCutoff);
+        resumable.forEach(id -> adminNotificationBroadcastService.resumeBroadcast(id, resumeCutoff));
+
+        // 4. 발행은 끝났는데 멈춘 발송 -> 강제 종료
+        List<Long> stale = adminNotificationLifecycleService.findStaleCompletedSendingIds(now.minusMinutes(STALE_MINUTES));
+        stale.forEach(id -> withMdc(id, adminNotificationLifecycleService::forceFinalize));
+
+        if (!completable.isEmpty() || !abandoned.isEmpty() || !resumable.isEmpty() || !stale.isEmpty()) {
+            log.info(">>> [AdminNotificationScheduler] 상태 보정 completable={} abandoned={} resumed={} stale={}",
+                    completable.size(), abandoned.size(), resumable.size(), stale.size());
+        }
+    }
+
+    // 미발송 로그 지연 재시도
+    @Scheduled(cron = "0 2/5 * * * *", zone = "Asia/Seoul")
+    public void retryFailedNotificationLogs() {
+        int retried = adminNotificationRetryer.retryDueLogs(LocalDateTime.now());
+        if (retried > 0) {
+            log.info(">>> [AdminNotificationScheduler] 재시도 logs={}", retried);
+        }
+    }
+
+    // 처리 건마다 MDC 설정
+    private void withMdc(Long adminNotificationId, Consumer<Long> action) {
+        MDC.put(MDC_KEY, String.valueOf(adminNotificationId));
+        try {
+            action.accept(adminNotificationId);
+        } finally {
+            MDC.remove(MDC_KEY);
+        }
+    }
+}

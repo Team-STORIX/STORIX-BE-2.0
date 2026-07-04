@@ -37,6 +37,10 @@ public class Notification extends BaseTimeEntity {
     @Column(name = "parent_target_id")
     private Long parentTargetId;
 
+    // 앱 외부 URL
+    @Column(name = "link", length = 1000)
+    private String targetLink;
+
     // 본문
     @Column(nullable = false, length = 200)
     private String title;
@@ -60,6 +64,43 @@ public class Notification extends BaseTimeEntity {
         this.title = title;
         this.content = content;
         this.isRead = false;
+    }
+
+
+    // 운영자 브로드캐스트용 (이동 X)
+    public static Notification ofBroadcast(Long userId, NotificationType notificationType, String title, String content) {
+        return Notification.builder()
+                .userId(userId)
+                .notificationType(notificationType)
+                .targetType(TargetType.NONE)
+                .title(title)
+                .content(content)
+                .build();
+    }
+
+    // 운영자 브로드캐스트용 (앱 이벤트)
+    public static Notification ofEventBroadcast(Long userId, NotificationType notificationType, String title, String content, Long eventTargetId) {
+        return Notification.builder()
+                .userId(userId)
+                .notificationType(notificationType)
+                .targetType(TargetType.APP_EVENT)
+                .targetId(eventTargetId)
+                .title(title)
+                .content(content)
+                .build();
+    }
+
+    // 운영자 브로드캐스트용 (외부 링크)
+    public static Notification ofExternalBroadcast(Long userId, NotificationType notificationType, String title, String content, String targetLink) {
+        Notification notification = Notification.builder()
+                .userId(userId)
+                .notificationType(notificationType)
+                .targetType(TargetType.EXTERNAL)
+                .title(title)
+                .content(content)
+                .build();
+        notification.targetLink = targetLink;
+        return notification;
     }
 
 

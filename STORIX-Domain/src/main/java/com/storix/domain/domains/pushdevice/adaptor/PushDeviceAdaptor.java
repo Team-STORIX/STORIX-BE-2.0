@@ -1,6 +1,7 @@
 package com.storix.domain.domains.pushdevice.adaptor;
 
 import com.storix.domain.domains.pushdevice.domain.PushDevice;
+import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import com.storix.domain.domains.pushdevice.dto.SyncDeviceCommand;
 import com.storix.domain.domains.pushdevice.exception.UnknownPushDeviceException;
 import com.storix.domain.domains.pushdevice.repository.PushDeviceRepository;
@@ -29,6 +30,16 @@ public class PushDeviceAdaptor {
     // [PushDispatch] 한 유저의 활성 디바이스 FCM 토큰 일괄 조회
     public List<String> findActiveFcmTokensByUserId(Long userId) {
         return pushDeviceRepository.findActiveFcmTokensByUserId(userId);
+    }
+
+    public List<ActivePushToken> findMarketingEnabledActiveTokensByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) return List.of();
+        return pushDeviceRepository.findMarketingEnabledActiveTokensByUserIds(userIds);
+    }
+
+    public List<ActivePushToken> findActiveTokensByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) return List.of();
+        return pushDeviceRepository.findActiveTokensByUserIds(userIds);
     }
 
     /** 쓰기 작업 관련 메서드 */

@@ -1,6 +1,7 @@
 package com.storix.domain.domains.pushdevice.repository;
 
 import com.storix.domain.domains.pushdevice.domain.PushDevice;
+import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,24 @@ public interface PushDeviceRepository extends JpaRepository<PushDevice, Long> {
     // 한 유저의 활성 디바이스 FCM 토큰 일괄 조회
     @Query("SELECT d.fcmToken FROM PushDevice d WHERE d.userId = :userId AND d.isActive = true")
     List<String> findActiveFcmTokensByUserId(@Param("userId") Long userId);
+
+    @Query("""
+        SELECT new com.storix.domain.domains.pushdevice.dto.ActivePushToken(d.userId, d.fcmToken)
+        FROM PushDevice d
+        JOIN NotificationSetting s ON s.userId = d.userId
+        WHERE d.userId IN :userIds
+          AND d.isActive = true
+          AND s.marketingEnabled = true
+    """)
+    List<ActivePushToken> findMarketingEnabledActiveTokensByUserIds(@Param("userIds") List<Long> userIds);
+
+    @Query("""
+        SELECT new com.storix.domain.domains.pushdevice.dto.ActivePushToken(d.userId, d.fcmToken)
+        FROM PushDevice d
+        WHERE d.userId IN :userIds
+          AND d.isActive = true
+    """)
+    List<ActivePushToken> findActiveTokensByUserIds(@Param("userIds") List<Long> userIds);
 
     // 단일 디바이스 비활성화
     @Modifying(clearAutomatically = true, flushAutomatically = true)
