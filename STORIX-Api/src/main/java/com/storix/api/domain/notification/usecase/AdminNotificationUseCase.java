@@ -55,8 +55,15 @@ public class AdminNotificationUseCase {
     // 운영자 알림 수정
     public CustomResponse<AdminNotificationResponse> updateNotification(Long adminNotificationId, AdminNotificationRequest req) {
 
+        // 1. 운영자 알림 수정
         AdminNotificationResponse result =
                 AdminNotificationResponse.from(adminNotificationService.update(adminNotificationId, req.toCommand()));
+
+        // 2. 즉시 발송으로 변경된 경우, 브로드캐스트 발송
+        if (req.sendType() == AdminNotificationSendType.IMMEDIATE) {
+            adminNotificationBroadcastService.broadcast(adminNotificationId);
+        }
+
         return CustomResponse.onSuccess(SuccessCode.ADMIN_NOTIFICATION_UPDATE_SUCCESS, result);
     }
 
