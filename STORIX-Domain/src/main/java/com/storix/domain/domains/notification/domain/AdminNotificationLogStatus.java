@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum AdminNotificationLogStatus {
 
-    PENDING("발송 대기 / 재시도 대상"),
+    PENDING("발송 대기"),
+    SENDING("발송 중"),
+
     SENT("발송 완료"),
     SKIPPED("발송 대상 외"),
     FAILED("발송 실패");

@@ -81,12 +81,17 @@ public class AdminNotificationLog extends BaseTimeEntity {
         return log;
     }
 
+    // 발송 선점
+    public void markSending() {
+        this.status = AdminNotificationLogStatus.SENDING;
+    }
+
     // 발송 시점에 생성한 인앱 알림 id 연결
     public void assignNotification(Long notificationId) {
         this.notificationId = notificationId;
     }
 
-    // 일시 실패 -> 시도 횟수 누적
+    // 일시 실패 -> 발송 중 시도 횟수 누적 후 다시 대기로
     public void recordTransientFailure(int maxAttempts, LocalDateTime now) {
         // 발송 시도 횟수 누적
         this.attempts++;
@@ -96,8 +101,10 @@ public class AdminNotificationLog extends BaseTimeEntity {
             this.status = AdminNotificationLogStatus.FAILED;
             this.nextRetryAt = null;
         }
-        // 2. 지수 백오프로 다음 재시도 시각 설정
+
+        // 2. 지수 백오프로 다음 재시도 시각 설정하고 대기로 복귀
         else {
+            this.status = AdminNotificationLogStatus.PENDING;
             long minutes = Math.min(BASE_BACKOFF_MINUTES * (1L << (this.attempts - 1)), MAX_BACKOFF_MINUTES);
             this.nextRetryAt = now.plusMinutes(minutes);
         }

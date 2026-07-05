@@ -6,7 +6,6 @@ import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
 import com.storix.domain.domains.notification.domain.AdminNotificationDeliveryOutcome;
 import com.storix.domain.domains.notification.domain.AdminNotificationLog;
 import com.storix.domain.domains.notification.dto.AdminNotificationDispatchCounts;
-import com.storix.domain.domains.notification.domain.AdminNotificationLogStatus;
 import com.storix.domain.domains.notification.domain.AdminNotificationTargetType;
 import com.storix.domain.domains.notification.domain.Notification;
 import com.storix.domain.domains.notification.domain.NotificationType;
@@ -31,38 +30,36 @@ public class AdminNotificationDeliveryResultService {
     private final NotificationAdaptor notificationAdaptor;
     private final AdminNotificationLifecycleService lifecycleService;
 
-    // FCM 발송 전 인앱 알림 생성
+    // FCM 발송 전 발송 로그 선점 + 인앱 알림 생성
     @Transactional
     public Map<Long, Long> prepareBroadcastNotifications(Long adminNotificationId, List<Long> userIds,
                                                          NotificationType notificationType, AdminNotificationTargetType targetType,
                                                          Long eventTargetId, String targetLink, String title, String content
     ) {
-        Map<Long, AdminNotificationLog> logByUser = adminNotificationLogAdaptor.findByChunk(adminNotificationId, userIds).stream()
-                .collect(Collectors.toMap(AdminNotificationLog::getUserId, l -> l));
+        // 1. 발송 대기 로그를 잠가 발송 중으로 선점 (SKIP LOCKED)
+        List<AdminNotificationLog> claimed = adminNotificationLogAdaptor.lockClaimablePending(adminNotificationId, userIds);
+        if (claimed.isEmpty()) return Map.of();
+        claimed.forEach(AdminNotificationLog::markSending);
 
-        // 미처리(PENDING) 로그 기준 발송 대상 조회
-        List<Long> targets = userIds.stream()
-                .filter(u -> logByUser.containsKey(u) && logByUser.get(u).getStatus() == AdminNotificationLogStatus.PENDING)
-                .toList();
-
-        // 인앱 알림 생성
-        List<Long> needNotification = targets.stream()
-                .filter(u -> logByUser.get(u).getNotificationId() == null)
+        // 2. 인앱 알림 없는 선점 로그만 생성해 연결
+        List<AdminNotificationLog> needNotification = claimed.stream()
+                .filter(l -> l.getNotificationId() == null)
                 .toList();
         if (!needNotification.isEmpty()) {
             List<Notification> saved = notificationAdaptor.saveAll(needNotification.stream()
-                    .map(u -> switch (targetType) {
-                        case NONE -> Notification.ofBroadcast(u, notificationType, title, content);
-                        case APP_EVENT -> Notification.ofEventBroadcast(u, notificationType, title, content, eventTargetId);
-                        case EXTERNAL -> Notification.ofExternalBroadcast(u, notificationType, title, content, targetLink);
+                    .map(l -> switch (targetType) {
+                        case NONE -> Notification.ofBroadcast(l.getUserId(), notificationType, title, content);
+                        case APP_EVENT -> Notification.ofEventBroadcast(l.getUserId(), notificationType, title, content, eventTargetId);
+                        case EXTERNAL -> Notification.ofExternalBroadcast(l.getUserId(), notificationType, title, content, targetLink);
                     })
                     .toList());
             for (int i = 0; i < needNotification.size(); i++) {
-                logByUser.get(needNotification.get(i)).assignNotification(saved.get(i).getId());
+                needNotification.get(i).assignNotification(saved.get(i).getId());
             }
         }
+
         Map<Long, Long> notificationIdByUser = new LinkedHashMap<>();
-        targets.forEach(u -> notificationIdByUser.put(u, logByUser.get(u).getNotificationId()));
+        claimed.forEach(l -> notificationIdByUser.put(l.getUserId(), l.getNotificationId()));
         return notificationIdByUser;
     }
 

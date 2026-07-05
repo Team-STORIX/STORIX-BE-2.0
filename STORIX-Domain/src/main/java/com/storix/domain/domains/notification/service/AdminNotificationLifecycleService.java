@@ -79,7 +79,7 @@ public class AdminNotificationLifecycleService {
         if (!adminNotification.isAllChunkPublished()) return;
 
         // 2. 미처리 로그가 남아있으면 아직 미완료
-        if (adminNotificationLogAdaptor.existsByStatus(adminNotificationId, AdminNotificationLogStatus.PENDING)) return;
+        if (adminNotificationLogAdaptor.existsIncomplete(adminNotificationId)) return;
 
         // 3. AdminNotificationLog 기준으로 최종 카운트 집계
         Map<AdminNotificationLogStatus, Integer> counts = adminNotificationLogAdaptor.countGroupByStatus(adminNotificationId);
@@ -111,8 +111,8 @@ public class AdminNotificationLifecycleService {
         AdminNotification adminNotification = adminNotificationAdaptor.findById(adminNotificationId);
         if (adminNotification.getStatus() != AdminNotificationStatus.SENDING) return;
 
-        // 1. 남은 [AdminNotificationLog] PENDING -> FAILED
-        int closed = adminNotificationLogAdaptor.failPendingLogs(adminNotificationId);
+        // 1. 남은 [AdminNotificationLog] 미처리 -> FAILED
+        int closed = adminNotificationLogAdaptor.failIncompleteLogs(adminNotificationId);
 
         // 2. 로그 기준으로 최종 카운트 집계
         Map<AdminNotificationLogStatus, Integer> counts = adminNotificationLogAdaptor.countGroupByStatus(adminNotificationId);
@@ -159,16 +159,15 @@ public class AdminNotificationLifecycleService {
         return adminNotificationAdaptor.claimStaleForResume(adminNotificationId, cutoff, LocalDateTime.now()) > 0;
     }
 
-    // 재시도 대상 원자적 선점
-    @Transactional
-    public List<AdminNotificationLog> claimRetryable(LocalDateTime now, int limit, int leaseMinutes) {
-        List<AdminNotificationLog> claimed = adminNotificationLogAdaptor.findRetryableForUpdate(now, limit);
+    // 지연 재시도 대상 조회
+    @Transactional(readOnly = true)
+    public List<AdminNotificationLog> findDueRetryable(LocalDateTime now, int limit) {
+        return adminNotificationLogAdaptor.findDueRetryable(now, limit);
+    }
 
-        //  SKIP LOCKED 로 인스턴스 간 분할 후 lease 로 재선점 방지
-        if (!claimed.isEmpty()) {
-            List<Long> ids = claimed.stream().map(AdminNotificationLog::getId).toList();
-            adminNotificationLogAdaptor.leaseRetry(ids, now.plusMinutes(leaseMinutes));
-        }
-        return claimed;
+    // 전송 중으로 멈춘 로그 회수
+    @Transactional
+    public int resetStaleSendingLogs(LocalDateTime cutoff) {
+        return adminNotificationLogAdaptor.resetStaleSending(cutoff, LocalDateTime.now());
     }
 }

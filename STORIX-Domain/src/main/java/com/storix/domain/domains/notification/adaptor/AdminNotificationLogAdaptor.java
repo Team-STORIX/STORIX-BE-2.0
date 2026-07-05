@@ -4,6 +4,7 @@ import com.storix.domain.domains.notification.domain.AdminNotificationLog;
 import com.storix.domain.domains.notification.domain.AdminNotificationLogStatus;
 import com.storix.domain.domains.notification.repository.AdminNotificationLogRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -24,16 +25,26 @@ public class AdminNotificationLogAdaptor {
         return adminNotificationLogRepository.findByAdminNotificationIdAndUserIdIn(adminNotificationId, userIds);
     }
 
-    public List<AdminNotificationLog> findRetryableForUpdate(LocalDateTime now, int limit) {
-        return adminNotificationLogRepository.findRetryableForUpdate(now, limit);
+    // 청크 발송 선점
+    public List<AdminNotificationLog> lockClaimablePending(Long adminNotificationId, Collection<Long> userIds) {
+        // 발송 대기 로그를 잠가서 반환 (SKIP LOCKED)
+        return adminNotificationLogRepository.lockClaimablePending(adminNotificationId, userIds);
+    }
+
+    // 지연 재시도 대상 조회
+    public List<AdminNotificationLog> findDueRetryable(LocalDateTime now, int limit) {
+        return adminNotificationLogRepository.findDueRetryable(now, PageRequest.of(0, limit));
     }
 
     public long countTotal(Long adminNotificationId) {
         return adminNotificationLogRepository.countByAdminNotificationId(adminNotificationId);
     }
 
-    public boolean existsByStatus(Long adminNotificationId, AdminNotificationLogStatus status) {
-        return adminNotificationLogRepository.existsByAdminNotificationIdAndStatus(adminNotificationId, status);
+    // 미처리 로그 존재 여부
+    public boolean existsIncomplete(Long adminNotificationId) {
+        return adminNotificationLogRepository.existsByAdminNotificationIdAndStatusIn(
+                adminNotificationId,
+                List.of(AdminNotificationLogStatus.PENDING, AdminNotificationLogStatus.SENDING));
     }
 
     public Map<AdminNotificationLogStatus, Integer> countGroupByStatus(Long adminNotificationId) {
@@ -50,8 +61,9 @@ public class AdminNotificationLogAdaptor {
         adminNotificationLogRepository.saveAll(logs);
     }
 
-    public void leaseRetry(List<Long> ids, LocalDateTime lease) {
-        adminNotificationLogRepository.leaseRetry(ids, lease);
+    // 발송 중으로 멈춘 로그를 발송 대기 상태로 복구
+    public int resetStaleSending(LocalDateTime cutoff, LocalDateTime now) {
+        return adminNotificationLogRepository.resetStaleSending(cutoff, now);
     }
 
     public void markSent(Long adminNotificationId, List<Long> userIds, LocalDateTime now) {
@@ -70,7 +82,7 @@ public class AdminNotificationLogAdaptor {
         return adminNotificationLogRepository.reviveFailedLogs(adminNotificationId, now);
     }
 
-    public int failPendingLogs(Long adminNotificationId) {
-        return adminNotificationLogRepository.failPendingLogs(adminNotificationId);
+    public int failIncompleteLogs(Long adminNotificationId) {
+        return adminNotificationLogRepository.failIncompleteLogs(adminNotificationId);
     }
 }

@@ -21,6 +21,8 @@ public class AdminNotificationScheduler {
 
     private static final int STALE_MINUTES = 30;
     private static final int RESUME_GIVEUP_HOURS = 2;
+    private static final int SENDING_LOG_STALE_MINUTES = 15;
+
     private static final String MDC_KEY = STORIXStatic.Mdc.ADMIN_NOTIFICATION_ID;
 
     private final AdminNotificationLifecycleService adminNotificationLifecycleService;
@@ -41,28 +43,31 @@ public class AdminNotificationScheduler {
     @Scheduled(cron = "0 3/5 * * * *", zone = "Asia/Seoul")
     public void reconcileSendingNotifications() {
 
+        LocalDateTime now = LocalDateTime.now();
+
+        // 0. 전송 중(SENDING)으로 멈춘 로그 회수
+        int recoveredLogs = adminNotificationLifecycleService.resetStaleSendingLogs(now.minusMinutes(SENDING_LOG_STALE_MINUTES));
+
         // 1. 전체 청크 발행 완료이지만, SENDING 인 발송 종료
         List<Long> completable = adminNotificationLifecycleService.findCompletableSendingIds();
-        completable.forEach(id -> withMdc(id, adminNotificationLifecycleService::tryFinalize));
-
-        LocalDateTime now = LocalDateTime.now();
+        reconcileEach(completable, "완료 종료", id -> withMdc(id, adminNotificationLifecycleService::tryFinalize));
 
         // 2. 2시간 넘게 진행 없는 발행 중단 건 강제 마감
         List<Long> abandoned = adminNotificationLifecycleService.findStaleIncompleteSendingIds(now.minusHours(RESUME_GIVEUP_HOURS));
-        abandoned.forEach(id -> withMdc(id, adminNotificationLifecycleService::forceFinalize));
+        reconcileEach(abandoned, "발행 중단 강제 마감", id -> withMdc(id, adminNotificationLifecycleService::forceFinalize));
 
         // 3. 발행 도중 멈춘 발송 -> 커서부터 재개
         LocalDateTime resumeCutoff = now.minusMinutes(STALE_MINUTES);
         List<Long> resumable = adminNotificationLifecycleService.findStaleIncompleteSendingIds(resumeCutoff);
-        resumable.forEach(id -> adminNotificationBroadcastService.resumeBroadcast(id, resumeCutoff));
+        reconcileEach(resumable, "재개", id -> adminNotificationBroadcastService.resumeBroadcast(id, resumeCutoff));
 
         // 4. 발행은 끝났는데 멈춘 발송 -> 강제 종료
         List<Long> stale = adminNotificationLifecycleService.findStaleCompletedSendingIds(now.minusMinutes(STALE_MINUTES));
-        stale.forEach(id -> withMdc(id, adminNotificationLifecycleService::forceFinalize));
+        reconcileEach(stale, "완료 정체 강제 종료", id -> withMdc(id, adminNotificationLifecycleService::forceFinalize));
 
-        if (!completable.isEmpty() || !abandoned.isEmpty() || !resumable.isEmpty() || !stale.isEmpty()) {
-            log.info(">>> [AdminNotificationScheduler] 상태 보정 completable={} abandoned={} resumed={} stale={}",
-                    completable.size(), abandoned.size(), resumable.size(), stale.size());
+        if (recoveredLogs > 0 || !completable.isEmpty() || !abandoned.isEmpty() || !resumable.isEmpty() || !stale.isEmpty()) {
+            log.info(">>> [AdminNotificationScheduler] 상태 보정 recoveredLogs={} completable={} abandoned={} resumed={} stale={}",
+                    recoveredLogs, completable.size(), abandoned.size(), resumable.size(), stale.size());
         }
     }
 
@@ -72,6 +77,17 @@ public class AdminNotificationScheduler {
         int retried = adminNotificationRetryer.retryDueLogs(LocalDateTime.now());
         if (retried > 0) {
             log.info(">>> [AdminNotificationScheduler] 재시도 logs={}", retried);
+        }
+    }
+
+    // 항목별 예외 개별 로깅
+    private void reconcileEach(List<Long> ids, String stage, Consumer<Long> action) {
+        for (Long id : ids) {
+            try {
+                action.accept(id);
+            } catch (Exception e) {
+                log.error(">>> [AdminNotificationScheduler] 보정 실패 stage={} id={}, cause={}", stage, id, e.getMessage(), e);
+            }
         }
     }
 

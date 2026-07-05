@@ -20,7 +20,7 @@ import java.util.List;
 public class AdminNotificationBroadcastService {
 
     private static final int TARGET_USER_CHUNK_SIZE = 1000;
-    private static final long RELAY_GRACE_MINUTES = 2;
+    private static final long RELAY_GRACE_MINUTES = 5;
     private static final String MDC_KEY = STORIXStatic.Mdc.ADMIN_NOTIFICATION_ID;
 
     private final AdminNotificationTargetService targetService;
@@ -76,7 +76,7 @@ public class AdminNotificationBroadcastService {
 
         while (true) {
             // 1. 진행 커서 기준 청크 단위 유저 조회
-            List<Long> userIds = targetService.findTargetChunk(info.targetAudience(), lastUserId, now, TARGET_USER_CHUNK_SIZE);
+            List<Long> userIds = targetService.findTargetChunk(info.targetAudience(), info.eventTargetId(), lastUserId, now, TARGET_USER_CHUNK_SIZE);
             if (userIds.isEmpty()) break;
             Long chunkLastUserId = userIds.get(userIds.size() - 1);
 

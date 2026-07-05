@@ -3,9 +3,13 @@ package com.storix.domain.domains.notification.repository;
 import com.storix.domain.domains.notification.domain.AdminNotificationLog;
 import com.storix.domain.domains.notification.domain.AdminNotificationLogStatus;
 import com.storix.domain.domains.notification.dto.AdminNotificationLogStatusCount;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
@@ -17,31 +21,41 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
     // 청크 내 기존 로그 조회
     List<AdminNotificationLog> findByAdminNotificationIdAndUserIdIn(Long adminNotificationId, Collection<Long> userIds);
 
-    // 지연 재시도 대상 원자적 선점
-    @Query(value = """
-        SELECT * FROM admin_notification_log
-        WHERE status = 'PENDING' AND next_retry_at <= :now
-        ORDER BY next_retry_at ASC
-        LIMIT :limit
-        FOR UPDATE SKIP LOCKED
-    """, nativeQuery = true)
-    List<AdminNotificationLog> findRetryableForUpdate(@Param("now") LocalDateTime now, @Param("limit") int limit);
+    // 청크 발송 선점
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2"))
+    @Query("""
+        SELECT l FROM AdminNotificationLog l
+        WHERE l.adminNotificationId = :id AND l.userId IN :userIds
+          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
+    """)
+    List<AdminNotificationLog> lockClaimablePending(@Param("id") Long id, @Param("userIds") Collection<Long> userIds);
 
-    // 선점한 재시도 로그 재선점 방지
+    // 지연 재시도 대상 조회
+    @Query("""
+        SELECT l FROM AdminNotificationLog l
+        WHERE l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
+          AND l.nextRetryAt <= :now
+        ORDER BY l.nextRetryAt ASC
+    """)
+    List<AdminNotificationLog> findDueRetryable(@Param("now") LocalDateTime now, org.springframework.data.domain.Pageable pageable);
+
+    // 발송 중으로 멈춘 로그 복구
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE AdminNotificationLog l
-        SET l.nextRetryAt = :lease
-        WHERE l.id IN :ids
-          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
+        SET l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING,
+            l.nextRetryAt = :now
+        WHERE l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.SENDING
+          AND l.updatedAt < :cutoff
     """)
-    void leaseRetry(@Param("ids") List<Long> ids, @Param("lease") LocalDateTime lease);
+    int resetStaleSending(@Param("cutoff") LocalDateTime cutoff, @Param("now") LocalDateTime now);
 
     // 전체 로그 수
     long countByAdminNotificationId(Long adminNotificationId);
 
     // 미처리 로그 존재 여부
-    boolean existsByAdminNotificationIdAndStatus(Long adminNotificationId, AdminNotificationLogStatus status);
+    boolean existsByAdminNotificationIdAndStatusIn(Long adminNotificationId, Collection<AdminNotificationLogStatus> statuses);
 
     // 상태별 로그 수 - 종료 집계용
     @Query("""
@@ -62,7 +76,7 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
             l.nextRetryAt = null
         WHERE l.adminNotificationId = :id
           AND l.userId IN :userIds
-          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
+          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.SENDING
     """)
     void markSent(@Param("id") Long id, @Param("userIds") List<Long> userIds, @Param("now") LocalDateTime now);
 
@@ -74,7 +88,7 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
             l.nextRetryAt = null
         WHERE l.adminNotificationId = :id
           AND l.userId IN :userIds
-          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
+          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.SENDING
     """)
     void markSkipped(@Param("id") Long id, @Param("userIds") List<Long> userIds);
 
@@ -87,7 +101,7 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
             l.nextRetryAt = null
         WHERE l.adminNotificationId = :id
           AND l.userId IN :userIds
-          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
+          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.SENDING
     """)
     void markPermanentFailed(@Param("id") Long id, @Param("userIds") List<Long> userIds);
 
@@ -103,14 +117,15 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
     """)
     int reviveFailedLogs(@Param("id") Long id, @Param("now") LocalDateTime now);
 
-    // 강제 종료 시 로그 실패 처리
+    // 강제 종료 시 미처리 로그 실패 처리
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE AdminNotificationLog l
         SET l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.FAILED,
             l.nextRetryAt = null
         WHERE l.adminNotificationId = :id
-          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
+          AND l.status IN (com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING,
+                           com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.SENDING)
     """)
-    int failPendingLogs(@Param("id") Long id);
+    int failIncompleteLogs(@Param("id") Long id);
 }

@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 public class AdminNotificationRetryer {
 
     private static final int RETRY_BATCH_SIZE = 500;
-    private static final int RETRY_LEASE_MINUTES = 15;
     private static final String MDC_KEY = STORIXStatic.Mdc.ADMIN_NOTIFICATION_ID;
 
     private final AdminNotificationTargetService targetService;
@@ -30,8 +29,8 @@ public class AdminNotificationRetryer {
 
     public int retryDueLogs(LocalDateTime now) {
 
-        // 1. 재시도 시각이 된 PENDING 로그 원자적 선점 (SKIP LOCKED + lease)
-        List<AdminNotificationLog> due = lifecycleService.claimRetryable(now, RETRY_BATCH_SIZE, RETRY_LEASE_MINUTES);
+        // 1. 재시도 시각이 된 PENDING 로그 조회
+        List<AdminNotificationLog> due = lifecycleService.findDueRetryable(now, RETRY_BATCH_SIZE);
         if (due.isEmpty()) return 0;
 
         // 2. 이벤트별로 유저를 묶어 title/content 한 번만 조회 후 재발송
@@ -56,6 +55,8 @@ public class AdminNotificationRetryer {
 
                 // 마지막 PENDING 로그 까지 처리됐으면 완료 종료
                 lifecycleService.tryFinalize(adminNotificationId);
+            } catch (Exception e) {
+                log.error(">>> [AdminNotification] 재시도 발송 실패 adminNotificationId={}, cause={}", adminNotificationId, e.getMessage(), e);
             } finally {
                 MDC.remove(MDC_KEY);
             }
