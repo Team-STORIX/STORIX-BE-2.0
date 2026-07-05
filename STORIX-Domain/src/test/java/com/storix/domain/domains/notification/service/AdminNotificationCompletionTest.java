@@ -88,7 +88,7 @@ class AdminNotificationCompletionTest {
     }
 
     private void stubLogCounts(int pending, int sent, int failed, int skipped) {
-        given(adminNotificationLogAdaptor.existsByStatus(eq(ID), eq(AdminNotificationLogStatus.PENDING))).willReturn(pending > 0);
+        given(adminNotificationLogAdaptor.existsIncomplete(eq(ID))).willReturn(pending > 0);
         given(adminNotificationLogAdaptor.countGroupByStatus(eq(ID))).willReturn(logCounts(sent, failed, skipped));
     }
 
@@ -151,11 +151,11 @@ class AdminNotificationCompletionTest {
         }
 
         @Test
-        @DisplayName("아직 처리할 PENDING 로그가 남아있으면 종료하지 않는다")
+        @DisplayName("아직 처리할 미처리 로그가 남아있으면 종료하지 않는다")
         void skip_when_pending_remains() {
             given(adminNotificationAdaptor.findById(ID))
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
-            given(adminNotificationLogAdaptor.existsByStatus(eq(ID), eq(AdminNotificationLogStatus.PENDING)))
+            given(adminNotificationLogAdaptor.existsIncomplete(eq(ID)))
                     .willReturn(true);
 
             lifecycleService.tryFinalize(ID);
@@ -273,7 +273,7 @@ class AdminNotificationCompletionTest {
         }
 
         @Test
-        @DisplayName("강제 종료 시 남은 PENDING 로그를 FAILED 로 닫는다 (종료 후 좀비 재시도 방지)")
+        @DisplayName("강제 종료 시 남은 미처리 로그를 FAILED 로 닫는다 (종료 후 좀비 재시도 방지)")
         void closes_pending_logs_before_finalize() {
             given(adminNotificationAdaptor.findById(ID))
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
@@ -281,7 +281,7 @@ class AdminNotificationCompletionTest {
 
             lifecycleService.forceFinalize(ID);
 
-            verify(adminNotificationLogAdaptor).failPendingLogs(ID);
+            verify(adminNotificationLogAdaptor).failIncompleteLogs(ID);
             verify(adminNotificationAdaptor).finalizeIfSending(
                     eq(ID), eq(AdminNotificationStatus.FAILED), eq(3), eq(2), eq(0), any(LocalDateTime.class));
         }
