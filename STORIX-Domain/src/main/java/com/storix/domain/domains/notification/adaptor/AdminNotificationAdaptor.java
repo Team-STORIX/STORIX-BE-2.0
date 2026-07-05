@@ -26,6 +26,11 @@ public class AdminNotificationAdaptor {
                 .orElseThrow(() -> AdminNotificationNotFoundException.EXCEPTION);
     }
 
+    public AdminNotification findByIdForUpdate(Long adminNotificationId) {
+        return adminNotificationRepository.findByIdForUpdate(adminNotificationId)
+                .orElseThrow(() -> AdminNotificationNotFoundException.EXCEPTION);
+    }
+
     public AdminNotificationBroadcastInfo findBroadcastInfo(Long adminNotificationId) {
         return adminNotificationRepository.findBroadcastInfo(adminNotificationId)
                 .orElseThrow(() -> AdminNotificationNotFoundException.EXCEPTION);

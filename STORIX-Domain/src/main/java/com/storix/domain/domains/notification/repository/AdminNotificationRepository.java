@@ -3,9 +3,11 @@ package com.storix.domain.domains.notification.repository;
 import com.storix.domain.domains.notification.domain.AdminNotification;
 import com.storix.domain.domains.notification.domain.AdminNotificationStatus;
 import com.storix.domain.domains.notification.dto.AdminNotificationBroadcastInfo;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,6 +27,11 @@ public interface AdminNotificationRepository extends JpaRepository<AdminNotifica
         WHERE e.id = :id
     """)
     Optional<AdminNotificationBroadcastInfo> findBroadcastInfo(@Param("id") Long id);
+
+    // 어드민 알림 수정/취소 시 발송 상태 경합 방지용 비관적 락 조회
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM AdminNotification e WHERE e.id = :id")
+    Optional<AdminNotification> findByIdForUpdate(@Param("id") Long id);
 
     // 청크 발송 로그 선저장 + 진행 커서 전진
     @Modifying(clearAutomatically = true, flushAutomatically = true)

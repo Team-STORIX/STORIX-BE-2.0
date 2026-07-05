@@ -37,10 +37,11 @@ public class AdminNotificationService {
 
     @Transactional
     public AdminNotification update(Long adminNotificationId, AdminNotificationCommand cmd) {
-        AdminNotification adminNotification = getById(adminNotificationId);
+        AdminNotification adminNotification = adminNotificationAdaptor.findByIdForUpdate(adminNotificationId);
         if (!adminNotification.isScheduled()) {
             throw AdminNotificationNotUpdatableException.EXCEPTION;
         }
+
         adminNotification.update(
                 cmd.title(),
                 cmd.content(),
@@ -62,12 +63,13 @@ public class AdminNotificationService {
 
     @Transactional(readOnly = true)
     public Page<AdminNotification> getNotifications(int page) {
-        return adminNotificationAdaptor.findAll(PageRequest.of(page, NOTIFICATION_PAGE_SIZE));
+        int safePage = Math.max(0, page);
+        return adminNotificationAdaptor.findAll(PageRequest.of(safePage, NOTIFICATION_PAGE_SIZE));
     }
 
     @Transactional
     public AdminNotification cancel(Long adminNotificationId) {
-        AdminNotification adminNotification = getById(adminNotificationId);
+        AdminNotification adminNotification = adminNotificationAdaptor.findByIdForUpdate(adminNotificationId);
         if (!adminNotification.isScheduled()) {
             throw AdminNotificationNotCancelableException.EXCEPTION;
         }
