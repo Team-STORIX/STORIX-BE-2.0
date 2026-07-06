@@ -64,7 +64,7 @@ public class WorksDetailKebabService {
     }
 
     @Transactional
-    public void reportReview(Long userId, Long reviewId, Long reportedUserId, ReportReason reason, String otherReason) {
+    public void reportReview(Long userId, Long reviewId, Long reportedUserId, String otherReason) {
 
         Long actualReviewerId = reviewAdaptor.findReviewerIdById(reviewId);
         if (!actualReviewerId.equals(reportedUserId)) {
@@ -85,7 +85,7 @@ public class WorksDetailKebabService {
                 userId,
                 actualReviewerId,
                 reviewId,
-                reason,
+                ReportReason.DEFAULT,
                 otherReason,
                 reportCase.getId()
         );
