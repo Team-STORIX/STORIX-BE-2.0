@@ -1,5 +1,6 @@
 package com.storix.domain.domains.topicroom.service;
 
+import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
@@ -61,7 +62,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final LoadUserPort loadUserPort;
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
-    private final ProfanityFilterService profanityFilterService;
+    private final BannedWordAdaptor bannedWordAdaptor;
     private final GenreScorePublisher genreScorePublisher;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
@@ -194,7 +195,9 @@ public class TopicRoomService implements TopicRoomUseCase {
     @Transactional
     public Long createRoom(Long userId, TopicRoomCreateRequestDto request) {
 
-        profanityFilterService.validate(request.getTopicRoomName());
+        if (bannedWordAdaptor.containsBannedWord(request.getTopicRoomName())) {
+            throw InvalidTitleException.EXCEPTION;
+        }
 
         User user = loadUserPort.findById(userId);
         Works works = loadWorksPort.findById(request.getWorksId());

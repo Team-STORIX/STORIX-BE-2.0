@@ -1,5 +1,6 @@
 package com.storix.domain.domains.profile.service;
 
+import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.genrescore.adaptor.GenreScoreAdaptor;
 import com.storix.domain.domains.profile.dto.UserInfo;
 import com.storix.domain.domains.profile.dto.UserInfoV2;
@@ -7,6 +8,7 @@ import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.Title;
 import com.storix.domain.domains.user.domain.TitleStage;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.exception.me.ProfileInvalidNicknameException;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +23,7 @@ public class ProfileService {
 
     private final UserAdaptor userAdaptor;
     private final GenreScoreAdaptor genreScoreAdaptor;
+    private final BannedWordAdaptor bannedWordAdaptor;
 
     // 독자 프로필 조회 (V1)
     @Transactional(readOnly = true)
@@ -78,15 +81,24 @@ public class ProfileService {
     // 독자 닉네임 중복 체크
     @Transactional(readOnly = true)
     public void validNickname(String nickName, Long userId) {
+        validateNicknameNotBanned(nickName);
         userAdaptor.checkNicknameDuplicateExceptSelf(nickName, userId);
     }
 
     // 독자 닉네임 변경
     @Transactional
     public String changeNickname(String nickName, Long userId) {
+        validateNicknameNotBanned(nickName);
         User readerUser = userAdaptor.findUserById(userId);
         readerUser.changeNickName(nickName);
         return nickName;
+    }
+
+    // 금칙어 검증
+    private void validateNicknameNotBanned(String nickName) {
+        if (bannedWordAdaptor.containsBannedWord(nickName)) {
+            throw ProfileInvalidNicknameException.EXCEPTION;
+        }
     }
 
     // 독자 한 줄 소개 변경

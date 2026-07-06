@@ -1,5 +1,6 @@
 package com.storix.domain.domains.user.service;
 
+import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
@@ -17,6 +18,7 @@ import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.dto.ReaderSignUpData;
 import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
+import com.storix.domain.domains.user.exception.me.ProfileInvalidNicknameException;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
@@ -54,6 +56,7 @@ public class AuthService {
     private final OnboardingWorksHelper onboardingWorksHelper; // -> usecase 리팩토링 필요
     private final GenreScorePublisher genreScorePublisher;
     private final UserAccessRevokedPublisher userAccessRevokedPublisher;
+    private final BannedWordAdaptor bannedWordAdaptor;
 
     // 독자 회원 가입 가능 여부 (토큰 검증, 계정 정보 유무)
     // - 카카오
@@ -101,7 +104,7 @@ public class AuthService {
             onboardingWorksHelper.checkReaderSignUpWithOnboardingWorksList(cmd.favoriteWorksIdList());
         }
 
-        userAdaptor.checkNicknameDuplicate(cmd.nickName());
+        validNickname(cmd.nickName());
 
         // 3. 회원 가입 정보 DB 저장
         CreateReaderUserCommand m = CreateReaderUserCommand.builder()
@@ -148,6 +151,9 @@ public class AuthService {
 
     // 독자 닉네임 중복 체크
     public void validNickname(String nickName) {
+        if (bannedWordAdaptor.containsBannedWord(nickName)) {
+            throw ProfileInvalidNicknameException.EXCEPTION;
+        }
         userAdaptor.checkNicknameDuplicate(nickName);
     }
 

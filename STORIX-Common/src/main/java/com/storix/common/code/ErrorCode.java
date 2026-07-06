@@ -37,7 +37,6 @@ public enum ErrorCode {
     ONBOARDING_DUPLICATE_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_001", "이미 사용 중인 닉네임입니다."),
     PROFILE_DUPLICATE_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_002", "이미 사용 중인 닉네임입니다."),
     PROFILE_FORBIDDEN_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_003", "사용할 수 없는 닉네임입니다."),
-    PROFILE_INVALID_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_004", "금칙어가 포함된 닉네임입니다."),
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "USER_ERROR_001", "로그인이 필요합니다."),
     FORBIDDEN_APPROACH(HttpStatus.FORBIDDEN, "USER_ERROR_002", "해당 요청을 수행할 권한이 없습니다."),
 
@@ -185,7 +184,12 @@ public enum ErrorCode {
 
     // Terms error
     DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다."),
-    CURRENT_TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_ERROR_002", "현재 시행 중인 약관이 없습니다. 약관 등록 여부를 확인해주세요.");
+    CURRENT_TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_ERROR_002", "현재 시행 중인 약관이 없습니다. 약관 등록 여부를 확인해주세요."),
+
+    // Banned Word error
+    BANNED_WORD_NOT_FOUND(HttpStatus.NOT_FOUND, "BANNED_WORD_ERROR_001", "해당 금칙어를 찾을 수 없습니다."),
+    DUPLICATE_BANNED_WORD(HttpStatus.CONFLICT, "BANNED_WORD_ERROR_002", "이미 등록된 금칙어입니다."),
+    BANNED_WORD_CSV_PARSE_ERROR(HttpStatus.BAD_REQUEST, "BANNED_WORD_ERROR_003", "금칙어 CSV 파일을 읽을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

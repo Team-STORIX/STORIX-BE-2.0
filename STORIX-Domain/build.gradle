@@ -11,6 +11,7 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'org.ahocorasick:ahocorasick:0.6.3'
 
     compileOnly 'io.swagger.core.v3:swagger-annotations-jakarta:2.2.22'
 
