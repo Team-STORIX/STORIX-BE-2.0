@@ -32,6 +32,7 @@ import com.storix.domain.domains.user.dto.AdminUserSanctionHistoryResponse;
 import com.storix.domain.domains.user.dto.AdminUserSanctionPageResponse;
 import com.storix.domain.domains.user.dto.AdminUserSearchCondition;
 import com.storix.domain.domains.user.exception.admin.InvalidAdminUserSanctionRequestException;
+import com.storix.domain.domains.user.exception.admin.UserAlreadySuspendedException;
 import com.storix.domain.domains.user.exception.admin.UserNotSuspendedException;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import com.storix.domain.domains.user.exception.auth.InvalidWithdrawException;
@@ -258,6 +259,9 @@ public class AdminUserService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime suspendedUntil = now.plusDays(SUSPENSION_DAYS);
         User user = userAdaptor.findUserById(userId);
+        if (user.getAccountState() == AccountState.SUSPENDED) {
+            throw UserAlreadySuspendedException.EXCEPTION;
+        }
         user.suspend(suspendedUntil);
         userAccessRevokedPublisher.publishSuspended(userId, suspendedUntil);
         saveManualSanctionHistory(userId, adminId, UserSanctionType.SUSPENDED, now, suspendedUntil, memo);

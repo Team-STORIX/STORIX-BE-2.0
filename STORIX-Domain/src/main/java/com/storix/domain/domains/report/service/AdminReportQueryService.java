@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 public class AdminReportQueryService {
 
     private static final String DELETED_CHAT_MESSAGE = "삭제된 메시지입니다.";
+    private static final String DELETED_TOPIC_ROOM = "삭제된 토픽룸입니다.";
 
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final FeedReportAdaptor feedReportAdaptor;
@@ -382,7 +383,7 @@ public class AdminReportQueryService {
                 room == null ? null : room.getId(),
                 reportedUserId,
                 nickName(reportedUserId, nickNames),
-                room == null ? DELETED_CHAT_MESSAGE : room.getTopicRoomName(),
+                room == null ? DELETED_TOPIC_ROOM : room.getTopicRoomName(),
                 room == null ? null : room.getCreatedAt(),
                 List.of(reportedChatMessage)
         );
