@@ -81,4 +81,13 @@ public interface PushDeviceRepository extends JpaRepository<PushDevice, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE PushDevice d SET d.lastSuccessAt = :now WHERE d.fcmToken IN :tokens AND d.isActive = true")
     void markFcmTokensSuccess(@Param("tokens") List<String> tokens, @Param("now") LocalDateTime now);
+
+    // 장기 미활동 활성 디바이스 일괄 비활성화
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        UPDATE PushDevice d SET d.isActive = false
+        WHERE d.isActive = true
+          AND d.updatedAt < :threshold
+    """)
+    int deactivateStaleDevices(@Param("threshold") LocalDateTime threshold);
 }

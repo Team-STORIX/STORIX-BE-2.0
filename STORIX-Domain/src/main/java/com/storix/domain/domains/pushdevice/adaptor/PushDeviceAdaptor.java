@@ -93,4 +93,9 @@ public class PushDeviceAdaptor {
     public void markFcmTokensSuccess(List<String> tokens, LocalDateTime now) {
         pushDeviceRepository.markFcmTokensSuccess(tokens, now);
     }
+
+    // [Batch] 장기 미활동 디바이스 일괄 비활성화 (threshold 이후 sync 없음, 기기별)
+    public int deactivateStaleDevices(LocalDateTime threshold) {
+        return pushDeviceRepository.deactivateStaleDevices(threshold);
+    }
 }
