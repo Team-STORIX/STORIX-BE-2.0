@@ -21,7 +21,7 @@ public record AdminUserBasicInfo(
     public static AdminUserBasicInfo from(User user) {
         return new AdminUserBasicInfo(
                 user.getId(),
-                user.getNickName(),
+                user.getDisplayNickName(),
                 user.getOauthInfo() == null ? null : user.getOauthInfo().getEmail(),
                 user.getOauthInfo() == null ? null : user.getOauthInfo().getProvider(),
                 user.getCreatedAt().toLocalDate(),
