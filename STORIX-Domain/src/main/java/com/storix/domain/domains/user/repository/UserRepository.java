@@ -19,14 +19,13 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    boolean existsByActiveNickName(String activeNickName);
+    boolean existsByNickName(String nickName);
 
     @Query("""
         SELECT (COUNT(u) > 0)
         FROM User u
-        WHERE u.activeNickName = :nickName
+        WHERE u.nickName = :nickName
           AND u.id <> :userId
-          AND u.accountState = com.storix.domain.domains.user.domain.AccountState.NORMAL
     """)
     boolean existsNickNameExceptSelf(
             @Param("nickName") String nickName,
@@ -69,13 +68,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Boolean findIsAdultVerifiedById(@Param("userId") Long userId);
 
     // 단건 프로필 정보 조회
-    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(u.id, u.profileObjectKey, u.nickName)" +
+    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
+            "   u.id, u.profileObjectKey, " +
+            "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +
+            ") " +
             "FROM User u " +
             "WHERE u.id = :userId ")
     StandardProfileInfo findStandardProfileInfoById(@Param("userId") Long userId);
 
     // 단체 프로필 정보 조회
-    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(u.id, u.profileObjectKey, u.nickName)" +
+    @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
+            "   u.id, u.profileObjectKey, " +
+            "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +
+            ") " +
             "FROM User u " +
             "WHERE u.id IN :userIds ")
     List<StandardProfileInfo> findStandardProfileInfoByUserIds(@Param("userIds") List<Long> userIds);
@@ -89,11 +94,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("state") AccountState state,
             @Param("now") LocalDateTime now);
 
-    @Query("""
-        SELECT new com.storix.domain.domains.user.dto.UserNicknameInfo(u.id, u.nickName)
-        FROM User u
-        WHERE u.id IN :userIds
-    """)
+    @Query("SELECT new com.storix.domain.domains.user.dto.UserNicknameInfo(" +
+            "   u.id, " +
+            "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +
+            ") " +
+            "FROM User u " +
+            "WHERE u.id IN :userIds")
     List<UserNicknameInfo> findNicknameInfoByUserIds(@Param("userIds") List<Long> userIds);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

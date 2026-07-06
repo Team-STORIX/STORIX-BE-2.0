@@ -21,7 +21,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "   m.id, " +
             "   m.roomId, " +
             "   m.senderId, " +
-            "   COALESCE(u.nickName, '알 수 없음'), " +
+            "   COALESCE(" + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN + ", '알 수 없음'), " +
             "   m.message, " +
             "   m.messageType, " +
             "   m.createdAt " +
@@ -40,7 +40,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "   m.id, " +
             "   m.roomId, " +
             "   m.senderId, " +
-            "   COALESCE(u.nickName, '알 수 없음'), " +
+            "   COALESCE(" + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN + ", '알 수 없음'), " +
             "   m.message, " +
             "   m.messageType, " +
             "   m.createdAt " +
@@ -144,7 +144,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "   m.id, " +
             "   m.roomId, " +
             "   m.senderId, " +
-            "   COALESCE(u.nickName, '알 수 없음'), " +
+            "   COALESCE(" + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN + ", '알 수 없음'), " +
             "   m.message, " +
             "   m.messageType, " +
             "   m.createdAt " +
