@@ -3,6 +3,7 @@ package com.storix.domain.domains.topicroom.adaptor;
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
+import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomUserException;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
@@ -55,5 +56,13 @@ public class TopicRoomAdaptor {
 
     public long countJoinedRooms(Long userId) {
         return topicRoomUserRepository.countByUserId(userId);
+    }
+
+    public Integer findActiveUserNumberById(Long roomId) {
+        Integer activeUserNumber = topicRoomRepository.findActiveUserNumberById(roomId);
+        if (activeUserNumber == null) {
+            throw UnknownTopicRoomException.EXCEPTION;
+        }
+        return activeUserNumber;
     }
 }
