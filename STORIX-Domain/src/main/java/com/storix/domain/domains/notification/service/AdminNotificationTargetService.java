@@ -35,7 +35,7 @@ public class AdminNotificationTargetService {
 
     // 발송 대상 청크 단위 조회
     @Transactional(readOnly = true)
-    public List<Long> findTargetChunk(AdminNotificationTargetAudience audience, Long lastUserId, LocalDateTime now, int size) {
+    public List<Long> findTargetChunk(AdminNotificationTargetAudience audience, Long eventTargetId, Long lastUserId, LocalDateTime now, int size) {
         PageRequest page = PageRequest.of(0, size);
         return switch (audience) {
             case ALL -> userAdaptor.findAdminNotificationTargetUserIds(lastUserId, null, page);
