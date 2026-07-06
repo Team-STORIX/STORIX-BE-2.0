@@ -60,9 +60,7 @@ public class PushDeviceAdaptor {
         }
 
         // 3. 한 기기 = 한 활성 계정 강제
-        if (created) {
-            pushDeviceRepository.deactivateOtherUsersOnDevice(userId, cmd.installationId());
-        }
+        pushDeviceRepository.deactivateOtherUsersOnDevice(userId, cmd.installationId());
 
         // 4. 같은 FCM 토큰을 들고 있는 다른 활성 디바이스 행 비활성화 (installationId 재발급 될 수 있는 경우)
         pushDeviceRepository.deactivateOtherActiveDevicesByToken(userId, cmd.installationId(), cmd.fcmToken());
