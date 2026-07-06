@@ -113,12 +113,16 @@ public class UserAdaptor {
         return userRepository.searchAdminUsers(userId, nickname,accountState, pageable);
     }
 
-    public int clearAllTitles() {
-        return userRepository.clearAllTitles();
+    public void clearAllTitles() {
+        userRepository.clearAllTitles();
     }
 
     public List<Long> findUntitledUserIdsHavingRawScore(Pageable pageable) {
         return userRepository.findUntitledUserIdsHavingRawScore(pageable);
+    }
+
+    public List<Long> findAdminNotificationTargetUserIds(Long lastUserId, LocalDateTime signupCutoff, Pageable pageable) {
+        return userRepository.findAdminNotificationTargetUserIds(lastUserId, signupCutoff, pageable);
     }
 
     public Map<Long, StandardProfileInfo> findStandardProfileInfoByUserIds(List<Long> userIds) {

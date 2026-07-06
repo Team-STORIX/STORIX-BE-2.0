@@ -101,6 +101,12 @@ public enum ErrorCode {
     ADMIN_IDENTIFIER_MISMATCH(HttpStatus.FORBIDDEN, "ADMIN_AUTH_ERROR_002", "관리자 식별자가 일치하지 않습니다."),
     ADMIN_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "ADMIN_AUTH_ERROR_003", "ID 또는 비밀번호가 올바르지 않습니다."),
 
+    // Admin Notification error
+    ADMIN_NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN_NOTIFICATION_ERROR_001", "존재하지 않는 운영자 알림입니다."),
+    ADMIN_NOTIFICATION_NOT_UPDATABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_007", "발송 예정 상태에서만 수정할 수 있습니다."),
+    ADMIN_NOTIFICATION_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_008", "발송 예정 상태에서만 취소할 수 있습니다."),
+    ADMIN_NOTIFICATION_NOT_REBROADCASTABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_009", "발송 실패 상태에서만 재발송할 수 있습니다."),
+
     // OIDC error
     OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),
 
@@ -108,6 +114,7 @@ public enum ErrorCode {
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_ERROR_001", "알림을 찾을 수 없습니다"),
     NOTIFICATION_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "NOTIFICATION_ERROR_002", "인가되지 않은 접근입니다."),
     FCM_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NOTIFICATION_ERROR_003", "FCM 푸시 전송에 실패했습니다."),
+    FCM_TRANSIENT_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "NOTIFICATION_ERROR_005", "FCM 일시 오류로 재시도 대상입니다."),
     NOTIFICATION_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_ERROR_004", "유저의 알림 설정이 존재하지 않습니다."),
 
     // PushDevice error

@@ -21,6 +21,28 @@ public enum SuccessCode {
     NOTIFICATION_TEST_PUSH_SUCCESS(HttpStatus.OK, "NOTI2008", "테스트 푸시 알림 전송에 성공했습니다."),
     NOTIFICATION_MARKETING_CONSENT_UPDATE_SUCCESS(HttpStatus.OK, "NOTI2009", "마케팅 알림 동의 상태가 변경되었습니다."),
 
+    // Event success
+    ADMIN_NOTIFICATION_CREATE_SUCCESS(HttpStatus.CREATED, "ADMIN_NOTIFICATION_SUCCESS_001", "운영자 알림 생성에 성공했습니다."),
+    ADMIN_NOTIFICATION_LOAD_SUCCESS(HttpStatus.OK, "ADMIN_NOTIFICATION_SUCCESS_002", "운영자 알림 조회에 성공했습니다."),
+    ADMIN_NOTIFICATION_UPDATE_SUCCESS(HttpStatus.OK, "ADMIN_NOTIFICATION_SUCCESS_003", "운영자 알림 수정에 성공했습니다."),
+    ADMIN_NOTIFICATION_CANCEL_SUCCESS(HttpStatus.OK, "ADMIN_NOTIFICATION_SUCCESS_004", "운영자 알림 취소에 성공했습니다."),
+    ADMIN_NOTIFICATION_BROADCAST_SUCCESS(HttpStatus.OK, "ADMIN_NOTIFICATION_SUCCESS_005", "운영자 알림 발송 요청에 성공했습니다."),
+    EVENT_POPUP_CREATE_SUCCESS(HttpStatus.CREATED, "EVENT_POPUP_SUCCESS_001", "이벤트 팝업 생성에 성공했습니다."),
+    EVENT_POPUP_LOAD_SUCCESS(HttpStatus.OK, "EVENT_POPUP_SUCCESS_002", "이벤트 팝업 조회에 성공했습니다."),
+    EVENT_POPUP_UPDATE_SUCCESS(HttpStatus.OK, "EVENT_POPUP_SUCCESS_003", "이벤트 팝업 수정에 성공했습니다."),
+    EVENT_POPUP_CANCEL_SUCCESS(HttpStatus.OK, "EVENT_POPUP_SUCCESS_004", "이벤트 팝업 종료에 성공했습니다."),
+    ADMIN_APP_EVENT_CREATE_SUCCESS(HttpStatus.CREATED, "ADMIN_APP_EVENT_SUCCESS_001", "앱 이벤트 생성에 성공했습니다."),
+    ADMIN_APP_EVENT_LOAD_SUCCESS(HttpStatus.OK, "ADMIN_APP_EVENT_SUCCESS_002", "앱 이벤트 조회에 성공했습니다."),
+    ADMIN_APP_EVENT_UPDATE_SUCCESS(HttpStatus.OK, "ADMIN_APP_EVENT_SUCCESS_003", "앱 이벤트 수정에 성공했습니다."),
+    ADMIN_APP_EVENT_CANCEL_SUCCESS(HttpStatus.OK, "ADMIN_APP_EVENT_SUCCESS_004", "앱 이벤트 종료에 성공했습니다."),
+    EVENT_BANNER_CREATE_SUCCESS(HttpStatus.CREATED, "EVENT_BANNER_SUCCESS_001", "이벤트 배너 생성에 성공했습니다."),
+    EVENT_BANNER_LOAD_SUCCESS(HttpStatus.OK, "EVENT_BANNER_SUCCESS_002", "이벤트 배너 조회에 성공했습니다."),
+    EVENT_BANNER_UPDATE_SUCCESS(HttpStatus.OK, "EVENT_BANNER_SUCCESS_003", "이벤트 배너 수정에 성공했습니다."),
+    EVENT_BANNER_CANCEL_SUCCESS(HttpStatus.OK, "EVENT_BANNER_SUCCESS_004", "이벤트 배너 종료에 성공했습니다."),
+    APP_EVENTS_LOAD_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_001", "앱 이벤트 조회에 성공했습니다."),
+    APP_EVENT_ACK_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_002", "앱 이벤트 확인 처리에 성공했습니다."),
+    APP_EVENT_POPUP_DISMISS_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_003", "팝업 오늘 다시 안 보기 처리에 성공했습니다."),
+
     // PushDevice success
     DEVICE_SYNC_SUCCESS(HttpStatus.OK, "DEVICE2001", "디바이스 동기화에 성공했습니다."),
     DEVICE_UNREGISTER_SUCCESS(HttpStatus.OK, "DEVICE2002", "디바이스 해제에 성공했습니다."),

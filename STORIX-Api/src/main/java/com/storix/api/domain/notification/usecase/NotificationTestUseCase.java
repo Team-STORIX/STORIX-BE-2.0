@@ -5,11 +5,11 @@ import com.storix.api.domain.notification.controller.dto.NotificationDispatchTes
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
-import com.storix.domain.domains.notification.exception.FcmSendFailedException;
 import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.pushdevice.service.PushDispatchService;
-import com.storix.infrastructure.external.fcm.FcmSender;
-import com.storix.infrastructure.external.fcm.dto.SingleSendResult;
+import com.storix.infrastructure.external.notification.exception.FcmSendFailedException;
+import com.storix.infrastructure.external.notification.fcm.FcmSender;
+import com.storix.infrastructure.external.notification.dto.SingleSendResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 

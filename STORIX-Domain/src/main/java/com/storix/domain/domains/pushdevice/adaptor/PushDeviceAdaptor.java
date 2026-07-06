@@ -1,6 +1,7 @@
 package com.storix.domain.domains.pushdevice.adaptor;
 
 import com.storix.domain.domains.pushdevice.domain.PushDevice;
+import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import com.storix.domain.domains.pushdevice.dto.SyncDeviceCommand;
 import com.storix.domain.domains.pushdevice.exception.UnknownPushDeviceException;
 import com.storix.domain.domains.pushdevice.repository.PushDeviceRepository;
@@ -31,6 +32,16 @@ public class PushDeviceAdaptor {
         return pushDeviceRepository.findActiveFcmTokensByUserId(userId);
     }
 
+    public List<ActivePushToken> findMarketingEnabledActiveTokensByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) return List.of();
+        return pushDeviceRepository.findMarketingEnabledActiveTokensByUserIds(userIds);
+    }
+
+    public List<ActivePushToken> findActiveTokensByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) return List.of();
+        return pushDeviceRepository.findActiveTokensByUserIds(userIds);
+    }
+
     /** 쓰기 작업 관련 메서드 */
     // [PushDevice] 사용자 디바이스 및 FCM 토큰 등록 (upsert)
     @Transactional
@@ -55,8 +66,8 @@ public class PushDeviceAdaptor {
     }
 
     // [PushDevice] 유저 탈퇴 시 모든 디바이스 일괄 비활성화
-    public int deactivateAllByUserId(Long userId) {
-        return pushDeviceRepository.deactivateAllByUserId(userId);
+    public void deactivateAllByUserId(Long userId) {
+        pushDeviceRepository.deactivateAllByUserId(userId);
     }
 
     // [PushDispatch] FCM invalid 토큰 일괄 비활성화

@@ -58,6 +58,20 @@ public class STORIXStatic {
             "/api/v1/auth/admin/slack/callback"
     );
 
+    // MDC 로그 상관키
+    public static class Mdc {
+        public static final String TRACE_ID = "traceId";
+        public static final String ADMIN_NOTIFICATION_ID = "adminNotificationId";
+    }
+
+    // S3 업로드 객체 키 prefix
+    public static class S3Prefix {
+        public static final String BOARD   = "public/board/reader";
+        public static final String PROFILE = "public/profile";
+        // 앱 이벤트 이미지 base prefix. 실제 경로는 EVENT + "/{appEventId}/{surface}"
+        public static final String EVENT   = "public/event";
+    }
+
     // 알림 메시지 타이틀/본문 템플릿
     public static class Notification {
 
