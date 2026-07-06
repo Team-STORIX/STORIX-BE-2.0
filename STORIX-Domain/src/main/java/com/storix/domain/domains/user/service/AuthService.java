@@ -18,7 +18,7 @@ import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.dto.ReaderSignUpData;
 import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
-import com.storix.domain.domains.user.exception.me.ProfileInvalidNicknameException;
+import com.storix.domain.domains.user.exception.me.ProfileForbiddenNicknameException;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
@@ -152,7 +152,7 @@ public class AuthService {
     // 독자 닉네임 중복 체크
     public void validNickname(String nickName) {
         if (bannedWordAdaptor.containsBannedWord(nickName)) {
-            throw ProfileInvalidNicknameException.EXCEPTION;
+            throw ProfileForbiddenNicknameException.EXCEPTION;
         }
         userAdaptor.checkNicknameDuplicate(nickName);
     }
