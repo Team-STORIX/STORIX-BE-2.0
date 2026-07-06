@@ -49,15 +49,22 @@ public class PushDeviceAdaptor {
         // 1. (userId, installationId) 기존 row 조회
         Optional<PushDevice> existing = pushDeviceRepository.findByUserIdAndInstallationId(userId, cmd.installationId());
 
-        // 2-1. 기존 row 있으면 갱신 (dirty checking)
+        // 2-1. 기존 row 있으면 갱신 (dirty checking), 2-2. 없으면 등록
+        boolean created;
         if (existing.isPresent()) {
             existing.get().refresh(cmd);
-            return false;
+            created = false;
+        } else {
+            pushDeviceRepository.save(PushDevice.from(userId, cmd));
+            created = true;
         }
 
-        // 2-2. 기존 row 없으면 등록
-        pushDeviceRepository.save(PushDevice.from(userId, cmd));
-        return true;
+        // 3. 한 기기 = 한 활성 계정 강제
+        pushDeviceRepository.deactivateOtherUsersOnDevice(userId, cmd.installationId());
+
+        // 4. 같은 FCM 토큰을 들고 있는 다른 활성 디바이스 행 비활성화 (installationId 재발급 될 수 있는 경우)
+        pushDeviceRepository.deactivateOtherActiveDevicesByToken(userId, cmd.installationId(), cmd.fcmToken());
+        return created;
     }
 
     // [PushDevice] 단일 디바이스 비활성화
@@ -75,8 +82,18 @@ public class PushDeviceAdaptor {
         return pushDeviceRepository.deactivateByFcmTokens(tokens);
     }
 
+    // [PushDevice] 같은 FCM 토큰을 들고 있는 다른 활성 디바이스 행 비활성화
+    public int deactivateOtherActiveDevicesByToken(Long userId, String installationId, String fcmToken) {
+        return pushDeviceRepository.deactivateOtherActiveDevicesByToken(userId, installationId, fcmToken);
+    }
+
     // [PushDispatch] 발송 성공한 토큰들의 lastSuccessAt 일괄 갱신
     public void markFcmTokensSuccess(List<String> tokens, LocalDateTime now) {
         pushDeviceRepository.markFcmTokensSuccess(tokens, now);
+    }
+
+    // [Batch] 장기 미활동 디바이스 일괄 비활성화 (threshold 이후 sync 없음, 기기별)
+    public int deactivateStaleDevices(LocalDateTime threshold) {
+        return pushDeviceRepository.deactivateStaleDevices(threshold);
     }
 }

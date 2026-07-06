@@ -43,5 +43,8 @@ public class PushDeviceService {
     public void refreshFcmToken(Long userId, String installationId, String fcmToken) {
         PushDevice device = pushDeviceAdaptor.getByUserIdAndInstallationId(userId, installationId);
         device.refreshFcmToken(fcmToken);
+
+        // 같은 FCM 토큰을 들고 있는 다른 활성 디바이스 행 비활성화
+        pushDeviceAdaptor.deactivateOtherActiveDevicesByToken(userId, installationId, fcmToken);
     }
 }
