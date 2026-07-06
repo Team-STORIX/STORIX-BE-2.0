@@ -2,6 +2,7 @@ package com.storix.domain.domains.review.adaptor;
 
 import com.storix.domain.domains.review.domain.ReviewReport;
 import com.storix.domain.domains.review.dto.CreateWorksDetailReportCommand;
+import com.storix.domain.domains.report.repository.ReportedUserCountProjection;
 import com.storix.domain.domains.review.repository.ReportCaseCountProjection;
 import com.storix.domain.domains.review.repository.ReviewReportRepository;
 import com.storix.domain.domains.works.exception.DuplicateReviewReportException;
@@ -46,4 +47,24 @@ public class ReviewReportAdaptor {
     public List<ReviewReport> findAllByReportCaseId(Long reportCaseId) {
         return reviewReportRepository.findAllByReportCaseIdOrderByCreatedAtAsc(reportCaseId);
     }
+
+    public long countByReporterId(Long userId) {
+        return reviewReportRepository.countByReporterId(userId);
+    }
+
+    public long countByReportedUserId(Long userId) {
+        return reviewReportRepository.countByReportedUserId(userId);
+    }
+
+    public Map<Long, Long> countByReportedUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+        return reviewReportRepository.countByReportedUserIds(userIds).stream()
+                .collect(Collectors.toMap(
+                        ReportedUserCountProjection::getReportedUserId,
+                        ReportedUserCountProjection::getReportCount
+                ));
+    }
+
 }

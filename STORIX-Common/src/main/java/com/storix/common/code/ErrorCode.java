@@ -186,6 +186,9 @@ public enum ErrorCode {
 
     // Suspended user error
     SUSPENDED_USER(HttpStatus.FORBIDDEN, "USER_ERROR_003", "정지된 계정입니다."),
+    INVALID_ADMIN_USER_SANCTION_REQUEST(HttpStatus.BAD_REQUEST, "USER_ERROR_004", "관리자 유저 제재 요청이 올바르지 않습니다."),
+    USER_NOT_SUSPENDED(HttpStatus.BAD_REQUEST, "USER_ERROR_005", "정지 상태가 아닌 유저입니다."),
+    USER_ALREADY_SUSPENDED(HttpStatus.CONFLICT, "USER_ERROR_006", "이미 정지 처리된 유저입니다."),
 
     // Terms error
     DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다."),

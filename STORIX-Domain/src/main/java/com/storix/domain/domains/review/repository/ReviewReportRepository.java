@@ -1,6 +1,7 @@
 package com.storix.domain.domains.review.repository;
 
 import com.storix.domain.domains.review.domain.ReviewReport;
+import com.storix.domain.domains.report.repository.ReportedUserCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +21,16 @@ public interface ReviewReportRepository extends JpaRepository<ReviewReport, Long
     List<ReviewReport> findAllByReportCaseIdOrderByCreatedAtAsc(Long reportCaseId);
 
     boolean existsByReporterIdAndReviewId(Long reporterId, Long reviewId);
+
+    long countByReporterId(Long reporterId);
+
+    long countByReportedUserId(Long reportedUserId);
+
+    @Query("""
+            SELECT report.reportedUserId AS reportedUserId, COUNT(report) AS reportCount
+            FROM ReviewReport report
+            WHERE report.reportedUserId IN :reportedUserIds
+            GROUP BY report.reportedUserId
+            """)
+    List<ReportedUserCountProjection> countByReportedUserIds(@Param("reportedUserIds") List<Long> reportedUserIds);
 }

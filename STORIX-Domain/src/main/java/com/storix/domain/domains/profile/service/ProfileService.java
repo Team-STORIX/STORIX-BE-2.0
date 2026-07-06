@@ -30,7 +30,7 @@ public class ProfileService {
         return UserInfo.builder()
                 .userId(userId)
                 .role(readerUser.getRole().toString())
-                .nickName(readerUser.getNickName())
+                .nickName(readerUser.getDisplayNickName())
                 .level(1)// level 미사용
                 .point(readerUser.getPoint())
                 .profileDescription(readerUser.getProfileDescription())
@@ -58,7 +58,7 @@ public class ProfileService {
         return UserInfoV2.builder()
                 .userId(userId)
                 .role(readerUser.getRole().toString())
-                .nickName(readerUser.getNickName())
+                .nickName(readerUser.getDisplayNickName())
                 .point(readerUser.getPoint())
                 .profileDescription(readerUser.getProfileDescription())
                 .profileImageUrl(readerUser.getProfileObjectKey() == null

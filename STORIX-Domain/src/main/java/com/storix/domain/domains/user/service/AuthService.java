@@ -3,6 +3,7 @@ package com.storix.domain.domains.user.service;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
+import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
@@ -118,12 +119,23 @@ public class AuthService {
 
         saveSignupTermsAgreements(authUserDetails.getUserId(), cmd);
 
+        // 4. 장르 점수 스코어링 반영
+        if (cmd.favoriteGenreList() != null && !cmd.favoriteGenreList().isEmpty()) {
+            for (Genre genre : cmd.favoriteGenreList()) {
+                genreScorePublisher.publishWithGenre(
+                        authUserDetails.getUserId(),
+                        null,
+                        genre,
+                        GenreScoreEventType.ONBOARDING_SELECT);
+            }
+        }
+
         if (cmd.favoriteWorksIdList() != null && !cmd.favoriteWorksIdList().isEmpty()) {
             favoriteWorksAdaptor.saveFavoriteWorks(authUserDetails.getUserId(), cmd.favoriteWorksIdList());
             genreScorePublisher.publishBatch(
                     authUserDetails.getUserId(),
                     cmd.favoriteWorksIdList(),
-                    GenreScoreEventType.ONBOARDING_SELECT);
+                    GenreScoreEventType.FAVORITE_WORKS_ADD);
         }
 
         libraryAdaptor.initLibrary(authUserDetails.getUserId());

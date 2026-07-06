@@ -5,7 +5,7 @@ import com.storix.common.annotation.UseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
@@ -30,7 +30,7 @@ public class AdminReportUseCase {
 
     public CustomResponse<Page<AdminReportListResponse>> getReports(
             AuthUserDetails authUserDetails,
-            ReportTargetType targetType,
+            TargetContentType targetType,
             ReportStatus status,
             LocalDateTime startAt,
             LocalDateTime endAt,

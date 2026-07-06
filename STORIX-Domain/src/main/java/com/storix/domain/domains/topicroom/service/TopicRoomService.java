@@ -4,7 +4,7 @@ import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
 import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
@@ -19,12 +19,14 @@ import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
+import com.storix.domain.domains.topicroom.domain.enums.ReportReason;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
+import com.storix.domain.domains.topicroom.publisher.TopicRoomActiveUserNumberPublisher;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
@@ -60,13 +62,13 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
     private final ProfanityFilterService profanityFilterService;
-    private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
     private final GenreScorePublisher genreScorePublisher;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
     private final UserAdaptor userAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
+    private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -202,6 +204,11 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw TopicRoomAlreadyExistsException.EXCEPTION;
         }
 
+        // 토픽룸 참여 개수 제한
+        if (loadTopicRoomPort.countJoinedRooms(userId) >= 9) {
+            throw MaxLimitException.EXCEPTION;
+        }
+
         if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
             throw UnverifiedException.EXCEPTION;
 
@@ -241,6 +248,8 @@ public class TopicRoomService implements TopicRoomUseCase {
         try {
             recordTopicRoomPort.saveParticipation(userId, room, TopicRoomRole.MEMBER);
             recordTopicRoomPort.incrementActiveUserNumber(roomId);
+            Integer activeUserNumber = topicRoomAdaptor.findActiveUserNumberById(roomId);
+            publishActiveUserNumberChanged(roomId, activeUserNumber);
 
             genreScorePublisher.publishWithGenre(
                     userId, works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
@@ -262,6 +271,7 @@ public class TopicRoomService implements TopicRoomUseCase {
 
         try {
             TopicRoom room = loadTopicRoomPort.findById(roomId);
+            publishActiveUserNumberChanged(room.getId(), room.getActiveUserNumber());
 
             // 인원수가 0 이하면 방 삭제 로직 실행
             if (room.getActiveUserNumber() <= 0) {
@@ -280,23 +290,28 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw SelfReportException.EXCEPTION;
         }
 
-        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId)) {
+        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId, request.getChatMessageId())) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
 
+        TargetContentType targetType = request.getChatMessageId() == null ? TargetContentType.TOPIC_ROOM : TargetContentType.CHAT;
+        Long targetId = request.getChatMessageId() == null ? roomId : request.getChatMessageId();
+
         ReportCase reportCase = reportCaseAdaptor.findOrCreate(
-                ReportTargetType.TOPIC_ROOM,
-                roomId,
+                targetType,
+                targetId,
                 request.getReportedUserId()
         );
+
+        boolean isChatMessageReport = request.getChatMessageId() != null;
 
         TopicRoomReport report = TopicRoomReport.builder()
                 .reporterId(reporterId)
                 .reportedUserId(request.getReportedUserId())
                 .topicRoomId(roomId)
                 .chatMessageId(request.getChatMessageId())
-                .reason(request.getReason())
-                .otherReason(request.getOtherReason())
+                .reason(isChatMessageReport ? request.getReason() : ReportReason.DEFAULT)
+                .otherReason(isChatMessageReport ? request.getOtherReason() : null)
                 .reportCaseId(reportCase.getId())
                 .build();
 
@@ -318,5 +333,9 @@ public class TopicRoomService implements TopicRoomUseCase {
                 }
             });
         }
+    }
+
+    private void publishActiveUserNumberChanged(Long roomId, Integer activeUserNumber) {
+        activeUserNumberPublisher.publish(roomId, activeUserNumber);
     }
 }

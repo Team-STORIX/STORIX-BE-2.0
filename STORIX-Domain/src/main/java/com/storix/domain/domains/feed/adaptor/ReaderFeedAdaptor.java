@@ -14,10 +14,12 @@ import com.storix.domain.domains.plus.dto.StandardReaderBoardInfo;
 import com.storix.domain.domains.plus.repository.ReaderBoardRepository;
 import com.storix.domain.domains.feed.exception.BoardReplyNotFoundException;
 import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -182,6 +184,10 @@ public class ReaderFeedAdaptor {
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
     }
 
+    public Long findReplyOwnerUserId(Long replyId) {
+        return findReplyById(replyId).getUserId();
+    }
+
     // 댓글 좋아요 관련
     public int isReplyLikeDeleted(Long userId, Long replyId) {
         return readerBoardReplyLikeRepository.deleteLike(userId, replyId);
@@ -284,6 +290,18 @@ public class ReaderFeedAdaptor {
     // 프로필 댓글 정보 확인
     public Slice<ReaderBoardReply> findAllByUserId(Long userId, Pageable pageable) {
         return readerBoardReplyRepository.findAllByUserId(userId, pageable);
+    }
+
+    public long countActiveRepliesByUserId(Long userId) {
+        return readerBoardReplyRepository.countByUserIdAndDeletedFalse(userId);
+    }
+
+    public Page<AdminUserContentItemResponse> findAdminReplyContentsByUserId(Long userId, Pageable pageable) {
+        return readerBoardReplyRepository.findAdminReplyContentsByUserId(userId, pageable);
+    }
+
+    public List<AdminUserContentItemResponse> findAdminReplyContentsByIds(List<Long> ids) {
+        return readerBoardReplyRepository.findAdminReplyContentsByIds(ids);
     }
 
     // 프로필 좋아요한 게시글 정보 확인

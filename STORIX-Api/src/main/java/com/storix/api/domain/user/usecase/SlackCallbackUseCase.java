@@ -51,6 +51,7 @@ public class SlackCallbackUseCase {
             }
         } catch (Exception e) {
             log.error(">>>> [Slack] 콜백 비동기 처리 실패", e);
+            slackNotificationService.sendApprovalFailure(pendingId, responseUrl, e.getMessage());
         }
     }
 }

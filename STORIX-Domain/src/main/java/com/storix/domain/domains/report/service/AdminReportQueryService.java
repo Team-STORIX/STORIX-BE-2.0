@@ -13,7 +13,7 @@ import com.storix.domain.domains.plus.dto.ReviewInfo;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
@@ -49,6 +49,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AdminReportQueryService {
+
+    private static final String DELETED_CHAT_MESSAGE = "삭제된 메시지입니다.";
+    private static final String DELETED_TOPIC_ROOM = "삭제된 토픽룸입니다.";
 
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final FeedReportAdaptor feedReportAdaptor;
@@ -110,6 +113,7 @@ public class AdminReportQueryService {
             case FEED_REPLY -> getFeedReplyReportDetail(reportCase);
             case REVIEW -> getReviewReportDetail(reportCase);
             case TOPIC_ROOM -> getTopicRoomReportDetail(reportCase);
+            case CHAT -> getChatReportDetail(reportCase);
         };
     }
 
@@ -120,21 +124,24 @@ public class AdminReportQueryService {
 
         Map<Long, Long> reportCounts = new HashMap<>();
         reportCounts.putAll(feedReportAdaptor.countFeedReportsByReportCaseIds(
-                reportCaseIdsByTargetType(reportCases, ReportTargetType.FEED)
+                reportCaseIdsByTargetType(reportCases, TargetContentType.FEED)
         ));
         reportCounts.putAll(feedReportAdaptor.countFeedReplyReportsByReportCaseIds(
-                reportCaseIdsByTargetType(reportCases, ReportTargetType.FEED_REPLY)
+                reportCaseIdsByTargetType(reportCases, TargetContentType.FEED_REPLY)
         ));
         reportCounts.putAll(reviewReportAdaptor.countByReportCaseIds(
-                reportCaseIdsByTargetType(reportCases, ReportTargetType.REVIEW)
+                reportCaseIdsByTargetType(reportCases, TargetContentType.REVIEW)
         ));
         reportCounts.putAll(topicRoomReportAdaptor.countByReportCaseIds(
-                reportCaseIdsByTargetType(reportCases, ReportTargetType.TOPIC_ROOM)
+                reportCaseIdsByTargetType(reportCases, TargetContentType.TOPIC_ROOM)
+        ));
+        reportCounts.putAll(topicRoomReportAdaptor.countByReportCaseIds(
+                reportCaseIdsByTargetType(reportCases, TargetContentType.CHAT)
         ));
         return reportCounts;
     }
 
-    private List<Long> reportCaseIdsByTargetType(List<ReportCase> reportCases, ReportTargetType targetType) {
+    private List<Long> reportCaseIdsByTargetType(List<ReportCase> reportCases, TargetContentType targetType) {
         return reportCases.stream()
                 .filter(reportCase -> reportCase.getTargetType() == targetType)
                 .map(ReportCase::getId)
@@ -328,6 +335,65 @@ public class AdminReportQueryService {
                 reportCase,
                 summary(
                         reportedUserId, nickNames, topicRoomLocation(room.getId()),
+                        firstReport != null ? reasonName(firstReport.getReason()) : null,
+                        firstReport != null ? firstReport.getOtherReason() : null,
+                        reports.size(), firstReportedAt(reportItems)
+                ),
+                reportItems,
+                content
+        );
+    }
+
+    private AdminReportDetailResponse getChatReportDetail(ReportCase reportCase) {
+        List<TopicRoomReport> reports = topicRoomReportAdaptor.findAllByReportCaseId(reportCase.getId());
+        ChatMessageResponseDto message = chatAdaptor.findAdminMessageById(reportCase.getTargetId());
+        Long reportedUserId = reports.isEmpty() ? reportCase.getReportedUserId() : reports.get(0).getReportedUserId();
+        TopicRoom room = message == null ? null : topicRoomPersistenceAdapter.findById(message.roomId());
+
+        Map<Long, String> nickNames = loadNickNames(collectUserIds(
+                reports.stream().map(TopicRoomReport::getReporterId).toList(),
+                List.of(reportedUserId, message == null ? null : message.senderId())
+        ));
+
+        List<AdminReportDetailResponse.ReportItem> reportItems = reports.stream()
+                .map(report -> new AdminReportDetailResponse.ReportItem(
+                        report.getId(),
+                        report.getReporterId(),
+                        nickName(report.getReporterId(), nickNames),
+                        report.getReportedUserId(),
+                        reasonName(report.getReason()),
+                        report.getOtherReason(),
+                        report.getCreatedAt()
+                ))
+                .toList();
+
+        AdminReportDetailResponse.ReportedChatMessage reportedChatMessage =
+                new AdminReportDetailResponse.ReportedChatMessage(
+                        message == null ? reportCase.getTargetId() : message.id(),
+                        message == null ? reportedUserId : message.senderId(),
+                        message == null ? nickName(reportedUserId, nickNames) : message.senderName(),
+                        message == null ? DELETED_CHAT_MESSAGE : message.message(),
+                        message == null ? null : message.messageType(),
+                        message == null ? null : message.createdAt()
+                );
+
+        AdminReportDetailResponse.ReportedContent content = new AdminReportDetailResponse.ReportedContent(
+                reportCase.getTargetType(),
+                message == null ? reportCase.getTargetId() : message.id(),
+                room == null ? null : room.getId(),
+                reportedUserId,
+                nickName(reportedUserId, nickNames),
+                room == null ? DELETED_TOPIC_ROOM : room.getTopicRoomName(),
+                room == null ? null : room.getCreatedAt(),
+                List.of(reportedChatMessage)
+        );
+
+        TopicRoomReport firstReport = reports.isEmpty() ? null : reports.get(0);
+
+        return detailResponse(
+                reportCase,
+                summary(
+                        reportedUserId, nickNames, room == null ? null : topicRoomLocation(room.getId()),
                         firstReport != null ? reasonName(firstReport.getReason()) : null,
                         firstReport != null ? firstReport.getOtherReason() : null,
                         reports.size(), firstReportedAt(reportItems)
