@@ -4,7 +4,7 @@ import com.storix.api.domain.report.controller.dto.AdminReportProcessRequest;
 import com.storix.api.domain.report.usecase.AdminReportUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminUserReportSummaryResponse;
@@ -42,7 +42,7 @@ public class AdminReportController {
     @Operation(summary = "관리자 신고 목록 조회", description = "신고 유형, 처리 상태, 접수 기간, 피신고자 ID로 신고 케이스 목록을 조회합니다.")
     public CustomResponse<Page<AdminReportListResponse>> getReports(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @RequestParam(required = false) ReportTargetType targetType,
+            @RequestParam(required = false) TargetContentType targetType,
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
@@ -81,7 +81,7 @@ public class AdminReportController {
     @PatchMapping("/{reportCaseId}")
     @Operation(
             summary = "관리자 신고 처리",
-            description = "신고 케이스를 처리합니다. status=REJECTED: 반려 / status=COMPLETED + processAction: 처리 완료 및 액션 실행 (CONTENT_DELETED | ACCOUNT_SUSPENDED(7일) | ACCOUNT_DELETED)"
+            description = "신고 케이스를 처리합니다. status=REJECTED: 반려 / status=COMPLETED + processAction: 처리 완료 및 액션 실행 (CONTENT_DELETED | ACCOUNT_SUSPENDED(7일) | ACCOUNT_DELETED). CONTENT_DELETED는 FEED/FEED_REPLY/REVIEW/CHAT 대상 콘텐츠를 삭제하며, CHAT은 신고된 채팅 메시지 1건을 soft delete합니다."
     )
     public CustomResponse<Void> processReport(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,

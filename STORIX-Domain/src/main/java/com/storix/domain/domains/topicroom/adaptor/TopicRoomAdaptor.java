@@ -54,6 +54,10 @@ public class TopicRoomAdaptor {
                 .orElseThrow(() -> UnknownTopicRoomUserException.EXCEPTION);
     }
 
+    public long countJoinedRooms(Long userId) {
+        return topicRoomUserRepository.countByUserId(userId);
+    }
+
     public Integer findActiveUserNumberById(Long roomId) {
         Integer activeUserNumber = topicRoomRepository.findActiveUserNumberById(roomId);
         if (activeUserNumber == null) {

@@ -2,7 +2,7 @@ package com.storix.domain.domains.report.repository;
 
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface ReportCaseRepository extends JpaRepository<ReportCase, Long>, ReportCaseRepositoryCustom {
 
     Optional<ReportCase> findByTargetTypeAndTargetIdAndReportedUserId(
-            ReportTargetType targetType,
+            TargetContentType targetType,
             Long targetId,
             Long reportedUserId
     );

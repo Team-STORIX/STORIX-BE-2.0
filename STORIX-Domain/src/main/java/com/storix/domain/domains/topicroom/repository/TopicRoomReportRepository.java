@@ -1,6 +1,7 @@
 package com.storix.domain.domains.topicroom.repository;
 
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
+import com.storix.domain.domains.report.repository.ReportedUserCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,5 +20,19 @@ public interface TopicRoomReportRepository extends JpaRepository<TopicRoomReport
 
     List<TopicRoomReport> findAllByReportCaseIdOrderByCreatedAtAsc(Long reportCaseId);
 
-    boolean existsByReporterIdAndReportedUserIdAndTopicRoomId(Long reporterId, Long reportedUserId, Long topicRoomId);
+    boolean existsByReporterIdAndReportedUserIdAndTopicRoomIdAndChatMessageIdIsNull(Long reporterId, Long reportedUserId, Long topicRoomId);
+
+    boolean existsByReporterIdAndReportedUserIdAndTopicRoomIdAndChatMessageId(Long reporterId, Long reportedUserId, Long topicRoomId, Long chatMessageId);
+
+    long countByReporterId(Long reporterId);
+
+    long countByReportedUserId(Long reportedUserId);
+
+    @Query("""
+            SELECT report.reportedUserId AS reportedUserId, COUNT(report) AS reportCount
+            FROM TopicRoomReport report
+            WHERE report.reportedUserId IN :reportedUserIds
+            GROUP BY report.reportedUserId
+            """)
+    List<ReportedUserCountProjection> countByReportedUserIds(@Param("reportedUserIds") List<Long> reportedUserIds);
 }

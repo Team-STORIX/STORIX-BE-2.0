@@ -1,0 +1,76 @@
+package com.storix.api.domain.user.usecase;
+
+import com.storix.api.domain.user.controller.dto.AdminUserSanctionRequest;
+import com.storix.common.annotation.UseCase;
+import com.storix.domain.domains.user.adaptor.AuthUserDetails;
+import com.storix.domain.domains.user.domain.AccountState;
+import com.storix.domain.domains.user.dto.AdminUserActivityStats;
+import com.storix.domain.domains.user.dto.AdminUserBasicInfo;
+import com.storix.domain.domains.user.dto.AdminUserContentPageResponse;
+import com.storix.domain.domains.user.dto.AdminUserListResponse;
+import com.storix.domain.domains.user.dto.AdminUserPageResponse;
+import com.storix.domain.domains.user.dto.AdminUserSanctionPageResponse;
+import com.storix.domain.domains.user.dto.AdminUserSearchCondition;
+import com.storix.domain.domains.user.dto.AdminUserSummaryResponse;
+import com.storix.domain.domains.user.service.AdminUserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+@UseCase
+@RequiredArgsConstructor
+public class AdminUserUseCase {
+
+    private final AdminUserService adminUserService;
+
+    public AdminUserPageResponse searchUsers(
+            AuthUserDetails authUserDetails,
+            Long userId,
+            String nickName,
+            AccountState accountState,
+            Pageable pageable
+    ) {
+        // 유저 검색 조건에 따라 유저 목록 조회
+        Page<AdminUserListResponse> userInfos = adminUserService.searchUsers(
+                new AdminUserSearchCondition(userId, nickName, accountState),
+                pageable
+        );
+        return AdminUserPageResponse.from(userInfos);
+    }
+
+    public AdminUserSummaryResponse getUserSummary(AuthUserDetails authUserDetails, Long userId) {
+        // 유저 기본 사항 조회
+        AdminUserBasicInfo basicInfo = adminUserService.getBasicInfo(userId);
+
+        // 유저 활동 통계 조회
+        AdminUserActivityStats activityStats = adminUserService.getActivityStats(userId);
+
+        return AdminUserSummaryResponse.of(basicInfo, activityStats);
+    }
+
+    public AdminUserSanctionPageResponse getUserSanctions(AuthUserDetails authUserDetails, Long userId, Pageable pageable) {
+        // 유저 제재 이력 상세 조회
+        return adminUserService.getSanctionDetails(userId, pageable);
+    }
+
+    public AdminUserContentPageResponse getUserContents(
+            AuthUserDetails authUserDetails,
+            Long userId,
+            Pageable pageable
+    ) {
+        // 유저 작성 콘텐츠 조회
+        return adminUserService.getUserContents(userId, pageable);
+    }
+
+    public void createUserSanction(AuthUserDetails authUserDetails, Long userId, AdminUserSanctionRequest request) {
+        // 유저 제재 처리
+        adminUserService.processManualSanction(
+                authUserDetails.getUserId(),
+                userId,
+                request.type(),
+                request.targetType(),
+                request.targetId(),
+                request.memo()
+        );
+    }
+}

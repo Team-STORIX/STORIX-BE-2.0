@@ -4,7 +4,7 @@ import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
 import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
@@ -289,13 +289,16 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw SelfReportException.EXCEPTION;
         }
 
-        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId)) {
+        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId, request.getChatMessageId())) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
 
+        TargetContentType targetType = request.getChatMessageId() == null ? TargetContentType.TOPIC_ROOM : TargetContentType.CHAT;
+        Long targetId = request.getChatMessageId() == null ? roomId : request.getChatMessageId();
+
         ReportCase reportCase = reportCaseAdaptor.findOrCreate(
-                ReportTargetType.TOPIC_ROOM,
-                roomId,
+                targetType,
+                targetId,
                 request.getReportedUserId()
         );
 

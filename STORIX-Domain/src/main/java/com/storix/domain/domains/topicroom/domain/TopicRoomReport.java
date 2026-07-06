@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
         name = "topic_room_report",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_topic_room_report_reporter_reported_room",
-                        columnNames = {"reporter_id", "reported_user_id", "topic_room_id"}
+                        name = "uk_topic_room_report_reporter_reported_room_message",
+                        columnNames = {"reporter_id", "reported_user_id", "topic_room_id", "chat_message_id"}
                 )
         }
 )

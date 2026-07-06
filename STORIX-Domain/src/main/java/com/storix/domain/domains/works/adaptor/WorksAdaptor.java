@@ -32,4 +32,8 @@ public class WorksAdaptor {
         return infos.stream()
                 .collect(Collectors.toMap(TopicRoomWorksInfo::id, Function.identity()));
     }
+
+    public void updateDecrementingReviewInfo(Long worksId, double rating) {
+        worksRepository.decrementReviewsCountAndUpdateAverageRating(worksId, rating);
+    }
 }

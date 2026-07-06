@@ -41,4 +41,8 @@ public class UserBlacklistAdaptor {
         return userBlacklistRepository.findById(userId)
                 .map(UserBlacklist::getReason);
     }
+
+    public void unblock(Long userId) {
+        userBlacklistRepository.deleteById(userId);
+    }
 }
