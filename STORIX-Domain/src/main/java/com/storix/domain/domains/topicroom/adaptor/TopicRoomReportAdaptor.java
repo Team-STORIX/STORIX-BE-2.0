@@ -28,12 +28,7 @@ public class TopicRoomReportAdaptor {
                 ));
     }
 
-    public boolean hasAlreadyReported(Long reporterId, Long reportedUserId, Long topicRoomId, Long chatMessageId) {
-        if (chatMessageId == null) {
-            return topicRoomReportRepository.existsByReporterIdAndReportedUserIdAndTopicRoomIdAndChatMessageIdIsNull(
-                    reporterId, reportedUserId, topicRoomId);
-        }
-        return topicRoomReportRepository.existsByReporterIdAndReportedUserIdAndTopicRoomIdAndChatMessageId(
+    public boolean hasAlreadyReported(Long reporterId, Long reportedUserId, Long topicRoomId, Long chatMessageId) {        return topicRoomReportRepository.existsByReporterIdAndReportedUserIdAndTopicRoomIdAndChatMessageId(
                 reporterId, reportedUserId, topicRoomId, chatMessageId);
     }
 

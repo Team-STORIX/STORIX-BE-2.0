@@ -29,6 +29,9 @@ public class TopicRoomReport extends BaseTimeEntity {
     private Long reporterId;
     private Long reportedUserId;
     private Long topicRoomId;
+
+    // 유저 신고는 0으로 저장함. NULL을 허용하면 중복이 DB단에서 막히지 않으므로 NOT NULL
+    @Column(name = "chat_message_id", nullable = false)
     private Long chatMessageId;
 
     @Enumerated(EnumType.STRING)

@@ -20,8 +20,6 @@ public interface TopicRoomReportRepository extends JpaRepository<TopicRoomReport
 
     List<TopicRoomReport> findAllByReportCaseIdOrderByCreatedAtAsc(Long reportCaseId);
 
-    boolean existsByReporterIdAndReportedUserIdAndTopicRoomIdAndChatMessageIdIsNull(Long reporterId, Long reportedUserId, Long topicRoomId);
-
     boolean existsByReporterIdAndReportedUserIdAndTopicRoomIdAndChatMessageId(Long reporterId, Long reportedUserId, Long topicRoomId, Long chatMessageId);
 
     long countByReporterId(Long reporterId);
