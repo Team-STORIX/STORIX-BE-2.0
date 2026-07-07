@@ -33,8 +33,14 @@ public class BannerUseCase {
         // 1. 이벤트 이미지 S3 업로드
         String imageObjectKey = s3UploadHelper.uploadEventImage(file, req.appEventId(), EventImageSurface.BANNER);
 
-        // 2. 배너 생성
-        Banner banner = eventBannerService.create(req.toCommand(imageObjectKey), authUser.getUserId());
+        // 2. 배너 생성. 검증 실패 시 올린 이미지 롤백
+        Banner banner;
+        try {
+            banner = eventBannerService.create(req.toCommand(imageObjectKey), authUser.getUserId());
+        } catch (Exception e) {
+            s3UploadHelper.delete(imageObjectKey);
+            throw e;
+        }
 
         // 3. 이벤트 배너 캐시 무효화
         eventContentCacheHelper.evict(STORIXStatic.ACTIVE_BANNER_KEY);
@@ -60,15 +66,24 @@ public class BannerUseCase {
     // 이벤트 배너 수정
     public CustomResponse<BannerResponse> updateBanner(Long bannerId, BannerRequest req, MultipartFile file) {
 
-        // 1. 이미지 파일이 있는 경우 S3 업로드, 아닌 경우 기존 imageKey 사용
-        String imageObjectKey = (file != null && !file.isEmpty())
+        // 1. 이미지 파일이 있으면 새로 업로드, 없으면 기존 유지
+        boolean replaceImage = file != null && !file.isEmpty();
+        String oldImageObjectKey = eventBannerService.getById(bannerId).getImageObjectKey();
+        String imageObjectKey = replaceImage
                 ? s3UploadHelper.uploadEventImage(file, req.appEventId(), EventImageSurface.BANNER)
-                : eventBannerService.getById(bannerId).getImageObjectKey();
+                : oldImageObjectKey;
 
-        // 2. 배너 수정
-        Banner banner = eventBannerService.update(bannerId, req.toCommand(imageObjectKey));
+        // 2. 배너 수정. 실패 시 새로 올린 이미지 롤백
+        Banner banner;
+        try {
+            banner = eventBannerService.update(bannerId, req.toCommand(imageObjectKey));
+        } catch (Exception e) {
+            if (replaceImage) s3UploadHelper.delete(imageObjectKey);
+            throw e;
+        }
 
-        // 3. 이벤트 배너 캐시 무효화
+        // 3. 교체 성공 시 옛 이미지 정리 + 캐시 무효화
+        if (replaceImage) s3UploadHelper.delete(oldImageObjectKey);
         eventContentCacheHelper.evict(STORIXStatic.ACTIVE_BANNER_KEY);
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_UPDATE_SUCCESS, BannerResponse.from(banner).withBaseUrl(baseUrl));
     }

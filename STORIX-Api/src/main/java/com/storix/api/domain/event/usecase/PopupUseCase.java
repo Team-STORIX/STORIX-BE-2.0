@@ -33,8 +33,14 @@ public class PopupUseCase {
         // 1. 이벤트 이미지 S3 업로드
         String imageObjectKey = s3UploadHelper.uploadEventImage(file, req.appEventId(), EventImageSurface.POPUP);
 
-        // 2. 팝업 생성
-        Popup popup = eventPopupService.create(req.toCommand(imageObjectKey), authUser.getUserId());
+        // 2. 팝업 생성. 검증 실패 시 올린 이미지 롤백
+        Popup popup;
+        try {
+            popup = eventPopupService.create(req.toCommand(imageObjectKey), authUser.getUserId());
+        } catch (Exception e) {
+            s3UploadHelper.delete(imageObjectKey);
+            throw e;
+        }
 
         // 3. 이벤트 팝업 캐시 무효화
         eventContentCacheHelper.evict(STORIXStatic.ACTIVE_POPUP_KEY);
@@ -60,15 +66,24 @@ public class PopupUseCase {
     // 이벤트 팝업 수정
     public CustomResponse<PopupResponse> updatePopup(Long popupId, PopupRequest req, MultipartFile file) {
 
-        // 1. 이미지 파일이 있는 경우 S3 업로드, 아닌 경우 기존 imageKey 사용
-        String imageObjectKey = (file != null && !file.isEmpty())
+        // 1. 이미지 파일이 있으면 새로 업로드, 없으면 기존 유지
+        boolean replaceImage = file != null && !file.isEmpty();
+        String oldImageObjectKey = eventPopupService.getById(popupId).getImageObjectKey();
+        String imageObjectKey = replaceImage
                 ? s3UploadHelper.uploadEventImage(file, req.appEventId(), EventImageSurface.POPUP)
-                : eventPopupService.getById(popupId).getImageObjectKey();
+                : oldImageObjectKey;
 
-        // 2. 팝업 수정
-        Popup popup = eventPopupService.update(popupId, req.toCommand(imageObjectKey));
+        // 2. 팝업 수정. 실패 시 새로 올린 이미지 롤백
+        Popup popup;
+        try {
+            popup = eventPopupService.update(popupId, req.toCommand(imageObjectKey));
+        } catch (Exception e) {
+            if (replaceImage) s3UploadHelper.delete(imageObjectKey);
+            throw e;
+        }
 
-        // 3. 이벤트 팝업 캐시 무효화
+        // 3. 교체 성공 시 옛 이미지 정리 + 캐시 무효화
+        if (replaceImage) s3UploadHelper.delete(oldImageObjectKey);
         eventContentCacheHelper.evict(STORIXStatic.ACTIVE_POPUP_KEY);
         return CustomResponse.onSuccess(SuccessCode.EVENT_POPUP_UPDATE_SUCCESS, PopupResponse.from(popup).withBaseUrl(baseUrl));
     }

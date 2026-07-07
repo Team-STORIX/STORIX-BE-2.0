@@ -32,7 +32,7 @@ public interface AppEventParticipantRepository extends JpaRepository<AppEventPar
     @Query(value = """
         INSERT INTO app_event_participants (app_event_id, user_id, is_winner, created_at, updated_at)
         VALUES (:appEventId, :userId, true, NOW(), NOW())
-        ON DUPLICATE KEY UPDATE is_winner = true
+        ON DUPLICATE KEY UPDATE is_winner = true, updated_at = NOW()
     """, nativeQuery = true)
     void upsertWinner(@Param("appEventId") Long appEventId, @Param("userId") Long userId);
 }

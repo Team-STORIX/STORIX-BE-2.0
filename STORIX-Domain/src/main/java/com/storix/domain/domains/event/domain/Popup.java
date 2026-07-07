@@ -113,10 +113,10 @@ public class Popup extends BaseTimeEntity {
         this.imageObjectKey = imageObjectKey;
         this.content = content;
         this.ctaText = ctaText;
-        this.displayStartAt = displayStartAt;
-        this.displayEndAt = displayEndAt;
-        // 강제 종료된 팝업은 수정으로 되살리지 않음
+        // 강제 종료된 팝업은 노출기간/상태를 수정으로 되살리지 않는다
         if (this.status != PopupStatus.ENDED) {
+            this.displayStartAt = displayStartAt;
+            this.displayEndAt = displayEndAt;
             this.status = resolveStatus(displayStartAt, displayEndAt);
         }
     }

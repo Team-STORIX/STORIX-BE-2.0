@@ -5,16 +5,19 @@ import com.storix.domain.domains.image.domain.EventImageSurface;
 import com.storix.domain.domains.image.exception.ImageInvalidContentTypeException;
 import com.storix.domain.domains.image.exception.ImageUploadFailedException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3UploadHelper {
@@ -48,6 +51,21 @@ public class S3UploadHelper {
             throw ImageUploadFailedException.EXCEPTION;
         }
         return objectKey;
+    }
+
+    // 실패해도 요청은 진행. 남은 객체는 후속 청소 대상
+    public void delete(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) {
+            return;
+        }
+        try {
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(objectKey)
+                    .build());
+        } catch (Exception e) {
+            log.warn(">>> [S3] object 삭제 실패. key={}", objectKey, e);
+        }
     }
 
     private String contentTypeToExt(String contentType) {

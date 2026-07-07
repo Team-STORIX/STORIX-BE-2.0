@@ -92,10 +92,10 @@ public class Banner extends BaseTimeEntity {
         this.contentTargetType = contentTargetType;
         this.bannerTitle = bannerTitle;
         this.imageObjectKey = imageObjectKey;
-        this.displayStartAt = displayStartAt;
-        this.displayEndAt = displayEndAt;
-        // 강제 종료된 배너는 수정으로 되살리지 않음
+        // 강제 종료된 배너는 노출기간/상태를 수정으로 되살리지 않는다
         if (this.status != BannerStatus.ENDED) {
+            this.displayStartAt = displayStartAt;
+            this.displayEndAt = displayEndAt;
             this.status = resolveStatus(displayStartAt, displayEndAt);
         }
     }
