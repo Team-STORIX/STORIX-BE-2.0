@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -213,6 +214,20 @@ public class GlobalExceptionHandler {
         log.warn("Format exception", e);
 
         ErrorCode errorCode = ErrorCode.INVALID_JSON_REQUEST;
+        ErrorResponse response = new ErrorResponse(errorCode);
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(response);
+    }
+
+    /** 멀티파트 업로드 크기 초과 — 서블릿 파싱 단계에서 발생 (컨트롤러 진입 전) */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException e) {
+
+        log.warn("Upload size exceeded", e);
+
+        ErrorCode errorCode = ErrorCode.IMAGE_FILE_TOO_LARGE;
         ErrorResponse response = new ErrorResponse(errorCode);
 
         return ResponseEntity

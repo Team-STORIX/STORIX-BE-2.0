@@ -36,6 +36,11 @@ public class STORIXStatic {
     public static final String TRENDING_AGGREGATED_KEY = "search:trending:aggregated";
     public static final String TRENDING_PREV_AGGREGATED_KEY = "search:trending:aggregated:prev";
 
+    // 이벤트 활성 콘텐츠 Redis 캐시 키
+    public static final String ACTIVE_POPUP_KEY = "event::activePopup::v1";
+    public static final String ACTIVE_BANNER_KEY = "event::activeBanner::v1";
+    public static final String PENDING_APP_EVENTS_KEY_PREFIX = "event::pendingAppEvents::v1::";
+
     public static final List<String> SWAGGER_URI= List.of(
             new String[]{"/swagger-resources/", "/swagger-ui/", "/v3/api-docs"}
     );
