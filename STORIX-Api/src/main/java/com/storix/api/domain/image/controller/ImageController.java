@@ -1,8 +1,8 @@
 package com.storix.api.domain.image.controller;
 
-import com.storix.domain.domains.image.dto.FileUploadRequest;
+import com.storix.api.domain.image.controller.dto.FileUploadRequest;
 import com.storix.domain.domains.image.dto.PresignedUrlResponse;
-import com.storix.domain.domains.image.dto.ProfileImageUploadRequest;
+import com.storix.api.domain.image.controller.dto.ProfileImageUploadRequest;
 import com.storix.api.domain.image.usecase.ImageUseCase;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.common.payload.CustomResponse;
