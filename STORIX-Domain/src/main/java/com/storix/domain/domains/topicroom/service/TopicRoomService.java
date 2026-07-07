@@ -293,12 +293,15 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw SelfReportException.EXCEPTION;
         }
 
-        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId, request.getChatMessageId())) {
+        boolean isChatMessageReport = request.getChatMessageId() != null;
+        Long chatMessageId = isChatMessageReport ? request.getChatMessageId() : 0L;
+
+        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId, chatMessageId)) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
 
-        TargetContentType targetType = request.getChatMessageId() == null ? TargetContentType.TOPIC_ROOM : TargetContentType.CHAT;
-        Long targetId = request.getChatMessageId() == null ? roomId : request.getChatMessageId();
+        TargetContentType targetType = isChatMessageReport ? TargetContentType.CHAT : TargetContentType.TOPIC_ROOM;
+        Long targetId = isChatMessageReport ? request.getChatMessageId() : roomId;
 
         ReportCase reportCase = reportCaseAdaptor.findOrCreate(
                 targetType,
@@ -306,14 +309,13 @@ public class TopicRoomService implements TopicRoomUseCase {
                 request.getReportedUserId()
         );
 
-        boolean isChatMessageReport = request.getChatMessageId() != null;
-
+        // 신고 사유(reason)는 별도로 받지 않고 유저/채팅 신고 모두 DEFAULT로 저장한다.
         TopicRoomReport report = TopicRoomReport.builder()
                 .reporterId(reporterId)
                 .reportedUserId(request.getReportedUserId())
                 .topicRoomId(roomId)
-                .chatMessageId(request.getChatMessageId())
-                .reason(isChatMessageReport ? request.getReason() : ReportReason.DEFAULT)
+                .chatMessageId(chatMessageId)
+                .reason(ReportReason.DEFAULT)
                 .otherReason(isChatMessageReport ? request.getOtherReason() : null)
                 .reportCaseId(reportCase.getId())
                 .build();
