@@ -31,7 +31,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("[이벤트 배너] 소속 앱 이벤트 검증(APP_EVENT 필수) + 기간 clamp + 겹침 방지")
+@DisplayName("[이벤트 배너] 소속 앱 이벤트 검증(APP_EVENT 필수) + 기간 clamp + 동시 노출 최대 3개")
 class BannerServiceTest {
 
     private static final Long ADMIN_ID = 7L;
@@ -86,7 +86,7 @@ class BannerServiceTest {
         @DisplayName("배너 기간이 이벤트 기간 안이면 저장된다")
         void create_within_period() {
             given(appEventAdaptor.findById(APP_EVENT_ID)).willReturn(appEvent());
-            given(eventBannerAdaptor.existsOverlapping(any(), any(), eq(null))).willReturn(false);
+            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(null))).willReturn(0L);
             given(eventBannerAdaptor.save(any(Banner.class))).willAnswer(inv -> inv.getArgument(0));
 
             Banner saved = bannerService.create(
@@ -110,7 +110,7 @@ class BannerServiceTest {
         @DisplayName("배너 종료가 이벤트 종료를 넘으면 이벤트 종료로 clamp 되어 저장된다")
         void clamp_end_to_event_end() {
             given(appEventAdaptor.findById(APP_EVENT_ID)).willReturn(appEvent());
-            given(eventBannerAdaptor.existsOverlapping(any(), any(), eq(null))).willReturn(false);
+            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(null))).willReturn(0L);
             given(eventBannerAdaptor.save(any(Banner.class))).willAnswer(inv -> inv.getArgument(0));
 
             Banner saved = bannerService.create(
@@ -133,16 +133,30 @@ class BannerServiceTest {
         }
 
         @Test
-        @DisplayName("겹치는 활성 배너가 있으면 예외")
-        void reject_overlapping() {
+        @DisplayName("겹치는 활성 배너가 이미 3개면 예외 (동시 노출 최대 3개)")
+        void reject_when_exceeds_limit() {
             given(appEventAdaptor.findById(APP_EVENT_ID)).willReturn(appEvent());
-            given(eventBannerAdaptor.existsOverlapping(any(), any(), eq(null))).willReturn(true);
+            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(null))).willReturn(3L);
 
             assertThatThrownBy(() -> bannerService.create(
                     command(APP_EVENT_ID, EVENT_START.plusDays(3), EVENT_START.plusDays(5)), ADMIN_ID))
                     .isInstanceOf(BannerOverlappingException.class);
 
             verify(eventBannerAdaptor, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("겹치는 활성 배너가 2개면(총 3개) 저장된다")
+        void allow_when_within_limit() {
+            given(appEventAdaptor.findById(APP_EVENT_ID)).willReturn(appEvent());
+            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(null))).willReturn(2L);
+            given(eventBannerAdaptor.save(any(Banner.class))).willAnswer(inv -> inv.getArgument(0));
+
+            Banner saved = bannerService.create(
+                    command(APP_EVENT_ID, EVENT_START.plusDays(3), EVENT_START.plusDays(5)), ADMIN_ID);
+
+            verify(eventBannerAdaptor).save(any(Banner.class));
+            assertThat(saved.getAppEvent().getId()).isEqualTo(APP_EVENT_ID);
         }
     }
 
@@ -154,7 +168,7 @@ class BannerServiceTest {
         @DisplayName("수정은 커맨드의 appEventId 를 무시하고 기존 배너의 이벤트 기간으로 clamp 한다")
         void update_uses_existing_app_event_ignoring_command() {
             given(eventBannerAdaptor.findById(BANNER_ID)).willReturn(existingBanner());
-            given(eventBannerAdaptor.existsOverlapping(any(), any(), eq(BANNER_ID))).willReturn(false);
+            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(BANNER_ID))).willReturn(0L);
 
             // 커맨드 appEventId(999)는 무시되고, 기존 배너의 이벤트(종료 EVENT_END)로 clamp 된다
             Banner updated = bannerService.update(BANNER_ID,
@@ -174,7 +188,7 @@ class BannerServiceTest {
 
             bannerService.update(BANNER_ID, command(APP_EVENT_ID, EVENT_START.plusDays(4), EVENT_START.plusDays(6)));
 
-            verify(eventBannerAdaptor, never()).existsOverlapping(any(), any(), any());
+            verify(eventBannerAdaptor, never()).countOverlapping(any(), any(), any());
         }
     }
 

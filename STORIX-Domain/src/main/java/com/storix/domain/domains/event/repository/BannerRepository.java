@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface BannerRepository extends JpaRepository<Banner, Long> {
 
@@ -27,7 +26,7 @@ public interface BannerRepository extends JpaRepository<Banner, Long> {
     // AppEvent 강제 종료 시 cascade 대상
     List<Banner> findAllByAppEvent_IdAndStatusNot(Long appEventId, BannerStatus status);
 
-    // 앱 홈 표시용 활성 배너
+    // 앱 홈 표시용 활성 배너, 상한은 Pageable 로 제한
     @Query("""
         SELECT b
         FROM Banner b
@@ -36,21 +35,22 @@ public interface BannerRepository extends JpaRepository<Banner, Long> {
           AND b.displayEndAt >= :now
         ORDER BY b.displayStartAt DESC, b.id DESC
     """)
-    Optional<Banner> findActiveBanner(
+    List<Banner> findActiveBanners(
             @Param("status") BannerStatus status,
-            @Param("now") LocalDateTime now
+            @Param("now") LocalDateTime now,
+            Pageable pageable
     );
 
-    // 등록/수정 시 기간 중복 배너 검증
+    // 등록/수정 시 기간이 겹치는 종료전 배너 수. 동시 노출 상한 검증용
     @Query("""
-        SELECT (COUNT(b) > 0)
+        SELECT COUNT(b)
         FROM Banner b
         WHERE b.status <> com.storix.domain.domains.event.domain.BannerStatus.ENDED
           AND (:excludeId IS NULL OR b.id <> :excludeId)
           AND b.displayStartAt <= :displayEndAt
           AND b.displayEndAt >= :displayStartAt
     """)
-    boolean existsOverlappingActiveBanner(
+    long countOverlappingActiveBanner(
             @Param("displayStartAt") LocalDateTime displayStartAt,
             @Param("displayEndAt") LocalDateTime displayEndAt,
             @Param("excludeId") Long excludeId

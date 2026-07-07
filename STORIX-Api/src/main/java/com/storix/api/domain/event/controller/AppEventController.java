@@ -44,8 +44,8 @@ public class AppEventController {
     }
 
     @GetMapping("/banner")
-    @Operation(summary = "노출 중인 배너 조회", description = "현재 노출 가능한 배너를 반환합니다. 없으면 null.")
-    public CustomResponse<BannerResponse> getBanner() {
+    @Operation(summary = "노출 중인 배너 조회", description = "현재 노출 가능한 배너를 최대 3개까지 반환합니다. 없으면 빈 배열.")
+    public CustomResponse<List<BannerResponse>> getBanner() {
         return appEventUseCase.getActiveBanner();
     }
 

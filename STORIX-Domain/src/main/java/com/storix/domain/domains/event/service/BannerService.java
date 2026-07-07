@@ -21,13 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class BannerService {
 
     private static final int BANNER_PAGE_SIZE = 10;
+    private static final int MAX_ACTIVE_BANNERS = 3;
 
     private final BannerAdaptor eventBannerAdaptor;
     private final AppEventAdaptor appEventAdaptor;
@@ -40,7 +40,7 @@ public class BannerService {
         // appEventId 없으면 독립 배너, 있으면 이벤트 기간으로 clamp
         AppEvent appEvent = cmd.appEventId() == null ? null : appEventAdaptor.findById(cmd.appEventId());
         DisplayPeriod period = clampToAppEvent(appEvent, cmd.displayStartAt(), cmd.displayEndAt());
-        validateNoOverlap(period.start(), period.end(), null);
+        validateOverlapWithinLimit(period.start(), period.end(), null);
         return eventBannerAdaptor.save(Banner.builder()
                 .appEvent(appEvent)
                 .contentTargetType(cmd.contentTargetType())
@@ -59,9 +59,9 @@ public class BannerService {
         // appEvent 는 불변 - 기존 배너가 소속된 이벤트 기준으로 검증/clamp
         validateAppEventRequired(cmd.contentTargetType(), banner.getAppEvent() != null);
         DisplayPeriod period = clampToAppEvent(banner.getAppEvent(), cmd.displayStartAt(), cmd.displayEndAt());
-        // 종료된 배너는 다시 노출되지 않으므로 기간 중복 검증 대상에서 제외
+        // 종료된 배너는 다시 노출되지 않으므로 동시 노출 상한 검증 대상에서 제외
         if (banner.getStatus() != BannerStatus.ENDED) {
-            validateNoOverlap(period.start(), period.end(), bannerId);
+            validateOverlapWithinLimit(period.start(), period.end(), bannerId);
         }
         banner.update(
                 cmd.contentTargetType(),
@@ -85,8 +85,10 @@ public class BannerService {
 
     // objectKey 형태로 반환, baseUrl/캐시는 UseCase 담당
     @Transactional(readOnly = true)
-    public Optional<BannerResponse> findActiveBanner(LocalDateTime now) {
-        return eventBannerAdaptor.findActiveBanner(now).map(BannerResponse::from);
+    public List<BannerResponse> findActiveBanners(LocalDateTime now) {
+        return eventBannerAdaptor.findActiveBanners(now, MAX_ACTIVE_BANNERS).stream()
+                .map(BannerResponse::from)
+                .toList();
     }
 
     @Transactional
@@ -138,8 +140,9 @@ public class BannerService {
         return eventDisplayPeriodHelper.clampToAppEvent(appEvent, displayStartAt, displayEndAt, () -> BannerOutOfEventPeriodException.EXCEPTION);
     }
 
-    private void validateNoOverlap(LocalDateTime displayStartAt, LocalDateTime displayEndAt, Long excludeId) {
-        if (eventBannerAdaptor.existsOverlapping(displayStartAt, displayEndAt, excludeId)) {
+    // 겹치는 종료전 배너가 이미 상한이면 거부 (새 배너 포함 최대 MAX_ACTIVE_BANNERS)
+    private void validateOverlapWithinLimit(LocalDateTime displayStartAt, LocalDateTime displayEndAt, Long excludeId) {
+        if (eventBannerAdaptor.countOverlapping(displayStartAt, displayEndAt, excludeId) >= MAX_ACTIVE_BANNERS) {
             throw BannerOverlappingException.EXCEPTION;
         }
     }

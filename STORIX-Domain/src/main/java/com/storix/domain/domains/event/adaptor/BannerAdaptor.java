@@ -6,12 +6,12 @@ import com.storix.domain.domains.event.exception.BannerNotFoundException;
 import com.storix.domain.domains.event.repository.BannerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -32,8 +32,8 @@ public class BannerAdaptor {
         return eventBannerRepository.findAllByOrderByIdDesc(pageable);
     }
 
-    public Optional<Banner> findActiveBanner(LocalDateTime now) {
-        return eventBannerRepository.findActiveBanner(BannerStatus.ACTIVE, now);
+    public List<Banner> findActiveBanners(LocalDateTime now, int limit) {
+        return eventBannerRepository.findActiveBanners(BannerStatus.ACTIVE, now, PageRequest.of(0, limit));
     }
 
     public List<Banner> findDueToActivate(LocalDateTime now) {
@@ -44,8 +44,8 @@ public class BannerAdaptor {
         return eventBannerRepository.findAllByStatusAndDisplayEndAtLessThan(BannerStatus.ACTIVE, now);
     }
 
-    public boolean existsOverlapping(LocalDateTime displayStartAt, LocalDateTime displayEndAt, Long excludeId) {
-        return eventBannerRepository.existsOverlappingActiveBanner(displayStartAt, displayEndAt, excludeId);
+    public long countOverlapping(LocalDateTime displayStartAt, LocalDateTime displayEndAt, Long excludeId) {
+        return eventBannerRepository.countOverlappingActiveBanner(displayStartAt, displayEndAt, excludeId);
     }
 
     // AppEvent 강제 종료 시 cascade 대상

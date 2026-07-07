@@ -120,7 +120,7 @@ public enum ErrorCode {
     // Event Banner error
     EVENT_BANNER_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_BANNER_ERROR_001", "존재하지 않는 이벤트 배너입니다."),
     EVENT_BANNER_INVALID_DISPLAY_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_002", "배너 노출 종료 일시는 시작 일시 이후여야 합니다."),
-    EVENT_BANNER_OVERLAPPING(HttpStatus.CONFLICT, "EVENT_BANNER_ERROR_003", "동시에 여러 배너를 노출할 수 없습니다."),
+    EVENT_BANNER_OVERLAPPING(HttpStatus.CONFLICT, "EVENT_BANNER_ERROR_003", "동시에 노출 가능한 배너는 최대 3개입니다."),
     EVENT_BANNER_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_004", "발급되지 않았거나 만료된 배너 이미지 키입니다."),
     EVENT_BANNER_OUT_OF_EVENT_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_005", "배너 노출 기간은 소속 앱 이벤트 기간 안에 있어야 합니다."),
     EVENT_BANNER_APP_EVENT_REQUIRED(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_006", "APP_EVENT 유형 배너는 소속 앱 이벤트가 필수입니다."),

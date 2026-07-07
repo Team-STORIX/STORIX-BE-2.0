@@ -55,13 +55,14 @@ public class AppEventUseCase {
     }
 
     // 노출 중인 배너 조회
-    public CustomResponse<BannerResponse> getActiveBanner() {
+    public CustomResponse<List<BannerResponse>> getActiveBanner() {
 
-        BannerResponse banner = eventContentCacheHelper.getActive(STORIXStatic.ACTIVE_BANNER_KEY, BannerResponse.class,
-                        () -> eventBannerService.findActiveBanner(LocalDateTime.now()), BannerResponse::displayEndAt)
+        List<BannerResponse> banners = eventContentCacheHelper.getActiveList(STORIXStatic.ACTIVE_BANNER_KEY, BannerResponse.class,
+                        () -> eventBannerService.findActiveBanners(LocalDateTime.now()), BannerResponse::displayEndAt)
+                .stream()
                 .map(b -> b.withBaseUrl(baseUrl))
-                .orElse(null);
-        return CustomResponse.onSuccess(SuccessCode.APP_EVENTS_LOAD_SUCCESS, banner);
+                .toList();
+        return CustomResponse.onSuccess(SuccessCode.APP_EVENTS_LOAD_SUCCESS, banners);
     }
 
     // 칭호 획득 조회
