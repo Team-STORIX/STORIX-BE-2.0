@@ -23,8 +23,8 @@ public class UserTitleHistoryAdaptor {
     private final UserTitleHistoryRepository userTitleHistoryRepository;
 
     // 획득 칭호 저장
-    public void saveNewTitles(Collection<UserTitleHistory> histories) {
-        if (histories == null || histories.isEmpty()) return;
+    public List<UserTitleHistory> saveNewTitles(Collection<UserTitleHistory> histories) {
+        if (histories == null || histories.isEmpty()) return List.of();
 
         Set<Long> userIds = histories.stream()
                 .map(UserTitleHistory::getUserId)
@@ -40,13 +40,14 @@ public class UserTitleHistoryAdaptor {
         List<UserTitleHistory> newHistories = histories.stream()
                 .filter(history -> !existingKeys.contains(key(history.getUserId(), history.getTitle())))
                 .toList();
-        if (newHistories.isEmpty()) return;
+        if (newHistories.isEmpty()) return List.of();
 
         try {
-            userTitleHistoryRepository.saveAll(newHistories);
+            return userTitleHistoryRepository.saveAll(newHistories);
         } catch (DataIntegrityViolationException e) {
             // 중복 획득(unique 충돌)만 무시, 그 외는 전파
             if (!isDuplicateKey(e)) throw e;
+            return List.of();
         }
     }
 
