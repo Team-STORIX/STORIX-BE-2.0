@@ -29,7 +29,7 @@ public record AdminNotificationRequest(
         @NotNull(message = "알림 타입은 필수입니다.")
         AdminNotificationType notificationType,
 
-        @Schema(description = "발송 대상 (ALL: 전체 유저, NEW_USERS: 가입 첫 달 신규 유저)", example = "ALL")
+        @Schema(description = "발송 대상 (ALL: 전체 유저, NEW_USERS: 가입 첫 달 신규 유저, EVENT_WINNERS: 특정 이벤트 당첨자 - eventTargetId 필수)", example = "ALL")
         @NotNull(message = "발송 대상은 필수입니다.")
         AdminNotificationTargetAudience targetAudience,
 
@@ -67,6 +67,11 @@ public record AdminNotificationRequest(
         return sendType != AdminNotificationSendType.SCHEDULED
                 || scheduledAt == null
                 || scheduledAt.isAfter(LocalDateTime.now());
+    }
+
+    @AssertTrue(message = "이벤트 당첨자 발송(EVENT_WINNERS) 시에는 대상 이벤트(eventTargetId)가 필수입니다.")
+    private boolean isEventTargetPresentWhenEventWinners() {
+        return targetAudience != AdminNotificationTargetAudience.EVENT_WINNERS || eventTargetId != null;
     }
 
     @AssertTrue(message = "타겟 타입에 필요한 값이 없습니다. (APP_EVENT: eventTargetId, EXTERNAL: targetLink)")
