@@ -17,7 +17,12 @@ public class STORIXStatic {
     // 일반 유저 선택 불가 닉네임
     public static final List<String> RESERVED_NICK_NAMES = List.of(
             WITHDRAWN_NICK_NAME,
-            "관리자"
+            "관리자",
+            "운영자",
+            "운영진",
+            "개발자",
+            "스토릭스",
+            "STORIX"
     );
 
     // 관리자/개발자 닉네임 중복 우회용 suffix 구분자

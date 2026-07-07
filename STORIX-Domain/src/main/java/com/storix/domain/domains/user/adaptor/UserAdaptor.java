@@ -51,15 +51,21 @@ public class UserAdaptor {
     }
 
     public void checkNicknameDuplicate(String nickName) {
-        if (STORIXStatic.RESERVED_NICK_NAMES.contains(nickName) || userRepository.existsByNickName(nickName)) {
+        if (isReservedNickName(nickName) || userRepository.existsByNickName(nickName)) {
             throw DuplicateNicknameException.EXCEPTION;
         }
     }
 
     public void checkNicknameDuplicateExceptSelf(String nickName, Long userId) {
-        if (STORIXStatic.RESERVED_NICK_NAMES.contains(nickName) || userRepository.existsNickNameExceptSelf(nickName, userId)) {
+        if (isReservedNickName(nickName) || userRepository.existsNickNameExceptSelf(nickName, userId)) {
             throw ProfileDuplicateNicknameException.EXCEPTION;
         }
+    }
+
+    // 예약 닉네임은 대소문자 구분 없이 차단 (예: "STORIX", "Storix", "storix")
+    private boolean isReservedNickName(String nickName) {
+        return nickName != null && STORIXStatic.RESERVED_NICK_NAMES.stream()
+                .anyMatch(reserved -> reserved.equalsIgnoreCase(nickName));
     }
 
     // 개발자 회원 가입
