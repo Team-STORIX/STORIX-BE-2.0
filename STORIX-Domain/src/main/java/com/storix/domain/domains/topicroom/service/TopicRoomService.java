@@ -308,12 +308,13 @@ public class TopicRoomService implements TopicRoomUseCase {
 
         boolean isChatMessageReport = request.getChatMessageId() != null;
 
+        // 신고 사유(reason)는 별도로 받지 않고 유저/채팅 신고 모두 DEFAULT로 저장한다.
         TopicRoomReport report = TopicRoomReport.builder()
                 .reporterId(reporterId)
                 .reportedUserId(request.getReportedUserId())
                 .topicRoomId(roomId)
                 .chatMessageId(request.getChatMessageId())
-                .reason(isChatMessageReport ? request.getReason() : ReportReason.DEFAULT)
+                .reason(ReportReason.DEFAULT)
                 .otherReason(isChatMessageReport ? request.getOtherReason() : null)
                 .reportCaseId(reportCase.getId())
                 .build();
