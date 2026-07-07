@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
+import java.util.Set;
+
 public record AdminUserSanctionRequest(
         @Schema(description = "제재 타입. CONTENT_DELETED 선택 시 targetType과 targetId가 필수입니다.", example = "CONTENT_DELETED")
         @NotNull UserSanctionType type,
@@ -22,9 +24,22 @@ public record AdminUserSanctionRequest(
         @Size(max = 500) String memo
 ) {
 
+    // 콘텐츠 삭제 제재로 처리 가능한 대상 타입. TOPIC_ROOM(유저 신고 전용)은 제외
+    private static final Set<TargetContentType> DELETABLE_TARGET_TYPES =
+            Set.of(TargetContentType.FEED, TargetContentType.FEED_REPLY, TargetContentType.REVIEW, TargetContentType.CHAT);
+
     @AssertTrue(message = "CONTENT_DELETED 처리 시 targetType과 targetId는 필수입니다")
     @Schema(hidden = true)
     public boolean isValidContentDeleteTarget() {
         return type != UserSanctionType.CONTENT_DELETED || (targetType != null && targetId != null);
+    }
+
+    @AssertTrue(message = "targetType은 FEED, FEED_REPLY, REVIEW, CHAT 중 하나여야 합니다")
+    @Schema(hidden = true)
+    public boolean isDeletableTargetType() {
+        // targetType 미입력(null)은 위 필수 검증에서 처리하므로 여기서는 통과시킨다.
+        return type != UserSanctionType.CONTENT_DELETED
+                || targetType == null
+                || DELETABLE_TARGET_TYPES.contains(targetType);
     }
 }
