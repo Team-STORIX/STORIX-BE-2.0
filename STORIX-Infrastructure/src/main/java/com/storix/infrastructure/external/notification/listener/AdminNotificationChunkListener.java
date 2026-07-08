@@ -31,10 +31,7 @@ public class AdminNotificationChunkListener {
         Long adminNotificationId = event.adminNotificationId();
         MDC.put(MDC_KEY, String.valueOf(adminNotificationId));
         try {
-            AdminNotificationDispatchCounts result = adminNotificationDispatcher.dispatch(
-                    adminNotificationId, event.title(), event.content(), event.notificationType(),
-                    event.targetType(), event.eventTargetId(), event.targetLink(),
-                    event.userIds(), LocalDateTime.now());
+            AdminNotificationDispatchCounts result = adminNotificationDispatcher.dispatch(event, LocalDateTime.now());
 
             deliveryResultService.accumulateProgress(adminNotificationId, result.sent(), result.failed(), result.skipped());
 

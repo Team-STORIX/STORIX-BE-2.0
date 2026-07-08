@@ -3,10 +3,9 @@ package com.storix.infrastructure.external.notification.dispatcher;
 import com.storix.domain.domains.notification.domain.AdminNotificationDeliveryOutcome;
 import com.storix.domain.domains.notification.domain.AdminNotificationTargetType;
 import com.storix.domain.domains.notification.dto.AdminNotificationDispatchCounts;
-import com.storix.domain.domains.notification.domain.AdminNotificationType;
 import com.storix.domain.domains.notification.domain.NotificationType;
+import com.storix.domain.domains.notification.event.AdminNotificationChunkEvent;
 import com.storix.domain.domains.notification.service.AdminNotificationDeliveryResultService;
-import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import com.storix.infrastructure.external.notification.dto.MulticastResult;
@@ -35,27 +34,26 @@ public class AdminNotificationDispatcher {
     private final AdminNotificationDeliveryResultService deliveryResultService;
 
     // 대상 유저에게 발송하고 결과를 로그에 반영
-    public AdminNotificationDispatchCounts dispatch(Long adminNotificationId, String title, String content,
-                                                   AdminNotificationType adminNotificationType, AdminNotificationTargetType targetType,
-                                                   Long eventTargetId, String targetLink, List<Long> userIds, LocalDateTime now
-    ) {
+    public AdminNotificationDispatchCounts dispatch(AdminNotificationChunkEvent event, LocalDateTime now) {
+        List<Long> userIds = event.userIds();
         if (userIds.isEmpty()) return AdminNotificationDispatchCounts.empty();
 
-        // 마케팅의 경우만 푸시 알림 : (광고) ~~ (수신거부 : 설정), 인앱 : 원문
-        boolean isMarketing = adminNotificationType == AdminNotificationType.MARKETING;
-        NotificationType notificationType = adminNotificationType.getNotificationType();
-        String pushTitle = isMarketing ? String.format(STORIXStatic.Notification.TITLE_MARKETING, title) : title;
-        String pushContent = isMarketing ? String.format(STORIXStatic.Notification.TPL_MARKETING, content) : content;
+        Long adminNotificationId = event.adminNotificationId();
+        AdminNotificationTargetType targetType = event.targetType();
+        Long eventTargetId = event.eventTargetId();
+        String targetLink = event.targetLink();
+        NotificationType notificationType = event.notificationType().getNotificationType();
 
         // 1. 발송 대상 인앱 알림 생성
         Map<Long, Long> notificationIdByUser = deliveryResultService.prepareBroadcastNotifications(
-                adminNotificationId, userIds, notificationType, targetType, eventTargetId, targetLink, title, content);
+                adminNotificationId, userIds, notificationType, targetType, eventTargetId, targetLink,
+                event.title(), event.content());
         if (notificationIdByUser.isEmpty()) return AdminNotificationDispatchCounts.empty();
 
         // 2. 발송 대상 활성 토큰 조회
         List<Long> targets = List.copyOf(notificationIdByUser.keySet());
-        List<ActivePushToken> activeTokens = isMarketing
-                ? pushDeviceAdaptor.findMarketingEnabledActiveTokensByUserIds(targets) // 마케팅 알림일 경우, 동의자만
+        List<ActivePushToken> activeTokens = event.isMarketing()
+                ? pushDeviceAdaptor.findMarketingEnabledActiveTokensByUserIds(targets)
                 : pushDeviceAdaptor.findActiveTokensByUserIds(targets);
         Map<Long, List<String>> tokensByUserId = activeTokens.stream()
                 .collect(Collectors.groupingBy(
@@ -75,7 +73,7 @@ public class AdminNotificationDispatcher {
             try {
                 MulticastResult result = fcmPushExecutor.sendAndApply(
                         tokens, buildData(adminNotificationId, notificationType, targetType, eventTargetId, targetLink,
-                                pushTitle, pushContent, notificationIdByUser.get(userId)));
+                                event.pushTitle(), event.pushContent(), notificationIdByUser.get(userId)));
                 if (!result.successTokens().isEmpty()) {
                     outcomes.put(userId, AdminNotificationDeliveryOutcome.SENT);
                 } else if (result.hasTransientFailure()) {
