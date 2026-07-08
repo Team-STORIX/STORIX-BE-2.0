@@ -9,6 +9,7 @@ import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
+import com.storix.domain.domains.topicroom.dto.RoomMember;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
@@ -25,6 +26,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -134,6 +137,15 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     @Override
     public List<Long> loadMemberIdsByRoomId(Long roomId) {
         return topicRoomUserRepository.findMemberIdsByRoomId(roomId);
+    }
+
+    @Override
+    public Map<Long, List<Long>> loadMembersByRoomIds(List<Long> roomIds) {
+        return topicRoomUserRepository.findMembersByRoomIds(roomIds).stream()
+                .collect(Collectors.groupingBy(
+                        RoomMember::roomId,
+                        Collectors.mapping(RoomMember::userId, Collectors.toList())
+                ));
     }
 
     @Override

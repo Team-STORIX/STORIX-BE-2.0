@@ -1,6 +1,7 @@
 package com.storix.domain.domains.topicroom.repository;
 
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
+import com.storix.domain.domains.topicroom.dto.RoomMember;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -40,6 +41,12 @@ public interface TopicRoomUserRepository extends JpaRepository<TopicRoomUser, Lo
             "FROM TopicRoomUser tu " +
             "WHERE tu.topicRoom.id = :roomId")
     List<Long> findMemberIdsByRoomId(@Param("roomId") Long roomId);
+
+    // 여러 방의 멤버를 한 번에 조회
+    @Query("SELECT new com.storix.domain.domains.topicroom.dto.RoomMember(tu.topicRoom.id, tu.userId) " +
+            "FROM TopicRoomUser tu " +
+            "WHERE tu.topicRoom.id IN :roomIds")
+    List<RoomMember> findMembersByRoomIds(@Param("roomIds") List<Long> roomIds);
 
     Optional<TopicRoomUser> findByUserIdAndTopicRoomId(Long userId, Long topicRoomId);
 }
