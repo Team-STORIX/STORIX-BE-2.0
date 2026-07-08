@@ -1,8 +1,13 @@
 package com.storix.domain.domains.report.service;
 
 import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
+import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
+import com.storix.domain.domains.feed.domain.FeedReplyReport;
+import com.storix.domain.domains.feed.domain.FeedReport;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
@@ -14,6 +19,10 @@ import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.report.exception.AlreadyProcessedReportCaseException;
 import com.storix.domain.domains.report.exception.InvalidReportProcessRequestException;
 import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
+import com.storix.domain.domains.review.adaptor.ReviewReportAdaptor;
+import com.storix.domain.domains.review.domain.ReviewReport;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
+import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.adaptor.UserSanctionHistoryAdaptor;
 import com.storix.domain.domains.user.domain.User;
@@ -30,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -40,6 +50,10 @@ public class AdminReportCommandService {
     private static final String ACCOUNT_DELETION_DETAIL = "관리자 신고 처리로 인한 계정 삭제";
 
     private final ReportCaseAdaptor reportCaseAdaptor;
+    private final FeedReportAdaptor feedReportAdaptor;
+    private final ReviewReportAdaptor reviewReportAdaptor;
+    private final TopicRoomReportAdaptor topicRoomReportAdaptor;
+    private final NotificationPublisher notificationPublisher;
     private final ChatAdaptor chatAdaptor;
     private final BoardAdaptor boardAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
@@ -67,6 +81,31 @@ public class AdminReportCommandService {
         if (status == ReportStatus.COMPLETED && processAction != null) {
             executeAction(reportCase, processAction);
         }
+
+        if (status == ReportStatus.COMPLETED) {
+            notifyReporters(reportCase);
+        }
+    }
+
+    // 처리 완료된 신고 케이스의 신고자 전원에게 처리 완료 알림
+    private void notifyReporters(ReportCase reportCase) {
+        findReporterIds(reportCase).stream()
+                .distinct()
+                .forEach(reporterId -> notificationPublisher.publish(NotificationEvent.reportProcessed(reporterId)));
+    }
+
+    private List<Long> findReporterIds(ReportCase reportCase) {
+        Long caseId = reportCase.getId();
+        return switch (reportCase.getTargetType()) {
+            case FEED -> feedReportAdaptor.findFeedReportsByReportCaseId(caseId).stream()
+                    .map(FeedReport::getReporterId).toList();
+            case FEED_REPLY -> feedReportAdaptor.findFeedReplyReportsByReportCaseId(caseId).stream()
+                    .map(FeedReplyReport::getReporterId).toList();
+            case REVIEW -> reviewReportAdaptor.findAllByReportCaseId(caseId).stream()
+                    .map(ReviewReport::getReporterId).toList();
+            case TOPIC_ROOM, CHAT -> topicRoomReportAdaptor.findAllByReportCaseId(caseId).stream()
+                    .map(TopicRoomReport::getReporterId).toList();
+        };
     }
 
     private void validateRequest(ReportStatus status, ReportAction processAction) {
