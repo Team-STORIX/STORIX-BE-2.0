@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import com.storix.api.domain.event.controller.dto.PageResponse;
+import com.storix.common.payload.PageResponseWrapperDTO;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -38,7 +38,7 @@ public class AdminPopupController {
 
     @GetMapping
     @Operation(summary = "이벤트 팝업 목록 조회", description = "최신순 번호형 페이지네이션. 페이지당 10개 고정이며 totalPages/totalElements 를 함께 반환합니다.")
-    public CustomResponse<PageResponse<PopupResponse>> getPopups(
+    public CustomResponse<PageResponseWrapperDTO<PopupResponse>> getPopups(
             @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         return eventPopupUseCase.getPopups(page);

@@ -2,7 +2,7 @@ package com.storix.api.domain.notification.usecase;
 
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
-import com.storix.api.domain.notification.controller.dto.AdminNotificationWrapperDto;
+import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.domain.domains.notification.domain.AdminNotificationSendType;
 import com.storix.api.domain.notification.controller.dto.AdminNotificationRequest;
 import com.storix.api.domain.notification.controller.dto.AdminNotificationResponse;
@@ -44,9 +44,9 @@ public class AdminNotificationUseCase {
     }
 
     // 운영자 알림 목록 조회
-    public CustomResponse<AdminNotificationWrapperDto> getNotifications(int page) {
+    public CustomResponse<PageResponseWrapperDTO<AdminNotificationSummaryResponse>> getNotifications(int page) {
 
-        AdminNotificationWrapperDto result = AdminNotificationWrapperDto.from(
+        PageResponseWrapperDTO<AdminNotificationSummaryResponse> result = PageResponseWrapperDTO.from(
                 adminNotificationService.getNotifications(page).map(AdminNotificationSummaryResponse::from));
         return CustomResponse.onSuccess(SuccessCode.ADMIN_NOTIFICATION_LOAD_SUCCESS, result);
     }

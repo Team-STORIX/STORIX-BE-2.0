@@ -4,7 +4,7 @@ import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.api.domain.event.controller.dto.BannerRequest;
-import com.storix.api.domain.event.controller.dto.PageResponse;
+import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.api.domain.image.helper.S3UploadHelper;
 import com.storix.domain.domains.event.domain.Banner;
 import com.storix.domain.domains.event.dto.BannerResponse;
@@ -48,9 +48,9 @@ public class BannerUseCase {
     }
 
     // 이벤트 배너 목록 조회
-    public CustomResponse<PageResponse<BannerResponse>> getBanners(int page) {
+    public CustomResponse<PageResponseWrapperDTO<BannerResponse>> getBanners(int page) {
 
-        PageResponse<BannerResponse> result = PageResponse.from(
+        PageResponseWrapperDTO<BannerResponse> result = PageResponseWrapperDTO.from(
                 eventBannerService.getBanners(page)
                         .map(banner -> BannerResponse.from(banner).withBaseUrl(baseUrl)));
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_LOAD_SUCCESS, result);

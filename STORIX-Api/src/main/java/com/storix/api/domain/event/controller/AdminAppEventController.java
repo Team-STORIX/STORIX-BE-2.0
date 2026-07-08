@@ -1,7 +1,7 @@
 package com.storix.api.domain.event.controller;
 
 import com.storix.api.domain.event.controller.dto.AppEventRequest;
-import com.storix.api.domain.event.controller.dto.PageResponse;
+import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.api.domain.event.usecase.AdminAppEventUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.event.dto.AppEventResponse;
@@ -35,7 +35,7 @@ public class AdminAppEventController {
 
     @GetMapping
     @Operation(summary = "앱 이벤트 목록 조회", description = "최신순 번호형 페이지네이션. 페이지당 10개 고정이며 totalPages/totalElements 를 함께 반환합니다.")
-    public CustomResponse<PageResponse<AppEventResponse>> getAppEvents(
+    public CustomResponse<PageResponseWrapperDTO<AppEventResponse>> getAppEvents(
             @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         return adminAppEventUseCase.getAppEvents(page);

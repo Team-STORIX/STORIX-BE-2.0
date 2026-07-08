@@ -1,10 +1,10 @@
-package com.storix.api.domain.event.controller.dto;
+package com.storix.common.payload;
 
 import org.springframework.data.domain.Page;
 
 import java.util.List;
 
-public record PageResponse<T>(
+public record PageResponseWrapperDTO<T>(
         List<T> content,
         int page,
         int size,
@@ -12,8 +12,8 @@ public record PageResponse<T>(
         int totalPages,
         boolean hasNext
 ) {
-    public static <T> PageResponse<T> from(Page<T> page) {
-        return new PageResponse<>(
+    public static <T> PageResponseWrapperDTO<T> from(Page<T> page) {
+        return new PageResponseWrapperDTO<>(
                 page.getContent(),
                 page.getNumber(),
                 page.getSize(),

@@ -1,7 +1,7 @@
 package com.storix.api.domain.event.usecase;
 
 import com.storix.api.domain.event.controller.dto.AppEventRequest;
-import com.storix.api.domain.event.controller.dto.PageResponse;
+import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.utils.STORIXStatic;
@@ -27,9 +27,9 @@ public class AdminAppEventUseCase {
     }
 
     // 앱 이벤트 목록 조회
-    public CustomResponse<PageResponse<AppEventResponse>> getAppEvents(int page) {
+    public CustomResponse<PageResponseWrapperDTO<AppEventResponse>> getAppEvents(int page) {
 
-        PageResponse<AppEventResponse> result = PageResponse.from(appEventService.getAppEvents(page));
+        PageResponseWrapperDTO<AppEventResponse> result = PageResponseWrapperDTO.from(appEventService.getAppEvents(page));
         return CustomResponse.onSuccess(SuccessCode.ADMIN_APP_EVENT_LOAD_SUCCESS, result);
     }
 

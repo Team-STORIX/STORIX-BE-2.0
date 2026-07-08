@@ -3,7 +3,7 @@ package com.storix.api.domain.event.usecase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.utils.STORIXStatic;
-import com.storix.api.domain.event.controller.dto.PageResponse;
+import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.api.domain.event.controller.dto.PopupRequest;
 import com.storix.api.domain.image.helper.S3UploadHelper;
 import com.storix.domain.domains.event.domain.Popup;
@@ -48,9 +48,9 @@ public class PopupUseCase {
     }
 
     // 이벤트 팝업 목록 조회
-    public CustomResponse<PageResponse<PopupResponse>> getPopups(int page) {
+    public CustomResponse<PageResponseWrapperDTO<PopupResponse>> getPopups(int page) {
 
-        PageResponse<PopupResponse> result = PageResponse.from(
+        PageResponseWrapperDTO<PopupResponse> result = PageResponseWrapperDTO.from(
                 eventPopupService.getPopups(page)
                         .map(popup -> PopupResponse.from(popup).withBaseUrl(baseUrl)));
         return CustomResponse.onSuccess(SuccessCode.EVENT_POPUP_LOAD_SUCCESS, result);
