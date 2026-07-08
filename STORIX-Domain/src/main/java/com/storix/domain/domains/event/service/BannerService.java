@@ -112,20 +112,17 @@ public class BannerService {
         return banners.size();
     }
 
-    // AppEvent 종료 cascade: 소속 활성 배너 일괄 종료. 반환값은 영향 건수(캐시 evict 판단용)
+    // AppEvent 종료 cascade: 소속 활성 배너 일괄 종료
     @Transactional
-    public int endByAppEvent(Long appEventId) {
-        List<Banner> banners = eventBannerAdaptor.findActiveByAppEvent(appEventId);
-        banners.forEach(Banner::end);
-        return banners.size();
+    public void endByAppEvent(Long appEventId) {
+        eventBannerAdaptor.findActiveByAppEvent(appEventId).forEach(Banner::end);
     }
 
-    // AppEvent 기간 변경 cascade: 소속 배너 노출기간을 이벤트 기간 안으로 clamp. 반환값은 영향 건수
+    // AppEvent 기간 변경 cascade: 소속 배너 노출기간을 이벤트 기간 안으로 clamp
     @Transactional
-    public int clampByAppEvent(Long appEventId, LocalDateTime eventStartAt, LocalDateTime eventEndAt) {
-        List<Banner> banners = eventBannerAdaptor.findActiveByAppEvent(appEventId);
-        banners.forEach(banner -> banner.clampToEventPeriod(eventStartAt, eventEndAt));
-        return banners.size();
+    public void clampByAppEvent(Long appEventId, LocalDateTime eventStartAt, LocalDateTime eventEndAt) {
+        eventBannerAdaptor.findActiveByAppEvent(appEventId)
+                .forEach(banner -> banner.clampToEventPeriod(eventStartAt, eventEndAt));
     }
 
     private void validatePeriod(LocalDateTime displayStartAt, LocalDateTime displayEndAt) {

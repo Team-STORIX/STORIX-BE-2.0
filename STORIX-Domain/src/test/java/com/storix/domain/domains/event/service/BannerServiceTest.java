@@ -11,13 +11,12 @@ import com.storix.domain.domains.event.dto.DisplayPeriod;
 import com.storix.domain.domains.event.exception.BannerAppEventRequiredException;
 import com.storix.domain.domains.event.exception.BannerOutOfEventPeriodException;
 import com.storix.domain.domains.event.exception.BannerOverlappingException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -49,11 +48,12 @@ class BannerServiceTest {
     @Mock
     private AppEventAdaptor appEventAdaptor;
 
-    @Spy
-    private EventDisplayPeriodHelper eventDisplayPeriodHelper = new EventDisplayPeriodHelper();
-
-    @InjectMocks
     private BannerService bannerService;
+
+    @BeforeEach
+    void setUp() {
+        bannerService = new BannerService(eventBannerAdaptor, appEventAdaptor, new EventDisplayPeriodHelper());
+    }
 
     private BannerCommand command(Long appEventId, LocalDateTime start, LocalDateTime end) {
         return new BannerCommand(appEventId, ContentTargetType.APP_EVENT, "여름 배너", "public/event/10/banner/7/img.png", start, end);

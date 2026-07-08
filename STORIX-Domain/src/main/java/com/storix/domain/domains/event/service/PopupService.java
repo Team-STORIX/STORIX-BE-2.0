@@ -116,20 +116,17 @@ public class PopupService {
         return popups.size();
     }
 
-    // AppEvent 종료 cascade: 소속 활성 팝업 일괄 종료. 반환값은 영향 건수(캐시 evict 판단용)
+    // AppEvent 종료 cascade: 소속 활성 팝업 일괄 종료
     @Transactional
-    public int endByAppEvent(Long appEventId) {
-        List<Popup> popups = eventPopupAdaptor.findActiveByAppEvent(appEventId);
-        popups.forEach(Popup::end);
-        return popups.size();
+    public void endByAppEvent(Long appEventId) {
+        eventPopupAdaptor.findActiveByAppEvent(appEventId).forEach(Popup::end);
     }
 
-    // AppEvent 기간 변경 cascade: 소속 팝업 노출기간을 이벤트 기간 안으로 clamp. 반환값은 영향 건수
+    // AppEvent 기간 변경 cascade: 소속 팝업 노출기간을 이벤트 기간 안으로 clamp
     @Transactional
-    public int clampByAppEvent(Long appEventId, LocalDateTime eventStartAt, LocalDateTime eventEndAt) {
-        List<Popup> popups = eventPopupAdaptor.findActiveByAppEvent(appEventId);
-        popups.forEach(popup -> popup.clampToEventPeriod(eventStartAt, eventEndAt));
-        return popups.size();
+    public void clampByAppEvent(Long appEventId, LocalDateTime eventStartAt, LocalDateTime eventEndAt) {
+        eventPopupAdaptor.findActiveByAppEvent(appEventId)
+                .forEach(popup -> popup.clampToEventPeriod(eventStartAt, eventEndAt));
     }
 
     private void validatePeriod(LocalDateTime displayStartAt, LocalDateTime displayEndAt) {
