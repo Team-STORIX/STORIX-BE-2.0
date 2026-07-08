@@ -120,7 +120,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     @Override
     public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
         // 1. 상위 5개 토픽룸 가져오기
-        List<TopicRoom> rooms = topicRoomAdaptor.loadTop5PopularRooms();
+        List<TopicRoom> rooms = topicRoomAdaptor.loadHotTopicRooms();
         if (rooms.isEmpty()) return Collections.emptyList();
 
         List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();

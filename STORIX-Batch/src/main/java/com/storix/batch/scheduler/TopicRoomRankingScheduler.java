@@ -19,6 +19,9 @@ import java.util.List;
 @Slf4j
 public class TopicRoomRankingScheduler {
 
+    private static final int MESSAGE_WINDOW_HOURS = 24;
+    private static final int FRESHNESS_HOURS = 24;
+
     private final LoadTopicRoomPort loadTopicRoomPort;
     private final UpdateTopicRoomPort updateTopicRoomPort;
 
@@ -60,6 +63,15 @@ public class TopicRoomRankingScheduler {
 
         updateTopicRoomPort.updatePreviousActiveUserNumbers(activeRooms);
         log.info(">>>> [Scheduler] 총 {}개의 토픽룸 스냅샷 완료", activeRooms.size());
+    }
+
+    // HOT 토픽룸 활동 점수 계산
+    @Scheduled(cron = "0 0 * * * *")
+    public void calculateHotActivityScore() {
+        LocalDateTime now = LocalDateTime.now();
+        int updated = updateTopicRoomPort.updateActivityScores(
+                now.minusHours(MESSAGE_WINDOW_HOURS), now.minusHours(FRESHNESS_HOURS));
+        log.info(">>>> [Scheduler] 토픽룸 활동 점수 {}건 갱신 완료", updated);
     }
 
     // 인기도 점수: 기존 공식

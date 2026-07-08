@@ -147,6 +147,11 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     }
 
     @Override
+    public int updateActivityScores(LocalDateTime messageSince, LocalDateTime freshnessSince) {
+        return topicRoomRepository.updateActivityScores(messageSince, freshnessSince);
+    }
+
+    @Override
     public List<TopicRoom> findAllActiveRooms() {
         return topicRoomRepository.findAllActiveRooms();
     }
