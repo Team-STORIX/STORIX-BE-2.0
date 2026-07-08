@@ -10,6 +10,7 @@ import com.storix.domain.domains.event.service.BannerService;
 import com.storix.domain.domains.event.service.EventContentCacheHelper;
 import com.storix.domain.domains.event.service.PopupDismissService;
 import com.storix.domain.domains.event.service.PopupService;
+import com.storix.domain.domains.event.service.UserAppEventCacheHelper;
 import com.storix.domain.domains.event.service.UserAppEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +29,7 @@ public class AppEventUseCase {
     private final BannerService eventBannerService;
     private final EventContentCacheHelper eventContentCacheHelper;
     private final UserAppEventService userAppEventService;
+    private final UserAppEventCacheHelper userAppEventCacheHelper;
 
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
@@ -77,7 +79,9 @@ public class AppEventUseCase {
     // 칭호 획득 확인 처리
     public CustomResponse<Void> ackAcquiredTitleEvent(Long userId, Long eventId) {
 
-        userAppEventService.ack(userId, eventId);
+        if (userAppEventService.ack(userId, eventId)) {
+            userAppEventCacheHelper.evict(userId);
+        }
         return CustomResponse.onSuccess(SuccessCode.APP_EVENT_ACK_SUCCESS);
     }
 }

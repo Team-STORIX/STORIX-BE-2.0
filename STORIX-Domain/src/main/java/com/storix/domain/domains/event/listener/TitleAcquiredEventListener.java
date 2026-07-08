@@ -1,5 +1,6 @@
 package com.storix.domain.domains.event.listener;
 
+import com.storix.domain.domains.event.service.UserAppEventCacheHelper;
 import com.storix.domain.domains.event.service.UserAppEventService;
 import com.storix.domain.domains.user.event.TitleAcquiredEvent;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +15,13 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class TitleAcquiredEventListener {
 
     private final UserAppEventService userAppEventService;
+    private final UserAppEventCacheHelper userAppEventCacheHelper;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(TitleAcquiredEvent event) {
-        // 한 건 실패가 같은 커밋의 다른 칭호 이벤트 처리를 막지 않도록 격리
         try {
             userAppEventService.createTitleAcquiredEvent(event.userId(), event.title(), event.acquiredAt());
+            userAppEventCacheHelper.evict(event.userId());
         } catch (Exception e) {
             log.warn(">>> [TitleAcquiredEventListener] 칭호 획득 이벤트 적재 실패. userId={}, title={}",
                     event.userId(), event.title(), e);

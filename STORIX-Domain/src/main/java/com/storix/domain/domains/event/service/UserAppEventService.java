@@ -36,14 +36,12 @@ public class UserAppEventService {
                 "genre", title.getGenre().name()
         ));
 
-        UserAppEvent saved = userAppEventAdaptor.save(UserAppEvent.builder()
+        return userAppEventAdaptor.save(UserAppEvent.builder()
                 .userId(userId)
                 .eventType(UserAppEventType.TITLE_ACQUIRED)
                 .payloadJson(payloadJson)
                 .occurredAt(acquiredAt)
                 .build());
-        userAppEventCacheHelper.evict(userId);
-        return saved;
     }
 
     @Transactional(readOnly = true)
@@ -59,12 +57,13 @@ public class UserAppEventService {
     }
 
     @Transactional
-    public void ack(Long userId, Long eventId) {
+    public boolean ack(Long userId, Long eventId) {
         UserAppEvent event = userAppEventAdaptor.findByIdAndOwner(eventId, userId);
-        if (event.getStatus() == UserAppEventStatus.PENDING) {
-            event.ack();
-            userAppEventCacheHelper.evict(userId);
+        if (event.getStatus() != UserAppEventStatus.PENDING) {
+            return false;
         }
+        event.ack();
+        return true;
     }
 
     private OneTimeAppEventResponse toResponse(UserAppEvent event) {
