@@ -6,6 +6,8 @@ import com.storix.domain.domains.event.dto.DisplayPeriod;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
 
 
@@ -34,5 +36,31 @@ public class EventDisplayPeriodHelper {
             throw onOutOfPeriod.get();
         }
         return new DisplayPeriod(start, end);
+    }
+
+    public int maxConcurrent(List<DisplayPeriod> periods, LocalDateTime windowStart) {
+        int n = periods.size();
+        LocalDateTime[] starts = new LocalDateTime[n];
+        LocalDateTime[] ends = new LocalDateTime[n];
+        for (int i = 0; i < n; i++) {
+            DisplayPeriod p = periods.get(i);
+            starts[i] = p.start().isBefore(windowStart) ? windowStart : p.start();
+            ends[i] = p.end();
+        }
+        Arrays.sort(starts);
+        Arrays.sort(ends);
+
+        int concurrent = 0;
+        int peak = 0;
+        int end = 0;
+        for (LocalDateTime start : starts) {
+            while (ends[end].isBefore(start)) {
+                concurrent--;
+                end++;
+            }
+            concurrent++;
+            peak = Math.max(peak, concurrent);
+        }
+        return peak;
     }
 }

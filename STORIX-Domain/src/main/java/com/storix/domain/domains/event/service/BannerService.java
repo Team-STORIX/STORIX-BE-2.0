@@ -142,7 +142,8 @@ public class BannerService {
 
     // 겹치는 종료전 배너가 이미 상한이면 거부 (새 배너 포함 최대 MAX_ACTIVE_BANNERS)
     private void validateOverlapWithinLimit(LocalDateTime displayStartAt, LocalDateTime displayEndAt, Long excludeId) {
-        if (eventBannerAdaptor.countOverlapping(displayStartAt, displayEndAt, excludeId) >= MAX_ACTIVE_BANNERS) {
+        List<DisplayPeriod> overlapping = eventBannerAdaptor.findOverlappingPeriods(displayStartAt, displayEndAt, excludeId);
+        if (eventDisplayPeriodHelper.maxConcurrent(overlapping, displayStartAt) >= MAX_ACTIVE_BANNERS) {
             throw BannerOverlappingException.EXCEPTION;
         }
     }

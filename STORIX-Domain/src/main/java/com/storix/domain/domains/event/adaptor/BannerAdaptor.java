@@ -2,6 +2,7 @@ package com.storix.domain.domains.event.adaptor;
 
 import com.storix.domain.domains.event.domain.Banner;
 import com.storix.domain.domains.event.domain.BannerStatus;
+import com.storix.domain.domains.event.dto.DisplayPeriod;
 import com.storix.domain.domains.event.exception.BannerNotFoundException;
 import com.storix.domain.domains.event.repository.BannerRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +45,8 @@ public class BannerAdaptor {
         return eventBannerRepository.findAllByStatusAndDisplayEndAtLessThan(BannerStatus.ACTIVE, now);
     }
 
-    public long countOverlapping(LocalDateTime displayStartAt, LocalDateTime displayEndAt, Long excludeId) {
-        return eventBannerRepository.countOverlappingActiveBanner(displayStartAt, displayEndAt, excludeId);
+    public List<DisplayPeriod> findOverlappingPeriods(LocalDateTime displayStartAt, LocalDateTime displayEndAt, Long excludeId) {
+        return eventBannerRepository.findOverlappingPeriods(displayStartAt, displayEndAt, excludeId);
     }
 
     // AppEvent 강제 종료 시 cascade 대상

@@ -7,6 +7,7 @@ import com.storix.domain.domains.event.domain.Banner;
 import com.storix.domain.domains.event.domain.BannerStatus;
 import com.storix.domain.domains.event.domain.ContentTargetType;
 import com.storix.domain.domains.event.dto.BannerCommand;
+import com.storix.domain.domains.event.dto.DisplayPeriod;
 import com.storix.domain.domains.event.exception.BannerAppEventRequiredException;
 import com.storix.domain.domains.event.exception.BannerOutOfEventPeriodException;
 import com.storix.domain.domains.event.exception.BannerOverlappingException;
@@ -21,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -86,7 +88,7 @@ class BannerServiceTest {
         @DisplayName("배너 기간이 이벤트 기간 안이면 저장된다")
         void create_within_period() {
             given(appEventAdaptor.findById(APP_EVENT_ID)).willReturn(appEvent());
-            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(null))).willReturn(0L);
+            given(eventBannerAdaptor.findOverlappingPeriods(any(), any(), eq(null))).willReturn(List.of());
             given(eventBannerAdaptor.save(any(Banner.class))).willAnswer(inv -> inv.getArgument(0));
 
             Banner saved = bannerService.create(
@@ -110,7 +112,7 @@ class BannerServiceTest {
         @DisplayName("배너 종료가 이벤트 종료를 넘으면 이벤트 종료로 clamp 되어 저장된다")
         void clamp_end_to_event_end() {
             given(appEventAdaptor.findById(APP_EVENT_ID)).willReturn(appEvent());
-            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(null))).willReturn(0L);
+            given(eventBannerAdaptor.findOverlappingPeriods(any(), any(), eq(null))).willReturn(List.of());
             given(eventBannerAdaptor.save(any(Banner.class))).willAnswer(inv -> inv.getArgument(0));
 
             Banner saved = bannerService.create(
@@ -133,10 +135,14 @@ class BannerServiceTest {
         }
 
         @Test
-        @DisplayName("겹치는 활성 배너가 이미 3개면 예외 (동시 노출 최대 3개)")
+        @DisplayName("동시 노출 피크가 이미 3이면 예외 (새 배너 포함 최대 3개)")
         void reject_when_exceeds_limit() {
             given(appEventAdaptor.findById(APP_EVENT_ID)).willReturn(appEvent());
-            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(null))).willReturn(3L);
+            // [D1,D10] 3개가 새 배너 창(D3~D5)에서 동시 3 → 새 배너 포함 4라 거부
+            given(eventBannerAdaptor.findOverlappingPeriods(any(), any(), eq(null))).willReturn(List.of(
+                    new DisplayPeriod(EVENT_START.plusDays(1), EVENT_START.plusDays(10)),
+                    new DisplayPeriod(EVENT_START.plusDays(1), EVENT_START.plusDays(10)),
+                    new DisplayPeriod(EVENT_START.plusDays(1), EVENT_START.plusDays(10))));
 
             assertThatThrownBy(() -> bannerService.create(
                     command(APP_EVENT_ID, EVENT_START.plusDays(3), EVENT_START.plusDays(5)), ADMIN_ID))
@@ -146,10 +152,13 @@ class BannerServiceTest {
         }
 
         @Test
-        @DisplayName("겹치는 활성 배너가 2개면(총 3개) 저장된다")
+        @DisplayName("동시 노출 피크가 2면(새 배너 포함 3) 저장된다")
         void allow_when_within_limit() {
             given(appEventAdaptor.findById(APP_EVENT_ID)).willReturn(appEvent());
-            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(null))).willReturn(2L);
+            // [D1,D10] 2개가 동시 2 → 새 배너 포함 3이라 통과
+            given(eventBannerAdaptor.findOverlappingPeriods(any(), any(), eq(null))).willReturn(List.of(
+                    new DisplayPeriod(EVENT_START.plusDays(1), EVENT_START.plusDays(10)),
+                    new DisplayPeriod(EVENT_START.plusDays(1), EVENT_START.plusDays(10))));
             given(eventBannerAdaptor.save(any(Banner.class))).willAnswer(inv -> inv.getArgument(0));
 
             Banner saved = bannerService.create(
@@ -168,7 +177,7 @@ class BannerServiceTest {
         @DisplayName("수정은 커맨드의 appEventId 를 무시하고 기존 배너의 이벤트 기간으로 clamp 한다")
         void update_uses_existing_app_event_ignoring_command() {
             given(eventBannerAdaptor.findById(BANNER_ID)).willReturn(existingBanner());
-            given(eventBannerAdaptor.countOverlapping(any(), any(), eq(BANNER_ID))).willReturn(0L);
+            given(eventBannerAdaptor.findOverlappingPeriods(any(), any(), eq(BANNER_ID))).willReturn(List.of());
 
             // 커맨드 appEventId(999)는 무시되고, 기존 배너의 이벤트(종료 EVENT_END)로 clamp 된다
             Banner updated = bannerService.update(BANNER_ID,
@@ -188,7 +197,7 @@ class BannerServiceTest {
 
             bannerService.update(BANNER_ID, command(APP_EVENT_ID, EVENT_START.plusDays(4), EVENT_START.plusDays(6)));
 
-            verify(eventBannerAdaptor, never()).countOverlapping(any(), any(), any());
+            verify(eventBannerAdaptor, never()).findOverlappingPeriods(any(), any(), any());
         }
     }
 

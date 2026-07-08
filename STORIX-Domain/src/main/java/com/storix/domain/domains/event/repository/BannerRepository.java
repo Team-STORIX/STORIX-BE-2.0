@@ -2,6 +2,7 @@ package com.storix.domain.domains.event.repository;
 
 import com.storix.domain.domains.event.domain.Banner;
 import com.storix.domain.domains.event.domain.BannerStatus;
+import com.storix.domain.domains.event.dto.DisplayPeriod;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -41,16 +42,16 @@ public interface BannerRepository extends JpaRepository<Banner, Long> {
             Pageable pageable
     );
 
-    // 등록/수정 시 기간이 겹치는 종료전 배너 수. 동시 노출 상한 검증용
+    // 새 배너 기간과 겹치는 종료전 배너들의 노출기간 조회
     @Query("""
-        SELECT COUNT(b)
+        SELECT new com.storix.domain.domains.event.dto.DisplayPeriod(b.displayStartAt, b.displayEndAt)
         FROM Banner b
         WHERE b.status <> com.storix.domain.domains.event.domain.BannerStatus.ENDED
           AND (:excludeId IS NULL OR b.id <> :excludeId)
           AND b.displayStartAt <= :displayEndAt
           AND b.displayEndAt >= :displayStartAt
     """)
-    long countOverlappingActiveBanner(
+    List<DisplayPeriod> findOverlappingPeriods(
             @Param("displayStartAt") LocalDateTime displayStartAt,
             @Param("displayEndAt") LocalDateTime displayEndAt,
             @Param("excludeId") Long excludeId
