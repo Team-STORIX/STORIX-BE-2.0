@@ -1,8 +1,8 @@
 package com.storix.api.domain.image.helper;
 
+import com.storix.common.utils.ImageContentType;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.image.domain.EventImageSurface;
-import com.storix.domain.domains.image.exception.ImageInvalidContentTypeException;
 import com.storix.domain.domains.image.exception.ImageUploadFailedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class S3UploadHelper {
     // {prefix}/{UUID}.ext 형태로 업로드 후 objectKey 반환
     public String upload(MultipartFile file, String objectKeyPrefix) {
         String contentType = file.getContentType();
-        String ext = contentTypeToExt(contentType);
+        String ext = ImageContentType.toExtension(contentType);
         String objectKey = objectKeyPrefix + "/" + UUID.randomUUID() + "." + ext;
         try {
             s3Client.putObject(
@@ -68,15 +68,4 @@ public class S3UploadHelper {
         }
     }
 
-    private String contentTypeToExt(String contentType) {
-        if (contentType == null) {
-            throw ImageInvalidContentTypeException.EXCEPTION;
-        }
-        return switch (contentType) {
-            case "image/jpeg" -> "jpg";
-            case "image/png" -> "png";
-            case "image/webp" -> "webp";
-            default -> throw ImageInvalidContentTypeException.EXCEPTION;
-        };
-    }
 }
