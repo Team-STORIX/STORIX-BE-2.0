@@ -58,14 +58,7 @@ public class NotificationDispatchService {
                 .content(event.content())
                 .build());
 
-        // 3. 푸시 발송 가능한 활성 디바이스 토큰 조회 > 없으면 인앱만
-        List<String> tokens = pushDeviceAdaptor.findActiveFcmTokensByUserId(event.recipientUserId());
-        if (tokens.isEmpty()) {
-            log.debug(">>> [Notification] no active device for userId={}", event.recipientUserId());
-            return DispatchResult.inAppOnly(saved.getId());
-        }
-
-        // 4-1. [SUSPENDED 유저] 제재/신고 안내 타입만 발송 허용
+        // 3. 정지 유저는 제재/신고 안내 타입만 푸시 허용
         if (user.getAccountState() == AccountState.SUSPENDED
                 && !event.notificationType().deliverableToSuspendedUser()) {
             log.debug(">>> [Notification] push skipped (user suspended) userId={}, type={}",
@@ -73,14 +66,19 @@ public class NotificationDispatchService {
             return DispatchResult.inAppOnly(saved.getId());
         }
 
-        // 4-2. 푸시 알림 수신 동의 체크 — 제재/약관·정책(법적 필수 고지) 타입은 동의 여부와 무관하게 발송
-        if (!event.notificationType().bypassConsent()) {
-            NotificationSetting setting = notificationSettingAdaptor.getByUserId(event.recipientUserId());
-            if (!setting.acceptsType(event.notificationType())) {
-                log.debug(">>> [Notification] push skipped (type disabled) userId={}, type={}",
-                        event.recipientUserId(), event.notificationType());
-                return DispatchResult.inAppOnly(saved.getId());
-            }
+        // 4. 푸시 수신 동의 체크
+        NotificationSetting setting = notificationSettingAdaptor.getByUserId(event.recipientUserId());
+        if (!setting.acceptsType(event.notificationType())) {
+            log.debug(">>> [Notification] push skipped (type disabled) userId={}, type={}",
+                    event.recipientUserId(), event.notificationType());
+            return DispatchResult.inAppOnly(saved.getId());
+        }
+
+        // 5. 푸시 대상 확정 — 활성 디바이스 토큰 조회 > 없으면 인앱만
+        List<String> tokens = pushDeviceAdaptor.findActiveFcmTokensByUserId(event.recipientUserId());
+        if (tokens.isEmpty()) {
+            log.debug(">>> [Notification] no active device for userId={}", event.recipientUserId());
+            return DispatchResult.inAppOnly(saved.getId());
         }
 
         return DispatchResult.pushTo(saved.getId(), tokens);

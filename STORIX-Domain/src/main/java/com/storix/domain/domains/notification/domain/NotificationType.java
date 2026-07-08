@@ -29,21 +29,12 @@ public enum NotificationType {
     FEATURE_UPDATE;    // 신기능 업데이트
 
 
-    // 일시 정지(SUSPENDED) 유저에게도 푸시 알림을 발송할지 여부 (운영/정책 알림만 발송)
+    // 일시 정지 유저에게도 푸시 알림을 발송할지 여부 (운영/정책 알림만 발송)
     public boolean deliverableToSuspendedUser() {
         return switch (this) {
             case REPORT_RECEIVED, REPORT_PROCESSED,
                  RESTRICTION_7D, RESTRICTION_30D,
                  TOS_UPDATE, PRIVACY_UPDATE, FEATURE_UPDATE -> true;
-            default -> false;
-        };
-    }
-
-    // 수신 동의 설정과 무관하게 무조건 발송해야 하는 필수 고지 타입인지 (제재/약관·정책 변경 등 법적·정책상 필수 안내)
-    public boolean bypassConsent() {
-        return switch (this) {
-            case RESTRICTION_7D, RESTRICTION_30D,
-                 TOS_UPDATE, PRIVACY_UPDATE -> true;
             default -> false;
         };
     }
