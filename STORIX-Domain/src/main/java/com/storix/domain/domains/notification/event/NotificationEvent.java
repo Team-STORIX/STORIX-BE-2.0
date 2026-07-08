@@ -4,11 +4,15 @@ import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.notification.domain.NotificationType;
 import com.storix.domain.domains.notification.domain.TargetType;
 
-// 알림 발송 트리거 이벤트.
-// 발행 지점(Service) 은 정적 팩토리로 만들어 publisher.publish() 만 호출.
-// AFTER_COMMIT 시점에 NotificationEventListener 가 인앱 저장 + FCM 발송 수행.
+/**
+ * 알림 발송 트리거 이벤트
+ *
+ * 발행 지점(Service) 은 정적 팩토리로 만들어 publisher.publish() 만 호출
+ * AFTER_COMMIT 시점에 NotificationEventListener 가 인앱 저장 + FCM 발송 수행
+ * */
 public record NotificationEvent(
         Long recipientUserId,
+        Long actorUserId,
         NotificationType notificationType,
         TargetType targetType,
         Long targetId,
@@ -19,9 +23,10 @@ public record NotificationEvent(
 
     /** 좋아요 */
     // 1. 내 피드에 좋아요
-    public static NotificationEvent likeFeed(Long recipientUserId, Long feedId, String actorNickname) {
+    public static NotificationEvent likeFeed(Long recipientUserId, Long actorUserId, Long feedId, String actorNickname) {
         return new NotificationEvent(
                 recipientUserId,
+                actorUserId,
                 NotificationType.LIKE_FEED,
                 TargetType.FEED,
                 feedId,
@@ -32,9 +37,10 @@ public record NotificationEvent(
     }
 
     // 2. 내 리뷰에 좋아요
-    public static NotificationEvent likeReview(Long recipientUserId, Long reviewId, String actorNickname) {
+    public static NotificationEvent likeReview(Long recipientUserId, Long actorUserId, Long reviewId, String actorNickname) {
         return new NotificationEvent(
                 recipientUserId,
+                actorUserId,
                 NotificationType.LIKE_REVIEW,
                 TargetType.REVIEW,
                 reviewId,
@@ -45,10 +51,11 @@ public record NotificationEvent(
     }
 
     // 3. 내 피드 댓글에 좋아요 — parentTargetId 로 부모 피드 ID 전달
-    public static NotificationEvent likeComment(Long recipientUserId, Long commentId, Long feedId,
+    public static NotificationEvent likeComment(Long recipientUserId, Long actorUserId, Long commentId, Long feedId,
                                                 String actorNickname) {
         return new NotificationEvent(
                 recipientUserId,
+                actorUserId,
                 NotificationType.LIKE_COMMENT,
                 TargetType.COMMENT,
                 commentId,
@@ -61,10 +68,11 @@ public record NotificationEvent(
 
     /** 댓글 / 답댓글 */
     // 1. 내 피드에 댓글
-    public static NotificationEvent commentOnFeed(Long recipientUserId, Long feedId,
+    public static NotificationEvent commentOnFeed(Long recipientUserId, Long actorUserId, Long feedId,
                                                   String actorNickname, String commentContent) {
         return new NotificationEvent(
                 recipientUserId,
+                actorUserId,
                 NotificationType.COMMENT_ON_FEED,
                 TargetType.FEED,
                 feedId,
@@ -75,10 +83,11 @@ public record NotificationEvent(
     }
 
     // 2. 내 댓글에 답댓글 — parentTargetId 로 부모 피드 ID 전달
-    public static NotificationEvent replyOnComment(Long recipientUserId, Long parentCommentId, Long feedId,
+    public static NotificationEvent replyOnComment(Long recipientUserId, Long actorUserId, Long parentCommentId, Long feedId,
                                                    String actorNickname, String replyContent) {
         return new NotificationEvent(
                 recipientUserId,
+                actorUserId,
                 NotificationType.REPLY_ON_COMMENT,
                 TargetType.COMMENT,
                 parentCommentId,
@@ -94,6 +103,7 @@ public record NotificationEvent(
     public static NotificationEvent todayFeed(Long recipientUserId, Long feedId) {
         return new NotificationEvent(
                 recipientUserId,
+                null,
                 NotificationType.TODAY_FEED,
                 TargetType.FEED,
                 feedId,
@@ -107,27 +117,13 @@ public record NotificationEvent(
     public static NotificationEvent hotTopicRoom(Long recipientUserId, Long topicRoomId, String topicRoomTitle) {
         return new NotificationEvent(
                 recipientUserId,
+                null,
                 NotificationType.HOT_TOPIC_ROOM,
                 TargetType.TOPIC_ROOM,
                 topicRoomId,
                 null,
                 STORIXStatic.Notification.TITLE_TOPIC_ROOM,
                 String.format(STORIXStatic.Notification.TPL_HOT_TOPIC_ROOM, topicRoomTitle)
-        );
-    }
-
-
-    /** 마케팅/광고 (운영자 발송) */
-    // 운영자가 입력한 타이틀/본문에 고정 prefix '(광고) ' + suffix '(수신거부 : 설정)' 자동 부착
-    public static NotificationEvent marketing(Long recipientUserId, String adTitle, String adBody) {
-        return new NotificationEvent(
-                recipientUserId,
-                NotificationType.MARKETING,
-                TargetType.NONE,
-                null,
-                null,
-                String.format(STORIXStatic.Notification.TITLE_MARKETING, adTitle),
-                String.format(STORIXStatic.Notification.TPL_MARKETING, adBody)
         );
     }
 
@@ -185,7 +181,7 @@ public record NotificationEvent(
     // 운영 정책 알림 공통 빌더 (타겟 없음, 고정 title/body)
     private static NotificationEvent policyEvent(Long recipientUserId, NotificationType type,
                                                  String title, String body) {
-        return new NotificationEvent(recipientUserId, type, TargetType.NONE, null, null, title, body);
+        return new NotificationEvent(recipientUserId, null, type, TargetType.NONE, null, null, title, body);
     }
 
 

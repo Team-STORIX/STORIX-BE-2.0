@@ -40,7 +40,7 @@ public class WorksDetailReactionService {
         StandardProfileInfo actor = userAdaptor.findStandardProfileInfoByUserId(actorUserId);
         notificationPublisher.publishUnlessSelf(
                 actorUserId,
-                NotificationEvent.likeReview(reviewAuthorUserId, reviewId, actor.nickName())
+                NotificationEvent.likeReview(reviewAuthorUserId, actorUserId, reviewId, actor.nickName())
         );
     }
 }

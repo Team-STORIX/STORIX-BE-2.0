@@ -8,6 +8,7 @@ import com.storix.domain.domains.notification.dto.DispatchResult;
 import com.storix.domain.domains.notification.event.NotificationEvent;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.List;
 public class NotificationDispatchService {
 
     private final UserAdaptor userAdaptor;
+    private final UserBlockAdaptor userBlockAdaptor;
     private final NotificationAdaptor notificationAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
 
@@ -34,6 +36,14 @@ public class NotificationDispatchService {
         User user = userAdaptor.findUserById(event.recipientUserId());
         if (user.getAccountState() == AccountState.DELETED) {
             log.debug(">>> [Notification] skipped (user deleted) userId={}", event.recipientUserId());
+            return DispatchResult.skip();
+        }
+
+        // 1-2. 수신자가 행위자를 차단했으면 전부 skip > 인앱 저장, 푸시 알림 X
+        if (event.actorUserId() != null
+                && userBlockAdaptor.isBlocked(event.recipientUserId(), event.actorUserId())) {
+            log.debug(">>> [Notification] skipped (actor blocked) userId={}, actorId={}",
+                    event.recipientUserId(), event.actorUserId());
             return DispatchResult.skip();
         }
 
