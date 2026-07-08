@@ -2,6 +2,8 @@ package com.storix.domain.domains.topicroom.service;
 
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
+import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.TargetContentType;
@@ -69,6 +71,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
     private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
+    private final NotificationPublisher notificationPublisher;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -320,6 +323,7 @@ public class TopicRoomService implements TopicRoomUseCase {
         } catch (DataIntegrityViolationException e) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
+        notificationPublisher.publish(NotificationEvent.reportReceived(reporterId));
     }
 
 

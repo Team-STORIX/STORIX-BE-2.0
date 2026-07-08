@@ -6,6 +6,8 @@ import com.storix.domain.domains.feed.dto.CreateFeedReportCommand;
 import com.storix.domain.domains.feed.exception.DuplicateFeedReplyReportException;
 import com.storix.domain.domains.feed.exception.DuplicateFeedReportException;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
@@ -24,6 +26,7 @@ public class FeedKebabService {
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final FeedReportAdaptor feedReportAdaptor;
     private final ReportCaseAdaptor reportCaseAdaptor;
+    private final NotificationPublisher notificationPublisher;
 
     // 내 게시물 삭제
     @Transactional
@@ -56,6 +59,7 @@ public class FeedKebabService {
         );
 
         feedReportAdaptor.saveReport(cmd);
+        notificationPublisher.publish(NotificationEvent.reportReceived(userId));
     }
 
     // 내 댓글 삭제
@@ -88,5 +92,6 @@ public class FeedKebabService {
         );
 
         feedReportAdaptor.saveReplyReport(cmd);
+        notificationPublisher.publish(NotificationEvent.reportReceived(userId));
     }
 }
