@@ -4,7 +4,8 @@ import com.storix.api.domain.notification.usecase.AdminNotificationUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.api.domain.notification.controller.dto.AdminNotificationRequest;
 import com.storix.api.domain.notification.controller.dto.AdminNotificationResponse;
-import com.storix.api.domain.notification.controller.dto.AdminNotificationWrapperDto;
+import com.storix.api.domain.notification.controller.dto.AdminNotificationSummaryResponse;
+import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +34,7 @@ public class AdminNotificationController {
 
     @GetMapping
     @Operation(summary = "운영자 알림 목록 조회", description = "최신순 번호형 페이지네이션. 페이지당 10개 고정이며 totalPages/totalElements 를 함께 반환합니다.")
-    public CustomResponse<AdminNotificationWrapperDto> getNotifications(
+    public CustomResponse<PageResponseWrapperDTO<AdminNotificationSummaryResponse>> getNotifications(
             @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         return adminNotificationUseCase.getNotifications(page);

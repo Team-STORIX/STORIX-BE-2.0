@@ -2,7 +2,7 @@ package com.storix.api.domain.notification.usecase;
 
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
-import com.storix.api.domain.notification.controller.dto.AdminNotificationWrapperDto;
+import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.domain.domains.notification.domain.AdminNotificationSendType;
 import com.storix.api.domain.notification.controller.dto.AdminNotificationRequest;
 import com.storix.api.domain.notification.controller.dto.AdminNotificationResponse;
@@ -10,6 +10,7 @@ import com.storix.api.domain.notification.controller.dto.AdminNotificationSummar
 import com.storix.domain.domains.notification.service.AdminNotificationService;
 import com.storix.domain.domains.notification.service.AdminNotificationLifecycleService;
 import com.storix.domain.domains.notification.service.AdminNotificationBroadcastService;
+import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,9 +22,15 @@ public class AdminNotificationUseCase {
     private final AdminNotificationService adminNotificationService;
     private final AdminNotificationLifecycleService adminNotificationLifecycleService;
     private final AdminNotificationBroadcastService adminNotificationBroadcastService;
+    private final AppEventAdaptor appEventAdaptor;
 
     // 운영자 알림 생성
     public CustomResponse<Long> createNotification(AuthUserDetails authUser, AdminNotificationRequest req) {
+
+        // 0. 이벤트를 참조하면 대상 이벤트 존재 재확인
+        if (req.eventTargetId() != null) {
+            appEventAdaptor.findById(req.eventTargetId());
+        }
 
         // 1. 운영자 알림 생성 (생성 관리자 id 저장)
         Long adminNotificationId = adminNotificationService.create(req.toCommand(), authUser.getUserId());
@@ -37,9 +44,9 @@ public class AdminNotificationUseCase {
     }
 
     // 운영자 알림 목록 조회
-    public CustomResponse<AdminNotificationWrapperDto> getNotifications(int page) {
+    public CustomResponse<PageResponseWrapperDTO<AdminNotificationSummaryResponse>> getNotifications(int page) {
 
-        AdminNotificationWrapperDto result = AdminNotificationWrapperDto.from(
+        PageResponseWrapperDTO<AdminNotificationSummaryResponse> result = PageResponseWrapperDTO.from(
                 adminNotificationService.getNotifications(page).map(AdminNotificationSummaryResponse::from));
         return CustomResponse.onSuccess(SuccessCode.ADMIN_NOTIFICATION_LOAD_SUCCESS, result);
     }
@@ -54,6 +61,11 @@ public class AdminNotificationUseCase {
 
     // 운영자 알림 수정
     public CustomResponse<AdminNotificationResponse> updateNotification(Long adminNotificationId, AdminNotificationRequest req) {
+
+        // 0. 이벤트를 참조하면(eventTargetId) 대상 이벤트 존재 재확인 (없으면 AppEventNotFoundException)
+        if (req.eventTargetId() != null) {
+            appEventAdaptor.findById(req.eventTargetId());
+        }
 
         // 1. 운영자 알림 수정
         AdminNotificationResponse result =

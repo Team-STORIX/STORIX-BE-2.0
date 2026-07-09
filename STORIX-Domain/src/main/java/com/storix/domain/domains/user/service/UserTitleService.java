@@ -7,7 +7,9 @@ import com.storix.domain.domains.user.adaptor.UserTitleHistoryAdaptor;
 import com.storix.domain.domains.user.domain.Title;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.domain.UserTitleHistory;
+import com.storix.domain.domains.user.event.TitleAcquiredEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,7 @@ public class UserTitleService {
     private final TopGenreResolver topGenreResolver;
     private final UserAdaptor userAdaptor;
     private final UserTitleHistoryAdaptor userTitleHistoryAdaptor;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 여러 유저의 칭호 일괄 갱신
     @Transactional
@@ -92,8 +95,11 @@ public class UserTitleService {
             if (user != null) user.changeTitle(title);
         });
 
-        // 4. 획득 칭호 저장
-        userTitleHistoryAdaptor.saveNewTitles(acquiredTitleHistories);
+        // 4. 획득 칭호 저장 + 앱 모달 이벤트 발행
+        List<UserTitleHistory> savedHistories = userTitleHistoryAdaptor.saveNewTitles(acquiredTitleHistories);
+        savedHistories.forEach(history -> eventPublisher.publishEvent(
+                new TitleAcquiredEvent(history.getUserId(), history.getTitle(), history.getAcquiredAt())
+        ));
     }
 
     private Title resolveTitle(Optional<TopGenreInfo> top) {

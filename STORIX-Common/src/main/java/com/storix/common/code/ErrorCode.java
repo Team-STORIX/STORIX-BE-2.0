@@ -47,6 +47,8 @@ public enum ErrorCode {
 
     // Image error
     IMAGE_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "IMAGE_ERROR_001", "지원하지 않는 Content Type입니다."),
+    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_ERROR_002", "이미지 업로드에 실패했습니다."),
+    IMAGE_FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "IMAGE_ERROR_003", "업로드 가능한 파일 크기를 초과했습니다."),
 
     // Other Server error
     OTHER_SERVER_BAD_REQUEST(HttpStatus.BAD_REQUEST, "FEIGN_ERROR_1", "Other server bad request"),
@@ -105,6 +107,34 @@ public enum ErrorCode {
     ADMIN_NOTIFICATION_NOT_UPDATABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_007", "발송 예정 상태에서만 수정할 수 있습니다."),
     ADMIN_NOTIFICATION_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_008", "발송 예정 상태에서만 취소할 수 있습니다."),
     ADMIN_NOTIFICATION_NOT_REBROADCASTABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_009", "발송 실패 상태에서만 재발송할 수 있습니다."),
+
+    // Event Popup error
+    EVENT_POPUP_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_POPUP_ERROR_001", "존재하지 않는 이벤트 팝업입니다."),
+    EVENT_POPUP_INVALID_DISPLAY_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_005", "팝업 노출 종료 일시는 시작 일시 이후여야 합니다."),
+    EVENT_POPUP_OVERLAPPING(HttpStatus.CONFLICT, "EVENT_POPUP_ERROR_006", "동시에 여러 팝업을 노출할 수 없습니다."),
+    EVENT_POPUP_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_007", "발급되지 않았거나 만료된 팝업 이미지 키입니다."),
+    EVENT_POPUP_OUT_OF_EVENT_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_009", "팝업 노출 기간은 소속 앱 이벤트 기간 안에 있어야 합니다."),
+    EVENT_POPUP_APP_EVENT_REQUIRED(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_010", "APP_EVENT 유형 팝업은 소속 앱 이벤트가 필수입니다."),
+
+    // Event Banner error
+    EVENT_BANNER_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_BANNER_ERROR_001", "존재하지 않는 이벤트 배너입니다."),
+    EVENT_BANNER_INVALID_DISPLAY_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_002", "배너 노출 종료 일시는 시작 일시 이후여야 합니다."),
+    EVENT_BANNER_OVERLAPPING(HttpStatus.CONFLICT, "EVENT_BANNER_ERROR_003", "동시에 노출 가능한 배너는 최대 3개입니다."),
+    EVENT_BANNER_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_004", "발급되지 않았거나 만료된 배너 이미지 키입니다."),
+    EVENT_BANNER_OUT_OF_EVENT_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_005", "배너 노출 기간은 소속 앱 이벤트 기간 안에 있어야 합니다."),
+    EVENT_BANNER_APP_EVENT_REQUIRED(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_006", "APP_EVENT 유형 배너는 소속 앱 이벤트가 필수입니다."),
+
+    // Admin App Event error
+    ADMIN_APP_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN_APP_EVENT_ERROR_001", "존재하지 않는 앱 이벤트입니다."),
+    ADMIN_APP_EVENT_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_002", "앱 이벤트명은 필수입니다."),
+    ADMIN_APP_EVENT_PERIOD_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_003", "앱 이벤트 시작/종료 일시는 필수입니다."),
+    ADMIN_APP_EVENT_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_004", "앱 이벤트 종료 일시는 시작 일시 이후여야 합니다."),
+
+    // App Event error
+    APP_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "APP_EVENT_ERROR_001", "존재하지 않는 앱 이벤트입니다."),
+    APP_EVENT_FORBIDDEN(HttpStatus.FORBIDDEN, "APP_EVENT_ERROR_002", "앱 이벤트를 확인할 권한이 없습니다."),
+    APP_EVENT_PAYLOAD_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_003", "앱 이벤트 payload 직렬화에 실패했습니다."),
+    APP_EVENT_WINNER_FINALIZER_NOT_IMPLEMENTED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_004", "당첨자 이벤트(hasWinner=true)는 종료 시 당첨자 확정(EventWinnerFinalizer) 구현이 필수입니다."),
 
     // OIDC error
     OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),

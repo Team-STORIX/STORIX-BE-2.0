@@ -87,6 +87,7 @@ public enum SuccessCode {
 
     // Image success
     IMAGE_ISSUE_PRESIGNED_URL_SUCCESS(HttpStatus.OK, "IMAGE_SUCCESS_001", "이미지를 업로드할 Presigned Url 발급에 성공했습니다."),
+    IMAGE_UPLOAD_SUCCESS(HttpStatus.OK, "IMAGE_SUCCESS_002", "이미지 업로드에 성공했습니다."),
 
     // Plus success
     PLUS_BOARD_UPLOAD_SUCCESS(HttpStatus.CREATED, "PLUS_SUCCESS_001", "게시물 등록에 성공했습니다."),
