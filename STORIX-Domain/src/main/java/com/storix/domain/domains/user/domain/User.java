@@ -207,6 +207,7 @@ public class User extends BaseTimeEntity {
         accountState = AccountState.DELETED;
         favoriteGenreList = null;
         profileObjectKey = null;
+        profileDescription = null;
         nickName = STORIXStatic.WITHDRAW_PREFIX + UUID.randomUUID() + ":" + nickName;
         oauthInfo = oauthInfo.withDrawOauthInfo();
         ageOver14 = null;

@@ -72,10 +72,10 @@ public interface PushDeviceRepository extends JpaRepository<PushDevice, Long> {
     int deactivateOtherUsersOnDevice(@Param("userId") Long userId,
                                      @Param("installationId") String installationId);
 
-    // 유저 탈퇴 시 해당 유저의 모든 활성 디바이스 일괄 비활성화
+    // 유저 탈퇴 시 모든 디바이스 물리 삭제 — 방침상 탈퇴 시 지체 없이 파기
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE PushDevice d SET d.isActive = false WHERE d.userId = :userId AND d.isActive = true")
-    void deactivateAllByUserId(@Param("userId") Long userId);
+    @Query("DELETE FROM PushDevice d WHERE d.userId = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 
     // 발송 성공한 토큰들의 lastSuccessAt 갱신
     @Modifying(clearAutomatically = true, flushAutomatically = true)

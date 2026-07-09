@@ -187,8 +187,8 @@ public class AuthService {
         favoriteWorksAdaptor.deleteFavoriteWorks(userId);
         libraryAdaptor.deleteLibrary(userId);
 
-        // 3. 푸시 알림 디바이스 일괄 비활성화
-        pushDeviceAdaptor.deactivateAllByUserId(userId);
+        // 3. 푸시 알림 토큰 물리 삭제
+        pushDeviceAdaptor.deleteAllByUserId(userId);
 
         // 4. 알림 설정 삭제 (재가입 시 새 row 생성됨)
         notificationSettingAdaptor.deleteByUserId(userId);

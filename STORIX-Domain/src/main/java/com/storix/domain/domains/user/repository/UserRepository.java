@@ -102,9 +102,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "WHERE u.id IN :userIds")
     List<UserNicknameInfo> findNicknameInfoByUserIds(@Param("userIds") List<Long> userIds);
 
+    // 탈퇴 1년 경과 유저의 소셜 식별자 파기
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM User u WHERE u.accountState = com.storix.domain.domains.user.domain.AccountState.DELETED AND u.deletedAt < :cutoff")
-    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
+    @Query("UPDATE User u SET u.oauthInfo.oid = null " +
+            "WHERE u.accountState = com.storix.domain.domains.user.domain.AccountState.DELETED " +
+            "AND u.deletedAt < :cutoff AND u.oauthInfo.oid IS NOT NULL")
+    int purgeOauthOidBefore(@Param("cutoff") LocalDateTime cutoff);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE User u SET u.title = null")
