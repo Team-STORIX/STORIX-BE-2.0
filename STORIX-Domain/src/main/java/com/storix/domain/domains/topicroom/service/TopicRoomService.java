@@ -277,14 +277,28 @@ public class TopicRoomService implements TopicRoomUseCase {
 
         try {
             TopicRoom room = loadTopicRoomPort.findById(roomId);
-            publishActiveUserNumberChanged(room.getId(), room.getActiveUserNumber());
-
-            // 인원수가 0 이하면 방 삭제 로직 실행
             if (room.getActiveUserNumber() <= 0) {
                 recordTopicRoomPort.deleteRoom(roomId);
+            } else {
+                publishActiveUserNumberChanged(room.getId(), room.getActiveUserNumber());
             }
         } catch (UnknownTopicRoomException e) {
             log.info("[leaveRoom] 다른 스레드에 의해 이미 지워진 토픽룸 {}번", roomId);
+        }
+    }
+
+    // 탈퇴 유저가 참여 중인 방 전체 나가기 — 방별 try/catch로 한 방 실패가 나머지를 막지 않게
+    @Override
+    @Transactional
+    public void leaveAllRooms(Long userId) {
+        List<Long> roomIds = topicRoomAdaptor.findAllJoinedRoomIdsByUserId(userId);
+        for (Long roomId : roomIds) {
+            try {
+                leaveRoom(userId, roomId);
+            } catch (Exception e) {
+                log.warn(">>> [TopicRoom] 탈퇴 유저 방 나가기 실패 userId={}, roomId={}, cause={}",
+                        userId, roomId, e.getMessage());
+            }
         }
     }
 
