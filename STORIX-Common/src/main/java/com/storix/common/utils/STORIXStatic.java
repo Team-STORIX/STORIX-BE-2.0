@@ -126,6 +126,10 @@ public class STORIXStatic {
         // 댓글 본문 미리보기 — 10자 노출 후 ...
         public static final int CONTENT_PREVIEW_MAX = 10;
         public static final String CONTENT_PREVIEW_SUFFIX = "...";
+
+        // 선정 알림 dedup Redis 키 prefix — {prefix}{yyyyMMdd}:{id}
+        public static final String FEATURED_FEED_KEY_PREFIX = "featured:feed:";
+        public static final String FEATURED_TOPIC_ROOM_KEY_PREFIX = "featured:topicroom:";
     }
 
     // 사용자 이력 — 마케팅 동의/거부 모달 표시 문구

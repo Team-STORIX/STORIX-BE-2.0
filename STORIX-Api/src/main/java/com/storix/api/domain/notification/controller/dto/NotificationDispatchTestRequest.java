@@ -31,7 +31,7 @@ public record NotificationDispatchTestRequest(
 ) {
     public NotificationEvent toEvent() {
         return new NotificationEvent(
-                recipientUserId, type, targetType, targetId, parentTargetId, title, content
+                recipientUserId, null, type, targetType, targetId, parentTargetId, title, content
         );
     }
 }

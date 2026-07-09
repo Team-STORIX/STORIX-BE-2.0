@@ -1,6 +1,8 @@
 package com.storix.domain.domains.review.service;
 
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
@@ -29,6 +31,7 @@ public class WorksDetailKebabService {
     private final ReviewReportAdaptor reviewReportAdaptor;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final LibraryAdaptor libraryAdaptor;
+    private final NotificationPublisher notificationPublisher;
 
     private final LoadWorksPort loadWorksPort;
 
@@ -91,6 +94,7 @@ public class WorksDetailKebabService {
         );
 
         reviewReportAdaptor.saveReport(cmd);
+        notificationPublisher.publish(NotificationEvent.reportReceived(userId));
     }
 
 }

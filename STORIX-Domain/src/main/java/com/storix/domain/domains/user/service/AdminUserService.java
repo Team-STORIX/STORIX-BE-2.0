@@ -4,6 +4,8 @@ import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
@@ -68,6 +70,7 @@ public class AdminUserService {
     private final UserAdaptor userAdaptor;
     private final AuthService authService;
     private final UserAccessRevokedPublisher userAccessRevokedPublisher;
+    private final NotificationPublisher notificationPublisher;
     private final UserBlacklistAdaptor userBlacklistAdaptor;
     private final BoardAdaptor boardAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
@@ -264,6 +267,7 @@ public class AdminUserService {
         }
         user.suspend(suspendedUntil);
         userAccessRevokedPublisher.publishSuspended(userId, suspendedUntil);
+        notificationPublisher.publish(NotificationEvent.restriction7d(userId));
         saveManualSanctionHistory(userId, adminId, UserSanctionType.SUSPENDED, now, suspendedUntil, memo);
     }
 

@@ -2,6 +2,7 @@ package com.storix.infrastructure.external.notification.dispatcher;
 
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.notification.dto.AdminNotificationBroadcastInfo;
+import com.storix.domain.domains.notification.event.AdminNotificationChunkEvent;
 import com.storix.domain.domains.notification.service.AdminNotificationLifecycleService;
 import com.storix.domain.domains.notification.service.AdminNotificationTargetService;
 import com.storix.domain.domains.notification.domain.AdminNotificationLog;
@@ -45,10 +46,8 @@ public class AdminNotificationRetryer {
 
             try {
                 AdminNotificationBroadcastInfo info = targetService.getBroadcastInfo(adminNotificationId);
-                adminNotificationDispatcher.dispatch(
-                        adminNotificationId, info.title(), info.content(), info.notificationType(),
-                        info.targetType(), info.eventTargetId(), info.targetLink(),
-                        entry.getValue(), now);
+                AdminNotificationChunkEvent event = AdminNotificationChunkEvent.of(adminNotificationId, info, entry.getValue());
+                adminNotificationDispatcher.dispatch(event, now);
 
                 // [AdminNotification] updatedAt 갱신
                 lifecycleService.touchProgress(adminNotificationId);

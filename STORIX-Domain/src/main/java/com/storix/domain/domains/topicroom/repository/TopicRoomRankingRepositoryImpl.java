@@ -59,6 +59,29 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
                 });
     }
 
+    // 활동 점수 = 24h 메시지 수×0.5 + 참여자 수×0.3 + 신규성(생성 24h 이내 1)×0.2
+    @Override
+    @Transactional
+    public int updateActivityScores(LocalDateTime messageSince, LocalDateTime freshnessSince) {
+
+        String sql = """
+                UPDATE topic_room tr
+                LEFT JOIN (
+                    SELECT room_id, COUNT(*) AS cnt
+                    FROM chat_message
+                    WHERE created_at >= ? AND deleted = false
+                    GROUP BY room_id
+                ) c ON c.room_id = tr.topic_room_id
+                SET tr.activity_score =
+                    COALESCE(c.cnt, 0) * 0.5
+                    + tr.active_user_number * 0.3
+                    + (CASE WHEN tr.created_at >= ? THEN 1 ELSE 0 END) * 0.2
+                WHERE tr.active_user_number > 1
+                """;
+
+        return jdbcTemplate.update(sql, messageSince, freshnessSince);
+    }
+
     // 공통 필터: 참여자 2명 이상 + 최근 메시지 72시간 이내
     private BooleanBuilder commonFilter() {
         LocalDateTime now = LocalDateTime.now();

@@ -3,6 +3,8 @@ package com.storix.domain.domains.topicroom.service;
 import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
+import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.TargetContentType;
@@ -70,6 +72,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
     private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
+    private final NotificationPublisher notificationPublisher;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -121,7 +124,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     @Override
     public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
         // 1. 상위 5개 토픽룸 가져오기
-        List<TopicRoom> rooms = topicRoomAdaptor.loadTop5PopularRooms();
+        List<TopicRoom> rooms = topicRoomAdaptor.loadHotTopicRooms();
         if (rooms.isEmpty()) return Collections.emptyList();
 
         List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
@@ -325,6 +328,7 @@ public class TopicRoomService implements TopicRoomUseCase {
         } catch (DataIntegrityViolationException e) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
+        notificationPublisher.publish(NotificationEvent.reportReceived(reporterId));
     }
 
 

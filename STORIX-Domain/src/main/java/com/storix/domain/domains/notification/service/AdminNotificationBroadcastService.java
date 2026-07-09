@@ -85,16 +85,8 @@ public class AdminNotificationBroadcastService {
                     adminNotificationId, userIds, LocalDateTime.now().plusMinutes(RELAY_GRACE_MINUTES), chunkLastUserId);
 
             // 3. 청크 단위 발송 이벤트 발행
-            adminNotificationPublisher.publishChunk(new AdminNotificationChunkEvent(
-                    adminNotificationId,
-                    info.title(),
-                    info.content(),
-                    info.notificationType(),
-                    info.targetType(),
-                    info.eventTargetId(),
-                    info.targetLink(),
-                    userIds
-            ));
+            adminNotificationPublisher.publishChunk(
+                    AdminNotificationChunkEvent.of(adminNotificationId, info, userIds));
 
             lastUserId = chunkLastUserId;
 

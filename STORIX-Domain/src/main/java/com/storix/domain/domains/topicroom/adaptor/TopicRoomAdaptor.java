@@ -34,8 +34,8 @@ public class TopicRoomAdaptor {
         return topicRoomUserRepository.existsByUserIdAndTopicRoomId(userId, roomId);
     }
 
-    public List<TopicRoom> loadTop5PopularRooms() {
-        return topicRoomRepository.findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();
+    public List<TopicRoom> loadHotTopicRooms() {
+        return topicRoomRepository.findTop15ByOrderByActivityScoreDescLastChatTimeDesc();
     }
 
     // 주어진 토픽룸 ID 목록 중 해당 유저가 참여하고 있는 방의 ID 조회
