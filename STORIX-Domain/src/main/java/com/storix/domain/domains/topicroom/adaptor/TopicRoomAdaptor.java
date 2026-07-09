@@ -58,6 +58,10 @@ public class TopicRoomAdaptor {
         return topicRoomUserRepository.countByUserId(userId);
     }
 
+    public List<Long> findAllJoinedRoomIdsByUserId(Long userId) {
+        return topicRoomUserRepository.findAllJoinedRoomIdsByUserId(userId);
+    }
+
     public Integer findActiveUserNumberById(Long roomId) {
         Integer activeUserNumber = topicRoomRepository.findActiveUserNumberById(roomId);
         if (activeUserNumber == null) {

@@ -3,11 +3,14 @@ package com.storix.infrastructure.config;
 import com.storix.infrastructure.external.chat.StompHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.*;
 import org.springframework.web.socket.server.HandshakeInterceptor;
@@ -24,8 +27,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/sub");
+        registry.enableSimpleBroker("/sub")
+                .setHeartbeatValue(new long[]{10000, 10000})
+                .setTaskScheduler(webSocketHeartbeatScheduler());
         registry.setApplicationDestinationPrefixes("/pub");
+    }
+
+    @Bean
+    public TaskScheduler webSocketHeartbeatScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(1);
+        scheduler.setThreadNamePrefix("ws-heartbeat-");
+        scheduler.initialize();
+        return scheduler;
     }
 
     @Override
@@ -36,10 +50,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 "https://api.storix.kr",
                 "http://localhost:3000",
                 "http://localhost:5173",
-                "capacitor://localhost",
-                "https://localhost",
-                "https://storix-fe-git-develop-kim-yunseongs-projects.vercel.app",
-                "https://storix-fe-git-main-kim-yunseongs-projects.vercel.app"
+                "https://localhost"
         ).addInterceptors(new HandshakeInterceptor() {
             @Override
             public boolean beforeHandshake(
