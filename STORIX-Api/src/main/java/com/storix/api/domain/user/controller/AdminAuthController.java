@@ -1,10 +1,12 @@
 package com.storix.api.domain.user.controller;
 
+import com.storix.api.domain.user.controller.dto.AdminProfileResponse;
 import com.storix.api.domain.user.controller.dto.AdminSignupPendingResponse;
 import com.storix.api.domain.user.controller.dto.AuthorizationResponse;
 import com.storix.api.domain.user.usecase.AdminAuthUseCase;
 import com.storix.api.domain.user.usecase.SlackCallbackUseCase;
 import com.storix.common.payload.CustomResponse;
+import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.dto.AdminLoginRequest;
 import com.storix.domain.domains.user.dto.AdminSignupRequest;
 import com.storix.infrastructure.external.slack.SlackInteractionDto;
@@ -15,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -44,6 +47,14 @@ public class AdminAuthController {
             @Valid @RequestBody AdminLoginRequest req
     ) {
         return adminAuthUseCase.adminLogin(req);
+    }
+
+    @Operation(summary = "관리자 프로필 조회", description = "로그인된 관리자의 닉네임과 이메일을 조회합니다.")
+    @GetMapping("/profile")
+    public ResponseEntity<CustomResponse<AdminProfileResponse>> getAdminProfile(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails
+    ) {
+        return adminAuthUseCase.getAdminProfile(authUserDetails.getUserId());
     }
 
     @Operation(hidden = true)

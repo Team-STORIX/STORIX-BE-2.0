@@ -66,6 +66,7 @@ public enum SuccessCode {
     ADMIN_SIGNUP_PENDING_SUCCESS(HttpStatus.OK, "ADMIN_AUTH_SUCCESS_001", "관리자 회원가입 요청이 Slack으로 전송되었습니다. 승인을 기다려주세요."),
     ADMIN_SIGNUP_APPROVED_SUCCESS(HttpStatus.CREATED, "ADMIN_AUTH_SUCCESS_002", "관리자 회원가입이 승인되었습니다."),
     ADMIN_LOGIN_SUCCESS(HttpStatus.OK, "ADMIN_AUTH_SUCCESS_003", "관리자 로그인에 성공했습니다."),
+    ADMIN_PROFILE_LOAD_SUCCESS(HttpStatus.OK, "ADMIN_AUTH_SUCCESS_004", "관리자 프로필 조회에 성공했습니다."),
     ONBOARDING_WORKS_LIST_LOAD_SUCCESS(HttpStatus.OK, "ONBOARDING_SUCCESS_001", "온보딩 작품 리스트 조회에 성공했습니다."),
 
     // Home success

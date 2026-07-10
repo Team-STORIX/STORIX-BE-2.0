@@ -1,5 +1,6 @@
 package com.storix.api.domain.user.usecase;
 
+import com.storix.api.domain.user.controller.dto.AdminProfileResponse;
 import com.storix.api.domain.user.controller.dto.AdminSignupPendingResponse;
 import com.storix.api.domain.user.controller.dto.AuthorizationResponse;
 import com.storix.api.domain.user.controller.dto.LoginWithTokenResponse;
@@ -10,6 +11,7 @@ import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.AdminSignupPending;
+import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.dto.AdminLoginRequest;
 import com.storix.domain.domains.user.dto.AdminSignupRequest;
 import com.storix.domain.domains.user.exception.admin.AdminIdentifierMismatchException;
@@ -63,5 +65,12 @@ public class AdminAuthUseCase {
         return ResponseEntity.ok()
                 .headers(cookieHelper.getTokenCookie(tokenResponse.refreshToken()))
                 .body(CustomResponse.onSuccess(SuccessCode.ADMIN_LOGIN_SUCCESS, result));
+    }
+
+    // 관리자 프로필 조회
+    public ResponseEntity<CustomResponse<AdminProfileResponse>> getAdminProfile(Long userId) {
+        User admin = adminAuthService.getAdminById(userId);
+        return ResponseEntity.ok()
+                .body(CustomResponse.onSuccess(SuccessCode.ADMIN_PROFILE_LOAD_SUCCESS, AdminProfileResponse.from(admin)));
     }
 }
