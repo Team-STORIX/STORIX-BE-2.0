@@ -1,11 +1,11 @@
 package com.storix.domain.domains.user.adaptor;
 
 import com.storix.domain.domains.user.domain.AdminSignupPending;
-import com.storix.domain.domains.user.domain.DeveloperSignupPending;
+import com.storix.domain.domains.user.domain.TesterSignupPending;
 import com.storix.domain.domains.user.exception.admin.AdminSignupPendingNotFoundException;
-import com.storix.domain.domains.user.exception.developer.DeveloperSignupPendingNotFoundException;
+import com.storix.domain.domains.user.exception.tester.TesterSignupPendingNotFoundException;
 import com.storix.domain.domains.user.repository.AdminSignupPendingRepository;
-import com.storix.domain.domains.user.repository.DeveloperSignupPendingRepository;
+import com.storix.domain.domains.user.repository.TesterSignupPendingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,25 +13,25 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class InternalSignupPendingAdaptor {
 
-    private final DeveloperSignupPendingRepository developerRepository;
+    private final TesterSignupPendingRepository testerRepository;
     private final AdminSignupPendingRepository adminRepository;
 
-    // 개발자
-    public void save(DeveloperSignupPending pending) {
-        developerRepository.save(pending);
+    // 테스터
+    public void save(TesterSignupPending pending) {
+        testerRepository.save(pending);
     }
 
-    public DeveloperSignupPending getDeveloperPending(String pendingId) {
-        return developerRepository.findById(pendingId)
-                .orElseThrow(() -> DeveloperSignupPendingNotFoundException.EXCEPTION);
+    public TesterSignupPending getTesterPending(String pendingId) {
+        return testerRepository.findById(pendingId)
+                .orElseThrow(() -> TesterSignupPendingNotFoundException.EXCEPTION);
     }
 
-    public boolean existsDeveloperPending(String pendingId) {
-        return developerRepository.existsById(pendingId);
+    public boolean existsTesterPending(String pendingId) {
+        return testerRepository.existsById(pendingId);
     }
 
-    public void deleteDeveloperPending(String pendingId) {
-        developerRepository.deleteById(pendingId);
+    public void deleteTesterPending(String pendingId) {
+        testerRepository.deleteById(pendingId);
     }
 
     // 관리자

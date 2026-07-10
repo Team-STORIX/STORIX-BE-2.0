@@ -7,9 +7,9 @@ import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.InternalSignupPendingAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.*;
-import com.storix.domain.domains.user.dto.CreateDeveloperUserCommand;
-import com.storix.domain.domains.user.exception.developer.DeveloperNotApprovedException;
-import com.storix.domain.domains.user.exception.developer.DeveloperSignupPendingNotFoundException;
+import com.storix.domain.domains.user.dto.CreateTesterUserCommand;
+import com.storix.domain.domains.user.exception.tester.TesterNotApprovedException;
+import com.storix.domain.domains.user.exception.tester.TesterSignupPendingNotFoundException;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-public class DeveloperAuthService {
+public class TesterAuthService {
 
     private final UserAdaptor userAdaptor;
     private final OnboardingWorksHelper onboardingWorksHelper;
@@ -28,15 +28,15 @@ public class DeveloperAuthService {
     private final InternalSignupPendingAdaptor internalSignupPendingAdaptor;
     private final IssuedKeyGenerator issuedKeyGenerator;
 
-    // 개발자 회원가입 요청 (Slack 승인 대기)
-    public DeveloperSignupPending requestSignup(String nickName, Set<Genre> favoriteGenreList, Set<Long> favoriteWorksIdList) {
+    // 테스터 회원가입 요청 (Slack 승인 대기)
+    public TesterSignupPending requestSignup(String nickName, Set<Genre> favoriteGenreList, Set<Long> favoriteWorksIdList) {
         if (favoriteWorksIdList != null && !favoriteWorksIdList.isEmpty()) {
             onboardingWorksHelper.checkReaderSignUpWithOnboardingWorksList(favoriteWorksIdList);
         }
 
         String pendingId = issuedKeyGenerator.generatePendingId();
 
-        DeveloperSignupPending pending = DeveloperSignupPending.builder()
+        TesterSignupPending pending = TesterSignupPending.builder()
                 .pendingId(pendingId)
                 .nickName(nickName)
                 .favoriteGenreList(favoriteGenreList)
@@ -50,29 +50,29 @@ public class DeveloperAuthService {
 
     // Slack 승인 후 유저 생성
     @Transactional
-    public AuthUserDetails approveDeveloperSignup(String pendingId) {
-        DeveloperSignupPending pending = internalSignupPendingAdaptor.getDeveloperPending(pendingId);
+    public AuthUserDetails approveTesterSignup(String pendingId) {
+        TesterSignupPending pending = internalSignupPendingAdaptor.getTesterPending(pendingId);
 
-        CreateDeveloperUserCommand cmd = CreateDeveloperUserCommand.builder()
+        CreateTesterUserCommand cmd = CreateTesterUserCommand.builder()
                 .oid(pendingId)
                 .nickName(pending.getNickName())
                 .favoriteGenreList(pending.getFavoriteGenreList())
                 .build();
 
-        AuthUserDetails authUserDetails = userAdaptor.saveDeveloperUser(cmd);
+        AuthUserDetails authUserDetails = userAdaptor.saveTesterUser(cmd);
 
         if (pending.getFavoriteWorksIdList() != null && !pending.getFavoriteWorksIdList().isEmpty()) {
             favoriteWorksAdaptor.saveFavoriteWorks(authUserDetails.getUserId(), pending.getFavoriteWorksIdList());
         }
         libraryAdaptor.initLibrary(authUserDetails.getUserId());
 
-        internalSignupPendingAdaptor.deleteDeveloperPending(pendingId);
+        internalSignupPendingAdaptor.deleteTesterPending(pendingId);
         return authUserDetails;
     }
 
-    // 개발자 로그인 (pendingId = oid)
+    // 테스터 로그인 (pendingId = oid)
     @Transactional
-    public AuthUserDetails loginDeveloper(String pendingId) {
+    public AuthUserDetails loginTester(String pendingId) {
         try {
             User user = userAdaptor.findReaderUserByOAuthInfo(
                     OAuthInfo.builder()
@@ -82,10 +82,10 @@ public class DeveloperAuthService {
             user.login();
             return new AuthUserDetails(user.getId(), user.getRole());
         } catch (Exception e) {
-            if (internalSignupPendingAdaptor.existsDeveloperPending(pendingId)) {
-                throw DeveloperNotApprovedException.EXCEPTION;
+            if (internalSignupPendingAdaptor.existsTesterPending(pendingId)) {
+                throw TesterNotApprovedException.EXCEPTION;
             }
-            throw DeveloperSignupPendingNotFoundException.EXCEPTION;
+            throw TesterSignupPendingNotFoundException.EXCEPTION;
         }
     }
 }

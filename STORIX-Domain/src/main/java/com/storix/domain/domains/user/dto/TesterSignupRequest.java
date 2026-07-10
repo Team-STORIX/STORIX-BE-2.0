@@ -5,10 +5,10 @@ import jakarta.validation.constraints.*;
 
 import java.util.Set;
 
-public record DeveloperSignupRequest(
+public record TesterSignupRequest(
 
-    @NotBlank(message = "개발자 식별자는 필수입니다.")
-    String developerIdentifier,
+    @NotBlank(message = "테스터 식별자는 필수입니다.")
+    String testerIdentifier,
 
     @NotBlank(message = "닉네임은 필수입니다.")
     @Size(min = 2, max = 10, message = "닉네임은 2~10자까지 가능합니다.")

@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Builder
-public record CreateDeveloperUserCommand(
+public record CreateTesterUserCommand(
         String oid,
         String nickName,
         Set<Genre> favoriteGenreList
@@ -27,7 +27,7 @@ public record CreateDeveloperUserCommand(
         Set<Genre> genres = (favoriteGenreList == null) ?
                 Collections.emptySet() : new LinkedHashSet<>(favoriteGenreList);
 
-        // 개발자 계정은 닉네임 중복 체크 대상에서 제외되므로, suffix로 nick_name 유니크 제약을 우회
+        // 테스터 계정은 닉네임 중복 체크 대상에서 제외되므로, suffix로 nick_name 유니크 제약을 우회
         String uniqueNickName = nickName + STORIXStatic.NICK_NAME_SUFFIX_DELIMITER + UUID.randomUUID();
 
         return User.builder()
@@ -35,7 +35,7 @@ public record CreateDeveloperUserCommand(
                 .oauthInfo(oauthInfo)
                 .nickName(uniqueNickName)
                 .favoriteGenreList(genres)
-                .role(Role.ADMIN)
+                .role(Role.TESTER)
                 .build();
     }
 }

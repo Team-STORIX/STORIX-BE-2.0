@@ -59,9 +59,9 @@ public class STORIXStatic {
             "/api/v2/auth/users/reader/signup",
             "/api/v1/auth/tokens/refresh",
 
-            "/api/v1/auth/developer/signup",
-            "/api/v1/auth/developer/login",
-            "/api/v1/auth/developer/slack/callback",
+            "/api/v1/auth/tester/signup",
+            "/api/v1/auth/tester/login",
+            "/api/v1/auth/tester/slack/callback",
 
             "/api/v1/auth/admin/signup",
             "/api/v1/auth/admin/login",

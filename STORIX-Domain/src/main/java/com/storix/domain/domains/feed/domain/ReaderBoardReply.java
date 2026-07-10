@@ -4,6 +4,7 @@ import com.storix.domain.domains.plus.domain.DeletedBy;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class ReaderBoardReply extends BoardReply {
     @ToString.Exclude
     @OneToMany(mappedBy = "parentReply")
     @SQLRestriction("deleted = false")
+    @BatchSize(size = 100) // 부모 댓글 페이징 후 답댓글은 배치 로드 (컬렉션 fetch join + 페이징의 인메모리 페이징 회피)
     private List<ReaderBoardReply> childReplies = new ArrayList<>();
 
     @ToString.Exclude
