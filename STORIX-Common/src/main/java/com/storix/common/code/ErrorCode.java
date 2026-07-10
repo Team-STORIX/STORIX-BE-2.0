@@ -212,6 +212,7 @@ public enum ErrorCode {
     REPORT_CASE_ALREADY_PROCESSED(HttpStatus.CONFLICT, "REPORT_ERROR_001", "이미 처리된 신고 케이스입니다."),
     INVALID_REPORT_PROCESS_REQUEST(HttpStatus.BAD_REQUEST, "REPORT_ERROR_002", "신고 처리 요청이 올바르지 않습니다."),
     UNKNOWN_REPORT_CASE(HttpStatus.NOT_FOUND, "REPORT_ERROR_003", "해당 신고 케이스를 찾을 수 없습니다."),
+    INVALID_REPORT_ACTION_COMBINATION(HttpStatus.BAD_REQUEST, "REPORT_ERROR_004", "계정 정지와 계정 삭제는 동시에 적용할 수 없습니다."),
 
     // Suspended user error
     SUSPENDED_USER(HttpStatus.FORBIDDEN, "USER_ERROR_003", "정지된 계정입니다."),

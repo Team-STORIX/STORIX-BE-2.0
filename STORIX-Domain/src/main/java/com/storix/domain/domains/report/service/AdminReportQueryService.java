@@ -98,7 +98,7 @@ public class AdminReportQueryService {
         long rejected = counts.getOrDefault(ReportStatus.REJECTED, 0L);
         long total = received + completed + rejected;
 
-        AdminReportSearchCondition condition = new AdminReportSearchCondition(null, null, null, null, userId);
+        AdminReportSearchCondition condition = new AdminReportSearchCondition(null, null, null, null, userId, null);
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<AdminReportListResponse> recentPage = getReports(condition, pageable);
 
@@ -416,7 +416,7 @@ public class AdminReportQueryService {
                 reportCase.getStatus(),
                 reportCase.getProcessedByAdminId(),
                 reportCase.getProcessMemo(),
-                reportCase.getProcessAction(),
+                reportCase.getProcessActions(),
                 reportCase.getCreatedAt(),
                 reportCase.getProcessedAt(),
                 reportCase.hasPreviousProcessHistory(),

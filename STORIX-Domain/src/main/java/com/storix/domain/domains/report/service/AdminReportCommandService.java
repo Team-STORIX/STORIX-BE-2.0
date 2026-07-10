@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -67,22 +68,23 @@ public class AdminReportCommandService {
     private final UserSanctionHistoryAdaptor userSanctionHistoryAdaptor;
 
     @Transactional
-    public void processReport(Long adminId, Long reportCaseId, ReportStatus status, ReportAction processAction, String processMemo) {
-        validateRequest(status, processAction);
-
+    public void processReport(Long adminId, Long reportCaseId, ReportStatus status, List<ReportAction> processActions, String processMemo) {
         ReportCase reportCase = reportCaseAdaptor.findByIdForUpdate(reportCaseId);
 
         if (reportCase.getStatus() != ReportStatus.RECEIVED) {
             throw AlreadyProcessedReportCaseException.EXCEPTION;
         }
 
-        reportCase.process(status, processAction, processMemo, adminId);
-
-        if (status == ReportStatus.COMPLETED && processAction != null) {
-            executeAction(reportCase, processAction);
-        }
+        Set<ReportAction> actions = (processActions == null) ? Set.of() : new LinkedHashSet<>(processActions);
+        reportCase.process(status, actions, processMemo, adminId);
 
         if (status == ReportStatus.COMPLETED) {
+            // 정해진 순서로 실행: 콘텐츠 삭제 -> 계정 정지 -> 계정 삭제
+            for (ReportAction action : ReportAction.values()) {
+                if (actions.contains(action)) {
+                    executeAction(reportCase, action);
+                }
+            }
             notifyReporters(reportCase);
         }
     }
@@ -108,17 +110,6 @@ public class AdminReportCommandService {
         };
     }
 
-    private void validateRequest(ReportStatus status, ReportAction processAction) {
-        if (status == ReportStatus.RECEIVED) {
-            throw InvalidReportProcessRequestException.EXCEPTION;
-        }
-        if (status == ReportStatus.REJECTED && processAction != null) {
-            throw InvalidReportProcessRequestException.EXCEPTION;
-        }
-        if (status == ReportStatus.COMPLETED && processAction == null) {
-            throw InvalidReportProcessRequestException.EXCEPTION;
-        }
-    }
 
     private void executeAction(ReportCase reportCase, ReportAction action) {
         switch (action) {

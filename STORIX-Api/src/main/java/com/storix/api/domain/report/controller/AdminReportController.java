@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -47,9 +46,10 @@ public class AdminReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
             @RequestParam(required = false) Long reportedUserId,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @RequestParam(required = false) String reportedUserKeyword,
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable
     ) {
-        return adminReportUseCase.getReports(authUserDetails, targetType, status, startAt, endAt, reportedUserId, pageable);
+        return adminReportUseCase.getReports(authUserDetails, targetType, status, startAt, endAt, reportedUserId, reportedUserKeyword, pageable);
     }
 
     @GetMapping("/users/{userId}")
@@ -81,7 +81,10 @@ public class AdminReportController {
     @PatchMapping("/{reportCaseId}")
     @Operation(
             summary = "관리자 신고 처리",
-            description = "신고 케이스를 처리합니다. status=REJECTED: 반려 / status=COMPLETED + processAction: 처리 완료 및 액션 실행 (CONTENT_DELETED | ACCOUNT_SUSPENDED(7일) | ACCOUNT_DELETED). CONTENT_DELETED는 FEED/FEED_REPLY/REVIEW/CHAT 대상 콘텐츠를 삭제하며, CHAT은 신고된 채팅 메시지 1건을 soft delete합니다."
+            description = "신고 케이스를 처리합니다.  \n" +
+                    "status=REJECTED: 반려 / status=COMPLETED + processActions: 처리 완료 및 액션 실행.  \n" +
+                    "processActions는 복수 선택 가능 (CONTENT_DELETED | ACCOUNT_SUSPENDED(7일) | ACCOUNT_DELETED), 단 ACCOUNT_SUSPENDED와 ACCOUNT_DELETED는 동시 적용 불가.  \n" +
+                    "CONTENT_DELETED는 FEED/FEED_REPLY/REVIEW/CHAT 대상 콘텐츠를 삭제하며, CHAT은 신고된 채팅 메시지 1건을 soft delete합니다."
     )
     public CustomResponse<Void> processReport(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,

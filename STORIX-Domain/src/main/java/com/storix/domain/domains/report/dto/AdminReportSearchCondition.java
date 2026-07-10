@@ -10,6 +10,7 @@ public record AdminReportSearchCondition(
         ReportStatus status,
         LocalDateTime startAt,
         LocalDateTime endAt,
-        Long reportedUserId
+        Long reportedUserId,
+        String reportedUserKeyword
 ) {
 }

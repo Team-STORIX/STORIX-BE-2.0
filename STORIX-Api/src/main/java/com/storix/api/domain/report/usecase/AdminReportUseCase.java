@@ -35,11 +35,12 @@ public class AdminReportUseCase {
             LocalDateTime startAt,
             LocalDateTime endAt,
             Long reportedUserId,
+            String reportedUserKeyword,
             Pageable pageable
     ) {
         validateAdmin(authUserDetails);
         Page<AdminReportListResponse> result = adminReportQueryService.getReports(
-                new AdminReportSearchCondition(targetType, status, startAt, endAt, reportedUserId),
+                new AdminReportSearchCondition(targetType, status, startAt, endAt, reportedUserId, reportedUserKeyword),
                 pageable
         );
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, result);
@@ -71,7 +72,7 @@ public class AdminReportUseCase {
         validateAdmin(authUserDetails);
         adminReportCommandService.processReport(
                 authUserDetails.getUserId(), reportCaseId,
-                request.status(), request.processAction(), request.processMemo());
+                request.status(), request.processActions(), request.processMemo());
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
     }
 

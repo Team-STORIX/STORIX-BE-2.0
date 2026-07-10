@@ -1,9 +1,7 @@
 package com.storix.domain.domains.report.repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
@@ -11,20 +9,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static com.storix.domain.domains.report.domain.QReportCase.reportCase;
+import static com.storix.domain.domains.user.domain.QUser.user;
 
 @RequiredArgsConstructor
 public class ReportCaseRepositoryImpl implements ReportCaseRepositoryCustom {
-
-    private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
-            "createdAt", "processedAt", "status", "targetType"
-    );
 
     private final JPAQueryFactory queryFactory;
 
@@ -32,19 +25,27 @@ public class ReportCaseRepositoryImpl implements ReportCaseRepositoryCustom {
     public Page<ReportCase> searchReportCases(AdminReportSearchCondition condition, Pageable pageable) {
         BooleanBuilder builder = buildCondition(condition);
 
-        List<ReportCase> results = queryFactory
-                .selectFrom(reportCase)
+        // 피신고자 닉네임 검색 시 User 조인
+        boolean joinUser = condition != null && StringUtils.hasText(condition.reportedUserKeyword());
+        if (joinUser) {
+            builder.and(user.nickName.containsIgnoreCase(condition.reportedUserKeyword().trim()));
+        }
+
+        JPAQuery<ReportCase> contentQuery = queryFactory.selectFrom(reportCase);
+        JPAQuery<Long> countQuery = queryFactory.select(reportCase.count()).from(reportCase);
+        if (joinUser) {
+            contentQuery.join(user).on(user.id.eq(reportCase.reportedUserId));
+            countQuery.join(user).on(user.id.eq(reportCase.reportedUserId));
+        }
+
+        List<ReportCase> results = contentQuery
                 .where(builder)
-                .orderBy(getOrderSpecifiers(pageable.getSort()))
+                .orderBy(reportCase.id.desc()) // 접수 최신순
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = queryFactory
-                .select(reportCase.count())
-                .from(reportCase)
-                .where(builder)
-                .fetchOne();
+        Long total = countQuery.where(builder).fetchOne();
 
         return new PageImpl<>(results, pageable, total != null ? total : 0);
     }
@@ -77,30 +78,5 @@ public class ReportCaseRepositoryImpl implements ReportCaseRepositoryCustom {
         }
 
         return builder;
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private OrderSpecifier<?>[] getOrderSpecifiers(Sort sort) {
-        if (sort.isUnsorted()) {
-            return new OrderSpecifier[]{
-                    new OrderSpecifier<>(Order.DESC, reportCase.createdAt)
-            };
-        }
-
-        List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
-        PathBuilder<ReportCase> entityPath = new PathBuilder<>(ReportCase.class, "reportCase");
-
-        for (Sort.Order order : sort) {
-            if (!ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
-                continue; // 허용되지 않은 필드는 무시 → 기본 정렬로 폴백
-            }
-            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-            orderSpecifiers.add(new OrderSpecifier(direction, entityPath.get(order.getProperty())));
-        }
-
-        if (orderSpecifiers.isEmpty()) {
-            return new OrderSpecifier[]{new OrderSpecifier<>(Order.DESC, reportCase.createdAt)};
-        }
-        return orderSpecifiers.toArray(new OrderSpecifier[0]);
     }
 }

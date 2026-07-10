@@ -6,6 +6,7 @@ import com.storix.domain.domains.report.domain.ReportStatus;
 import com.storix.domain.domains.report.domain.TargetContentType;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 public record AdminReportListResponse(
         Long reportCaseId,
@@ -16,7 +17,7 @@ public record AdminReportListResponse(
         ReportStatus status,
         long reportCount,
         Long processedByAdminId,
-        ReportAction processAction,
+        Set<ReportAction> processActions,
         LocalDateTime createdAt,
         LocalDateTime processedAt,
         boolean reopened
@@ -32,7 +33,7 @@ public record AdminReportListResponse(
                 reportCase.getStatus(),
                 reportCount,
                 reportCase.getProcessedByAdminId(),
-                reportCase.getProcessAction(),
+                reportCase.getProcessActions(),
                 reportCase.getCreatedAt(),
                 reportCase.getProcessedAt(),
                 reportCase.hasPreviousProcessHistory()
