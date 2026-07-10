@@ -60,17 +60,14 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     @Query("SELECT r.userId FROM ReaderBoardReply r WHERE r.id = :replyId AND r.board.id = :boardId AND r.deleted = false")
     Optional<Long> findActiveUserIdByIdAndBoardId(@Param("replyId") Long replyId, @Param("boardId") Long boardId);
 
-    // 피드 댓글 조회 (최상위 댓글 + 답댓글 fetch join) — 삭제된 댓글 제외
-    // FETCH JOIN with ON clause is invalid in JPQL; deleted filter applied via @SQLRestriction on childReplies
+    // 피드 최상위 댓글 조회 (삭제 제외) — 답댓글은 @BatchSize로 배치 로드
     @Query("SELECT r FROM ReaderBoardReply r " +
-            "LEFT JOIN FETCH r.childReplies " +
             "WHERE r.board.id = :boardId AND r.parentReply IS NULL AND r.deleted = false")
     Slice<ReaderBoardReply> findAllByBoard_Id(@Param("boardId") Long boardId, Pageable pageable);
 
-    // 차단 유저 제외 댓글 조회
-    @Query("SELECT DISTINCT r FROM ReaderBoardReply r " +
-            "LEFT JOIN FETCH r.childReplies c " +
-            "WHERE r.board.id = :boardId AND r.parentReply IS NULL AND r.userId NOT IN :blockedIds")
+    // 차단 유저 제외 최상위 댓글 조회 — 답댓글은 @BatchSize로 배치 로드
+    @Query("SELECT r FROM ReaderBoardReply r " +
+            "WHERE r.board.id = :boardId AND r.parentReply IS NULL AND r.deleted = false AND r.userId NOT IN :blockedIds")
     Slice<ReaderBoardReply> findAllByBoard_IdExcludingBlocked(
             @Param("boardId") Long boardId,
             @Param("blockedIds") List<Long> blockedIds,
