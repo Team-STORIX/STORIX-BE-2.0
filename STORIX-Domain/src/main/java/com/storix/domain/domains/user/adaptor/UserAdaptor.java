@@ -68,8 +68,8 @@ public class UserAdaptor {
                 .anyMatch(reserved -> reserved.equalsIgnoreCase(nickName));
     }
 
-    // 개발자 회원 가입
-    public AuthUserDetails saveDeveloperUser(CreateDeveloperUserCommand cmd) {
+    // 테스터 회원 가입
+    public AuthUserDetails saveTesterUser(CreateTesterUserCommand cmd) {
         try {
             User user = userRepository.save(cmd.toEntity());
             return new AuthUserDetails(user.getId(), user.getRole());

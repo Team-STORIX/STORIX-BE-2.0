@@ -57,10 +57,10 @@ public enum SuccessCode {
     AUTH_REISSUE_ACCESSTOKEN_SUCCESS(HttpStatus.CREATED, "AUTH_SUCCESS_003", "엑세스 토큰 재발급에 성공했습니다."),
     AUTH_WITHDRAW_SUCCESS(HttpStatus.OK, "AUTH_SUCCESS_006", "회원 탈퇴에 성공했습니다."),
 
-    // Developer Auth success
-    DEVELOPER_SIGNUP_PENDING_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_001", "개발자 회원가입 요청이 Slack으로 전송되었습니다. 승인을 기다려주세요."),
-    DEVELOPER_SIGNUP_APPROVED_SUCCESS(HttpStatus.CREATED, "DEV_AUTH_SUCCESS_002", "개발자 회원가입이 승인되었습니다."),
-    DEVELOPER_LOGIN_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_003", "개발자 로그인에 성공했습니다."),
+    // Tester Auth success
+    TESTER_SIGNUP_PENDING_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_001", "테스터 회원가입 요청이 Slack으로 전송되었습니다. 승인을 기다려주세요."),
+    TESTER_SIGNUP_APPROVED_SUCCESS(HttpStatus.CREATED, "DEV_AUTH_SUCCESS_002", "테스터 회원가입이 승인되었습니다."),
+    TESTER_LOGIN_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_003", "테스터 로그인에 성공했습니다."),
 
     // Admin Auth success
     ADMIN_SIGNUP_PENDING_SUCCESS(HttpStatus.OK, "ADMIN_AUTH_SUCCESS_001", "관리자 회원가입 요청이 Slack으로 전송되었습니다. 승인을 기다려주세요."),

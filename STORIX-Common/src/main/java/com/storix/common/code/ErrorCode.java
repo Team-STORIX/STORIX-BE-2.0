@@ -91,11 +91,11 @@ public enum ErrorCode {
     SLACK_SEND_MESSAGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SLACK_ERROR_001", "Slack 메시지 전송에 실패했습니다."),
     SLACK_INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "SLACK_ERROR_002", "Slack 서명 검증에 실패했습니다."),
 
-    // Developer Auth error
-    DEVELOPER_SIGNUP_PENDING_NOT_FOUND(HttpStatus.NOT_FOUND, "DEV_AUTH_ERROR_001", "개발자 회원가입 대기 요청을 찾을 수 없습니다."),
-    DEVELOPER_NOT_APPROVED(HttpStatus.BAD_REQUEST, "DEV_AUTH_ERROR_002", "아직 Slack 승인이 완료되지 않았습니다."),
+    // Tester Auth error
+    TESTER_SIGNUP_PENDING_NOT_FOUND(HttpStatus.NOT_FOUND, "DEV_AUTH_ERROR_001", "테스터 회원가입 대기 요청을 찾을 수 없습니다."),
+    TESTER_NOT_APPROVED(HttpStatus.BAD_REQUEST, "DEV_AUTH_ERROR_002", "아직 Slack 승인이 완료되지 않았습니다."),
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "DEV_AUTH_ERROR_003", "지원하지 않는 OAuth Provider입니다."),
-    DEVELOPER_IDENTIFIER_MISMATCH(HttpStatus.FORBIDDEN, "DEV_AUTH_ERROR_004", "개발자 식별자가 일치하지 않습니다."),
+    TESTER_IDENTIFIER_MISMATCH(HttpStatus.FORBIDDEN, "DEV_AUTH_ERROR_004", "테스터 식별자가 일치하지 않습니다."),
 
     // Admin Auth error
     ADMIN_SIGNUP_PENDING_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN_AUTH_ERROR_001", "관리자 회원가입 대기 요청을 찾을 수 없습니다."),

@@ -10,8 +10,8 @@ import java.util.Arrays;
 @Getter
 public enum Role {
     READER("READER"),
-    ADMIN("ADMIN"),
-    SUPER_ADMIN("SUPER_ADMIN");
+    TESTER("TESTER"),
+    ADMIN("ADMIN");
 
     private final String stringValue;
 

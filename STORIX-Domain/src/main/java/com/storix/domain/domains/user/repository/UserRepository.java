@@ -117,7 +117,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         SELECT u.id
         FROM User u
         WHERE u.accountState = com.storix.domain.domains.user.domain.AccountState.NORMAL
-          AND u.role <> com.storix.domain.domains.user.domain.Role.SUPER_ADMIN
+          AND u.role <> com.storix.domain.domains.user.domain.Role.ADMIN
           AND (:lastUserId IS NULL OR u.id > :lastUserId)
           AND (:signupCutoff IS NULL OR u.createdAt >= :signupCutoff)
         ORDER BY u.id ASC

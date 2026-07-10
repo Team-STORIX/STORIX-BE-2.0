@@ -108,8 +108,8 @@ public class NotificationController {
 
     /** 테스트용 FCM 알림 전송 */
     // FCM 환경변수 세팅 검증
-    @PostMapping("/developer/test-push")
-    @Operation(summary = "[개발자] FCM 푸시 전송 테스트", description = "요청 body 의 token 으로 알림 1건 전송하고 FCM messageId 반환.")
+    @PostMapping("/tester/test-push")
+    @Operation(summary = "[테스터] FCM 푸시 전송 테스트", description = "요청 body 의 token 으로 알림 1건 전송하고 FCM messageId 반환.")
     public CustomResponse<String> sendTestPush(
             @RequestBody @Valid FcmSendRequest request
     ) {
@@ -117,8 +117,8 @@ public class NotificationController {
     }
 
     // 알림 E2E 검증 (인앱 저장 + 멀티 디바이스 푸시)
-    @PostMapping("/developer/test-dispatch")
-    @Operation(summary = "[개발자] 알림 E2E 테스트", description = "지정한 recipientUserId 로 NotificationEvent 를 publish.  \n" +
+    @PostMapping("/tester/test-dispatch")
+    @Operation(summary = "[테스터] 알림 E2E 테스트", description = "지정한 recipientUserId 로 NotificationEvent 를 publish.  \n" +
             "AFTER_COMMIT 후 listener 가 인앱 저장 + 활성 디바이스에 FCM 발송.")
     public CustomResponse<Void> testDispatch(
             @RequestBody @Valid NotificationDispatchTestRequest request

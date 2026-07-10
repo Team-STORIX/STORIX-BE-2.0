@@ -33,7 +33,7 @@ public record CreateAdminUserCommand(
                 .nickName(uniqueNickName)
                 .favoriteGenreList(Collections.emptySet())
                 .password(encodedPassword)
-                .role(Role.SUPER_ADMIN)
+                .role(Role.ADMIN)
                 .build();
     }
 }

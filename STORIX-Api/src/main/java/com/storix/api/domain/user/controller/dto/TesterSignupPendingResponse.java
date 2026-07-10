@@ -1,6 +1,6 @@
 package com.storix.api.domain.user.controller.dto;
 
-public record DeveloperSignupPendingResponse(
+public record TesterSignupPendingResponse(
         String pendingId
 ) {
 }

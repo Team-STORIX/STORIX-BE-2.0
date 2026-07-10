@@ -9,9 +9,9 @@ import org.springframework.data.redis.core.TimeToLive;
 
 import java.util.Set;
 
-@RedisHash(value = "developerSignupPending")
+@RedisHash(value = "testerSignupPending")
 @Getter
-public class DeveloperSignupPending {
+public class TesterSignupPending {
 
     @Id
     private final String pendingId;
@@ -24,7 +24,7 @@ public class DeveloperSignupPending {
     private final Long ttl;
 
     @Builder
-    public DeveloperSignupPending(String pendingId, String nickName, Set<Genre> favoriteGenreList, Set<Long> favoriteWorksIdList, Long ttl) {
+    public TesterSignupPending(String pendingId, String nickName, Set<Genre> favoriteGenreList, Set<Long> favoriteWorksIdList, Long ttl) {
         this.pendingId = pendingId;
         this.nickName = nickName;
         this.favoriteGenreList = favoriteGenreList;
