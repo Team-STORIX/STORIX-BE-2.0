@@ -18,6 +18,11 @@ public interface BannerRepository extends JpaRepository<Banner, Long> {
     @EntityGraph(attributePaths = "appEvent")
     Page<Banner> findAllByOrderByIdDesc(Pageable pageable);
 
+    // 배너명 검색 — keyword null이면 전체 조회
+    @EntityGraph(attributePaths = "appEvent")
+    @Query("SELECT b FROM Banner b WHERE (:keyword IS NULL OR b.bannerTitle LIKE %:keyword%) ORDER BY b.id DESC")
+    Page<Banner> searchByBannerTitle(@Param("keyword") String keyword, Pageable pageable);
+
     // 스케줄러: 노출 시작이 지난 예약 배너
     List<Banner> findAllByStatusAndDisplayStartAtLessThanEqual(BannerStatus status, LocalDateTime now);
 

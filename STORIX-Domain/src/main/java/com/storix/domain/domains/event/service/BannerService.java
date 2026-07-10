@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -79,8 +80,9 @@ public class BannerService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Banner> getBanners(int page) {
-        return eventBannerAdaptor.findAll(PageRequest.of(page, BANNER_PAGE_SIZE));
+    public Page<Banner> getBanners(int page, String keyword) {
+        String normalized = StringUtils.hasText(keyword) ? keyword.trim() : null;
+        return eventBannerAdaptor.searchByTitle(normalized, PageRequest.of(page, BANNER_PAGE_SIZE));
     }
 
     // objectKey 형태로 반환, baseUrl/캐시는 UseCase 담당

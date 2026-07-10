@@ -33,6 +33,10 @@ public class BannerAdaptor {
         return eventBannerRepository.findAllByOrderByIdDesc(pageable);
     }
 
+    public Page<Banner> searchByTitle(String keyword, Pageable pageable) {
+        return eventBannerRepository.searchByBannerTitle(keyword, pageable);
+    }
+
     public List<Banner> findActiveBanners(LocalDateTime now, int limit) {
         return eventBannerRepository.findActiveBanners(BannerStatus.ACTIVE, now, PageRequest.of(0, limit));
     }
