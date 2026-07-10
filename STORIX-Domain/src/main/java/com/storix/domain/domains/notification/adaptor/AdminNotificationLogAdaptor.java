@@ -85,4 +85,13 @@ public class AdminNotificationLogAdaptor {
     public int failIncompleteLogs(Long adminNotificationId) {
         return adminNotificationLogRepository.failIncompleteLogs(adminNotificationId);
     }
+
+    // 야간 마케팅 발송 연기 - 해당 유저 PENDING 로그의 재시도 시각을 미룸
+    public int deferPending(Long adminNotificationId, List<Long> userIds, LocalDateTime deferUntil) {
+        return adminNotificationLogRepository.deferPending(adminNotificationId, userIds, deferUntil);
+    }
+
+    public boolean existsScheduledRetry(Long adminNotificationId, LocalDateTime now) {
+        return adminNotificationLogRepository.existsScheduledRetry(adminNotificationId, now);
+    }
 }

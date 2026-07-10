@@ -128,4 +128,24 @@ public interface AdminNotificationLogRepository extends JpaRepository<AdminNotif
                            com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.SENDING)
     """)
     int failIncompleteLogs(@Param("id") Long id);
+
+    // 야간 마케팅 발송 연기 - PENDING 로그의 재시도 시각만 미룸 (status/attempts 불변)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        UPDATE AdminNotificationLog l
+        SET l.nextRetryAt = :deferUntil
+        WHERE l.adminNotificationId = :id
+          AND l.userId IN :userIds
+          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
+    """)
+    int deferPending(@Param("id") Long id, @Param("userIds") List<Long> userIds, @Param("deferUntil") LocalDateTime deferUntil);
+
+    // 미래 재시도가 예약된 PENDING 로그 존재 여부 (강제 종료 보류 판단)
+    @Query("""
+        SELECT (COUNT(l) > 0) FROM AdminNotificationLog l
+        WHERE l.adminNotificationId = :id
+          AND l.status = com.storix.domain.domains.notification.domain.AdminNotificationLogStatus.PENDING
+          AND l.nextRetryAt > :now
+    """)
+    boolean existsScheduledRetry(@Param("id") Long id, @Param("now") LocalDateTime now);
 }

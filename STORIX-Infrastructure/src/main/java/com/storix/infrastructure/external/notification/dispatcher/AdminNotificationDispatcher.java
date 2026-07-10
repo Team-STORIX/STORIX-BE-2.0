@@ -6,6 +6,7 @@ import com.storix.domain.domains.notification.dto.AdminNotificationDispatchCount
 import com.storix.domain.domains.notification.domain.NotificationType;
 import com.storix.domain.domains.notification.event.AdminNotificationChunkEvent;
 import com.storix.domain.domains.notification.service.AdminNotificationDeliveryResultService;
+import com.storix.common.utils.NightWindow;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import com.storix.infrastructure.external.notification.dto.MulticastResult;
@@ -43,6 +44,15 @@ public class AdminNotificationDispatcher {
         Long eventTargetId = event.eventTargetId();
         String targetLink = event.targetLink();
         NotificationType notificationType = event.notificationType().getNotificationType();
+
+        // 0. 야간 마케팅 발송 연기 - 실제 발송 시점이 야간이면 발송/인앱생성 없이 다음 08:00로 미룸
+        if (event.isMarketing() && NightWindow.isNight(now)) {
+            LocalDateTime deferUntil = NightWindow.nextAllowedAt(now);
+            deliveryResultService.deferMarketingChunk(adminNotificationId, userIds, deferUntil);
+            log.info(">>> [AdminNotification] 야간 마케팅 발송 연기 adminNotificationId={}, count={}, until={}",
+                    adminNotificationId, userIds.size(), deferUntil);
+            return AdminNotificationDispatchCounts.empty();
+        }
 
         // 1. 발송 대상 인앱 알림 생성
         Map<Long, Long> notificationIdByUser = deliveryResultService.prepareBroadcastNotifications(

@@ -1,6 +1,8 @@
 package com.storix.domain.domains.notification.domain;
 
 import com.storix.common.model.BaseTimeEntity;
+import com.storix.common.utils.NightWindow;
+import com.storix.domain.domains.notification.exception.AdminNotificationMarketingNightException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -118,6 +120,7 @@ public class AdminNotification extends BaseTimeEntity {
         this.targetLink = targetLink;
         this.assigneeAdminId = assigneeAdminId;
         this.status = AdminNotificationStatus.SCHEDULED;
+        validateMarketingSendTime();
     }
 
     public void update(String title,
@@ -138,6 +141,15 @@ public class AdminNotification extends BaseTimeEntity {
         this.targetType = targetType != null ? targetType : AdminNotificationTargetType.NONE;
         this.eventTargetId = eventTargetId;
         this.targetLink = targetLink;
+        validateMarketingSendTime();
+    }
+
+    // 마케팅은 수신 동의 없이 야간(21시~익일 8시) 발송 불가
+    private void validateMarketingSendTime() {
+        if (notificationType == AdminNotificationType.MARKETING
+                && scheduledAt != null && NightWindow.isNight(scheduledAt)) {
+            throw AdminNotificationMarketingNightException.EXCEPTION;
+        }
     }
 
     public void cancel() {

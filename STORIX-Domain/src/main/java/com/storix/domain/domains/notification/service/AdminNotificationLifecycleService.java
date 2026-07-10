@@ -111,6 +111,9 @@ public class AdminNotificationLifecycleService {
         AdminNotification adminNotification = adminNotificationAdaptor.findById(adminNotificationId);
         if (adminNotification.getStatus() != AdminNotificationStatus.SENDING) return;
 
+        // 0. 미래 재시도가 예약된 로그(야간 마케팅 연기)가 있으면 강제 종료 보류
+        if (adminNotificationLogAdaptor.existsScheduledRetry(adminNotificationId, LocalDateTime.now())) return;
+
         // 1. 남은 [AdminNotificationLog] 미처리 -> FAILED
         int closed = adminNotificationLogAdaptor.failIncompleteLogs(adminNotificationId);
 

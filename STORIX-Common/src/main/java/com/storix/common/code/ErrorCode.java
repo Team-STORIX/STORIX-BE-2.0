@@ -107,6 +107,7 @@ public enum ErrorCode {
     ADMIN_NOTIFICATION_NOT_UPDATABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_007", "발송 예정 상태에서만 수정할 수 있습니다."),
     ADMIN_NOTIFICATION_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_008", "발송 예정 상태에서만 취소할 수 있습니다."),
     ADMIN_NOTIFICATION_NOT_REBROADCASTABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_009", "발송 실패 상태에서만 재발송할 수 있습니다."),
+    ADMIN_NOTIFICATION_MARKETING_NIGHT_BLOCKED(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_010", "야간(21시~익일 8시)에는 마케팅 알림을 발송할 수 없습니다."),
 
     // Event Popup error
     EVENT_POPUP_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_POPUP_ERROR_001", "존재하지 않는 이벤트 팝업입니다."),
