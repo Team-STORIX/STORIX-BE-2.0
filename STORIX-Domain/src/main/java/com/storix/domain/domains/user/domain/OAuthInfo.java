@@ -1,6 +1,8 @@
 package com.storix.domain.domains.user.domain;
 
 import com.storix.common.utils.STORIXStatic;
+import com.storix.domain.domains.user.converter.OAuthRefreshTokenConverter;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -22,6 +24,7 @@ public class OAuthInfo {
 
     private String oid;
 
+    @Convert(converter = OAuthRefreshTokenConverter.class)
     private String oauthRefreshToken;
 
     private String email; // 관리자 이메일

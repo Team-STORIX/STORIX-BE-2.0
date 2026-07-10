@@ -101,4 +101,10 @@ public class AdminNotificationDeliveryResultService {
         adminNotificationAdaptor.addCounts(adminNotificationId, sent, failed, skipped, LocalDateTime.now());
         lifecycleService.tryFinalize(adminNotificationId);
     }
+
+    // 야간 마케팅 청크 발송 연기 - 발송/집계 없이 다음 08:00로 재시도 예약
+    @Transactional
+    public void deferMarketingChunk(Long adminNotificationId, List<Long> userIds, LocalDateTime deferUntil) {
+        adminNotificationLogAdaptor.deferPending(adminNotificationId, userIds, deferUntil);
+    }
 }

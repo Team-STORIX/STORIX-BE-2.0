@@ -81,6 +81,8 @@ public class NotificationDispatchService {
             return DispatchResult.inAppOnly(saved.getId());
         }
 
-        return DispatchResult.pushTo(saved.getId(), tokens);
+        // 뱃지 표시용 미읽음 총합 — 방금 저장한 알림 포함
+        int unreadCount = notificationAdaptor.countUnreadByUserId(event.recipientUserId());
+        return DispatchResult.pushTo(saved.getId(), tokens, unreadCount);
     }
 }

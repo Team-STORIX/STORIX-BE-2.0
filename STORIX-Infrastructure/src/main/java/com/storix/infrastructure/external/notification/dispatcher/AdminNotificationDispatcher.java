@@ -6,6 +6,8 @@ import com.storix.domain.domains.notification.dto.AdminNotificationDispatchCount
 import com.storix.domain.domains.notification.domain.NotificationType;
 import com.storix.domain.domains.notification.event.AdminNotificationChunkEvent;
 import com.storix.domain.domains.notification.service.AdminNotificationDeliveryResultService;
+import com.storix.common.utils.NightWindow;
+import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import com.storix.infrastructure.external.notification.dto.MulticastResult;
@@ -32,6 +34,7 @@ public class AdminNotificationDispatcher {
     private final PushDeviceAdaptor pushDeviceAdaptor;
     private final FcmPushExecutor fcmPushExecutor;
     private final AdminNotificationDeliveryResultService deliveryResultService;
+    private final NotificationAdaptor notificationAdaptor;
 
     // 대상 유저에게 발송하고 결과를 로그에 반영
     public AdminNotificationDispatchCounts dispatch(AdminNotificationChunkEvent event, LocalDateTime now) {
@@ -44,6 +47,15 @@ public class AdminNotificationDispatcher {
         String targetLink = event.targetLink();
         NotificationType notificationType = event.notificationType().getNotificationType();
 
+        // 0. 야간 마케팅 발송 연기 - 실제 발송 시점이 야간이면 발송/인앱생성 없이 다음 08:00로 미룸
+        if (event.isMarketing() && NightWindow.isNight(now)) {
+            LocalDateTime deferUntil = NightWindow.nextAllowedAt(now);
+            deliveryResultService.deferMarketingChunk(adminNotificationId, userIds, deferUntil);
+            log.info(">>> [AdminNotification] 야간 마케팅 발송 연기 adminNotificationId={}, count={}, until={}",
+                    adminNotificationId, userIds.size(), deferUntil);
+            return AdminNotificationDispatchCounts.empty();
+        }
+
         // 1. 발송 대상 인앱 알림 생성
         Map<Long, Long> notificationIdByUser = deliveryResultService.prepareBroadcastNotifications(
                 adminNotificationId, userIds, notificationType, targetType, eventTargetId, targetLink,
@@ -52,6 +64,7 @@ public class AdminNotificationDispatcher {
 
         // 2. 발송 대상 활성 토큰 조회
         List<Long> targets = List.copyOf(notificationIdByUser.keySet());
+        Map<Long, Integer> unreadByUser = notificationAdaptor.countUnreadByUserIds(targets); // 뱃지용 미읽음 총합
         List<ActivePushToken> activeTokens = event.isMarketing()
                 ? pushDeviceAdaptor.findMarketingEnabledActiveTokensByUserIds(targets)
                 : pushDeviceAdaptor.findActiveTokensByUserIds(targets);
@@ -72,8 +85,9 @@ public class AdminNotificationDispatcher {
             }
             try {
                 MulticastResult result = fcmPushExecutor.sendAndApply(
-                        tokens, buildData(adminNotificationId, notificationType, targetType, eventTargetId, targetLink,
-                                event.pushTitle(), event.pushContent(), notificationIdByUser.get(userId)));
+                        tokens, buildData(notificationType, targetType, eventTargetId, targetLink,
+                                event.title(), event.content(), notificationIdByUser.get(userId),
+                                unreadByUser.getOrDefault(userId, 0)));
                 if (!result.successTokens().isEmpty()) {
                     outcomes.put(userId, AdminNotificationDeliveryOutcome.SENT);
                 } else if (result.hasTransientFailure()) {
@@ -98,28 +112,26 @@ public class AdminNotificationDispatcher {
         return deliveryResultService.applyDispatchOutcomes(adminNotificationId, outcomes, MAX_ATTEMPTS, now);
     }
 
-    private Map<String, String> buildData(Long adminNotificationId, NotificationType notificationType,
+    private Map<String, String> buildData(NotificationType notificationType,
                                           AdminNotificationTargetType targetType, Long eventTargetId, String targetLink,
-                                          String title, String content, Long notificationId
+                                          String title, String content, Long notificationId, int unreadCount
     ) {
         Map<String, String> data = new HashMap<>();
-        if (notificationId != null) {
-            data.put("notificationId", String.valueOf(notificationId));
-        }
+        data.put("notificationId", String.valueOf(notificationId));
         data.put("type", notificationType.name());
         data.put("category", notificationType.category().name());
+        data.put("unreadCount", String.valueOf(unreadCount));
 
         data.put("targetType", targetType.getTargetType().name());
         if (targetType == AdminNotificationTargetType.APP_EVENT && eventTargetId != null) {
             data.put("targetId", String.valueOf(eventTargetId));
         }
         if (targetType == AdminNotificationTargetType.EXTERNAL && targetLink != null) {
-            data.put("link", targetLink);
+            data.put("targetLink", targetLink);
         }
 
         data.put("title", title);
         data.put("body", content);
-        data.put("adminNotificationId", String.valueOf(adminNotificationId));
         return data;
     }
 }

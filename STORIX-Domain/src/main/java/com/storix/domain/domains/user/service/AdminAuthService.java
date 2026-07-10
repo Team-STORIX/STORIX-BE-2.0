@@ -76,4 +76,9 @@ public class AdminAuthService {
         user.login();
         return new AuthUserDetails(user.getId(), user.getRole());
     }
+
+    @Transactional(readOnly = true)
+    public User getAdminById(Long userId) {
+        return userAdaptor.findUserById(userId);
+    }
 }

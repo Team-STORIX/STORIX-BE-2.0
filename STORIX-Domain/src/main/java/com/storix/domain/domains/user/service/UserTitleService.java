@@ -10,7 +10,6 @@ import com.storix.domain.domains.user.domain.UserTitleHistory;
 import com.storix.domain.domains.user.event.TitleAcquiredEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,24 +53,6 @@ public class UserTitleService {
             int to = Math.min(from + TITLE_ASSIGN_CHUNK_SIZE, targetUserIds.size());
             assignTitleChunk(targetUserIds.subList(from, to));
         }
-    }
-
-    // 미부여 칭호 보정
-    @Transactional
-    public int assignMissingTitles() {
-        int assigned = 0;
-
-        while (true) {
-            List<Long> userIds = userAdaptor.findUntitledUserIdsHavingRawScore(PageRequest.of(0, TITLE_ASSIGN_CHUNK_SIZE));
-            if (userIds.isEmpty()) break;
-
-            assignTitleChunk(userIds);
-            assigned += userIds.size();
-
-            if (userIds.size() < TITLE_ASSIGN_CHUNK_SIZE) break;
-        }
-
-        return assigned;
     }
 
     private void assignTitleChunk(List<Long> userIds) {

@@ -47,11 +47,11 @@ public class BannerUseCase {
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_CREATE_SUCCESS, BannerResponse.from(banner).withBaseUrl(baseUrl));
     }
 
-    // 이벤트 배너 목록 조회
-    public CustomResponse<PageResponseWrapperDTO<BannerResponse>> getBanners(int page) {
+    // 이벤트 배너 목록 조회 (배너명 검색)
+    public CustomResponse<PageResponseWrapperDTO<BannerResponse>> getBanners(int page, String keyword) {
 
         PageResponseWrapperDTO<BannerResponse> result = PageResponseWrapperDTO.from(
-                eventBannerService.getBanners(page)
+                eventBannerService.getBanners(page, keyword)
                         .map(banner -> BannerResponse.from(banner).withBaseUrl(baseUrl)));
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_LOAD_SUCCESS, result);
     }

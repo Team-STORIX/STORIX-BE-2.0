@@ -7,6 +7,7 @@ import com.storix.domain.domains.report.domain.TargetContentType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 public record AdminReportDetailResponse(
         Long reportCaseId,
@@ -15,7 +16,7 @@ public record AdminReportDetailResponse(
         ReportStatus status,
         Long processedByAdminId,
         String processMemo,
-        ReportAction processAction,
+        Set<ReportAction> processActions,
         LocalDateTime receivedAt,
         LocalDateTime processedAt,
         boolean reopened,

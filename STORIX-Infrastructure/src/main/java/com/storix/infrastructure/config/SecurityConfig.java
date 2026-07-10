@@ -125,6 +125,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v1/auth/admin/signup").permitAll()
                                 .requestMatchers("/api/v1/auth/admin/login").permitAll()
                                 .requestMatchers("/api/v1/auth/admin/slack/callback").permitAll()
+                                .requestMatchers("/api/v1/auth/admin/profile").hasRole("SUPER_ADMIN")
 
                                 // [TopicRoom]
                                 .requestMatchers("/ws-stomp/**").permitAll()

@@ -107,6 +107,7 @@ public enum ErrorCode {
     ADMIN_NOTIFICATION_NOT_UPDATABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_007", "발송 예정 상태에서만 수정할 수 있습니다."),
     ADMIN_NOTIFICATION_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_008", "발송 예정 상태에서만 취소할 수 있습니다."),
     ADMIN_NOTIFICATION_NOT_REBROADCASTABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_009", "발송 실패 상태에서만 재발송할 수 있습니다."),
+    ADMIN_NOTIFICATION_MARKETING_NIGHT_BLOCKED(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_010", "야간(21시~익일 8시)에는 마케팅 알림을 발송할 수 없습니다."),
 
     // Event Popup error
     EVENT_POPUP_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_POPUP_ERROR_001", "존재하지 않는 이벤트 팝업입니다."),
@@ -212,6 +213,7 @@ public enum ErrorCode {
     REPORT_CASE_ALREADY_PROCESSED(HttpStatus.CONFLICT, "REPORT_ERROR_001", "이미 처리된 신고 케이스입니다."),
     INVALID_REPORT_PROCESS_REQUEST(HttpStatus.BAD_REQUEST, "REPORT_ERROR_002", "신고 처리 요청이 올바르지 않습니다."),
     UNKNOWN_REPORT_CASE(HttpStatus.NOT_FOUND, "REPORT_ERROR_003", "해당 신고 케이스를 찾을 수 없습니다."),
+    INVALID_REPORT_ACTION_COMBINATION(HttpStatus.BAD_REQUEST, "REPORT_ERROR_004", "계정 정지와 계정 삭제는 동시에 적용할 수 없습니다."),
 
     // Suspended user error
     SUSPENDED_USER(HttpStatus.FORBIDDEN, "USER_ERROR_003", "정지된 계정입니다."),

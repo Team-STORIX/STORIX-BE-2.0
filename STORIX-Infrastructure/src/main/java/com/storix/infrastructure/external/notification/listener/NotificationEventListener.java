@@ -46,7 +46,7 @@ public class NotificationEventListener {
 
     // 일시 오류 재시도
     private void sendWithRetry(NotificationEvent event, DispatchResult result) {
-        Map<String, String> data = buildData(event, result.notificationId());
+        Map<String, String> data = buildData(event, result.notificationId(), result.unreadCount());
         FcmTransientException lastTransient = null;
         for (int attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
             try {
@@ -83,12 +83,13 @@ public class NotificationEventListener {
     }
 
     // FCM data payload 빌드
-    private Map<String, String> buildData(NotificationEvent event, Long notificationId) {
+    private Map<String, String> buildData(NotificationEvent event, Long notificationId, int unreadCount) {
         Map<String, String> data = new HashMap<>();
         data.put("notificationId", String.valueOf(notificationId));
         data.put("type", event.notificationType().name());
         data.put("category", event.notificationType().category().name());
         data.put("targetType", event.targetType().name());
+        data.put("unreadCount", String.valueOf(unreadCount));
         data.put("title", event.title());
         data.put("body", event.content());
         if (event.targetId() != null) {
