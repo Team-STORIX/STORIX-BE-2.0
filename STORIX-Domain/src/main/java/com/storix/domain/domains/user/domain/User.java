@@ -109,7 +109,7 @@ public class User extends BaseTimeEntity {
     @AttributeOverrides({
             @AttributeOverride(name = "provider", column = @Column(name = "oauth_provider")),
             @AttributeOverride(name = "oid", column = @Column(name = "oauth_oid")),
-            @AttributeOverride(name = "oauthRefreshToken", column = @Column(name = "oauth_refresh_token", length = 1024)),
+            @AttributeOverride(name = "oauthRefreshToken", column = @Column(name = "oauth_refresh_token", length = 2048)),
             @AttributeOverride(name = "email", column = @Column(name = "oauth_email"))
     })
     private OAuthInfo oauthInfo;
