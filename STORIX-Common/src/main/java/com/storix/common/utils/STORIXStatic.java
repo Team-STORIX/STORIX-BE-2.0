@@ -85,6 +85,9 @@ public class STORIXStatic {
     // 알림 메시지 타이틀/본문 템플릿
     public static class Notification {
 
+        // Android 헤드업 표시용 채널 id
+        public static final String ANDROID_CHANNEL_ID = "storix_default_high";
+
         // 타이틀 — 서비스
         public static final String TITLE_FEED       = "피드";
         public static final String TITLE_REVIEW     = "리뷰";

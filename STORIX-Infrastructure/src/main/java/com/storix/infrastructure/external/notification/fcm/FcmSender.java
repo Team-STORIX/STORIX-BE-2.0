@@ -1,6 +1,9 @@
 package com.storix.infrastructure.external.notification.fcm;
 
 import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.AndroidNotification;
+import com.google.firebase.messaging.ApnsConfig;
+import com.google.firebase.messaging.Aps;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -13,6 +16,7 @@ import com.storix.infrastructure.external.notification.dto.SingleSendResult;
 import com.storix.infrastructure.external.notification.dto.TokenClassification;
 import com.storix.infrastructure.external.notification.exception.FcmSendFailedException;
 import com.storix.infrastructure.external.notification.exception.FcmTransientException;
+import com.storix.common.utils.STORIXStatic;
 import com.storix.infrastructure.external.notification.fcm.helper.FcmErrorClassifier;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +46,8 @@ public class FcmSender {
         Message.Builder builder = Message.builder()
                 .setToken(token)
                 .setNotification(displayNotification(data))
-                .setAndroidConfig(highPriorityAndroid());
+                .setAndroidConfig(highPriorityAndroid())
+                .setApnsConfig(apnsConfig(data));
         putData(builder::putData, data);
 
         try {
@@ -79,7 +84,8 @@ public class FcmSender {
         MulticastMessage.Builder builder = MulticastMessage.builder()
                 .addAllTokens(tokens)
                 .setNotification(displayNotification(data))
-                .setAndroidConfig(highPriorityAndroid());
+                .setAndroidConfig(highPriorityAndroid())
+                .setApnsConfig(apnsConfig(data));
         putData(builder::putData, data);
 
         try {
@@ -130,10 +136,41 @@ public class FcmSender {
                 .build();
     }
 
-    // Android HIGH 우선순위
+    // Android HIGH 전송 우선순위 + 알림 표시 우선순위 MAX(헤드업 유도) + 기본 사운드
     private AndroidConfig highPriorityAndroid() {
         return AndroidConfig.builder()
                 .setPriority(AndroidConfig.Priority.HIGH)
+                .setNotification(AndroidNotification.builder()
+                        .setChannelId(STORIXStatic.Notification.ANDROID_CHANNEL_ID)
+                        .setDefaultSound(true)
+                        .setPriority(AndroidNotification.Priority.MAX)
+                        .build())
                 .build();
+    }
+
+    // iOS APNs 고우선순위 즉시 표시(alert) + 기본 사운드 + 뱃지(미읽음 총합)
+    private ApnsConfig apnsConfig(Map<String, String> data) {
+        Aps.Builder aps = Aps.builder().setSound("default");
+        Integer badge = parseBadge(data);
+        if (badge != null) {
+            aps.setBadge(badge);
+        }
+        return ApnsConfig.builder()
+                .putHeader("apns-priority", "10")
+                .putHeader("apns-push-type", "alert")
+                .setAps(aps.build())
+                .build();
+    }
+
+    // data.unreadCount -> iOS 뱃지 숫자 (없거나 파싱 실패 시 뱃지 미설정)
+    private Integer parseBadge(Map<String, String> data) {
+        if (data == null) return null;
+        String value = data.get("unreadCount");
+        if (value == null) return null;
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

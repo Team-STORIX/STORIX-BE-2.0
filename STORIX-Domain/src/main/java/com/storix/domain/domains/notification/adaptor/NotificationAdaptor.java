@@ -9,6 +9,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -36,6 +38,13 @@ public class NotificationAdaptor {
     // 안 읽은 알림 개수
     public int countUnreadByUserId(Long userId) {
         return notificationRepository.countByUserIdAndIsReadFalse(userId);
+    }
+
+    // 여러 유저의 미읽음 수 일괄 조회 — 미읽음 0인 유저는 맵에 없음
+    public Map<Long, Integer> countUnreadByUserIds(List<Long> userIds) {
+        if (userIds.isEmpty()) return Map.of();
+        return notificationRepository.countUnreadByUserIds(userIds).stream()
+                .collect(Collectors.toMap(row -> row.userId(), row -> row.count().intValue()));
     }
 
 
