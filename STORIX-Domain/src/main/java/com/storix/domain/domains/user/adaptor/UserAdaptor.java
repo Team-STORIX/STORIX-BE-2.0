@@ -123,10 +123,6 @@ public class UserAdaptor {
         userRepository.clearAllTitles();
     }
 
-    public List<Long> findUntitledUserIdsHavingRawScore(Pageable pageable) {
-        return userRepository.findUntitledUserIdsHavingRawScore(pageable);
-    }
-
     public List<Long> findAdminNotificationTargetUserIds(Long lastUserId, LocalDateTime signupCutoff, Pageable pageable) {
         return userRepository.findAdminNotificationTargetUserIds(lastUserId, signupCutoff, pageable);
     }
