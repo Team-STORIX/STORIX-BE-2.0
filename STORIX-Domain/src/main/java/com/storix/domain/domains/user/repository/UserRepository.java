@@ -21,6 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByNickName(String nickName);
 
+    boolean existsByIdAndNickName(Long id, String nickName);
+
     @Query("""
         SELECT (COUNT(u) > 0)
         FROM User u

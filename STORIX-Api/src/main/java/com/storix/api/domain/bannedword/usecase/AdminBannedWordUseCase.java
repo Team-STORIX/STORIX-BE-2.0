@@ -21,6 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminBannedWordUseCase {
 
+    private static final String CSV_HEADER = "slang";
+
     private final BannedWordAdminService bannedWordAdminService;
     private final BannedWordMatcher bannedWordMatcher;
 
@@ -28,24 +30,21 @@ public class AdminBannedWordUseCase {
         return BannedWordPageResponse.from(bannedWordAdminService.search(keyword, pageable));
     }
 
+    // 캐시 갱신은 BannedWordCacheReloadListener가 변경 트랜잭션 커밋 후 수행함
     public void addBannedWord(BannedWordCreateRequest request) {
-        bannedWordAdminService.addWord(request.word());   // 트랜잭션
-        bannedWordMatcher.reload();                        // 비 트랜잭션 (DB 커밋 후 캐시 갱신)
+        bannedWordAdminService.addWord(request.word());
     }
 
     public void addBannedWords(BannedWordBulkCreateRequest request) {
         bannedWordAdminService.addWords(request.words());
-        bannedWordMatcher.reload();
     }
 
     public void addBannedWordsFromCsv(MultipartFile file) {
         bannedWordAdminService.addWords(parseWords(file));
-        bannedWordMatcher.reload();
     }
 
     public void deleteBannedWord(Long bannedWordId) {
         bannedWordAdminService.deleteWord(bannedWordId);
-        bannedWordMatcher.reload();
     }
 
     public void reloadCache() {
@@ -55,8 +54,12 @@ public class AdminBannedWordUseCase {
     private List<String> parseWords(MultipartFile file) {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-            return reader.lines()
-                    .skip(1) // 첫 줄은 헤더(slang)이므로 스킵
+            List<String> lines = reader.lines().toList();
+
+            int start = !lines.isEmpty() && CSV_HEADER.equalsIgnoreCase(extractWord(lines.get(0))) ? 1 : 0;
+
+            return lines.stream()
+                    .skip(start)
                     .map(AdminBannedWordUseCase::extractWord)
                     .filter(word -> !word.isBlank())
                     .distinct()
@@ -67,10 +70,28 @@ public class AdminBannedWordUseCase {
     }
 
     private static String extractWord(String line) {
-        String firstColumn = line.split(",", -1)[0].trim();
-        if (firstColumn.length() >= 2 && firstColumn.startsWith("\"") && firstColumn.endsWith("\"")) {
-            firstColumn = firstColumn.substring(1, firstColumn.length() - 1);
+        String trimmed = stripBom(line).trim();
+        if (!trimmed.startsWith("\"")) {
+            return trimmed.split(",", 2)[0].trim();
         }
-        return firstColumn.trim();
+
+        StringBuilder firstColumn = new StringBuilder();
+        for (int i = 1; i < trimmed.length(); i++) {
+            char c = trimmed.charAt(i);
+            if (c == '"') {
+                if (i + 1 < trimmed.length() && trimmed.charAt(i + 1) == '"') {
+                    firstColumn.append('"');
+                    i++;
+                    continue;
+                }
+                break;
+            }
+            firstColumn.append(c);
+        }
+        return firstColumn.toString().trim();
+    }
+
+    private static String stripBom(String line) {
+        return line.startsWith("\uFEFF") ? line.substring(1) : line;
     }
 }

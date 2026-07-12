@@ -70,7 +70,7 @@ public class AdminBannedWordController {
     @PostMapping(value = "/bulk/csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "금칙어 CSV 벌크 등록",
-            description = "CSV 파일을 업로드해 금칙어를 일괄 등록합니다. 각 줄의 첫 번째 컬럼을 단어로 읽으며, 이미 등록된 단어는 건너뛰고 캐시를 즉시 갱신합니다."
+            description = "CSV 파일을 업로드해 금칙어를 일괄 등록합니다. 각 줄의 첫 번째 컬럼을 단어로 읽고, 첫 줄이 헤더(slang)인 경우에만 건너뜁니다. 이미 등록된 단어는 건너뛰고 캐시를 즉시 갱신합니다."
     )
     public CustomResponse<Void> addBannedWordsFromCsv(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,

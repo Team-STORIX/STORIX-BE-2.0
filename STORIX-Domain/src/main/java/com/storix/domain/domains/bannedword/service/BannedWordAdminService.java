@@ -1,10 +1,12 @@
 package com.storix.domain.domains.bannedword.service;
 
 import com.storix.domain.domains.bannedword.domain.BannedWord;
+import com.storix.domain.domains.bannedword.event.BannedWordChangedEvent;
 import com.storix.domain.domains.bannedword.exception.BannedWordNotFoundException;
 import com.storix.domain.domains.bannedword.exception.DuplicateBannedWordException;
 import com.storix.domain.domains.bannedword.repository.BannedWordRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +25,7 @@ import java.util.Set;
 public class BannedWordAdminService {
 
     private final BannedWordRepository bannedWordRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<BannedWord> search(String keyword, Pageable pageable) {
@@ -37,24 +42,33 @@ public class BannedWordAdminService {
         try {
             bannedWordRepository.save(BannedWord.builder().word(normalized).build());
         } catch (DataIntegrityViolationException e) {
-            // uk_banned_word 제약 위반(동시 요청 등)은 도메인 예외로 변환
             throw DuplicateBannedWordException.EXCEPTION;
         }
+        eventPublisher.publishEvent(new BannedWordChangedEvent());
     }
 
     public void addWords(List<String> words) {
-        // 단어마다 existsByWord 쿼리가 나가지 않도록 기존 단어를 한 번에 조회해 메모리에서 비교
-        Set<String> existingWords = new HashSet<>(bannedWordRepository.findAllWords());
+        Set<String> seenWords = bannedWordRepository.findAllWords().stream()
+                .map(word -> word.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toCollection(HashSet::new));
 
         List<BannedWord> newWords = words.stream()
                 .map(String::trim)
                 .filter(word -> !word.isBlank())
-                .distinct()
-                .filter(word -> !existingWords.contains(word))
+                .filter(word -> seenWords.add(word.toLowerCase(Locale.ROOT)))
                 .map(word -> BannedWord.builder().word(word).build())
                 .toList();
 
-        bannedWordRepository.saveAll(newWords);
+        if (newWords.isEmpty()) {
+            return;
+        }
+
+        try {
+            bannedWordRepository.saveAll(newWords);
+        } catch (DataIntegrityViolationException e) {
+            throw DuplicateBannedWordException.EXCEPTION;
+        }
+        eventPublisher.publishEvent(new BannedWordChangedEvent());
     }
 
     public void deleteWord(Long id) {
@@ -62,5 +76,6 @@ public class BannedWordAdminService {
             throw BannedWordNotFoundException.EXCEPTION;
         }
         bannedWordRepository.deleteById(id);
+        eventPublisher.publishEvent(new BannedWordChangedEvent());
     }
 }

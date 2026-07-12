@@ -57,7 +57,10 @@ public class UserAdaptor {
     }
 
     public void checkNicknameDuplicateExceptSelf(String nickName, Long userId) {
-        if (isReservedNickName(nickName) || userRepository.existsNickNameExceptSelf(nickName, userId)) {
+        if (isReservedNickName(nickName) && !userRepository.existsByIdAndNickName(userId, nickName)) {
+            throw ProfileDuplicateNicknameException.EXCEPTION;
+        }
+        if (userRepository.existsNickNameExceptSelf(nickName, userId)) {
             throw ProfileDuplicateNicknameException.EXCEPTION;
         }
     }
@@ -146,7 +149,6 @@ public class UserAdaptor {
                 ));
     }
 
-    // suspendedUntil 기준으로 정지 만료된 유저 일괄 복구 — ReportCase 상태와 독립적
     public int restoreExpiredSuspensions(LocalDateTime now) {
         return userRepository.restoreExpiredSuspensions(AccountState.SUSPENDED, now);
     }
