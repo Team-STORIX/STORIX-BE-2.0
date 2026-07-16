@@ -1,0 +1,17 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: slack
+    receivers:
+      - uid: slack-storix
+        type: slack
+        settings:
+          url: ${SLACK_WEBHOOK_URL}
+          title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+          text: |-
+            {{ range .Alerts }}
+            *{{ .Labels.severity }}* | env=`{{ .Labels.env }}` app=`{{ .Labels.application }}`
+            {{ .Annotations.summary }}
+            {{ if .Annotations.runbook }}→ {{ .Annotations.runbook }}{{ end }}
+            {{ end }}
