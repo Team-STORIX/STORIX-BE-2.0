@@ -50,6 +50,7 @@ application-*.yml
 
 .omc/state
 /storix-db-tunnel.sh
+/storix-grafana-tunnel.sh
 .claude
 /tools
 *.sql
