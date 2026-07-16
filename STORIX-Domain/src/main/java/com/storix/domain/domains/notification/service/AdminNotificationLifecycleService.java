@@ -8,6 +8,7 @@ import com.storix.domain.domains.notification.domain.AdminNotificationLogStatus;
 import com.storix.domain.domains.notification.domain.AdminNotificationStatus;
 import com.storix.domain.domains.notification.dto.AdminNotificationStartResult;
 import com.storix.domain.domains.notification.exception.AdminNotificationNotRebroadcastableException;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -25,9 +26,11 @@ public class AdminNotificationLifecycleService {
 
     private static final int DUE_NOTIFICATION_SIZE = 20;
     private static final int RECONCILE_BATCH_SIZE = 20;
+    private static final String METRIC_FORCE_FINALIZE = "admin.notification.force_finalize";
 
     private final AdminNotificationAdaptor adminNotificationAdaptor;
     private final AdminNotificationLogAdaptor adminNotificationLogAdaptor;
+    private final MeterRegistry meterRegistry;
 
     /* ===== 상태 변경 ===== */
 
@@ -94,8 +97,8 @@ public class AdminNotificationLifecycleService {
         int updated = adminNotificationAdaptor.finalizeIfSending(
                 adminNotificationId, finalStatus, sent, failed, skipped, LocalDateTime.now());
         if (updated > 0) {
-            log.info(">>> [AdminNotification] 발송 종료 adminNotificationId={} status={} sent={} failed={} skipped={}",
-                    adminNotificationId, finalStatus, sent, failed, skipped);
+            log.info(">>> [AdminNotification] 발송 종료 status={} sent={} failed={} skipped={}",
+                    finalStatus, sent, failed, skipped);
         }
     }
 
@@ -125,8 +128,9 @@ public class AdminNotificationLifecycleService {
         int updated = adminNotificationAdaptor.finalizeIfSending(
                 adminNotificationId, AdminNotificationStatus.FAILED, sent, failed, skipped, LocalDateTime.now());
         if (updated > 0) {
-            log.warn(">>> [AdminNotification] 강제 종료 (stale) adminNotificationId={} status={} sent={} failed={} skipped={} closedPending={}",
-                    adminNotificationId, AdminNotificationStatus.FAILED, sent, failed, skipped, closed);
+            meterRegistry.counter(METRIC_FORCE_FINALIZE).increment();
+            log.warn(">>> [AdminNotification] 강제 종료 (stale) status={} sent={} failed={} skipped={} closedPending={}",
+                    AdminNotificationStatus.FAILED, sent, failed, skipped, closed);
         }
     }
 

@@ -39,7 +39,7 @@ public class AdminNotificationBroadcastService {
                 log.info(">>> [AdminNotification] broadcast 건너뜀 - 발송 처리 불가 상태 status={}", result.status());
                 return;
             }
-            log.info(">>> [AdminNotification] broadcast 시작 adminNotificationId={}", adminNotificationId);
+            log.info(">>> [AdminNotification] broadcast 시작");
             runFanOut(adminNotificationId);
         } catch (Exception e) {
             // 발행 실패 시 SENDING 으로 남고 보정 스케줄러가 재개/종료
@@ -95,7 +95,7 @@ public class AdminNotificationBroadcastService {
 
         // 4. 이벤트 발행 완료 표시
         int targetCount = targetService.countEnrolled(adminNotificationId);
-        log.info(">>> [AdminNotification] 모든 chunk 발행 완료 adminNotificationId={} targetCount={}", adminNotificationId, targetCount);
+        log.info(">>> [AdminNotification] 모든 chunk 발행 완료 targetCount={}", targetCount);
         lifecycleService.markAllChunkPublished(adminNotificationId, targetCount);
     }
 }

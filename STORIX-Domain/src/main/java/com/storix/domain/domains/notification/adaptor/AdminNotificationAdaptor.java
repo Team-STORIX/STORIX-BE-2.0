@@ -50,6 +50,10 @@ public class AdminNotificationAdaptor {
         return adminNotificationRepository.findCompletableSendingIds(pageable);
     }
 
+    public long countSending() {
+        return adminNotificationRepository.countByStatus(AdminNotificationStatus.SENDING);
+    }
+
     public List<Long> findStaleIncompleteSendingIds(LocalDateTime cutoff, Pageable pageable) {
         return adminNotificationRepository.findStaleIncompleteSendingIds(cutoff, pageable);
     }

@@ -1,5 +1,6 @@
 package com.storix.infrastructure.config;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +16,20 @@ import java.util.concurrent.Executor;
 @Configuration
 @EnableAsync
 public class AsyncConfig {
+
+    private static final String METRIC_REJECTED = "notification.executor.rejected";
+    private static final String TAG_EXECUTOR = "executor";
+
+    private final MeterRegistry meterRegistry;
+
+    public AsyncConfig(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
+    // 큐 포화로 태스크가 거절될 때 executor별 카운트
+    private void recordRejected(String executor) {
+        meterRegistry.counter(METRIC_REJECTED, TAG_EXECUTOR, executor).increment();
+    }
 
     // 제출 스레드의 MDC(상관키 등)를 워커 스레드로 복사 - @Async 경계에서 로그 상관키 유지
     private static TaskDecorator mdcTaskDecorator() {
@@ -87,6 +102,7 @@ public class AsyncConfig {
         executor.setTaskDecorator(mdcTaskDecorator()); // MDC 전파
         
         executor.setRejectedExecutionHandler((r, exec) -> {
+            recordRejected("notificationConsumer");
             log.warn(">>> [Notification] queue overflow - running on caller thread (pool={}, queue={}/{})",
                     exec.getPoolSize(), exec.getQueue().size(), exec.getQueue().remainingCapacity());
             if (!exec.isShutdown()) {
@@ -107,6 +123,7 @@ public class AsyncConfig {
         executor.setTaskDecorator(mdcTaskDecorator()); // MDC 전파
 
         executor.setRejectedExecutionHandler((r, exec) -> {
+            recordRejected("adminNotificationProducer");
             log.warn(">>> [AdminNotification] broadcast queue overflow - running on caller thread (pool={}, queue={}/{})",
                     exec.getPoolSize(), exec.getQueue().size(), exec.getQueue().remainingCapacity());
             if (!exec.isShutdown()) {
@@ -127,6 +144,7 @@ public class AsyncConfig {
         executor.setTaskDecorator(mdcTaskDecorator()); // MDC 전파
 
         executor.setRejectedExecutionHandler((r, exec) -> {
+            recordRejected("adminNotificationConsumer");
             log.warn(">>> [AdminNotification] queue overflow - running on caller thread (pool={}, queue={}/{})",
                     exec.getPoolSize(), exec.getQueue().size(), exec.getQueue().remainingCapacity());
             if (!exec.isShutdown()) {

@@ -10,6 +10,7 @@ import com.storix.domain.domains.notification.adaptor.AdminNotificationLogAdapto
 import com.storix.domain.domains.notification.domain.AdminNotificationLogStatus;
 import com.storix.domain.domains.notification.dto.AdminNotificationStartResult;
 import com.storix.domain.domains.notification.exception.AdminNotificationNotRebroadcastableException;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -52,7 +53,8 @@ class AdminNotificationCompletionTest {
 
     @BeforeEach
     void setUp() {
-        lifecycleService = new AdminNotificationLifecycleService(adminNotificationAdaptor, adminNotificationLogAdaptor);
+        lifecycleService = new AdminNotificationLifecycleService(
+                adminNotificationAdaptor, adminNotificationLogAdaptor, new SimpleMeterRegistry());
         deliveryResultService = new AdminNotificationDeliveryResultService(
                 adminNotificationAdaptor, adminNotificationLogAdaptor, notificationAdaptor, lifecycleService);
     }
