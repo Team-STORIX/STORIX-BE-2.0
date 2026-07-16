@@ -43,7 +43,7 @@ groups:
           severity: warning
         annotations:
           summary: '힙 사용률이 85%를 넘겼습니다. 메모리 누수 또는 Full GC 로 인한 응답 지연이 임박했습니다.'
-        noDataState: NoData
+        noDataState: OK
         execErrState: Alerting
         data:
           - refId: A
@@ -73,7 +73,7 @@ groups:
         annotations:
           summary: '전체 시간의 20% 이상을 GC 로 보내고 있습니다. 응답이 사실상 멈춥니다.'
           runbook: '힙 덤프 확보 -> 메모리 누수 의심'
-        noDataState: NoData
+        noDataState: OK
         execErrState: Alerting
         data:
           - refId: A
@@ -103,7 +103,7 @@ groups:
           severity: warning
         annotations:
           summary: 'Full GC 가 분당 1회를 넘습니다. 곧 스레싱으로 번집니다.'
-        noDataState: NoData
+        noDataState: OK
         execErrState: Alerting
         data:
           - refId: A
@@ -133,7 +133,7 @@ groups:
           severity: warning
         annotations:
           summary: 'CPU 가 1분 이상 90%를 넘겼습니다. 순간 피크가 아니라 과부하입니다.'
-        noDataState: NoData
+        noDataState: OK
         execErrState: Alerting
         data:
           - refId: A
@@ -161,7 +161,7 @@ groups:
         annotations:
           summary: 'HikariCP 활성 커넥션이 90%를 넘겼습니다. 곧 요청이 커넥션을 기다리며 밀립니다.'
           runbook: '느린 쿼리 / 트랜잭션 누수 / OSIV 확인'
-        noDataState: NoData
+        noDataState: OK
         execErrState: Alerting
         data:
           - refId: A
@@ -195,7 +195,7 @@ groups:
         annotations:
           summary: '서버 에러율이 1%를 넘겼습니다.'
           runbook: 'Loki: {job="storix"} | json | level="ERROR"'
-        noDataState: NoData
+        noDataState: OK
         execErrState: Alerting
         data:
           - refId: A
@@ -229,7 +229,7 @@ groups:
         annotations:
           summary: '상위 1% 요청의 응답시간이 1초를 넘습니다.'
           runbook: 'application.yml 에 percentiles-histogram 설정이 있어야 이 지표가 나온다'
-        noDataState: NoData
+        noDataState: OK
         execErrState: Alerting
         data:
           - refId: A
