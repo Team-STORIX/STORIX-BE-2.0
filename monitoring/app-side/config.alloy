@@ -1,0 +1,52 @@
+discovery.docker "storix" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "15s"
+}
+
+discovery.relabel "storix" {
+  targets = discovery.docker.storix.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(storix-app|storix-batch)"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "storix"
+  }
+
+  rule {
+    target_label = "env"
+    replacement  = sys.env("ENV")
+  }
+
+  rule {
+    target_label = "instance"
+    replacement  = sys.env("INSTANCE_ID")
+  }
+}
+
+loki.source.docker "storix" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.storix.output
+  forward_to = [loki.write.monitoring.receiver]
+}
+
+loki.write "monitoring" {
+  endpoint {
+    url = "http://" + sys.env("MONITORING_HOST") + ":3100/loki/api/v1/push"
+
+    basic_auth {
+      username = sys.env("LOKI_USER")
+      password = sys.env("LOKI_PASSWORD")
+    }
+  }
+}
