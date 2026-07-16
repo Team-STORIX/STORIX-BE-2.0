@@ -107,6 +107,7 @@ public class SecurityConfig {
                         (requests) -> requests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                 .requestMatchers("/actuator/health").permitAll()
+                                .requestMatchers("/actuator/prometheus").permitAll()
 
                                 // [Onboarding]
                                 .requestMatchers("/api/v1/onboarding/**").permitAll()
