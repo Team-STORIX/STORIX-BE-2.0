@@ -19,7 +19,7 @@ public record AppleOauthErrorResponse(
         try (var is = response.body().asInputStream()) {
             byte[] raw = is.readAllBytes();
             String rawBody = new String(raw, StandardCharsets.UTF_8);
-            log.error("[Apple] 원본 에러 응답 본문: {}", rawBody);
+            log.debug("[Apple] 원본 에러 응답 본문: {}", rawBody);
             return new ObjectMapper().readValue(raw, AppleOauthErrorResponse.class);
         } catch (IOException e) {
             log.error("[Apple] 에러 응답 JSON 파싱 실패: type={}, message={}",

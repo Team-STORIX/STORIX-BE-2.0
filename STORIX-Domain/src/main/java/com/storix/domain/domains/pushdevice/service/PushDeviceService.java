@@ -26,8 +26,7 @@ public class PushDeviceService {
             return pushDeviceAdaptor.upsert(userId, cmd);
         } catch (DataIntegrityViolationException e) {
             // 1-2. (userId, installationId) unique constraint 충돌 시 > 재시도 (update)
-            log.warn(">>>> [PushDevice] register race detected, retrying. userId={}, installationId={}",
-                    userId, cmd.installationId());
+            log.warn(">>>> [PushDevice] register race detected, retrying. installationId={}", cmd.installationId());
             return pushDeviceAdaptor.upsert(userId, cmd);
         }
     }

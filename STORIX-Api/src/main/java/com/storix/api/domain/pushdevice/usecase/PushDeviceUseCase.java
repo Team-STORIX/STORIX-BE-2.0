@@ -19,9 +19,9 @@ public class PushDeviceUseCase {
         boolean isNew = pushDeviceService.sync(userId, request.toCommand());
 
         if (isNew) {
-            log.info(">>>> [PushDevice] register userId={}, installationId={}", userId, request.installationId());
+            log.info(">>>> [PushDevice] register installationId={}", request.installationId());
         } else {
-            log.info(">>>> [PushDevice] refresh userId={}, installationId={}", userId, request.installationId());
+            log.info(">>>> [PushDevice] refresh installationId={}", request.installationId());
         }
     }
 
@@ -29,8 +29,8 @@ public class PushDeviceUseCase {
     public void unregister(Long userId, String installationId) {
         int affected = pushDeviceService.unregister(userId, installationId);
         if (affected == 0) {
-            log.warn(">>>> [PushDevice] unregister target not found (already inactive or never registered) userId={}, installationId={}",
-                    userId, installationId);
+            log.warn(">>>> [PushDevice] unregister target not found (already inactive or never registered) installationId={}",
+                    installationId);
         }
     }
 

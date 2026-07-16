@@ -22,7 +22,7 @@ public class ChatController {
         Authentication auth = (Authentication) accessor.getUser();
 
         if (auth == null) {
-            log.error(">>>> [채팅 에러] 인증되지 않은 세션입니다.");
+            log.warn(">>>> [채팅] 인증되지 않은 세션입니다.");
             return;
         }
 

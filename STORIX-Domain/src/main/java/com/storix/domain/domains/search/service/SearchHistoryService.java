@@ -87,7 +87,7 @@ public class SearchHistoryService {
                 );
             }
         } catch (Exception e) {
-            log.error("검색어 로그 저장 실패: {}", e.getMessage());
+            log.warn("검색어 로그 저장 실패: {}", e.getMessage());
         }
     }
 
@@ -208,7 +208,7 @@ public class SearchHistoryService {
             );
 
         } catch (Exception e) {
-            log.error("서재 검색어 로그 저장 실패: {}", e.getMessage());
+            log.warn("서재 검색어 로그 저장 실패: {}", e.getMessage());
         }
     }
 

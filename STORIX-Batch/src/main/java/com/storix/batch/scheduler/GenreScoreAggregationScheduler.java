@@ -52,8 +52,8 @@ public class GenreScoreAggregationScheduler {
         try {
             userTitleService.assignTitles(touchedUsers);
         } catch (Exception e) {
-            log.error(">>> [GenreScoreBatch] 칭호 일괄 갱신 실패 (count={}, userIds={})",
-                    touchedUsers.size(), touchedUsers, e);
+            log.error(">>> [GenreScoreBatch] 칭호 일괄 갱신 실패 (count={}, partialUserIds={})",
+                    touchedUsers.size(), touchedUsers.stream().limit(20).toList(), e);
         }
 
         int oldDeleted = aggregationService.cleanupOldProcessed();
