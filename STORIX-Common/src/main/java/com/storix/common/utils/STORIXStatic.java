@@ -71,6 +71,9 @@ public class STORIXStatic {
     // MDC 로그 상관키
     public static class Mdc {
         public static final String TRACE_ID = "traceId";
+        public static final String USER_ID = "userId";
+        public static final String ENDPOINT = "endpoint";
+        public static final String HTTP_METHOD = "httpMethod";
         public static final String ADMIN_NOTIFICATION_ID = "adminNotificationId";
     }
 

@@ -34,7 +34,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final TraceIdFilter traceIdFilter;
+    private final MdcContextFilter mdcContextFilter;
     private final JwtAuthenticationFilter jwtFilter;
     private final OnboardingAuthenticationFilter onboardingFilter;
     private final ErrorHandlingFilter errorHandlingFilter;
@@ -139,11 +139,11 @@ public class SecurityConfig {
                                 .anyRequest().hasRole("READER")
                 )
 
-                // traceId(MDC) -> 에러처리 -> jwt filter
+                // MDC 상관키 -> 에러처리 -> jwt filter
                 .addFilterBefore(errorHandlingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(onboardingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(traceIdFilter, ErrorHandlingFilter.class)
+                .addFilterBefore(mdcContextFilter, ErrorHandlingFilter.class)
 
                 // spring security exception handler
                 .exceptionHandling(exceptions -> exceptions
