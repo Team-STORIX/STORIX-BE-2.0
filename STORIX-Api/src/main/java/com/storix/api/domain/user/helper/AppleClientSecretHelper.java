@@ -57,12 +57,11 @@ public class AppleClientSecretHelper {
 
     private PrivateKey getPrivateKey(String privateKeyString) {
         if (privateKeyString == null || privateKeyString.isBlank()) {
-            log.error("[Apple] privateKey 값이 비어있습니다. 환경변수 APPLE_PRIVATE_KEY 주입 확인 필요. raw={}", privateKeyString);
+            log.error("[Apple] privateKey 값이 비어있습니다. 환경변수 APPLE_PRIVATE_KEY 주입 확인 필요.");
             throw ApplePrivateKeyException.EXCEPTION;
         }
         try {
-            log.debug("[Apple] privateKey raw(앞 40자)={}, rawLength={}, containsBEGIN={}, containsEND={}",
-                    privateKeyString.substring(0, Math.min(40, privateKeyString.length())),
+            log.debug("[Apple] privateKey rawLength={}, containsBEGIN={}, containsEND={}",
                     privateKeyString.length(),
                     privateKeyString.contains("-----BEGIN PRIVATE KEY-----"),
                     privateKeyString.contains("-----END PRIVATE KEY-----"));
@@ -72,8 +71,7 @@ public class AppleClientSecretHelper {
                     .replace("-----END PRIVATE KEY-----", "")
                     .replaceAll("\\s", "");
 
-            log.debug("[Apple] privateKey base64 정제 후 length={}, prefix={}",
-                    key.length(), key.substring(0, Math.min(20, key.length())));
+            log.debug("[Apple] privateKey base64 정제 후 length={}", key.length());
 
             byte[] keyBytes = Base64.getDecoder().decode(key);
             log.debug("[Apple] base64 decode 완료: bytes={}", keyBytes.length);
@@ -84,11 +82,11 @@ public class AppleClientSecretHelper {
             log.debug("[Apple] PrivateKey 생성 성공: algorithm={}, format={}", pk.getAlgorithm(), pk.getFormat());
             return pk;
         } catch (Exception e) {
-            log.error("[Apple] private key 파싱 실패: type={}, message={}, keyPrefix={}, length={}",
+            log.error("[Apple] private key 파싱 실패: type={}, message={}, length={}, hasPemHeader={}",
                     e.getClass().getSimpleName(),
                     e.getMessage(),
-                    privateKeyString.substring(0, Math.min(30, privateKeyString.length())),
-                    privateKeyString.length(), e);
+                    privateKeyString.length(),
+                    privateKeyString.contains("-----BEGIN PRIVATE KEY-----"), e);
             throw ApplePrivateKeyException.EXCEPTION;
         }
     }

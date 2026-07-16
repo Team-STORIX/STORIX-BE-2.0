@@ -53,7 +53,7 @@ public class FcmSender {
         try {
             // 2. 전송 성공
             String messageId = firebaseMessaging.send(builder.build());
-            log.info(">>>> [FCM] send 성공. messageId={}, token={}", messageId, fcmErrorClassifier.maskToken(token));
+            log.debug(">>>> [FCM] send 성공. messageId={}, token={}", messageId, fcmErrorClassifier.maskToken(token));
             return SingleSendResult.success(messageId);
         } catch (FirebaseMessagingException e) {
             MessagingErrorCode code = e.getMessagingErrorCode();
@@ -64,11 +64,14 @@ public class FcmSender {
                 return SingleSendResult.invalid(token);
             }
             // 4. 일시 오류(UNAVAILABLE/INTERNAL/QUOTA_EXCEEDED) -> 재시도 대상 (multicast 와 분류 일치)
-            log.error(">>>> [FCM] send 실패. token={}, errorCode={}, msg={}", fcmErrorClassifier.maskToken(token), code, e.getMessage());
             if (fcmErrorClassifier.isRetryableToken(code)) {
+                log.warn(">>>> [FCM] send 일시 실패(재시도 대상). token={}, errorCode={}, msg={}",
+                        fcmErrorClassifier.maskToken(token), code, e.getMessage());
                 throw new FcmTransientException(code, e);
             }
             // 5. 영구·설정 오류 -> 재시도 무의미
+            log.error(">>>> [FCM] send 영구 실패. token={}, errorCode={}, msg={}",
+                    fcmErrorClassifier.maskToken(token), code, e.getMessage());
             throw FcmSendFailedException.EXCEPTION;
         }
     }
@@ -107,11 +110,13 @@ public class FcmSender {
             // 4. batch 자체 실패 -> 에러코드로 일시/영구 분류 (일시만 재시도 대상)
             MessagingErrorCode code = e.getMessagingErrorCode();
             recordFailureMetric(code);
-            log.error(">>>> [FCM] multicast 실패. tokenCount={}, errorCode={}, msg={}",
-                    tokens.size(), code, e.getMessage());
             if (fcmErrorClassifier.isRetryableToken(code)) {
+                log.warn(">>>> [FCM] multicast 일시 실패(재시도 대상). tokenCount={}, errorCode={}, msg={}",
+                        tokens.size(), code, e.getMessage());
                 throw new FcmTransientException(code, e);  // UNAVAILABLE/INTERNAL/QUOTA_EXCEEDED → 재시도
             }
+            log.error(">>>> [FCM] multicast 영구 실패. tokenCount={}, errorCode={}, msg={}",
+                    tokens.size(), code, e.getMessage());
             throw FcmSendFailedException.EXCEPTION;          // 영구·설정 오류 → 재시도 무의미
         }
     }

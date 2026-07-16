@@ -30,7 +30,7 @@ public class GenreScoreLogListener {
         try {
             genreScoreAdaptor.saveLog(UserGenreScoreLog.from(event));
         } catch (Exception e) {
-            log.error(">>> [GenreScore] log persist failed for event={}, cause={}", event, e.getMessage());
+            log.warn(">>> [GenreScore] log persist failed for event={}, cause={}", event, e.getMessage());
         }
     }
 }

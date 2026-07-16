@@ -7,6 +7,7 @@ import com.storix.domain.domains.notification.domain.NotificationType;
 import com.storix.domain.domains.notification.event.AdminNotificationChunkEvent;
 import com.storix.domain.domains.notification.service.AdminNotificationDeliveryResultService;
 import com.storix.common.utils.NightWindow;
+import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
@@ -15,6 +16,7 @@ import com.storix.infrastructure.external.notification.exception.FcmTransientExc
 import com.storix.infrastructure.external.notification.fcm.FcmPushExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -51,8 +53,7 @@ public class AdminNotificationDispatcher {
         if (event.isMarketing() && NightWindow.isNight(now)) {
             LocalDateTime deferUntil = NightWindow.nextAllowedAt(now);
             deliveryResultService.deferMarketingChunk(adminNotificationId, userIds, deferUntil);
-            log.info(">>> [AdminNotification] 야간 마케팅 발송 연기 adminNotificationId={}, count={}, until={}",
-                    adminNotificationId, userIds.size(), deferUntil);
+            log.info(">>> [AdminNotification] 야간 마케팅 발송 연기 count={}, until={}", userIds.size(), deferUntil);
             return AdminNotificationDispatchCounts.empty();
         }
 
@@ -78,33 +79,38 @@ public class AdminNotificationDispatcher {
         // 3. 유저별 FCM 발송 -> 결과 분류
         Map<Long, AdminNotificationDeliveryOutcome> outcomes = new LinkedHashMap<>();
         for (Long userId : targets) {
-            List<String> tokens = tokensByUserId.getOrDefault(userId, List.of());
-            if (tokens.isEmpty()) {
-                outcomes.put(userId, AdminNotificationDeliveryOutcome.SKIPPED);
-                continue;
-            }
+            MDC.put(STORIXStatic.Mdc.USER_ID, String.valueOf(userId)); // 유저 단위 로그 상관키 (FcmSender 로그까지 전파)
             try {
-                MulticastResult result = fcmPushExecutor.sendAndApply(
-                        tokens, buildData(notificationType, targetType, eventTargetId, targetLink,
-                                event.title(), event.content(), notificationIdByUser.get(userId),
-                                unreadByUser.getOrDefault(userId, 0)));
-                if (!result.successTokens().isEmpty()) {
-                    outcomes.put(userId, AdminNotificationDeliveryOutcome.SENT);
-                } else if (result.hasTransientFailure()) {
-                    outcomes.put(userId, AdminNotificationDeliveryOutcome.TRANSIENT_FAILURE);
-                } else if (result.failureCount() > 0 && result.failureCount() == result.invalidTokens().size()) {
+                List<String> tokens = tokensByUserId.getOrDefault(userId, List.of());
+                if (tokens.isEmpty()) {
                     outcomes.put(userId, AdminNotificationDeliveryOutcome.SKIPPED);
-                } else {
-                    outcomes.put(userId, AdminNotificationDeliveryOutcome.PERMANENT_FAILURE);
+                    continue;
                 }
-            } catch (FcmTransientException e) {
-                outcomes.put(userId, AdminNotificationDeliveryOutcome.TRANSIENT_FAILURE);
-                log.warn(">>> [AdminNotification] 푸시 일시 실패 adminNotificationId={}, userId={}, code={}",
-                        adminNotificationId, userId, e.getMessagingErrorCode());
-            } catch (Exception e) {
-                outcomes.put(userId, AdminNotificationDeliveryOutcome.PERMANENT_FAILURE);
-                log.warn(">>> [AdminNotification] 푸시 영구 실패 adminNotificationId={}, userId={}, cause={}",
-                        adminNotificationId, userId, e.getMessage());
+                try {
+                    MulticastResult result = fcmPushExecutor.sendAndApply(
+                            tokens, buildData(notificationType, targetType, eventTargetId, targetLink,
+                                    event.title(), event.content(), notificationIdByUser.get(userId),
+                                    unreadByUser.getOrDefault(userId, 0)));
+                    if (!result.successTokens().isEmpty()) {
+                        outcomes.put(userId, AdminNotificationDeliveryOutcome.SENT);
+                    } else if (result.hasTransientFailure()) {
+                        outcomes.put(userId, AdminNotificationDeliveryOutcome.TRANSIENT_FAILURE);
+                    } else if (result.failureCount() > 0 && result.failureCount() == result.invalidTokens().size()) {
+                        outcomes.put(userId, AdminNotificationDeliveryOutcome.SKIPPED);
+                    } else {
+                        outcomes.put(userId, AdminNotificationDeliveryOutcome.PERMANENT_FAILURE);
+                    }
+                } catch (FcmTransientException e) {
+                    outcomes.put(userId, AdminNotificationDeliveryOutcome.TRANSIENT_FAILURE);
+                    log.warn(">>> [AdminNotification] 푸시 일시 실패 recipientUserId={}, code={}",
+                            userId, e.getMessagingErrorCode());
+                } catch (Exception e) {
+                    outcomes.put(userId, AdminNotificationDeliveryOutcome.PERMANENT_FAILURE);
+                    log.warn(">>> [AdminNotification] 푸시 영구 실패 recipientUserId={}, cause={}",
+                            userId, e.getMessage());
+                }
+            } finally {
+                MDC.remove(STORIXStatic.Mdc.USER_ID);
             }
         }
 

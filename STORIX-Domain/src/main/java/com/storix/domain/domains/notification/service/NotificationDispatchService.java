@@ -35,14 +35,14 @@ public class NotificationDispatchService {
         // 1. 탈퇴 유저는 전부 skip
         User user = userAdaptor.findUserById(event.recipientUserId());
         if (user.getAccountState() == AccountState.DELETED) {
-            log.debug(">>> [Notification] skipped (user deleted) userId={}", event.recipientUserId());
+            log.debug(">>> [Notification] skipped (user deleted) recipientUserId={}", event.recipientUserId());
             return DispatchResult.skip();
         }
 
         // 1-2. 수신자가 행위자를 차단했으면 전부 skip > 인앱 저장, 푸시 알림 X
         if (event.actorUserId() != null
                 && userBlockAdaptor.isBlocked(event.recipientUserId(), event.actorUserId())) {
-            log.debug(">>> [Notification] skipped (actor blocked) userId={}, actorId={}",
+            log.debug(">>> [Notification] skipped (actor blocked) recipientUserId={}, actorId={}",
                     event.recipientUserId(), event.actorUserId());
             return DispatchResult.skip();
         }
@@ -61,7 +61,7 @@ public class NotificationDispatchService {
         // 3. 정지 유저는 제재/신고 안내 타입만 푸시 허용
         if (user.getAccountState() == AccountState.SUSPENDED
                 && !event.notificationType().deliverableToSuspendedUser()) {
-            log.debug(">>> [Notification] push skipped (user suspended) userId={}, type={}",
+            log.debug(">>> [Notification] push skipped (user suspended) recipientUserId={}, type={}",
                     event.recipientUserId(), event.notificationType());
             return DispatchResult.inAppOnly(saved.getId());
         }
@@ -69,7 +69,7 @@ public class NotificationDispatchService {
         // 4. 푸시 수신 동의 체크
         NotificationSetting setting = notificationSettingAdaptor.getByUserId(event.recipientUserId());
         if (!setting.acceptsType(event.notificationType())) {
-            log.debug(">>> [Notification] push skipped (type disabled) userId={}, type={}",
+            log.debug(">>> [Notification] push skipped (type disabled) recipientUserId={}, type={}",
                     event.recipientUserId(), event.notificationType());
             return DispatchResult.inAppOnly(saved.getId());
         }
@@ -77,7 +77,7 @@ public class NotificationDispatchService {
         // 5. 푸시 대상 확정 — 활성 디바이스 토큰 조회 > 없으면 인앱만
         List<String> tokens = pushDeviceAdaptor.findActiveFcmTokensByUserId(event.recipientUserId());
         if (tokens.isEmpty()) {
-            log.debug(">>> [Notification] no active device for userId={}", event.recipientUserId());
+            log.debug(">>> [Notification] no active device for recipientUserId={}", event.recipientUserId());
             return DispatchResult.inAppOnly(saved.getId());
         }
 

@@ -81,11 +81,6 @@ public class StompHandler implements ChannelInterceptor {
 
     private void handleConnect(StompHeaderAccessor accessor) {
         String token = accessor.getFirstNativeHeader("Authorization");
-        log.info(">>>> [STOMP_DIAG] CONNECT received sessionId={}, authorizationExists={}, bearerToken={}, authorizationLength={}",
-                accessor.getSessionId(),
-                token != null,
-                token != null && token.startsWith("Bearer "),
-                token != null ? token.length() : 0);
 
         if (token != null && token.startsWith("Bearer ")) {
             try {
@@ -95,13 +90,12 @@ public class StompHandler implements ChannelInterceptor {
 
                 accessor.setUser(auth);
 
-                log.info(">>>> [STOMP] 인증 성공: UserID {}", info.userId());
+                log.debug(">>>> [STOMP] 인증 성공: UserID {}", info.userId());
             } catch (Exception e) {
-                log.error(">>>> [STOMP] 인증 실패: sessionId={}, exceptionType={}, message={}",
+                log.warn(">>>> [STOMP] 인증 실패: sessionId={}, exceptionType={}, message={}",
                         accessor.getSessionId(),
                         e.getClass().getSimpleName(),
-                        e.getMessage(),
-                        e);
+                        e.getMessage());
                 throw new MessageDeliveryException("UNAUTHORIZED");
             }
         } else {

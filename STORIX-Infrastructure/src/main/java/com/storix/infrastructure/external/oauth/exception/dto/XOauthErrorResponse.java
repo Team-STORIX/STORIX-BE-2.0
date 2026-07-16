@@ -21,7 +21,7 @@ public record XOauthErrorResponse(
         try (var is = response.body().asInputStream()) {
             byte[] raw = is.readAllBytes();
             String rawBody = new String(raw, StandardCharsets.UTF_8);
-            log.error("[X] 원본 에러 응답 본문: {}", rawBody);
+            log.debug("[X] 원본 에러 응답 본문: {}", rawBody);
             return new ObjectMapper().readValue(raw, XOauthErrorResponse.class);
         } catch (IOException e) {
             log.error("[X] 에러 응답 JSON 파싱 실패: type={}, message={}",

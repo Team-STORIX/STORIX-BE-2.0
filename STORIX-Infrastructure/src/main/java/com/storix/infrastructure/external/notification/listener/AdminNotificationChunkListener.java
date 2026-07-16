@@ -35,11 +35,11 @@ public class AdminNotificationChunkListener {
 
             deliveryResultService.accumulateProgress(adminNotificationId, result.sent(), result.failed(), result.skipped());
 
-            log.info(">>> [AdminNotification] chunk 처리 완료 adminNotificationId={} userIds={} sent={} failed={} skipped={}",
-                    adminNotificationId, event.userIds().size(), result.sent(), result.failed(), result.skipped());
+            log.info(">>> [AdminNotification] chunk 처리 완료 userIds={} sent={} failed={} skipped={}",
+                    event.userIds().size(), result.sent(), result.failed(), result.skipped());
         } catch (Exception e) {
             // 청크 실패 시 PENDING 으로 남겨 재시도 대상으로 두고 계속 진행
-            log.error(">>> [AdminNotification] chunk 실패 adminNotificationId={}, cause={}", adminNotificationId, e.getMessage(), e);
+            log.error(">>> [AdminNotification] chunk 실패 cause={}", e.getMessage(), e);
         } finally {
             MDC.remove(MDC_KEY);
         }

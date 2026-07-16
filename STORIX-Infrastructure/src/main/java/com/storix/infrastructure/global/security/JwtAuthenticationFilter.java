@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.storix.common.utils.STORIXStatic;
+import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -51,6 +52,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(token)) {
             Authentication authentication = getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            AuthUserDetails userDetails = (AuthUserDetails) authentication.getPrincipal();
+            MDC.put(STORIXStatic.Mdc.USER_ID, String.valueOf(userDetails.getUserId()));
         }
 
         filterChain.doFilter(request, response);

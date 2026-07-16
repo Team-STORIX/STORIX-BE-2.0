@@ -20,6 +20,9 @@ public interface AdminNotificationRepository extends JpaRepository<AdminNotifica
 
     Page<AdminNotification> findAllByOrderByIdDesc(Pageable pageable);
 
+    // 상태별 알림 수
+    long countByStatus(AdminNotificationStatus status);
+
     // 발송용 어드민 알림 조회 (lastBroadcastUserId = 재개 시작 커서)
     @Query("""
         SELECT new com.storix.domain.domains.notification.dto.AdminNotificationBroadcastInfo(e.title, e.content, e.notificationType, e.targetAudience, e.targetType, e.eventTargetId, e.targetLink, e.lastBroadcastUserId)
