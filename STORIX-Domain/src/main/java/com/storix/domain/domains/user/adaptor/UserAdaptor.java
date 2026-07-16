@@ -1,20 +1,22 @@
 package com.storix.domain.domains.user.adaptor;
 
+import com.storix.common.utils.STORIXStatic;
+import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
-import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.domain.User;
-import com.storix.domain.domains.user.dto.CreateDeveloperUserCommand;
-import com.storix.domain.domains.user.dto.CreateReaderUserCommand;
-import com.storix.domain.domains.user.dto.StandardProfileInfo;
+import com.storix.domain.domains.user.dto.*;
 import com.storix.domain.domains.user.exception.me.*;
 import com.storix.domain.domains.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -27,15 +29,6 @@ public class UserAdaptor {
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
     private final UserRepository userRepository;
-
-    public Role findUserRoleByUserId(Long userId) {
-        Optional<Role> role = userRepository.findRoleByUserId(userId);
-        if (role.isEmpty()) {
-            throw UnknownUserException.EXCEPTION;
-        } else {
-            return role.get();
-        }
-    }
 
     public StandardProfileInfo findStandardProfileInfoByUserId(Long userId) {
         StandardProfileInfo info = userRepository.findStandardProfileInfoById(userId);
@@ -58,25 +51,46 @@ public class UserAdaptor {
     }
 
     public void checkNicknameDuplicate(String nickName) {
-        if (userRepository.existsByActiveNickName(nickName)) {
+        if (isReservedNickName(nickName) || userRepository.existsByNickName(nickName)) {
             throw DuplicateNicknameException.EXCEPTION;
         }
     }
 
     public void checkNicknameDuplicateExceptSelf(String nickName, Long userId) {
-        if (userRepository.existsNickNameExceptSelf(nickName, userId)) {
+        if (isReservedNickName(nickName) || userRepository.existsNickNameExceptSelf(nickName, userId)) {
             throw ProfileDuplicateNicknameException.EXCEPTION;
         }
     }
 
-    // 개발자 회원 가입
-    public AuthUserDetails saveDeveloperUser(CreateDeveloperUserCommand cmd) {
+    // 예약 닉네임은 대소문자 구분 없이 차단 (예: "STORIX", "Storix", "storix")
+    private boolean isReservedNickName(String nickName) {
+        return nickName != null && STORIXStatic.RESERVED_NICK_NAMES.stream()
+                .anyMatch(reserved -> reserved.equalsIgnoreCase(nickName));
+    }
+
+    // 테스터 회원 가입
+    public AuthUserDetails saveTesterUser(CreateTesterUserCommand cmd) {
         try {
             User user = userRepository.save(cmd.toEntity());
             return new AuthUserDetails(user.getId(), user.getRole());
         } catch (DataIntegrityViolationException e) {
             throw DuplicateUserException.EXCEPTION;
         }
+    }
+
+    // 관리자 회원 가입
+    public AuthUserDetails saveAdminUser(CreateAdminUserCommand cmd) {
+        try {
+            User user = userRepository.save(cmd.toEntity());
+            return new AuthUserDetails(user.getId(), user.getRole());
+        } catch (DataIntegrityViolationException e) {
+            throw DuplicateUserException.EXCEPTION;
+        }
+    }
+
+    public User findAdminByEmail(String email) {
+        return userRepository.findByOauthInfoEmail(email)
+                .orElseThrow(() -> UnknownUserException.EXCEPTION);
     }
 
     // 독자 회원 가입
@@ -97,6 +111,22 @@ public class UserAdaptor {
         return user.get();
     }
 
+    public List<User> findUsersByIds(Collection<Long> userIds) {
+        return userRepository.findAllById(userIds);
+    }
+
+    public Page<AdminUserListResponse> findAdminUsers(Long userId, String nickname, AccountState accountState, Pageable pageable) {
+        return userRepository.searchAdminUsers(userId, nickname,accountState, pageable);
+    }
+
+    public void clearAllTitles() {
+        userRepository.clearAllTitles();
+    }
+
+    public List<Long> findAdminNotificationTargetUserIds(Long lastUserId, LocalDateTime signupCutoff, Pageable pageable) {
+        return userRepository.findAdminNotificationTargetUserIds(lastUserId, signupCutoff, pageable);
+    }
+
     public Map<Long, StandardProfileInfo> findStandardProfileInfoByUserIds(List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyMap();
@@ -111,6 +141,29 @@ public class UserAdaptor {
                 .collect(Collectors.toMap(
                         StandardProfileInfo::userId,
                         Function.identity(),
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+    }
+
+    // suspendedUntil 기준으로 정지 만료된 유저 일괄 복구 — ReportCase 상태와 독립적
+    public int restoreExpiredSuspensions(LocalDateTime now) {
+        return userRepository.restoreExpiredSuspensions(AccountState.SUSPENDED, now);
+    }
+
+    public int purgeOauthOidBefore(LocalDateTime cutoff) {
+        return userRepository.purgeOauthOidBefore(cutoff);
+    }
+
+    public Map<Long, String> findNicknameMapByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return userRepository.findNicknameInfoByUserIds(userIds).stream()
+                .collect(Collectors.toMap(
+                        UserNicknameInfo::userId,
+                        UserNicknameInfo::nickName,
                         (a, b) -> a,
                         LinkedHashMap::new
                 ));

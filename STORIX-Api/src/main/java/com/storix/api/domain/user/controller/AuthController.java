@@ -11,7 +11,7 @@ import com.storix.domain.domains.user.adaptor.OnboardingUserDetails;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.user.dto.OAuthAuthorizationRequest;
-import com.storix.domain.domains.user.dto.ReaderSignupRequest;
+import com.storix.api.domain.user.controller.dto.ReaderSignupRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "온보딩", description = "온보딩 관련 API")
+@Tag(name = "인증", description = "인증 관련 API")
 public class AuthController {
 
     private final AuthUseCase authUseCase;
@@ -71,6 +71,25 @@ public class AuthController {
         return oauthLoginUseCase.readerOAuthNativeLogin(req, OAuthProvider.APPLE);
     }
 
+    @Operation(summary = "X(트위터) 로그인", description = "X(트위터) 로그인 api 입니다. (OAuth 2.0 PKCE, 웹/앱 공용)  \n" +
+            "code, redirectUri, codeVerifier(PKCE)를 보내주세요.  \n" +
+            "redirectUri로 클라이언트를 구분합니다.  \n" +
+            "- 웹(http/https): accessToken body + refreshToken 쿠키  \n" +
+            "- 앱(커스텀 스킴, 예: storix://): access/refresh 토큰을 body로 반환  \n" +
+            "회원가입이 필요한 유저의 경우 readerPreLoginResponse로 온보딩 토큰을 반환합니다.")
+    @GetMapping("/oauth/x/login")
+    public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> xLogin(
+            @RequestParam("code") String code,
+            @RequestParam("redirectUri") String redirectUri,
+            @RequestParam("codeVerifier") String codeVerifier
+    ) {
+        OAuthAuthorizationRequest req = OAuthAuthorizationRequest.forX(code, redirectUri, codeVerifier);
+        boolean isWeb = redirectUri.startsWith("http://") || redirectUri.startsWith("https://");
+        return isWeb
+                ? oauthLoginUseCase.readerOAuthLogin(req, OAuthProvider.X)
+                : oauthLoginUseCase.readerOAuthNativeLogin(req, OAuthProvider.X);
+    }
+
     @Operation(summary = "카카오 네이티브 로그인", description = "iOS/Android 네이티브 SDK에서 받은 accessToken/idToken을 그대로 검증하여 로그인합니다.  \n" +
             "회원가입한 유저의 경우 readerLoginResponse로 액세스 토큰을 리프레쉬 토큰 쿠키와 함께 반환합니다.   \n" +
             "회원가입이 필요한 유저의 경우 readerPreLoginResponse로 온보딩 토큰을 반환합니다.")
@@ -89,17 +108,18 @@ public class AuthController {
     public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> naverNativeLogin(
             @Valid @RequestBody NaverNativeLoginRequest body
     ) {
-        OAuthAuthorizationRequest req = OAuthAuthorizationRequest.forNaverNative(body.accessToken());
+        OAuthAuthorizationRequest req = OAuthAuthorizationRequest.forNaverNative(body.accessToken(), body.refreshToken());
         return oauthLoginUseCase.readerOAuthNativeLogin(req, OAuthProvider.NAVER);
     }
 
-    @Operation(summary = "독자 계정 회원가입", description = "유저 정보를 최종적으로 등록하는 api 입니다.  \n온보딩 토큰을 보내주세요.")
+    @Operation(summary = "[v1] 독자 계정 회원가입", description = "[v1 > v2 마이그레이션 필요] 유저 정보를 최종적으로 등록하는 api 입니다.   \n" +
+            "온보딩 토큰을 보내주세요.", deprecated = true)
     @PostMapping("/users/reader/signup")
     public ResponseEntity<CustomResponse<AuthorizationResponse>> readerUserSignup(
             @AuthenticationPrincipal OnboardingUserDetails onboardingUser,
             @Valid @RequestBody ReaderSignupRequest req
     ) {
-        return authUseCase.readerSignup(req, onboardingUser.getJti());
+        return authUseCase.readerSignup(req.toData(), onboardingUser.getJti());
     }
 
     @Operation(summary = "닉네임 중복 체크", description = "닉네임 중복 여부를 체크하는 api 입니다.")
@@ -132,20 +152,22 @@ public class AuthController {
         return authorizationUseCase.getTokenRefresh(cookieRefreshToken, bodyRefreshToken);
     }
 
-    @Operation(summary = "로그아웃", description = "로그아웃용 api 입니다.   \n액세스 토큰을 보내주세요.")
+    @Operation(summary = "[v1] 로그아웃", description = "[v1 > v2 마이그레이션 필요] 로그아웃용 api 입니다.   \n" +
+            "액세스 토큰을 보내주세요.", deprecated = true)
     @PostMapping("/user/logout")
     public ResponseEntity<CustomResponse<Void>> logout(
             @AuthenticationPrincipal AuthUserDetails authUserDetails
     ) {
-        return logoutUseCase.execute(authUserDetails.getUserId());
+        return logoutUseCase.execute(authUserDetails.getUserId(), null);
     }
 
-    @Operation(summary = "회원 탈퇴", description = "회원 탈퇴용 api 입니다.   \n액세스 토큰을 보내주세요.")
+    @Operation(summary = "[v1] 회원 탈퇴", description = "[v1 > v2 마이그레이션 필요] 회원 탈퇴용 api 입니다.   \n" +
+            "회원 계정과 관련된 Refresh 토큰과 모든 디바이스의 FCM 토큰을 비활성화합니다.", deprecated = true)
     @DeleteMapping("/user/withdraw")
     public ResponseEntity<CustomResponse<Void>> withdraw(
             @AuthenticationPrincipal AuthUserDetails authUserDetails
     ) {
-        return withDrawUseCase.execute(authUserDetails.getUserId());
+        return withDrawUseCase.execute(authUserDetails.getUserId(), null, null);
     }
 
 }

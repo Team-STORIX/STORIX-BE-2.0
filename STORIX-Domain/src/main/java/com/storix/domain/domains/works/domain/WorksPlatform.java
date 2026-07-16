@@ -20,6 +20,7 @@ public class WorksPlatform {
     @JoinColumn(name = "works_id", nullable = false)
     private Works works;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Platform platform;
 

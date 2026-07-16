@@ -1,6 +1,6 @@
 package com.storix.api.domain.search;
 
-import com.storix.domain.domains.search.application.SearchUseCase;
+import com.storix.api.domain.search.usecase.SearchUseCase;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
@@ -34,11 +34,13 @@ public class SearchV2Controller {
     private final TopicRoomUseCase topicRoomUseCase;
 
     @GetMapping("/works")
-    @Operation(summary = "작품 다중 필터 검색", description = "작품 유형, 장르 필터 + 정렬 기준으로 검색합니다.    \nSwagger 테스트 시 ctrl/cmd + 클릭으로 다중 선택이 가능합니다.")
+    @Operation(summary = "작품 다중 필터 검색", description = "작품 유형, 장르 필터 + 정렬 기준으로 검색합니다.    \n"
+            + "검색어가 '#'으로 시작하면 해당 해시태그로 시작하는 해시태그를 가진 작품을 검색하고, 그 외에는 작품명으로 검색합니다.    \n"
+            + "Swagger 테스트 시 ctrl/cmd + 클릭으로 다중 선택이 가능합니다.")
     public CustomResponse<SearchResponseWrapperDto<WorksSearchResponseDto>> searchWorksWithFilters(
             @AuthenticationPrincipal AuthUserDetails authUser,
 
-            @Parameter(description = "작품명")
+            @Parameter(description = "검색어 — '#'으로 시작하면 해시태그 검색, 그 외에는 작품명 검색")
             @RequestParam String keyword,
 
             @Parameter(description = "작품 유형 (다중 선택 가능)")
@@ -54,10 +56,7 @@ public class SearchV2Controller {
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
 
-        return CustomResponse.onSuccess(
-                SuccessCode.SUCCESS,
-                searchUseCase.searchWorksWithFilters(authUser.getUserId(), keyword, worksTypes, genres, pageable)
-        );
+        return searchUseCase.searchWorksWithFilters(authUser.getUserId(), keyword, worksTypes, genres, pageable);
     }
 
     // 토픽룸 다중 필터 검색

@@ -8,11 +8,14 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface UserGenreRawScoreRepository extends JpaRepository<UserGenreRawScore, UserGenreRawScoreId> {
 
     List<UserGenreRawScore> findAllByIdUserId(Long userId);
+
+    List<UserGenreRawScore> findAllByIdUserIdIn(Collection<Long> userIds);
 
     @Modifying
     @Query(value = """

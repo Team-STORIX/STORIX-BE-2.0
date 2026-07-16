@@ -1,10 +1,14 @@
 package com.storix.domain.domains.feed.domain;
 
 import com.storix.common.model.BaseTimeEntity;
+import com.storix.domain.domains.plus.domain.DeletedBy;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
 
 @Getter
 @MappedSuperclass
@@ -33,8 +37,36 @@ public abstract class BoardReply extends BaseTimeEntity {
     @Column(nullable = false)
     protected boolean deleted = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deleted_by")
+    protected DeletedBy deletedBy;
+
+    @Column(name = "deleted_at")
+    protected LocalDateTime deletedAt;
+
     public String getDisplayComment() {
         return deleted ? "삭제된 댓글입니다" : comment;
+    }
+
+    public boolean softDeleteByAdmin() {
+        if (this.deleted) return false;
+        this.deleted = true;
+        this.deletedBy = DeletedBy.ADMIN;
+        this.deletedAt = LocalDateTime.now();
+        return true;
+    }
+
+    public boolean softDeleteByUser() {
+        if (this.deleted) return false;
+        this.deleted = true;
+        this.deletedBy = DeletedBy.USER;
+        this.deletedAt = LocalDateTime.now();
+        return true;
+    }
+
+    // 필드 추가 이전 삭제 데이터는 deletedBy가 없으므로 USER로 간주
+    public DeletedBy getDeletedBy() {
+        return (deleted && deletedBy == null) ? DeletedBy.USER : deletedBy;
     }
 
     public abstract Long getBoardId();

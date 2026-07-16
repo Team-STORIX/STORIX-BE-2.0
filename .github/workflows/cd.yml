@@ -31,6 +31,10 @@ jobs:
           docker compose pull app
           docker compose pull batch
 
+          echo ">>> Fetching config.alloy..."
+          mkdir -p alloy
+          curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/develop/monitoring/app-side/config.alloy -o alloy/config.alloy
+
           echo ">>> Starting new containers..."
           docker compose up -d
 

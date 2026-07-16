@@ -1,0 +1,71 @@
+package com.storix.domain.domains.report.dto;
+
+import com.storix.domain.domains.chat.domain.MessageType;
+import com.storix.domain.domains.report.domain.ReportAction;
+import com.storix.domain.domains.report.domain.ReportStatus;
+import com.storix.domain.domains.report.domain.TargetContentType;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+
+public record AdminReportDetailResponse(
+        Long reportCaseId,
+        TargetContentType targetType,
+        Long targetId,
+        ReportStatus status,
+        Long processedByAdminId,
+        String processMemo,
+        Set<ReportAction> processActions,
+        LocalDateTime receivedAt,
+        LocalDateTime processedAt,
+        boolean reopened,
+        Summary summary,
+        List<ReportItem> reports,
+        ReportedContent reportedContent
+) {
+
+    public record Summary(
+            Long reportedUserId,
+            String reportedUserNickName,
+            String location,
+            String reason,
+            String otherReason,
+            long reportCount,
+            LocalDateTime firstReportedAt
+    ) {
+    }
+
+    public record ReportItem(
+            Long reportId,
+            Long reporterId,
+            String reporterNickName,
+            Long reportedUserId,
+            String reason,
+            String otherReason,
+            LocalDateTime reportedAt
+    ) {
+    }
+
+    public record ReportedContent(
+            TargetContentType targetType,
+            Long targetId,
+            Long parentTargetId,
+            Long authorUserId,
+            String authorNickName,
+            String content,
+            LocalDateTime createdAt,
+            List<ReportedChatMessage> chatMessages
+    ) {
+    }
+
+    public record ReportedChatMessage(
+            Long messageId,
+            Long senderId,
+            String senderNickName,
+            String message,
+            MessageType messageType,
+            LocalDateTime createdAt
+    ) {
+    }
+}

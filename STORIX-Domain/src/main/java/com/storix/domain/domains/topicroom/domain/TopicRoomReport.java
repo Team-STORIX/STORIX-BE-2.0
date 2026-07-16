@@ -10,6 +10,15 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Table(
+        name = "topic_room_report",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_topic_room_report_reporter_reported_room_message",
+                        columnNames = {"reporter_id", "reported_user_id", "topic_room_id", "chat_message_id"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TopicRoomReport extends BaseTimeEntity {
 
@@ -21,18 +30,31 @@ public class TopicRoomReport extends BaseTimeEntity {
     private Long reportedUserId;
     private Long topicRoomId;
 
+    // 유저 신고는 0으로 저장함. NULL을 허용하면 중복이 DB단에서 막히지 않으므로 NOT NULL
+    @Column(name = "chat_message_id", nullable = false)
+    private Long chatMessageId;
+
     @Enumerated(EnumType.STRING)
     private ReportReason reason;
 
     @Column(length = 100)
     private String otherReason;
 
+    @Column(name = "report_case_id")
+    private Long reportCaseId;
+
+    public TopicRoomReport(Long reporterId, Long reportedUserId, Long topicRoomId, Long chatMessageId, ReportReason reason, String otherReason) {
+        this(reporterId, reportedUserId, topicRoomId, chatMessageId, reason, otherReason, null);
+    }
+
     @Builder
-    public TopicRoomReport(Long reporterId, Long reportedUserId, Long topicRoomId, ReportReason reason, String otherReason) {
+    public TopicRoomReport(Long reporterId, Long reportedUserId, Long topicRoomId, Long chatMessageId, ReportReason reason, String otherReason, Long reportCaseId) {
         this.reporterId = reporterId;
         this.reportedUserId = reportedUserId;
         this.topicRoomId = topicRoomId;
+        this.chatMessageId = chatMessageId;
         this.reason = reason;
         this.otherReason = otherReason;
+        this.reportCaseId = reportCaseId;
     }
 }

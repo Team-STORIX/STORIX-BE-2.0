@@ -41,10 +41,8 @@ out/
 *.env
 
 ### 추가가 필요한 파일은 예외로 추가하기 ###
-*.yml
-!ci.yml
-!cd.yml
-*application.yml
+application.yml
+application-*.yml
 *.properties
 
 !gradle/wrapper/gradle-wrapper.jar
@@ -52,3 +50,12 @@ out/
 
 .omc/state
 /storix-db-tunnel.sh
+/storix-grafana-tunnel.sh
+.claude
+/tools
+*.sql
+
+/docker-compose.yml
+
+### nginx basic auth
+monitoring/nginx/.htpasswd

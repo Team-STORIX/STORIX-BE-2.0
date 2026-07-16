@@ -32,6 +32,12 @@ public class TokenAdaptor {
         refreshTokenRepository.deleteById(userId);
     }
 
+    // 토큰이 없어도 예외 없이 삭제 (계정 정지 시 사용)
+    public void deleteRefreshTokenByUserIdIfPresent(Long userId) {
+        refreshTokenRepository.findById(userId)
+                .ifPresent(refreshTokenRepository::delete);
+    }
+
     public void deleteRefreshToken(String refreshToken) {
         refreshTokenRepository.deleteByRefreshToken(refreshToken);
     }
@@ -47,7 +53,10 @@ public class TokenAdaptor {
             throw InvalidTokenException.EXCEPTION;
         }
 
-        return new OnboardingPrincipal(onboardingToken.get().getProvider(), onboardingToken.get().getOid());
+        return new OnboardingPrincipal(
+                onboardingToken.get().getProvider(),
+                onboardingToken.get().getOid(),
+                onboardingToken.get().getOauthRefreshToken());
     }
 
     public void deleteOnboardingTokenByJti(String jti) { onboardingTokenRepository.deleteById(jti);}

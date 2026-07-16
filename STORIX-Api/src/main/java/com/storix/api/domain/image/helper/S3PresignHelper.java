@@ -2,7 +2,7 @@ package com.storix.api.domain.image.helper;
 
 import com.storix.domain.domains.image.dto.PresignedUrlResponse;
 
-import com.storix.domain.domains.image.exception.ImageInvalidContentTypeException;
+import com.storix.common.utils.ImageContentType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -38,7 +38,7 @@ public class S3PresignHelper {
     // 공개/비공개 컨텐츠 용 (프로필, 게시글, 리뷰)
     public PresignedUrlResponse createPresignedPutUrl(Long userId, String contentType, String objectKeyPrefix) {
 
-        String ext = contentTypeToExt(contentType);
+        String ext = ImageContentType.toExtension(contentType);
         String objectKey = objectKeyPrefix + "/" + userId + "/" + UUID.randomUUID() + "." + ext;
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -82,7 +82,7 @@ public class S3PresignHelper {
     // 이미지 다운로드 용
     public PresignedUrlResponse createPresignedDownloadUrl(String objectKey, String contentType) {
 
-        String ext = contentTypeToExt(contentType);
+        String ext = ImageContentType.toExtension(contentType);
         String downloadFileName = nowAsKeyPart() + "." + ext;
 
         GetObjectRequest getReq = GetObjectRequest.builder()
@@ -104,16 +104,6 @@ public class S3PresignHelper {
                 objectKey,
                 presignReq.signatureDuration().toSeconds()
         );
-    }
-
-    // ContentType
-    private String contentTypeToExt(String contentType) {
-        return switch (contentType) {
-            case "image/jpeg" -> "jpg";
-            case "image/png" -> "png";
-            case "image/webp" -> "webp";
-            default -> throw ImageInvalidContentTypeException.EXCEPTION;
-        };
     }
 
 }

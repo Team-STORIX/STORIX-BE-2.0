@@ -10,7 +10,11 @@ dependencies {
     api 'com.fasterxml.jackson.core:jackson-databind'
 
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.micrometer:micrometer-core'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'org.ahocorasick:ahocorasick:0.6.3'
+
+    compileOnly 'io.swagger.core.v3:swagger-annotations-jakarta:2.2.22'
 
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'

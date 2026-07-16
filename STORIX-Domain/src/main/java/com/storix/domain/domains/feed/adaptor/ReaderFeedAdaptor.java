@@ -14,10 +14,12 @@ import com.storix.domain.domains.plus.dto.StandardReaderBoardInfo;
 import com.storix.domain.domains.plus.repository.ReaderBoardRepository;
 import com.storix.domain.domains.feed.exception.BoardReplyNotFoundException;
 import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -35,9 +37,9 @@ public class ReaderFeedAdaptor {
     private final ReaderBoardReplyRepository readerBoardReplyRepository;
     private final ReaderBoardReplyLikeRepository readerBoardReplyLikeRepository;
 
-    // 게시물 존재 여부 확인
+    // 게시물 존재 여부 확인 (삭제된 게시글 차단)
     public void checkReaderBoardExist(Long boardId) {
-        if (!readerBoardRepository.existsById(boardId)) {
+        if (!readerBoardRepository.existsByIdAndDeletedFalse(boardId)) {
             throw InvalidBoardRequestException.EXCEPTION;
         }
     }
@@ -52,9 +54,31 @@ public class ReaderFeedAdaptor {
         }
     }
 
+    // 게시글 확인 (삭제된 게시글에 대한 쓰기 작업 차단)
+    public ReaderBoard findActiveReaderBoardById(Long boardId) {
+        ReaderBoard readerBoard = findReaderBoardById(boardId);
+        if (readerBoard.isDeleted()) {
+            throw InvalidBoardRequestException.EXCEPTION;
+        }
+        return readerBoard;
+    }
+
+    // 게시글 작성자 userId 조회
+    public Long findBoardOwnerUserId(Long boardId) {
+        return readerBoardRepository.findUserIdById(boardId)
+                .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
+    }
+
     // 전체 게시글 확인
     public Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(Pageable pageable) {
         return readerBoardRepository.findAllByOrderByCreatedAtDesc(pageable);
+    }
+
+    public Slice<ReaderBoard> findAllExcludingBlocked(List<Long> blockedIds, Pageable pageable) {
+        if (blockedIds.isEmpty()) {
+            return readerBoardRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
+        return readerBoardRepository.findAllExcludingBlockedOrderByCreatedAtDesc(blockedIds, pageable);
     }
 
     // 리스트 좋아요 정보 확인
@@ -141,11 +165,27 @@ public class ReaderFeedAdaptor {
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
     }
 
-    // 댓글 존재 여부 확인
+    // 댓글 존재 여부 확인 (삭제된 댓글 차단)
     public void checkReplyExist(Long boardId, Long replyId) {
-        if (!readerBoardReplyRepository.existsByIdAndBoard_Id(replyId, boardId)) {
+        if (!readerBoardReplyRepository.existsByIdAndBoard_IdAndDeletedFalse(replyId, boardId)) {
             throw BoardReplyNotFoundException.EXCEPTION;
         }
+    }
+
+    // 댓글 조회 (boardId 일치 검증 포함)
+    public ReaderBoardReply findReplyByBoardIdAndReplyId(Long boardId, Long replyId) {
+        return readerBoardReplyRepository.findByIdAndBoard_Id(replyId, boardId)
+                .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
+    }
+
+    // 댓글 작성자 userId 조회 (boardId 일치 검증 + 삭제된 댓글 차단)
+    public Long findReplyOwnerUserId(Long boardId, Long replyId) {
+        return readerBoardReplyRepository.findActiveUserIdByIdAndBoardId(replyId, boardId)
+                .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
+    }
+
+    public Long findReplyOwnerUserId(Long replyId) {
+        return findReplyById(replyId).getUserId();
     }
 
     // 댓글 좋아요 관련
@@ -211,17 +251,34 @@ public class ReaderFeedAdaptor {
 
     }
 
+    // 관리자 댓글 강제 삭제 (소유권 검증 없음, 원문 보존 soft delete, idempotent)
+    public void adminDeleteReaderBoardReply(Long replyId) {
+        ReaderBoardReply reply = readerBoardReplyRepository.findById(replyId)
+                .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
+
+        if (readerBoardReplyRepository.softDeleteByAdminIfNotDeleted(replyId, LocalDateTime.now()) > 0) {
+            readerBoardRepository.decrementReplyCount(reply.getBoardId());
+        }
+    }
+
     // 답댓글 조회
     public Slice<ReaderBoardReply> findAllByParentReplyId(Long parentReplyId, Pageable pageable) {
         return readerBoardReplyRepository.findAllByParentReplyId(parentReplyId, pageable);
     }
 
-    // 게시물 - 댓글 정보 확인
+    // 게시물 댓글 정보 확인
     public Slice<ReaderBoardReply> findAllByBoardId(Long boardId, Pageable pageable) {
         return readerBoardReplyRepository.findAllByBoard_Id(boardId, pageable);
     }
 
-    // 게시물 - 댓글 좋아요 여부 확인
+    public Slice<ReaderBoardReply> findAllByBoardIdExcludingBlocked(Long boardId, List<Long> blockedIds, Pageable pageable) {
+        if (blockedIds.isEmpty()) {
+            return readerBoardReplyRepository.findAllByBoard_Id(boardId, pageable);
+        }
+        return readerBoardReplyRepository.findAllByBoard_IdExcludingBlocked(boardId, blockedIds, pageable);
+    }
+
+    // 게시물 댓글 좋아요 여부 확인
     public Set<Long> findLikedReplyIds(Long userId, List<Long> replyIds) {
         if (userId == null || replyIds == null || replyIds.isEmpty()) {
             return Collections.emptySet();
@@ -230,12 +287,24 @@ public class ReaderFeedAdaptor {
         return new HashSet<>(readerBoardReplyLikeRepository.findLikedReplyIds(userId, replyIds));
     }
 
-    // 프로필 - 댓글 정보 확인
+    // 프로필 댓글 정보 확인
     public Slice<ReaderBoardReply> findAllByUserId(Long userId, Pageable pageable) {
         return readerBoardReplyRepository.findAllByUserId(userId, pageable);
     }
 
-    // 프로필 - 좋아요한 게시글 정보 확인
+    public long countActiveRepliesByUserId(Long userId) {
+        return readerBoardReplyRepository.countByUserIdAndDeletedFalse(userId);
+    }
+
+    public Page<AdminUserContentItemResponse> findAdminReplyContentsByUserId(Long userId, Pageable pageable) {
+        return readerBoardReplyRepository.findAdminReplyContentsByUserId(userId, pageable);
+    }
+
+    public List<AdminUserContentItemResponse> findAdminReplyContentsByIds(List<Long> ids) {
+        return readerBoardReplyRepository.findAdminReplyContentsByIds(ids);
+    }
+
+    // 프로필 좋아요한 게시글 정보 확인
     public Slice<ReaderBoard> findAllLikedReaderBoards(Long userId, Pageable pageable) {
         return readerBoardRepository.findAllLikedReaderBoards(userId, pageable);
     }
@@ -256,6 +325,10 @@ public class ReaderFeedAdaptor {
             return readerBoardRepository.findSteadyTrendingFeed(threshold, pageable);
         }
         return readerBoardRepository.findSteadyTrendingFeedNotToday(excludeIds, threshold, pageable);
+    }
+
+    public int hardDeleteRepliesBefore(LocalDateTime cutoff) {
+        return readerBoardReplyRepository.hardDeleteBefore(cutoff);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.storix.api.domain.plus.controller.dto;
 
+import com.storix.domain.domains.feed.domain.BoardTheme;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -19,6 +20,8 @@ public record ReaderBoardUploadRequest(
         @NotBlank(message = "게시글 내용을 입력해주세요.")
         @Size(max = 300, message = "게시글은 300자까지 가능합니다.")
         String content,
+
+        BoardTheme theme,
 
         @Size(min = 1, max = 3, message = "게시글 이미지는 3개까지 업로드 가능합니다.")
         List<FileKeys> files

@@ -15,6 +15,8 @@ import com.storix.domain.domains.review.dto.SliceReviewInfoWithProfile;
 import com.storix.domain.domains.review.dto.StandardReviewInfo;
 import com.storix.domain.domains.review.dto.StandardSliceReviewInfo;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
+import com.storix.domain.domains.user.exception.block.BlockedUserContentException;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
@@ -36,6 +38,7 @@ import java.util.Objects;
 public class ReviewService {
 
     private final UserAdaptor userAdaptor;
+    private final UserBlockAdaptor userBlockAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final ReviewLikeAdaptor reviewLikeAdaptor;
     private final LibraryAdaptor libraryAdaptor;
@@ -96,8 +99,12 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public Slice<SliceReviewInfoWithProfile> findAllReviewWithoutMine(Long userId, Long worksId, Pageable pageable) {
 
-        // 1) 다른 사람의 리뷰 정보
-        Slice<SliceReviewInfo> reviews = reviewAdaptor.getOtherReviewInfo(userId, worksId, pageable);
+        List<Long> blockedIds = userId != null
+                ? userBlockAdaptor.findBlockedUserIds(userId)
+                : List.of();
+
+        // 1) 다른 사람의 리뷰 정보 (차단 유저 제외)
+        Slice<SliceReviewInfo> reviews = reviewAdaptor.getOtherReviewInfoExcludingBlocked(userId, worksId, blockedIds, pageable);
 
         if (reviews.isEmpty()) {
             return new SliceImpl<>(List.of(), pageable, reviews.hasNext());
@@ -135,6 +142,10 @@ public class ReviewService {
 
         // 1) 리뷰 정보
         ReviewInfo reviewInfo = reviewAdaptor.findReviewById(reviewId);
+
+        if (userId != null && userBlockAdaptor.isBlocked(userId, reviewInfo.reviewerId())) {
+            throw BlockedUserContentException.EXCEPTION;
+        }
         boolean isLiked = reviewLikeAdaptor.isAlreadyLiked(userId, reviewId);
         StandardReviewInfo review = StandardReviewInfo.fromReviewInfo(reviewInfo, isLiked);
 

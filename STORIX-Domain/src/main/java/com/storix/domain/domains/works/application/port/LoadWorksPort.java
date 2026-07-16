@@ -1,12 +1,10 @@
 package com.storix.domain.domains.works.application.port;
 
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
-import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
-import com.storix.domain.domains.works.domain.WorksSortType;
 import com.storix.domain.domains.works.domain.WorksType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -16,10 +14,15 @@ import java.util.Map;
 
 public interface LoadWorksPort {
 
+    // 작품명으로 작품 검색
     Slice<Works> searchWorks(String keyword, Pageable pageable);
 
+    // 다중 필터 + 작품명으로 작품 검색
     Slice<Works> searchWorksWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable);
-  
+
+    // 다중 필터 + 해시태그명으로 작품 검색
+    Slice<Works> searchWorksByHashtagWithFilters(String hashtagKeyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable);
+
     Works findById(Long worksId);
 
     // 키워드로 작품 ID 리스트만 조회 (검색용)
@@ -52,10 +55,9 @@ public interface LoadWorksPort {
     // 피드 관심 작품 리스트 용
     Map<Long, SlicedWorksInfo> findAllSlicedWorksInfoByWorksIds(List<Long> worksIds);
 
-    Map<Long, TopicRoomWorksInfo> loadWorksMapByIds(List<Long> worksIds);
-
     // 랜덤 작품 조회 (없으면 빈 리스트)
     List<Works> findRandomWorksExcluding(List<Long> excludedIds, int limit);
 
     List<Works> findWorksByIds(List<Long> worksIds);
+
 }

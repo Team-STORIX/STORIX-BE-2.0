@@ -37,7 +37,6 @@ public enum ErrorCode {
     ONBOARDING_DUPLICATE_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_001", "이미 사용 중인 닉네임입니다."),
     PROFILE_DUPLICATE_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_002", "이미 사용 중인 닉네임입니다."),
     PROFILE_FORBIDDEN_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_003", "사용할 수 없는 닉네임입니다."),
-    PROFILE_INVALID_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_004", "금칙어가 포함된 닉네임입니다."),
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "USER_ERROR_001", "로그인이 필요합니다."),
     FORBIDDEN_APPROACH(HttpStatus.FORBIDDEN, "USER_ERROR_002", "해당 요청을 수행할 권한이 없습니다."),
 
@@ -48,6 +47,8 @@ public enum ErrorCode {
 
     // Image error
     IMAGE_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "IMAGE_ERROR_001", "지원하지 않는 Content Type입니다."),
+    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_ERROR_002", "이미지 업로드에 실패했습니다."),
+    IMAGE_FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "IMAGE_ERROR_003", "업로드 가능한 파일 크기를 초과했습니다."),
 
     // Other Server error
     OTHER_SERVER_BAD_REQUEST(HttpStatus.BAD_REQUEST, "FEIGN_ERROR_1", "Other server bad request"),
@@ -90,11 +91,51 @@ public enum ErrorCode {
     SLACK_SEND_MESSAGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SLACK_ERROR_001", "Slack 메시지 전송에 실패했습니다."),
     SLACK_INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "SLACK_ERROR_002", "Slack 서명 검증에 실패했습니다."),
 
-    // Developer Auth error
-    DEVELOPER_SIGNUP_PENDING_NOT_FOUND(HttpStatus.NOT_FOUND, "DEV_AUTH_ERROR_001", "개발자 회원가입 대기 요청을 찾을 수 없습니다."),
-    DEVELOPER_NOT_APPROVED(HttpStatus.BAD_REQUEST, "DEV_AUTH_ERROR_002", "아직 Slack 승인이 완료되지 않았습니다."),
+    // Tester Auth error
+    TESTER_SIGNUP_PENDING_NOT_FOUND(HttpStatus.NOT_FOUND, "DEV_AUTH_ERROR_001", "테스터 회원가입 대기 요청을 찾을 수 없습니다."),
+    TESTER_NOT_APPROVED(HttpStatus.BAD_REQUEST, "DEV_AUTH_ERROR_002", "아직 Slack 승인이 완료되지 않았습니다."),
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "DEV_AUTH_ERROR_003", "지원하지 않는 OAuth Provider입니다."),
-    DEVELOPER_IDENTIFIER_MISMATCH(HttpStatus.FORBIDDEN, "DEV_AUTH_ERROR_004", "개발자 식별자가 일치하지 않습니다."),
+    TESTER_IDENTIFIER_MISMATCH(HttpStatus.FORBIDDEN, "DEV_AUTH_ERROR_004", "테스터 식별자가 일치하지 않습니다."),
+
+    // Admin Auth error
+    ADMIN_SIGNUP_PENDING_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN_AUTH_ERROR_001", "관리자 회원가입 대기 요청을 찾을 수 없습니다."),
+    ADMIN_IDENTIFIER_MISMATCH(HttpStatus.FORBIDDEN, "ADMIN_AUTH_ERROR_002", "관리자 식별자가 일치하지 않습니다."),
+    ADMIN_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "ADMIN_AUTH_ERROR_003", "ID 또는 비밀번호가 올바르지 않습니다."),
+
+    // Admin Notification error
+    ADMIN_NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN_NOTIFICATION_ERROR_001", "존재하지 않는 운영자 알림입니다."),
+    ADMIN_NOTIFICATION_NOT_UPDATABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_007", "발송 예정 상태에서만 수정할 수 있습니다."),
+    ADMIN_NOTIFICATION_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_008", "발송 예정 상태에서만 취소할 수 있습니다."),
+    ADMIN_NOTIFICATION_NOT_REBROADCASTABLE(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_009", "발송 실패 상태에서만 재발송할 수 있습니다."),
+    ADMIN_NOTIFICATION_MARKETING_NIGHT_BLOCKED(HttpStatus.BAD_REQUEST, "ADMIN_NOTIFICATION_ERROR_010", "야간(21시~익일 8시)에는 마케팅 알림을 발송할 수 없습니다."),
+
+    // Event Popup error
+    EVENT_POPUP_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_POPUP_ERROR_001", "존재하지 않는 이벤트 팝업입니다."),
+    EVENT_POPUP_INVALID_DISPLAY_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_005", "팝업 노출 종료 일시는 시작 일시 이후여야 합니다."),
+    EVENT_POPUP_OVERLAPPING(HttpStatus.CONFLICT, "EVENT_POPUP_ERROR_006", "동시에 여러 팝업을 노출할 수 없습니다."),
+    EVENT_POPUP_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_007", "발급되지 않았거나 만료된 팝업 이미지 키입니다."),
+    EVENT_POPUP_OUT_OF_EVENT_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_009", "팝업 노출 기간은 소속 앱 이벤트 기간 안에 있어야 합니다."),
+    EVENT_POPUP_APP_EVENT_REQUIRED(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_010", "APP_EVENT 유형 팝업은 소속 앱 이벤트가 필수입니다."),
+
+    // Event Banner error
+    EVENT_BANNER_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_BANNER_ERROR_001", "존재하지 않는 이벤트 배너입니다."),
+    EVENT_BANNER_INVALID_DISPLAY_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_002", "배너 노출 종료 일시는 시작 일시 이후여야 합니다."),
+    EVENT_BANNER_OVERLAPPING(HttpStatus.CONFLICT, "EVENT_BANNER_ERROR_003", "동시에 노출 가능한 배너는 최대 3개입니다."),
+    EVENT_BANNER_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_004", "발급되지 않았거나 만료된 배너 이미지 키입니다."),
+    EVENT_BANNER_OUT_OF_EVENT_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_005", "배너 노출 기간은 소속 앱 이벤트 기간 안에 있어야 합니다."),
+    EVENT_BANNER_APP_EVENT_REQUIRED(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_006", "APP_EVENT 유형 배너는 소속 앱 이벤트가 필수입니다."),
+
+    // Admin App Event error
+    ADMIN_APP_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN_APP_EVENT_ERROR_001", "존재하지 않는 앱 이벤트입니다."),
+    ADMIN_APP_EVENT_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_002", "앱 이벤트명은 필수입니다."),
+    ADMIN_APP_EVENT_PERIOD_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_003", "앱 이벤트 시작/종료 일시는 필수입니다."),
+    ADMIN_APP_EVENT_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_004", "앱 이벤트 종료 일시는 시작 일시 이후여야 합니다."),
+
+    // App Event error
+    APP_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "APP_EVENT_ERROR_001", "존재하지 않는 앱 이벤트입니다."),
+    APP_EVENT_FORBIDDEN(HttpStatus.FORBIDDEN, "APP_EVENT_ERROR_002", "앱 이벤트를 확인할 권한이 없습니다."),
+    APP_EVENT_PAYLOAD_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_003", "앱 이벤트 payload 직렬화에 실패했습니다."),
+    APP_EVENT_WINNER_FINALIZER_NOT_IMPLEMENTED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_004", "당첨자 이벤트(hasWinner=true)는 종료 시 당첨자 확정(EventWinnerFinalizer) 구현이 필수입니다."),
 
     // OIDC error
     OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),
@@ -102,6 +143,12 @@ public enum ErrorCode {
     // Notification error
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_ERROR_001", "알림을 찾을 수 없습니다"),
     NOTIFICATION_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "NOTIFICATION_ERROR_002", "인가되지 않은 접근입니다."),
+    FCM_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NOTIFICATION_ERROR_003", "FCM 푸시 전송에 실패했습니다."),
+    FCM_TRANSIENT_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "NOTIFICATION_ERROR_005", "FCM 일시 오류로 재시도 대상입니다."),
+    NOTIFICATION_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_ERROR_004", "유저의 알림 설정이 존재하지 않습니다."),
+
+    // PushDevice error
+    PUSH_DEVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "DEVICE_ERROR_001", "해당 기기 식별자로 등록된 디바이스가 없습니다."),
 
     // Topic Room error
     ADULT_VERIFICATION_REQUIRED(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_001", "성인인증이 되지 않은 사용자입니다."),
@@ -113,6 +160,7 @@ public enum ErrorCode {
     TOPIC_ROOM_ALREADY_EXISTS(HttpStatus.CONFLICT, "TOPIC_ROOM_ERROR_007", "이미 해당 작품에 대한 토픽룸이 존재합니다."),
     TOPIC_ROOM_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_008", "해당 토픽룸에 참여하지 않은 유저입니다."),
     TODAY_TOPIC_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_009", "오늘의 토픽룸이 없습니다."),
+    DUPLICATE_TOPIC_ROOM_REPORT(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_010", "이미 신고한 사용자입니다."),
 
     // Search error
     SEARCH_NO_TOPIC_ROOM_FOUND(HttpStatus.NOT_FOUND, "SEARCH_ERROR_001", "검색한 키워드로 조회되는 토픽룸이 없습니다."),
@@ -154,7 +202,33 @@ public enum ErrorCode {
     SPOILER_SCRIPT_REQUIRED(HttpStatus.BAD_REQUEST, "SPOILER_ERROR_001", "스포일러 설정 시 스포일러 문구를 입력해주세요."),
 
     // Preference error
-    PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다.");
+    PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다."),
+
+    // Block error
+    SELF_BLOCK_ERROR(HttpStatus.BAD_REQUEST, "BLOCK_ERROR_001", "자기 자신은 차단할 수 없습니다."),
+    DUPLICATE_USER_BLOCK(HttpStatus.CONFLICT, "BLOCK_ERROR_002", "이미 차단한 사용자입니다."),
+    BLOCKED_USER_CONTENT(HttpStatus.FORBIDDEN, "BLOCK_ERROR_003", "차단한 사용자의 콘텐츠에 접근할 수 없습니다."),
+
+    // Report error
+    REPORT_CASE_ALREADY_PROCESSED(HttpStatus.CONFLICT, "REPORT_ERROR_001", "이미 처리된 신고 케이스입니다."),
+    INVALID_REPORT_PROCESS_REQUEST(HttpStatus.BAD_REQUEST, "REPORT_ERROR_002", "신고 처리 요청이 올바르지 않습니다."),
+    UNKNOWN_REPORT_CASE(HttpStatus.NOT_FOUND, "REPORT_ERROR_003", "해당 신고 케이스를 찾을 수 없습니다."),
+    INVALID_REPORT_ACTION_COMBINATION(HttpStatus.BAD_REQUEST, "REPORT_ERROR_004", "계정 정지와 계정 삭제는 동시에 적용할 수 없습니다."),
+
+    // Suspended user error
+    SUSPENDED_USER(HttpStatus.FORBIDDEN, "USER_ERROR_003", "정지된 계정입니다."),
+    INVALID_ADMIN_USER_SANCTION_REQUEST(HttpStatus.BAD_REQUEST, "USER_ERROR_004", "관리자 유저 제재 요청이 올바르지 않습니다."),
+    USER_NOT_SUSPENDED(HttpStatus.BAD_REQUEST, "USER_ERROR_005", "정지 상태가 아닌 유저입니다."),
+    USER_ALREADY_SUSPENDED(HttpStatus.CONFLICT, "USER_ERROR_006", "이미 정지 처리된 유저입니다."),
+
+    // Terms error
+    DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다."),
+    CURRENT_TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_ERROR_002", "현재 시행 중인 약관이 없습니다. 약관 등록 여부를 확인해주세요."),
+
+    // Banned Word error
+    BANNED_WORD_NOT_FOUND(HttpStatus.NOT_FOUND, "BANNED_WORD_ERROR_001", "해당 금칙어를 찾을 수 없습니다."),
+    DUPLICATE_BANNED_WORD(HttpStatus.CONFLICT, "BANNED_WORD_ERROR_002", "이미 등록된 금칙어입니다."),
+    BANNED_WORD_CSV_PARSE_ERROR(HttpStatus.BAD_REQUEST, "BANNED_WORD_ERROR_003", "금칙어 CSV 파일을 읽을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

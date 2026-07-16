@@ -7,11 +7,12 @@ import java.util.List;
 
 public interface UpdateTopicRoomPort {
 
-    void updateLastChatTime(Long roomId, LocalDateTime lastChatTime);
-
     // 여러 방의 인기도 점수 일괄 업데이트
     void updatePopularity(List<TopicRoom> rooms);
 
     // 여러 방의 이전 참여자 수 일괄 업데이트
     void updatePreviousActiveUserNumbers(List<TopicRoom> rooms);
+
+    // 활동 점수 DB 단일 UPDATE 로 일괄 갱신
+    int updateActivityScores(LocalDateTime messageSince, LocalDateTime freshnessSince);
 }

@@ -1,13 +1,18 @@
 package com.storix.infrastructure.external.slack;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.storix.common.property.SlackProperties;
 import com.storix.domain.domains.user.exception.oauth.SlackInvalidSignatureException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -21,9 +26,34 @@ public class SlackSignatureVerifier {
     private static final String VERSION = "v0";
     private static final long TIMESTAMP_TOLERANCE_SECONDS = 300;
 
-    private final SlackProperties slackProperties;
+    private static final String HEADER_TIMESTAMP = "X-Slack-Request-Timestamp";
+    private static final String HEADER_SIGNATURE = "X-Slack-Signature";
+    private static final String PAYLOAD_PREFIX = "payload=";
 
-    public void verify(String timestamp, String body, String signature) {
+    private final SlackProperties slackProperties;
+    private final ObjectMapper objectMapper;
+
+
+    public SlackInteractionDto verify(HttpServletRequest request) throws IOException {
+        try {
+            String rawBody = new String(request.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            verifySignature(request.getHeader(HEADER_TIMESTAMP), rawBody, request.getHeader(HEADER_SIGNATURE));
+
+            String payload = URLDecoder.decode(
+                    rawBody.substring(PAYLOAD_PREFIX.length()), StandardCharsets.UTF_8);
+            JsonNode root = objectMapper.readTree(payload);
+            return new SlackInteractionDto(
+                    root.at("/actions/0/action_id").asText(),
+                    root.at("/actions/0/value").asText(),
+                    root.at("/response_url").asText()
+            );
+        } catch (IOException e) {
+            log.error(">>>> [Slack] 콜백 파싱 실패", e);
+            throw e;
+        }
+    }
+
+    private void verifySignature(String timestamp, String body, String signature) {
         if (timestamp == null || body == null || signature == null) {
             throw SlackInvalidSignatureException.EXCEPTION;
         }

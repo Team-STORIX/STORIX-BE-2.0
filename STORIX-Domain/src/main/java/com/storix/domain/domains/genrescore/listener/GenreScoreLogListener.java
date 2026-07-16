@@ -1,8 +1,8 @@
 package com.storix.domain.domains.genrescore.listener;
 
+import com.storix.domain.domains.genrescore.adaptor.GenreScoreAdaptor;
 import com.storix.domain.domains.genrescore.domain.UserGenreScoreLog;
 import com.storix.domain.domains.genrescore.event.GenreScoreEvent;
-import com.storix.domain.domains.genrescore.repository.UserGenreScoreLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class GenreScoreLogListener {
 
-    private final UserGenreScoreLogRepository logRepository;
+    private final GenreScoreAdaptor genreScoreAdaptor;
 
     // 트랜잭션 커밋 후 반영
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -28,9 +28,9 @@ public class GenreScoreLogListener {
         }
 
         try {
-            logRepository.save(UserGenreScoreLog.from(event));
+            genreScoreAdaptor.saveLog(UserGenreScoreLog.from(event));
         } catch (Exception e) {
-            log.error(">>> [GenreScore] log persist failed for event={}, cause={}", event, e.getMessage());
+            log.warn(">>> [GenreScore] log persist failed for event={}, cause={}", event, e.getMessage());
         }
     }
 }

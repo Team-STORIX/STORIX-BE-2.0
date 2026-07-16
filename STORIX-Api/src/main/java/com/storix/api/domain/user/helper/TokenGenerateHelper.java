@@ -7,7 +7,6 @@ import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.OnboardingTokenInfo;
-
 import com.storix.domain.domains.user.exception.token.ExpiredTokenException;
 import com.storix.domain.domains.user.exception.token.InvalidRefreshTokenException;
 import com.storix.domain.domains.user.exception.token.InvalidTokenException;
@@ -60,16 +59,17 @@ public class TokenGenerateHelper {
         }
 
         Long userId = tokenProvider.parseRefreshToken(refreshToken);
-        Role role = userAdaptor.findUserRoleByUserId(userId);
+        User user = userAdaptor.findUserById(userId);
+        user.login();
 
         tokenAdaptor.deleteRefreshToken(refreshToken);
 
         // AccessToken, RefreshToken 재발급
-        return generateLoginWithToken(new AuthUserDetails(userId, role));
+        return generateLoginWithToken(new AuthUserDetails(userId, user.getRole()));
     }
 
     @Transactional
-    public OAuthLoginWithTokenResponse generateOAuthLoginWithToken(OAuthInfo oAuthInfo) {
+    public OAuthLoginWithTokenResponse generateOAuthLoginWithToken(OAuthInfo oAuthInfo, String oauthRefreshToken) {
 
         OAuthProvider provider = oAuthInfo.getProvider();
         String oid = oAuthInfo.getOid();
@@ -81,6 +81,7 @@ public class TokenGenerateHelper {
                 .jti(oti.jti())
                 .provider(provider)
                 .oid(oid)
+                .oauthRefreshToken(oauthRefreshToken)
                 .onboardingToken(oti.onboardingToken())
                 .ttl(ttlSeconds)
                 .build();

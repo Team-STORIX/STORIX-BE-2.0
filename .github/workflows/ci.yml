@@ -3,7 +3,10 @@ name: STORIX CI - Build & Push to ECR
 on:
   push:
     branches:
-      - main
+      - develop
+    paths-ignore:
+      - 'monitoring/**'
+      - '.github/workflows/cd-monitoring.yml'
 
 jobs:
   build-and-push:

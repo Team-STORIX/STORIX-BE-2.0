@@ -35,7 +35,7 @@ public record WorksDetailResponseDto(
                 .worksType(works.getWorksType().getDbValue())
                 .thumbnailUrl(works.getThumbnailUrl())
                 .author(works.getAuthor())
-                .illustrator(works.getIllustrator())
+                .illustrator(resolveIllustrator(works.getAuthor(), works.getIllustrator()))
                 .originalAuthor(works.getOriginalAuthor())
                 .genre(works.getGenre().getDbValue())
                 .platforms(works.getPlatforms().stream()
@@ -50,6 +50,14 @@ public record WorksDetailResponseDto(
                         .toList())
                 .hasTopicRoom(hasTopicRoom)
                 .build();
+    }
+
+    // 그림 작가와 글 작가가 동일하면 그림 작가를 내려주지 않아 하나만 표시되도록 한다.
+    private static String resolveIllustrator(String author, String illustrator) {
+        if (author != null && author.equals(illustrator)) {
+            return null;
+        }
+        return illustrator;
     }
 
     public static Double roundAvgRating(Double avgRating) {

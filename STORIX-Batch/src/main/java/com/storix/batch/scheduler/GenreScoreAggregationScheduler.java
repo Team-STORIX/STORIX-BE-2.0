@@ -2,6 +2,7 @@ package com.storix.batch.scheduler;
 
 import com.storix.domain.domains.genrescore.service.GenreScoreAggregationService;
 import com.storix.domain.domains.genrescore.service.GenreScoreAggregationService.ChunkResult;
+import com.storix.domain.domains.user.service.UserTitleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,10 +21,10 @@ public class GenreScoreAggregationScheduler {
     private static final int MAX_ITERATIONS = 10_000;
 
     private final GenreScoreAggregationService aggregationService;
+    private final UserTitleService userTitleService;
 
-
-    // 매일 자정, 미처리 로그 청크 단위로 집계
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    // 5분마다 미처리 로그 청크 단위로 집계
+    @Scheduled(cron = "0 */5 * * * *", zone = "Asia/Seoul")
     public void run() {
         long started = System.currentTimeMillis();
         Set<Long> touchedUsers = new HashSet<>();
@@ -44,6 +45,15 @@ public class GenreScoreAggregationScheduler {
 
         if (iter >= MAX_ITERATIONS) {
             log.warn(">>> [GenreScoreBatch] MAX_ITERATIONS({}) 도달 — 다음 실행 시 잔여분 처리", MAX_ITERATIONS);
+        }
+
+        // 집계로 점수가 변동된 유저의 칭호 일괄 갱신 (단일 트랜잭션 + JDBC 배치)
+        // 실패해도 멱등 — 다음 재집계/기동 backfill 로 보정. 복구용으로 실패 userId 만 남긴다.
+        try {
+            userTitleService.assignTitles(touchedUsers);
+        } catch (Exception e) {
+            log.error(">>> [GenreScoreBatch] 칭호 일괄 갱신 실패 (count={}, partialUserIds={})",
+                    touchedUsers.size(), touchedUsers.stream().limit(20).toList(), e);
         }
 
         int oldDeleted = aggregationService.cleanupOldProcessed();

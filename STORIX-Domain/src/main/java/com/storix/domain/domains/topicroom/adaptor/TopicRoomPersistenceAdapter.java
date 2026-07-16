@@ -9,22 +9,25 @@ import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
+import com.storix.domain.domains.topicroom.dto.RoomMember;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.repository.TopicRoomReportRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
+import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
 import com.storix.domain.domains.topicroom.exception.TodayTopicRoomNotFoundException;
 import org.springframework.cache.annotation.Cacheable;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -96,7 +99,11 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     }
 
     @Override public void saveReport(TopicRoomReport report) {
-        topicRoomReportRepository.save(report);
+        try {
+            topicRoomReportRepository.saveAndFlush(report);
+        } catch (DataIntegrityViolationException e) {
+            throw DuplicateTopicRoomReportException.EXCEPTION;
+        }
     }
 
     @Override
@@ -107,27 +114,6 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     @Override
     public void decrementActiveUserNumber(Long roomId) {
         topicRoomRepository.decrementActiveUserNumber(roomId);
-    }
-
-    @Override
-    public void updateLastChatTime(Long roomId, LocalDateTime lastChatTime) {
-        topicRoomRepository.updateLastChatTime(roomId, lastChatTime);
-    }
-
-    @Override
-    public List<TopicRoom> loadTop5PopularRooms() {
-        return topicRoomRepository.findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();
-    }
-
-    @Override
-    public Set<Long> loadJoinedRoomIds(Long userId, List<Long> roomIds) {
-
-        // 빈 리스트일 경우 -> 빈 Set 반환
-        if (roomIds == null || roomIds.isEmpty()) {
-            return Collections.emptySet();
-        }
-
-        return topicRoomUserRepository.findJoinedRoomIdsByUserIdAndRoomIds(userId, roomIds);
     }
 
     @Override
@@ -149,13 +135,17 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     }
 
     @Override
-    public boolean existsByUserIdAndRoomId(Long userId, Long roomId) {
-        return topicRoomUserRepository.existsByUserIdAndTopicRoomId(userId, roomId);
+    public List<Long> loadMemberIdsByRoomId(Long roomId) {
+        return topicRoomUserRepository.findMemberIdsByRoomId(roomId);
     }
 
     @Override
-    public List<Long> loadMemberIdsByRoomId(Long roomId) {
-        return topicRoomUserRepository.findMemberIdsByRoomId(roomId);
+    public Map<Long, List<Long>> loadMembersByRoomIds(List<Long> roomIds) {
+        return topicRoomUserRepository.findMembersByRoomIds(roomIds).stream()
+                .collect(Collectors.groupingBy(
+                        RoomMember::roomId,
+                        Collectors.mapping(RoomMember::userId, Collectors.toList())
+                ));
     }
 
     @Override
@@ -166,6 +156,11 @@ public class TopicRoomPersistenceAdapter implements LoadTopicRoomPort, RecordTop
     @Override
     public void updatePreviousActiveUserNumbers(List<TopicRoom> rooms) {
         topicRoomRepository.bulkUpdatePreviousActiveUserNumbers(rooms);
+    }
+
+    @Override
+    public int updateActivityScores(LocalDateTime messageSince, LocalDateTime freshnessSince) {
+        return topicRoomRepository.updateActivityScores(messageSince, freshnessSince);
     }
 
     @Override

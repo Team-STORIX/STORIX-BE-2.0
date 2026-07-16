@@ -1,8 +1,13 @@
 package com.storix.domain.domains.review.service;
 
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
+import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
+import com.storix.domain.domains.report.domain.ReportCase;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.review.adaptor.ReviewLikeAdaptor;
 import com.storix.domain.domains.review.adaptor.ReviewReportAdaptor;
 import com.storix.domain.domains.review.dto.ModifyReviewRequest;
@@ -11,6 +16,7 @@ import com.storix.domain.domains.topicroom.domain.enums.ReportReason;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.topicroom.exception.SelfReportException;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
+import com.storix.domain.domains.works.exception.DuplicateReviewReportException;
 import com.storix.domain.domains.works.exception.InvalidReviewReportException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +29,9 @@ public class WorksDetailKebabService {
     private final ReviewAdaptor reviewAdaptor;
     private final ReviewLikeAdaptor reviewLikeAdaptor;
     private final ReviewReportAdaptor reviewReportAdaptor;
+    private final ReportCaseAdaptor reportCaseAdaptor;
     private final LibraryAdaptor libraryAdaptor;
+    private final NotificationPublisher notificationPublisher;
 
     private final LoadWorksPort loadWorksPort;
 
@@ -59,7 +67,7 @@ public class WorksDetailKebabService {
     }
 
     @Transactional
-    public void reportReview(Long userId, Long reviewId, Long reportedUserId, ReportReason reason, String otherReason) {
+    public void reportReview(Long userId, Long reviewId, Long reportedUserId, String otherReason) {
 
         Long actualReviewerId = reviewAdaptor.findReviewerIdById(reviewId);
         if (!actualReviewerId.equals(reportedUserId)) {
@@ -70,15 +78,23 @@ public class WorksDetailKebabService {
             throw SelfReportException.EXCEPTION;
         }
 
+        if (reviewReportAdaptor.hasAlreadyReported(userId, reviewId)) {
+            throw DuplicateReviewReportException.EXCEPTION;
+        }
+
+        ReportCase reportCase = reportCaseAdaptor.findOrCreate(TargetContentType.REVIEW, reviewId, actualReviewerId);
+
         CreateWorksDetailReportCommand cmd = new CreateWorksDetailReportCommand(
                 userId,
                 actualReviewerId,
                 reviewId,
-                reason,
-                otherReason
+                ReportReason.DEFAULT,
+                otherReason,
+                reportCase.getId()
         );
 
         reviewReportAdaptor.saveReport(cmd);
+        notificationPublisher.publish(NotificationEvent.reportReceived(userId));
     }
 
 }

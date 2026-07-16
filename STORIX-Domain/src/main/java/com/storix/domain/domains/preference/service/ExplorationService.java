@@ -3,6 +3,7 @@ package com.storix.domain.domains.preference.service;
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.ErrorCode;
 import com.storix.common.exception.STORIXCodeException;
+import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.preference.application.ExplorationUseCase;
 import com.storix.domain.domains.preference.dto.*;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
@@ -22,10 +23,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExplorationService implements ExplorationUseCase {
 
+    public static final int DAILY_EXPLORATION_LIMIT = 10;
+
     private final ExplorationRepository explorationRepository;
     private final LoadWorksPort loadWorksPort;
     private final ExplorationCacheHelper cacheHelper;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
+    private final ReviewAdaptor reviewAdaptor;
 
     @Override
     @Transactional(readOnly = true)
@@ -39,15 +43,17 @@ public class ExplorationService implements ExplorationUseCase {
         List<Long> dbHistoryIds = explorationRepository.findRespondedWorksIdsByUserId(userId);
         Set<Long> pendingIds = cacheHelper.getPendingWorksIds(userId);
         List<Long> favoriteWorksIds = favoriteWorksAdaptor.findAllFavoriteWorksIdsByUserId(userId);
+        List<Long> reviewedWorksIds = reviewAdaptor.findAllReviewedWorksIdsByUserId(userId);
 
         Set<Long> allHistoryIds = new HashSet<>(dbHistoryIds);
         allHistoryIds.addAll(pendingIds);
         allHistoryIds.addAll(favoriteWorksIds);
+        allHistoryIds.addAll(reviewedWorksIds);
 
         int sessionCount = explorationRepository.countByUserIdAndCreatedAtAfter(userId, threshold)
                 + pendingIds.size();
 
-        int needed = 10 - sessionCount;
+        int needed = DAILY_EXPLORATION_LIMIT - sessionCount;
         if (needed <= 0) return Collections.emptyList();
 
         return loadWorksPort.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed)
@@ -72,7 +78,7 @@ public class ExplorationService implements ExplorationUseCase {
                 .isLiked(request.isLiked())
                 .build();
 
-        Long result = cacheHelper.submitWithLua(userId, pendingDto);
+        Long result = cacheHelper.submitWithLua(userId, pendingDto, DAILY_EXPLORATION_LIMIT);
 
         if (result == -1 || result == -2) {
             cacheHelper.markAsParticipatedToday(userId);
@@ -87,7 +93,7 @@ public class ExplorationService implements ExplorationUseCase {
             throw new STORIXCodeException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
-        if (result == 15) {
+        if (result == DAILY_EXPLORATION_LIMIT) {
             cacheHelper.markAsParticipatedToday(userId);
             cacheHelper.deleteChartCache(userId);
         }
@@ -135,7 +141,8 @@ public class ExplorationService implements ExplorationUseCase {
                         w.getOriginalAuthor(),
                         w.getThumbnailUrl(),
                         w.getWorksType(),
-                        w.getGenre()
+                        w.getGenre(),
+                        w.getAvgRating()
                 ))
                 .toList();
     }

@@ -1,0 +1,72 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    mem_limit: 512m
+    environment:
+      - GOMEMLIMIT=460MiB
+
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  loki:
+    image: grafana/loki:3.1.1
+    container_name: loki
+    mem_limit: 384m
+    restart: unless-stopped
+    command:
+      - '-config.file=/etc/loki/loki.yml'
+      - '-config.expand-env=true'
+    environment:
+      - LOKI_S3_BUCKET=${LOKI_S3_BUCKET:?set LOKI_S3_BUCKET}
+      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
+      - GOMEMLIMIT=340MiB
+    volumes:
+      - ./loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+
+  # 앱 EC2의 Alloy 가 여기로 로그를 push 한다 (basic auth).
+  loki-proxy:
+    image: nginx:1.27-alpine
+    container_name: loki-proxy
+    mem_limit: 32m
+    restart: unless-stopped
+    volumes:
+      - ./nginx/loki.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
+    ports:
+      - "3100:3100"
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: grafana
+    mem_limit: 384m
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:?set SLACK_WEBHOOK_URL}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:

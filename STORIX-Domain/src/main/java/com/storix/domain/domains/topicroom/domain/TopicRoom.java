@@ -1,6 +1,7 @@
 package com.storix.domain.domains.topicroom.domain;
 
 import com.storix.common.model.BaseTimeEntity;
+import com.storix.domain.domains.chat.domain.MessageType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -23,7 +24,8 @@ import java.time.LocalDateTime;
         indexes = {
                 @Index(name = "idx_popularity_last_chat", columnList = "popularity_score, last_chat_time"),
                 @Index(name = "idx_growth_rate", columnList = "popularity_growth_rate"),
-                @Index(name = "idx_active_user_last_chat", columnList = "active_user_number, last_chat_time")
+                @Index(name = "idx_active_user_last_chat", columnList = "active_user_number, last_chat_time"),
+                @Index(name = "idx_activity_score_last_chat", columnList = "activity_score, last_chat_time")
         }
 )
 public class TopicRoom extends BaseTimeEntity {
@@ -48,11 +50,24 @@ public class TopicRoom extends BaseTimeEntity {
     @Column(name = "last_chat_time")
     private LocalDateTime lastChatTime;
 
+    @Column(name = "last_message", columnDefinition = "TEXT")
+    private String lastMessage;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "last_message_type")
+    private MessageType lastMessageType;
+
+    @Column(name = "last_message_sender_id")
+    private Long lastMessageSenderId;
+
     @Column(name = "popularity_score", nullable = false)
     private Double popularityScore;
 
     @Column(name = "popularity_growth_rate", nullable = false)
     private Double popularityGrowthRate;
+
+    @Column(name = "activity_score", nullable = false)
+    private Double activityScore;
 
     @Builder
     public TopicRoom(String topicRoomName, Long worksId) {
@@ -61,8 +76,12 @@ public class TopicRoom extends BaseTimeEntity {
         this.activeUserNumber = 0;
         this.previousActiveUserNumber = 0;
         this.lastChatTime = LocalDateTime.now();
+        this.lastMessage = null;
+        this.lastMessageType = null;
+        this.lastMessageSenderId = null;
         this.popularityScore = 0.0;
         this.popularityGrowthRate = 0.0;
+        this.activityScore = 0.0;
     }
 
     // 인기도 점수 업데이트
