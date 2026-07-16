@@ -41,7 +41,7 @@ jobs:
               "git reset --hard origin/develop",
               "set -a && . ./.env && set +a",
               "printf '%s' \"$LOKI_PASSWORD\" | docker run --rm -i httpd:2.4-alpine htpasswd -niB \"$LOKI_USER\" > monitoring/nginx/.htpasswd",
-              "chmod 600 monitoring/nginx/.htpasswd",
+              "chmod 644 monitoring/nginx/.htpasswd",
               "cd monitoring",
               "docker compose -f compose-monitoring.yml config -q",
               "docker compose -f compose-monitoring.yml up -d",
