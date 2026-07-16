@@ -1,14 +1,5 @@
 name: STORIX CD - Deploy Monitoring Stack
 
-# 모니터링 설정(알림 룰 포함)이 바뀔 때만 돈다. 앱 배포와 완전히 분리.
-# self-hosted runner 를 쓰지 않는다(public 레포 보안). GitHub 러너가 OIDC 로 AWS 에 붙어
-# SSM send-command 로 모니터링 EC2 에서 배포를 실행한다. 박스엔 러너가 없다.
-#
-# 사전 준비
-#   - 모니터링 EC2 에 레포가 /home/ubuntu/storix-monitoring 에 클론, .env 존재
-#   - EC2 IAM: AmazonSSMManagedInstanceCore (SSM 에이전트) + Loki S3 / ec2:DescribeInstances
-#   - GitHub Secrets: MONITORING_DEPLOY_ROLE_ARN, MONITORING_INSTANCE_ID
-
 on:
   push:
     branches:
@@ -19,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write   # OIDC 로 AWS 역할 assume
+  id-token: write
   contents: read
 
 jobs:
@@ -39,7 +30,6 @@ jobs:
 
       - name: Deploy via SSM
         run: |
-          # $LOKI_USER 등은 러너가 아니라 EC2 셸이 .env 로드 후 치환해야 하므로 quoted heredoc
           cat > /tmp/params.json << 'JSON'
           {
             "commands": [
@@ -49,12 +39,12 @@ jobs:
               "git fetch --prune origin",
               "git reset --hard origin/develop",
               "set -a && . ./.env && set +a",
-              "docker run --rm httpd:2.4-alpine htpasswd -nbB \"$LOKI_USER\" \"$LOKI_PASSWORD\" > monitoring/nginx/.htpasswd",
+              "printf '%s' \"$LOKI_PASSWORD\" | docker run --rm -i httpd:2.4-alpine htpasswd -niB \"$LOKI_USER\" > monitoring/nginx/.htpasswd",
               "chmod 600 monitoring/nginx/.htpasswd",
               "cd monitoring",
               "docker compose -f compose-monitoring.yml config -q",
               "docker compose -f compose-monitoring.yml up -d",
-              "curl -sf -X POST http://localhost:9090/-/reload",
+              "for i in $(seq 1 10); do if curl -sf -X POST http://localhost:9090/-/reload; then break; fi; if [ $i -eq 10 ]; then echo 'prometheus reload failed'; exit 1; fi; sleep 3; done",
               "docker compose -f compose-monitoring.yml restart grafana",
               "chown -R ubuntu:ubuntu /home/ubuntu/storix-monitoring"
             ]
@@ -69,7 +59,6 @@ jobs:
             --query "Command.CommandId" --output text)
           echo "CommandId: $CMD_ID"
 
-          # SSM 은 비동기 — 결과를 안 기다리면 실패해도 초록불. 완료까지 대기 후 상태 확인.
           aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" || true
 
           echo "===== STDOUT ====="
