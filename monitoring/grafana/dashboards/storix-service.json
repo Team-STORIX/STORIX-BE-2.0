@@ -1,6 +1,6 @@
 {
   "uid": "storix-service",
-  "title": "STORIX 서비스 / 부하",
+  "title": "STORIX 서비스 지표",
   "tags": ["storix"],
   "timezone": "browser",
   "schemaVersion": 39,
