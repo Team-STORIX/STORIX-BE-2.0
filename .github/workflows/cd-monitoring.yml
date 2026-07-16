@@ -34,6 +34,7 @@ jobs:
           {
             "commands": [
               "set -euo pipefail",
+              "export HOME=/root",
               "git config --global --add safe.directory /home/ubuntu/storix-monitoring",
               "cd /home/ubuntu/storix-monitoring",
               "git fetch --prune origin",
