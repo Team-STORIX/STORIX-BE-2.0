@@ -58,12 +58,9 @@ public class AsyncConfig {
         executor.setQueueCapacity(200);
         executor.setThreadNamePrefix("S3Cleanup-");
 
-        // 셧다운(재배포) 시 큐에 남은 정리 작업이 유실되지 않도록 완료를 기다린다
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
 
-        // 포화 시 기본 AbortPolicy 는 커밋 이후 호출자 스레드에 예외를 던지므로,
-        // 호출자 스레드에서 직접 실행해 정리 작업이 유실되지 않게 한다
         executor.setRejectedExecutionHandler((r, exec) -> {
             log.warn(">>> [S3Cleanup] queue overflow — running on caller thread (pool={}, queue={}/{})",
                     exec.getPoolSize(), exec.getQueue().size(), exec.getQueue().remainingCapacity());

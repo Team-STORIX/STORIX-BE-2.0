@@ -25,7 +25,7 @@ public class FeedKebabService {
     private final FeedReportAdaptor feedReportAdaptor;
     private final ReportCaseAdaptor reportCaseAdaptor;
 
-    // 내 게시물 삭제 — 첨부 이미지는 커밋 후 S3에서 정리된다 (S3CleanupEvent)
+    // 내 게시물 삭제
     @Transactional
     public void deleteReaderBoard(Long userId, Long readerBoardId) {
         boardAdaptor.deleteSingleReaderBoard(userId, readerBoardId);

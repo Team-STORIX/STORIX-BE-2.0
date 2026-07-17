@@ -9,6 +9,7 @@ import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.plus.dto.BoardHardDeleteResult;
 import com.storix.domain.domains.plus.dto.CreateReaderBoardCommand;
 import com.storix.domain.domains.plus.repository.ReaderBoardRepository;
+import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
 import com.storix.domain.domains.plus.exception.DuplicateBoardUploadException;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
@@ -25,9 +26,6 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class BoardAdaptor {
-
-    // 하드 삭제 배치 청크 크기 — IN 절 파라미터 수를 제한해 대량 백로그에서도 안전하게 처리
-    private static final int HARD_DELETE_CHUNK_SIZE = 1000;
 
     private final ReaderBoardRepository readerBoardRepository;
     private final BoardImageAdaptor boardImageAdaptor;
@@ -54,7 +52,7 @@ public class BoardAdaptor {
         return readerBoardRepository.findAllReaderBoardByUserId(userId, pageable);
     }
 
-    // 독자 게시글 삭제 — 첨부 이미지는 커밋 후 S3에서 정리된다 (S3CleanupEvent)
+    // 독자 게시글 삭제
     public void deleteSingleReaderBoard(Long userId, Long boardId) {
         ReaderBoard board = readerBoardRepository.findById(boardId)
                 .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
@@ -108,16 +106,14 @@ public class BoardAdaptor {
         return readerBoardRepository.updatePopularityScoresRecentDays(threshold);
     }
 
-    // 하드 삭제 대상 게시글을 청크 단위로 정리한다.
-    // 벌크 DELETE 는 JPA cascade 를 타지 않으므로 자식(댓글 좋아요 → 댓글 → 좋아요 → 이미지) 을 먼저 지우고,
-    // 첨부 이미지 objectKey 는 커밋 후 S3 정리를 위해 이벤트로 발행한다.
+    // 하드 삭제 대상 정리 : 댓글 좋아요 → 댓글 → 좋아요 → 이미지
     public BoardHardDeleteResult hardDeleteBoardsBefore(LocalDateTime cutoff) {
         int boardCount = 0;
         int imageCount = 0;
 
         while (true) {
             List<Long> boardIds = readerBoardRepository.findIdsForHardDelete(
-                    cutoff, PageRequest.of(0, HARD_DELETE_CHUNK_SIZE));
+                    cutoff, PageRequest.of(0, STORIXStatic.HARD_DELETE_CHUNK_SIZE));
             if (boardIds.isEmpty()) {
                 break;
             }

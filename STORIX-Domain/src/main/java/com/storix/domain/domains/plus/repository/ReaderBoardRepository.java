@@ -110,8 +110,6 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
 
     boolean existsByIdAndDeletedFalse(Long id);
 
-    // 하드 삭제 대상 선정 predicate 는 이 쿼리 한 곳에만 존재한다.
-    // 실제 삭제는 여기서 조회한 id 기반(hardDeleteByIds)으로 수행해 선정/삭제 기준이 어긋나지 않게 한다.
     @Query("SELECT r.id FROM ReaderBoard r WHERE r.deleted = true AND r.deletedAt < :cutoff")
     List<Long> findIdsForHardDelete(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);
 

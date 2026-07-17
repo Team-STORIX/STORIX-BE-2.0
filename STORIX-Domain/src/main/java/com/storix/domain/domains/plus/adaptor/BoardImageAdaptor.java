@@ -63,7 +63,7 @@ public class BoardImageAdaptor {
                 ));
     }
 
-    // 게시글 objectKey 목록 조회 (예: 하드 삭제 전 S3 정리 대상 수집)
+    // 게시글 objectKey 목록 조회
     public List<String> findObjectKeysByBoardIds(List<Long> boardIds) {
         if (boardIds == null || boardIds.isEmpty()) {
             return List.of();
@@ -72,7 +72,7 @@ public class BoardImageAdaptor {
         return readerBoardImageRepository.findObjectKeysByBoardIds(boardIds);
     }
 
-    // 게시글 이미지 하드 삭제 — 부모 게시글 벌크 삭제 전에 호출해야 한다 (cascade 미적용)
+    // 게시글 이미지 하드 삭제
     public int hardDeleteByBoardIds(List<Long> boardIds) {
         if (boardIds == null || boardIds.isEmpty()) {
             return 0;

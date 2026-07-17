@@ -15,6 +15,11 @@ public class STORIXStatic {
 
     public static final int MILLI_TO_SECOND = 1000;
 
+    public static final int HARD_DELETE_CHUNK_SIZE = 1000;
+
+    // S3 DeleteObjects API 요청당 최대 키 수 (고정 한도가 1000)
+    public static final int S3_MAX_KEYS_PER_DELETE_REQUEST = 1000;
+
     // 인기 검색어 Redis 합산 키
     public static final String TRENDING_AGGREGATED_KEY = "search:trending:aggregated";
     public static final String TRENDING_PREV_AGGREGATED_KEY = "search:trending:aggregated:prev";

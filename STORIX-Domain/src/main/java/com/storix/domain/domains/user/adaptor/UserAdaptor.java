@@ -107,7 +107,6 @@ public class UserAdaptor {
         return user.get();
     }
 
-    // 갱신용 조회 — 행 잠금으로 동시 변경을 직렬화 (예: 프로필 이미지 변경)
     public User findUserByIdForUpdate(Long userId) {
         return userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> UnknownUserException.EXCEPTION);

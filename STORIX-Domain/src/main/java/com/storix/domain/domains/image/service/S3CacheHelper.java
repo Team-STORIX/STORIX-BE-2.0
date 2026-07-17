@@ -60,8 +60,7 @@ public class S3CacheHelper {
         );
     }
 
-    // 사용(소비)된 objectKey 를 유효 키 캐시에서 제거 — 이후 삭제된 S3 오브젝트로 재변경/재사용되는 것을 방지.
-    // evict 는 커밋 이후 호출되므로 Redis 장애가 성공한 요청을 실패로 만들지 않게 예외를 삼킨다 (미소거 키는 TTL 로 만료).
+    // 소비된 objectKey 캐시 제거
     public void evictProfileKey(Long userId, String objectKey) {
         if (objectKey == null || objectKey.isBlank()) return;
         evictQuietly(keyFor(userId, PROFILE_KEY_PREFIX), List.of(objectKey));

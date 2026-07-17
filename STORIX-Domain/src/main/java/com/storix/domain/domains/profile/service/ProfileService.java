@@ -99,8 +99,7 @@ public class ProfileService {
         return profileDescription;
     }
 
-    // 프로필 사진 변경 — 교체된 기존 이미지는 커밋 후 S3에서 정리된다 (S3CleanupEvent)
-    // 행 잠금 조회로 동시 변경을 직렬화해 교체 이미지가 정리 대상에서 누락되는 것을 방지한다
+    // 프로필 사진 변경
     @Transactional
     public String changeProfileImage(String objectKey, Long userId) {
         User user = userAdaptor.findUserByIdForUpdate(userId);

@@ -1,5 +1,6 @@
 package com.storix.domain.domains.feed.adaptor;
 
+import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.feed.domain.ReaderBoardLike;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
 import com.storix.domain.domains.feed.domain.ReaderBoardReplyLike;
@@ -309,15 +310,12 @@ public class ReaderFeedAdaptor {
         return readerBoardRepository.findSteadyTrendingFeedNotToday(excludeIds, threshold, pageable);
     }
 
-    // soft-delete 후 보존 기간이 경과한 댓글을 청크 단위로 하드 삭제한다.
-    // 벌크 DELETE 는 JPA cascade 를 타지 않으므로 좋아요 삭제 → 자식 답댓글 참조 해제 → 댓글 삭제 순으로 FK 위반을 방지한다.
     public int hardDeleteRepliesBefore(LocalDateTime cutoff) {
-        final int chunkSize = 1000;
         int total = 0;
 
         while (true) {
             List<Long> replyIds = readerBoardReplyRepository.findIdsForHardDelete(
-                    cutoff, PageRequest.of(0, chunkSize));
+                    cutoff, PageRequest.of(0, STORIXStatic.HARD_DELETE_CHUNK_SIZE));
             if (replyIds.isEmpty()) {
                 break;
             }
