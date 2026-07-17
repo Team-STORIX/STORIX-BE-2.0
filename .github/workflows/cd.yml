@@ -49,6 +49,7 @@ jobs:
         env:
           INSTANCE_ID: ${{ steps.target.outputs.instance_id }}
           BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
           PULL_BATCH: ${{ steps.target.outputs.pull_batch }}
           ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
         run: |
@@ -65,7 +66,7 @@ jobs:
               "test -f .env || { echo 'env missing'; exit 1; }",
               "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}",
               "mkdir -p alloy",
-              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${BRANCH}/monitoring/app-side/config.alloy -o alloy/config.alloy",
+              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/monitoring/app-side/config.alloy -o alloy/config.alloy",
               "docker compose pull app",
               "${BATCH_LINE}",
               "docker compose up -d",
