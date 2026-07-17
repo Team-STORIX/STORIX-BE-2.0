@@ -13,10 +13,18 @@ public class PopupDismissAdaptor {
     private final PopupDismissRepository popupDismissRepository;
 
     public void upsertForToday(Long userId, Long popupId, LocalDate today) {
-        popupDismissRepository.upsertDismiss(userId, popupId, today);
+        popupDismissRepository.upsertDismiss(userId, popupId, today, false);
     }
 
-    public boolean isDismissedOn(Long userId, Long popupId, LocalDate date) {
-        return popupDismissRepository.existsByUserIdAndPopup_IdAndDismissedOn(userId, popupId, date);
+    public void upsertNeverShow(Long userId, Long popupId, LocalDate today) {
+        popupDismissRepository.upsertDismiss(userId, popupId, today, true);
+    }
+
+    public boolean isPermanentlyDismissed(Long userId, Long popupId) {
+        return popupDismissRepository.existsByUserIdAndPopup_IdAndPermanentTrue(userId, popupId);
+    }
+
+    public boolean isSuppressedOn(Long userId, Long popupId, LocalDate date) {
+        return popupDismissRepository.existsSuppressedOn(userId, popupId, date);
     }
 }

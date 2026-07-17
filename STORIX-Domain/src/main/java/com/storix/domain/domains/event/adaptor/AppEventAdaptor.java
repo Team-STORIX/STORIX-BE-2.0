@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class AppEventAdaptor {
@@ -21,6 +23,10 @@ public class AppEventAdaptor {
     public AppEvent findById(Long appEventId) {
         return appEventRepository.findById(appEventId)
                 .orElseThrow(() -> AppEventNotFoundException.EXCEPTION);
+    }
+
+    public Optional<AppEvent> findOptionalById(Long appEventId) {
+        return appEventRepository.findById(appEventId);
     }
 
     public Page<AppEvent> findAll(Pageable pageable) {

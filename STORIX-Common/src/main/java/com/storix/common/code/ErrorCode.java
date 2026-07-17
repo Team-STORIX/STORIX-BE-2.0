@@ -137,6 +137,11 @@ public enum ErrorCode {
     APP_EVENT_PAYLOAD_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_003", "앱 이벤트 payload 직렬화에 실패했습니다."),
     APP_EVENT_WINNER_FINALIZER_NOT_IMPLEMENTED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_004", "당첨자 이벤트(hasWinner=true)는 종료 시 당첨자 확정(EventWinnerFinalizer) 구현이 필수입니다."),
 
+    // Attendance Event error
+    ATTENDANCE_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ATTENDANCE_EVENT_ERROR_001", "진행 중인 출석 이벤트가 없습니다."),
+    ATTENDANCE_EVENT_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "ATTENDANCE_EVENT_ERROR_002", "출석 이벤트 기간이 아닙니다."),
+    ATTENDANCE_ALREADY_CHECKED_IN(HttpStatus.CONFLICT, "ATTENDANCE_EVENT_ERROR_003", "오늘은 이미 출석 체크를 완료했습니다."),
+
     // OIDC error
     OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),
 

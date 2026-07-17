@@ -43,6 +43,15 @@ public class AppEventController {
         return appEventUseCase.dismissPopupForToday(authUser.getUserId(), popupId);
     }
 
+    @PatchMapping("/popup/{popupId}/never-show")
+    @Operation(summary = "팝업 다시 보지 않기", description = "해당 팝업을 노출 기간 내내 이 유저에게 다시 노출하지 않습니다.")
+    public CustomResponse<Void> neverShowPopup(
+            @AuthenticationPrincipal AuthUserDetails authUser,
+            @PathVariable Long popupId
+    ) {
+        return appEventUseCase.dismissPopupForever(authUser.getUserId(), popupId);
+    }
+
     @GetMapping("/banner")
     @Operation(summary = "노출 중인 배너 조회", description = "현재 노출 가능한 배너를 최대 3개까지 반환합니다. 없으면 빈 배열.")
     public CustomResponse<List<BannerResponse>> getBanner() {
