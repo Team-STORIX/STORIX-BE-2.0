@@ -1,6 +1,7 @@
 package com.storix.domain.domains.image.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3CacheHelper {
@@ -58,10 +60,25 @@ public class S3CacheHelper {
         );
     }
 
-    // 사용(소비)된 objectKey 를 유효 키 캐시에서 제거 — 이후 삭제된 S3 오브젝트로 재변경되는 것을 방지
+    // 사용(소비)된 objectKey 를 유효 키 캐시에서 제거 — 이후 삭제된 S3 오브젝트로 재변경/재사용되는 것을 방지.
+    // evict 는 커밋 이후 호출되므로 Redis 장애가 성공한 요청을 실패로 만들지 않게 예외를 삼킨다 (미소거 키는 TTL 로 만료).
     public void evictProfileKey(Long userId, String objectKey) {
         if (objectKey == null || objectKey.isBlank()) return;
-        redisTemplate.opsForSet().remove(keyFor(userId, PROFILE_KEY_PREFIX), objectKey);
+        evictQuietly(keyFor(userId, PROFILE_KEY_PREFIX), List.of(objectKey));
+    }
+
+    public void evictBoardKeys(Long userId, List<String> objectKeys) {
+        if (objectKeys == null || objectKeys.isEmpty()) return;
+        evictQuietly(keyFor(userId, BOARD_KEY_PREFIX), objectKeys);
+    }
+
+    private void evictQuietly(String redisKey, List<String> objectKeys) {
+        try {
+            redisTemplate.opsForSet().remove(redisKey, objectKeys.toArray());
+        } catch (Exception e) {
+            log.warn(">>> [S3CacheHelper] 소비된 objectKey 캐시 제거 실패 — TTL 만료까지 재사용 가능 상태 (redisKey={}, keys={})",
+                    redisKey, objectKeys, e);
+        }
     }
 
     // ObjectKeys 검증 로직

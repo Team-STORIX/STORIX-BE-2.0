@@ -39,6 +39,9 @@ public class BoardUseCase {
                 req.objectKeys()
         );
         boardService.createReaderBoard(cmd);
+        // 소비된 키는 유효 키 캐시에서 제거 — 같은 키로 여러 게시글이 같은 S3 오브젝트를 참조하면
+        // 한 게시글 삭제 시 다른 게시글의 이미지까지 S3에서 지워지므로 재사용을 차단한다
+        s3CacheHelper.evictBoardKeys(userId, req.objectKeys());
         return CustomResponse.onSuccess(SuccessCode.PLUS_BOARD_UPLOAD_SUCCESS);
     }
 

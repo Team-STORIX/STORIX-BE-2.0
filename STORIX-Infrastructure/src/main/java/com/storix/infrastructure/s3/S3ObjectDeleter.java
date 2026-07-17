@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
+import software.amazon.awssdk.services.s3.model.S3Error;
 
 import java.util.List;
 
@@ -45,6 +46,7 @@ public class S3ObjectDeleter {
         }
     }
 
+    // 삭제 실패는 재시도 없이 로그로만 남기므로, 수동 복구가 가능하도록 실패 키 전체를 기록한다
     private void deleteChunk(List<ObjectIdentifier> chunk) {
         try {
             DeleteObjectsResponse response = s3Client.deleteObjects(DeleteObjectsRequest.builder()
@@ -53,10 +55,17 @@ public class S3ObjectDeleter {
                     .build());
 
             if (!response.errors().isEmpty()) {
-                log.warn("S3 오브젝트 일부 삭제 실패: {}건, 첫 오류={}", response.errors().size(), response.errors().get(0));
+                List<String> failedKeys = response.errors().stream()
+                        .map(S3Error::key)
+                        .toList();
+                log.error("S3 오브젝트 일부 삭제 실패: {}건, 첫 오류={}, 실패 키={}",
+                        failedKeys.size(), response.errors().get(0), failedKeys);
             }
         } catch (SdkException e) {
-            log.warn("S3 오브젝트 일괄 삭제 실패: {}건 (첫 키={})", chunk.size(), chunk.get(0).key(), e);
+            List<String> failedKeys = chunk.stream()
+                    .map(ObjectIdentifier::key)
+                    .toList();
+            log.error("S3 오브젝트 일괄 삭제 실패: {}건, 실패 키={}", failedKeys.size(), failedKeys, e);
         }
     }
 }

@@ -176,7 +176,8 @@ public class AuthService {
     public void withDrawUser(Long userId, Set<WithdrawReason> reasons, String detail) {
         // 1. 유저 soft-delete — withdraw()가 profileObjectKey를 null 처리하므로,
         //    프로필 이미지는 지금 objectKey를 확보해 커밋 후 S3에서 정리한다 (S3CleanupEvent)
-        User user = userAdaptor.findUserById(userId);
+        //    행 잠금 조회로 프로필 이미지 변경과 직렬화 — 교체 직후 키가 정리 대상에서 누락되는 것을 방지
+        User user = userAdaptor.findUserByIdForUpdate(userId);
         String profileObjectKey = user.getProfileObjectKey();
         user.withdraw();
         s3CleanupPublisher.publish(profileObjectKey);
