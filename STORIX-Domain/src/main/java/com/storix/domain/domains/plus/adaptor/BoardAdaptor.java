@@ -21,6 +21,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +38,7 @@ public class BoardAdaptor {
     private final ReaderBoardReplyRepository readerBoardReplyRepository;
     private final ReaderBoardReplyLikeRepository readerBoardReplyLikeRepository;
     private final S3CleanupPublisher s3CleanupPublisher;
+    private final PlatformTransactionManager transactionManager;
 
     /**
      * 독자
@@ -110,27 +114,38 @@ public class BoardAdaptor {
 
     // 하드 삭제 대상 정리 : 댓글 좋아요 → 댓글 → 좋아요 → 이미지
     public BoardHardDeleteResult hardDeleteBoardsBefore(LocalDateTime cutoff) {
+        TransactionTemplate chunkTx = new TransactionTemplate(transactionManager);
+        chunkTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
         int boardCount = 0;
         int imageCount = 0;
 
         while (true) {
-            List<Long> boardIds = readerBoardRepository.findIdsForHardDelete(
-                    cutoff, PageRequest.of(0, STORIXStatic.HARD_DELETE_CHUNK_SIZE));
-            if (boardIds.isEmpty()) {
+            BoardHardDeleteResult chunk = chunkTx.execute(status -> {
+                List<Long> boardIds = readerBoardRepository.findIdsForHardDelete(
+                        cutoff, PageRequest.of(0, STORIXStatic.HARD_DELETE_CHUNK_SIZE));
+                if (boardIds.isEmpty()) {
+                    return new BoardHardDeleteResult(0, 0);
+                }
+
+                List<String> imageObjectKeys = boardImageAdaptor.findObjectKeysByBoardIds(boardIds);
+
+                readerBoardReplyLikeRepository.hardDeleteByBoardIds(boardIds);
+                readerBoardReplyRepository.detachChildRepliesByBoardIds(boardIds);
+                readerBoardReplyRepository.hardDeleteByBoardIds(boardIds);
+                readerBoardLikeRepository.hardDeleteByBoardIds(boardIds);
+                boardImageAdaptor.hardDeleteByBoardIds(boardIds);
+                int deleted = readerBoardRepository.hardDeleteByIds(boardIds);
+
+                s3CleanupPublisher.publish(imageObjectKeys);
+                return new BoardHardDeleteResult(deleted, imageObjectKeys.size());
+            });
+
+            if (chunk == null || chunk.boardCount() == 0) {
                 break;
             }
-
-            List<String> imageObjectKeys = boardImageAdaptor.findObjectKeysByBoardIds(boardIds);
-
-            readerBoardReplyLikeRepository.hardDeleteByBoardIds(boardIds);
-            readerBoardReplyRepository.detachChildRepliesByBoardIds(boardIds);
-            readerBoardReplyRepository.hardDeleteByBoardIds(boardIds);
-            readerBoardLikeRepository.hardDeleteByBoardIds(boardIds);
-            boardImageAdaptor.hardDeleteByBoardIds(boardIds);
-            boardCount += readerBoardRepository.hardDeleteByIds(boardIds);
-
-            imageCount += imageObjectKeys.size();
-            s3CleanupPublisher.publish(imageObjectKeys);
+            boardCount += chunk.boardCount();
+            imageCount += chunk.imageCount();
         }
 
         return new BoardHardDeleteResult(boardCount, imageCount);

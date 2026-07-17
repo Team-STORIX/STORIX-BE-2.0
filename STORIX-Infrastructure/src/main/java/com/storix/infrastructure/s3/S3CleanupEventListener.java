@@ -15,8 +15,9 @@ public class S3CleanupEventListener {
 
     private final S3ObjectDeleter s3ObjectDeleter;
 
+    // 트랜잭션 커밋 이후에만 실행 — 트랜잭션 밖 발행은 무시된다 (발행 지점은 항상 트랜잭션 안이어야 함)
     @Async("s3CleanupExecutor")
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onEvent(S3CleanupEvent event) {
         s3ObjectDeleter.deleteObjects(event.objectKeys());
     }

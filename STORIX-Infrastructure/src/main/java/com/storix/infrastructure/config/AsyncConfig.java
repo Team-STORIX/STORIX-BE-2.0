@@ -99,16 +99,14 @@ public class AsyncConfig {
         executor.setMaxPoolSize(5);
         executor.setQueueCapacity(200);
         executor.setThreadNamePrefix("S3Cleanup-");
+        executor.setTaskDecorator(mdcTaskDecorator());
 
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
 
         executor.setRejectedExecutionHandler((r, exec) -> {
-            log.warn(">>> [S3Cleanup] queue overflow — running on caller thread (pool={}, queue={}/{})",
+            log.error(">>> [S3Cleanup] queue overflow — cleanup task dropped, 고아 오브젝트 발생 가능 (pool={}, queue={}/{})",
                     exec.getPoolSize(), exec.getQueue().size(), exec.getQueue().remainingCapacity());
-            if (!exec.isShutdown()) {
-                r.run();
-            }
         });
         executor.initialize();
         return executor;

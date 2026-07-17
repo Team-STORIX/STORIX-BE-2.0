@@ -137,11 +137,12 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             "WHERE r.id = :replyId AND r.deleted = false")
     int softDeleteByAdminIfNotDeleted(@Param("replyId") Long replyId, @Param("now") LocalDateTime now);
 
-    // 하드 delete 대상 선정
-    @Query("SELECT r.id FROM ReaderBoardReply r WHERE r.deleted = true AND r.deletedAt < :cutoff")
+    @Query("SELECT r.id FROM ReaderBoardReply r " +
+            "WHERE r.deleted = true AND r.deletedAt < :cutoff " +
+            "AND NOT EXISTS (SELECT 1 FROM ReaderBoardReply c WHERE c.parentReply.id = r.id AND c.deleted = false) " +
+            "ORDER BY r.id ASC")
     List<Long> findIdsForHardDelete(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);
 
-    // 삭제 대상 댓글을 부모로 참조하는 답댓글의 FK 참조 해제 (self-FK 위반 방지)
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ReaderBoardReply r SET r.parentReply = null WHERE r.parentReply.id IN :replyIds")
     int detachChildRepliesOf(@Param("replyIds") List<Long> replyIds);

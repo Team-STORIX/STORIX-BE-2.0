@@ -25,6 +25,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -37,6 +40,7 @@ public class ReaderFeedAdaptor {
     private final ReaderBoardLikeRepository readerBoardLikeRepository;
     private final ReaderBoardReplyRepository readerBoardReplyRepository;
     private final ReaderBoardReplyLikeRepository readerBoardReplyLikeRepository;
+    private final PlatformTransactionManager transactionManager;
 
     // 게시물 존재 여부 확인 (삭제된 게시글 차단)
     public void checkReaderBoardExist(Long boardId) {
@@ -328,19 +332,30 @@ public class ReaderFeedAdaptor {
         return readerBoardRepository.findSteadyTrendingFeedNotToday(excludeIds, threshold, pageable);
     }
 
+    // 락 점유 방지를 위해 REQUIRES_NEW
     public int hardDeleteRepliesBefore(LocalDateTime cutoff) {
+        TransactionTemplate chunkTx = new TransactionTemplate(transactionManager);
+        chunkTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
         int total = 0;
 
         while (true) {
-            List<Long> replyIds = readerBoardReplyRepository.findIdsForHardDelete(
-                    cutoff, PageRequest.of(0, STORIXStatic.HARD_DELETE_CHUNK_SIZE));
-            if (replyIds.isEmpty()) {
+            Integer deleted = chunkTx.execute(status -> {
+                List<Long> replyIds = readerBoardReplyRepository.findIdsForHardDelete(
+                        cutoff, PageRequest.of(0, STORIXStatic.HARD_DELETE_CHUNK_SIZE));
+                if (replyIds.isEmpty()) {
+                    return 0;
+                }
+
+                readerBoardReplyLikeRepository.hardDeleteByReplyIds(replyIds);
+                readerBoardReplyRepository.detachChildRepliesOf(replyIds);
+                return readerBoardReplyRepository.hardDeleteByIds(replyIds);
+            });
+
+            if (deleted == null || deleted == 0) {
                 break;
             }
-
-            readerBoardReplyLikeRepository.hardDeleteByReplyIds(replyIds);
-            readerBoardReplyRepository.detachChildRepliesOf(replyIds);
-            total += readerBoardReplyRepository.hardDeleteByIds(replyIds);
+            total += deleted;
         }
 
         return total;

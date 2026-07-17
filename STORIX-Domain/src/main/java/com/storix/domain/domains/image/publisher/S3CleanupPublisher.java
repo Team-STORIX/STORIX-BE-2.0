@@ -33,7 +33,7 @@ public class S3CleanupPublisher {
         try {
             eventPublisher.publishEvent(new S3CleanupEvent(keys));
         } catch (Exception e) {
-            log.warn(">>> [S3Cleanup] publish failed keyCount={}, cause={}", keys.size(), e.getMessage());
+            log.warn(">>> [S3Cleanup] publish failed keyCount={}, keys={}", keys.size(), keys, e);
         }
     }
 
