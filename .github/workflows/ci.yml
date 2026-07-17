@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - main
     paths-ignore:
       - 'monitoring/**'
       - '.github/workflows/cd-monitoring.yml'
@@ -33,6 +34,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Resolve env tag (develop=dev, main=prod)
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "ENV_TAG=prod" >> "$GITHUB_ENV"
+          else
+            echo "ENV_TAG=dev" >> "$GITHUB_ENV"
+          fi
+
       - name: Build bootJar (Api + Batch)
         run: ./gradlew :STORIX-Api:bootJar :STORIX-Batch:bootJar -x test --no-daemon
 
@@ -50,21 +59,15 @@ jobs:
       - name: Build & push storix-api image to ECR
         env:
           IMAGE_NAME: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_API_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -f STORIX-Api/Dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
-          docker push $IMAGE_NAME:$IMAGE_TAG
-
-          docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
-          docker push $IMAGE_NAME:latest
+          docker build -f STORIX-Api/Dockerfile -t $IMAGE_NAME:$ENV_TAG -t $IMAGE_NAME:$ENV_TAG-${{ github.sha }} .
+          docker push $IMAGE_NAME:$ENV_TAG
+          docker push $IMAGE_NAME:$ENV_TAG-${{ github.sha }}
 
       - name: Build & push storix-batch image to ECR
         env:
           IMAGE_NAME: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_BATCH_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -f STORIX-Batch/Dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
-          docker push $IMAGE_NAME:$IMAGE_TAG
-
-          docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
-          docker push $IMAGE_NAME:latest
+          docker build -f STORIX-Batch/Dockerfile -t $IMAGE_NAME:$ENV_TAG -t $IMAGE_NAME:$ENV_TAG-${{ github.sha }} .
+          docker push $IMAGE_NAME:$ENV_TAG
+          docker push $IMAGE_NAME:$ENV_TAG-${{ github.sha }}
