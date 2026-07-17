@@ -37,6 +37,18 @@ discovery.relabel "storix" {
 loki.source.docker "storix" {
   host       = "unix:///var/run/docker.sock"
   targets    = discovery.relabel.storix.output
+  forward_to = [loki.process.storix.receiver]
+}
+
+loki.process "storix" {
+  stage.json {
+    expressions = { level = "level" }
+  }
+
+  stage.labels {
+    values = { level = "" }
+  }
+
   forward_to = [loki.write.monitoring.receiver]
 }
 

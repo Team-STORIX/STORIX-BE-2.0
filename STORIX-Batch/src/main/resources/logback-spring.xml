@@ -2,16 +2,16 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-    <!-- !prod: 일반 콘솔 로깅 출력 -->
-    <springProfile name="!prod">
+    <!-- 로컬: 일반 콘솔 로깅 출력 -->
+    <springProfile name="!prod &amp; !dev">
         <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
     </springProfile>
 
-    <!-- prod: JSON 구조화 로깅 출력 -->
-    <springProfile name="prod">
+    <!-- dev·prod: JSON 구조화 로깅 출력 -->
+    <springProfile name="prod,dev">
         <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <timeZone>Asia/Seoul</timeZone>
