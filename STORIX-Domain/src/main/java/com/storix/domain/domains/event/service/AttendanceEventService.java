@@ -16,13 +16,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
 public class AttendanceEventService {
 
-    // 응모권 지급 기준 누적 출석일 (달성 시마다 1장)
-    private static final List<Integer> TICKET_MILESTONE_DAYS = List.of(3, 7, 14);
+    // 누적 출석일 → 누적 지급 응모권 (3~6일 1개, 7~13일 2개, 14일 5개)
+    private static final NavigableMap<Integer, Integer> TICKET_TOTALS_BY_ATTENDED_DAYS =
+            new TreeMap<>(Map.of(3, 1, 7, 2, 14, 5));
 
     private final AppEventAdaptor appEventAdaptor;
     private final AttendanceCheckAdaptor attendanceCheckAdaptor;
@@ -53,11 +57,12 @@ public class AttendanceEventService {
             throw AttendanceAlreadyCheckedInException.EXCEPTION;
         }
         int totalAttendedDays = (int) attendanceCheckAdaptor.countAttendedDays(event.getId(), userId);
+        int issuedTickets = issuedTicketsFor(totalAttendedDays);
         return AttendanceCheckInResponse.builder()
                 .attendedDate(today)
                 .totalAttendedDays(totalAttendedDays)
-                .newlyIssuedTickets(TICKET_MILESTONE_DAYS.contains(totalAttendedDays) ? 1 : 0)
-                .issuedTickets(issuedTicketsFor(totalAttendedDays))
+                .newlyIssuedTickets(issuedTickets - issuedTicketsFor(totalAttendedDays - 1))
+                .issuedTickets(issuedTickets)
                 .build();
     }
 
@@ -86,8 +91,7 @@ public class AttendanceEventService {
     }
 
     private static int issuedTicketsFor(int totalAttendedDays) {
-        return (int) TICKET_MILESTONE_DAYS.stream()
-                .filter(milestone -> totalAttendedDays >= milestone)
-                .count();
+        Map.Entry<Integer, Integer> reached = TICKET_TOTALS_BY_ATTENDED_DAYS.floorEntry(totalAttendedDays);
+        return reached == null ? 0 : reached.getValue();
     }
 }

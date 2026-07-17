@@ -144,8 +144,8 @@ class AttendanceEventServiceTest {
         }
 
         @Test
-        @DisplayName("3·7·14일 달성 시 응모권이 1장 새로 발급된다")
-        void checkIn_milestone_issues_ticket() {
+        @DisplayName("7일 달성 시 누적 응모권이 2개가 된다 (+1)")
+        void checkIn_seven_days_issues_ticket() {
             LocalDate today = START.plusDays(6);
             given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
             given(attendanceCheckAdaptor.insertIfAbsent(EVENT_ID, USER_ID, today)).willReturn(true);
@@ -154,7 +154,21 @@ class AttendanceEventServiceTest {
             AttendanceCheckInResponse response = attendanceEventService.checkIn(EVENT_ID, USER_ID, today);
 
             assertThat(response.newlyIssuedTickets()).isEqualTo(1);
-            assertThat(response.issuedTickets()).isEqualTo(2); // 3일 + 7일 달성
+            assertThat(response.issuedTickets()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("14일 달성 시 누적 응모권이 5개가 된다 (+3)")
+        void checkIn_fourteen_days_issues_tickets() {
+            LocalDate today = END;
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            given(attendanceCheckAdaptor.insertIfAbsent(EVENT_ID, USER_ID, today)).willReturn(true);
+            given(attendanceCheckAdaptor.countAttendedDays(EVENT_ID, USER_ID)).willReturn(14L);
+
+            AttendanceCheckInResponse response = attendanceEventService.checkIn(EVENT_ID, USER_ID, today);
+
+            assertThat(response.newlyIssuedTickets()).isEqualTo(3);
+            assertThat(response.issuedTickets()).isEqualTo(5);
         }
 
         @Test

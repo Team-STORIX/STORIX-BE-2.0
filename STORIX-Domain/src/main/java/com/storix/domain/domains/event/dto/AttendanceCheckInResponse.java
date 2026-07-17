@@ -13,7 +13,7 @@ public record AttendanceCheckInResponse(
         @Schema(description = "누적 출석일 수")
         int totalAttendedDays,
 
-        @Schema(description = "이번 출석으로 새로 발급된 응모권 수 (3·7·14일 달성 시에만 1)")
+        @Schema(description = "이번 출석으로 새로 발급된 응모권 수 (3일 +1, 7일 +1, 14일 +3, 그 외 0)")
         int newlyIssuedTickets,
 
         @Schema(description = "지금까지 발급된 응모권 수")
