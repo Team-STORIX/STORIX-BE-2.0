@@ -1,7 +1,9 @@
 package com.storix.domain.domains.feed.repository;
 
 import com.storix.domain.domains.feed.domain.FeedReplyReport;
+import com.storix.domain.domains.report.repository.ReportedUserCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -20,4 +22,20 @@ public interface FeedReplyReportRepository extends JpaRepository<FeedReplyReport
     List<FeedReplyReport> findAllByReportCaseIdOrderByCreatedAtAsc(Long reportCaseId);
 
     boolean existsByReporterIdAndReplyId(Long reporterId, Long replyId);
+
+    long countByReporterId(Long reporterId);
+
+    long countByReportedUserId(Long reportedUserId);
+
+    @Query("""
+            SELECT report.reportedUserId AS reportedUserId, COUNT(report) AS reportCount
+            FROM FeedReplyReport report
+            WHERE report.reportedUserId IN :reportedUserIds
+            GROUP BY report.reportedUserId
+            """)
+    List<ReportedUserCountProjection> countByReportedUserIds(@Param("reportedUserIds") List<Long> reportedUserIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM FeedReplyReport report WHERE report.reportCaseId IN :reportCaseIds")
+    int deleteByReportCaseIdIn(@Param("reportCaseIds") List<Long> reportCaseIds);
 }

@@ -3,6 +3,7 @@ package com.storix.domain.domains.topicroom.adaptor;
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
+import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomUserException;
 import com.storix.domain.domains.topicroom.repository.TopicRoomRepository;
 import com.storix.domain.domains.topicroom.repository.TopicRoomUserRepository;
@@ -33,8 +34,8 @@ public class TopicRoomAdaptor {
         return topicRoomUserRepository.existsByUserIdAndTopicRoomId(userId, roomId);
     }
 
-    public List<TopicRoom> loadTop5PopularRooms() {
-        return topicRoomRepository.findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();
+    public List<TopicRoom> loadHotTopicRooms() {
+        return topicRoomRepository.findTop15ByOrderByActivityScoreDescLastChatTimeDesc();
     }
 
     // 주어진 토픽룸 ID 목록 중 해당 유저가 참여하고 있는 방의 ID 조회
@@ -51,5 +52,21 @@ public class TopicRoomAdaptor {
     public TopicRoomUser findByUserIdAndRoomId(Long userId, Long roomId) {
         return topicRoomUserRepository.findByUserIdAndTopicRoomId(userId, roomId)
                 .orElseThrow(() -> UnknownTopicRoomUserException.EXCEPTION);
+    }
+
+    public long countJoinedRooms(Long userId) {
+        return topicRoomUserRepository.countByUserId(userId);
+    }
+
+    public List<Long> findAllJoinedRoomIdsByUserId(Long userId) {
+        return topicRoomUserRepository.findAllJoinedRoomIdsByUserId(userId);
+    }
+
+    public Integer findActiveUserNumberById(Long roomId) {
+        Integer activeUserNumber = topicRoomRepository.findActiveUserNumberById(roomId);
+        if (activeUserNumber == null) {
+            throw UnknownTopicRoomException.EXCEPTION;
+        }
+        return activeUserNumber;
     }
 }

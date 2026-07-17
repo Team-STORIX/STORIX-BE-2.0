@@ -1,0 +1,408 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: storix-infra
+    folder: STORIX
+    interval: 1m
+    rules:
+
+      - uid: storix-app-down
+        title: '서비스 다운'
+        condition: B
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.application }} 인스턴스가 스크랩되지 않습니다 (다운 또는 네트워크 단절).'
+          runbook: 'EC2 상태 / 보안그룹(9100·9101) / docker ps 확인'
+        noDataState: Alerting
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 'up{job=~"storix-.*"}'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+
+      - uid: storix-jvm-heap
+        title: 'JVM 힙 사용률 85% 초과'
+        condition: B
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: '힙 사용률이 85%를 넘겼습니다. 메모리 누수 또는 Full GC 로 인한 응답 지연이 임박했습니다.'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |
+                sum by (env, application, instance_id) (jvm_memory_used_bytes{area="heap"})
+                / sum by (env, application, instance_id) (jvm_memory_max_bytes{area="heap"})
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.85] }
+
+      - uid: storix-gc-thrashing
+        title: 'GC 스레싱'
+        condition: B
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: '전체 시간의 20% 이상을 GC 로 보내고 있습니다. 응답이 사실상 멈춥니다.'
+          runbook: '힙 덤프 확보 -> 메모리 누수 의심'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |
+                sum by (env, application, instance_id) (
+                  rate(jvm_gc_pause_seconds_sum{job=~"storix-.*"}[5m])
+                )
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.2] }
+
+      - uid: storix-full-gc-frequent
+        title: 'Full GC 가 분당 1회 넘게 발생'
+        condition: B
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Full GC 가 분당 1회를 넘습니다. 곧 스레싱으로 번집니다.'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |
+                sum by (env, application, instance_id) (
+                  rate(jvm_gc_pause_seconds_count{job=~"storix-.*", action="end of major GC"}[5m])
+                ) * 60
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [1] }
+
+      - uid: storix-cpu-high
+        title: 'CPU 사용률 90% 초과'
+        condition: B
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'CPU 가 1분 이상 90%를 넘겼습니다. 순간 피크가 아니라 과부하입니다.'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 'system_cpu_usage{job=~"storix-.*"}'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.9] }
+
+      - uid: storix-db-pool
+        title: 'DB 커넥션 풀 90% 초과'
+        condition: B
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'HikariCP 활성 커넥션이 90%를 넘겼습니다. 곧 요청이 커넥션을 기다리며 밀립니다.'
+          runbook: '느린 쿼리 / 트랜잭션 누수 / OSIV 확인'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 'hikaricp_connections_active / hikaricp_connections_max'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.9] }
+
+  - orgId: 1
+    name: storix-service
+    folder: STORIX
+    interval: 1m
+    rules:
+
+      - uid: storix-5xx-rate
+        title: '5xx 에러율 1% 초과'
+        condition: B
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: '서버 에러율이 1%를 넘겼습니다.'
+          runbook: 'Loki: {job="storix"} | json | level="ERROR"'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |
+                (
+                  sum by (env, application) (rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+                  / sum by (env, application) (rate(http_server_requests_seconds_count[5m]))
+                )
+                and
+                (sum by (env, application) (rate(http_server_requests_seconds_count[5m])) > 0.05)
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.01] }
+
+      - uid: storix-latency-p99
+        title: 'p99 응답시간 1초 초과'
+        condition: B
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: '상위 1% 요청의 응답시간이 1초를 넘습니다.'
+          runbook: 'application.yml 에 percentiles-histogram 설정이 있어야 이 지표가 나온다'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |
+                histogram_quantile(
+                  0.99,
+                  sum by (le, env, application) (rate(http_server_requests_seconds_bucket[5m]))
+                )
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [1] }
+
+  - orgId: 1
+    name: storix-notification
+    folder: STORIX
+    interval: 1m
+    rules:
+
+      - uid: storix-executor-rejected
+        title: '알림 작업이 큐에서 버려짐'
+        condition: B
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: '비동기 큐가 꽉 차 작업이 거부됐습니다. 알림이 실제로 유실됩니다. executor={{ $labels.executor }}'
+          runbook: 'AsyncConfig 의 풀/큐 크기 확인. Loki: {job="storix"} | json | level="ERROR"'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 'sum by (env, executor) (increase(notification_executor_rejected_total[5m]))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+
+      - uid: storix-notification-force-finalize
+        title: '알림 발송이 정체돼 강제 종료됨'
+        condition: B
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: '발송이 끝나지 않아 배치가 강제 마감했습니다. 정상 운영이면 0이어야 합니다.'
+          runbook: 'Loki: {job="storix"} | json | adminNotificationId != ""'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 3600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 'sum by (env) (increase(admin_notification_force_finalize_total[1h]))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+
+      - uid: storix-notification-sending-stuck
+        title: 'SENDING 상태 알림이 쌓임'
+        condition: B
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'SENDING 인 알림이 30분 넘게 5건 이상 남아 있습니다. 발송이 안 끝나고 정체 중입니다.'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 1800, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 'max by (env) (admin_notification_sending_inflight)'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [5] }
+
+      - uid: storix-fcm-failure-spike
+        title: 'FCM 발송 실패 급증'
+        condition: B
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'FCM 실패가 10분간 50건을 넘었습니다. code={{ $labels.code }}'
+          runbook: '토큰 만료(UNREGISTERED/INVALID_ARGUMENT)는 정상이라 제외돼 있다. 그 외 코드면 설정·인증 문제일 수 있다.'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # 만료 토큰 정리는 정상 동작이므로 알림 대상에서 제
+              expr: |
+                sum by (env, code) (
+                  increase(fcm_send_failure_total{code!~"UNREGISTERED|INVALID_ARGUMENT"}[10m])
+                )
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [50] }
+
+  - orgId: 1
+    name: storix-logs
+    folder: STORIX
+    interval: 1m
+    rules:
+
+      - uid: storix-error-log-spike
+        title: 'ERROR 로그 급증'
+        condition: B
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'ERROR 로그가 5분간 10건을 넘었습니다.'
+          runbook: 'Loki: {job="storix"} | json | level="ERROR"'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: loki
+            model:
+              refId: A
+              queryType: instant
+              expr: 'sum by (env) (count_over_time({job="storix"} | json | level="ERROR" [5m]))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [10] }

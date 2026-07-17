@@ -32,6 +32,8 @@ public interface TopicRoomUseCase {
 
     void leaveRoom(Long userId, Long roomId);
 
+    void leaveAllRooms(Long userId);
+
     void reportUser(Long reporterId, Long roomId, TopicRoomReportRequestDto request);
 
     List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId);

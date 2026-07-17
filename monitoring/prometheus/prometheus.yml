@@ -1,0 +1,42 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  external_labels:
+    monitor: storix
+
+scrape_configs:
+  - job_name: storix-api
+    metrics_path: /actuator/prometheus
+    ec2_sd_configs:
+      - region: ap-northeast-2
+        port: 9100
+        filters:
+          - name: tag:Service
+            values: [storix-api]
+          - name: instance-state-name
+            values: [running]
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_Env]
+        target_label: env
+      - source_labels: [__meta_ec2_instance_id]
+        target_label: instance_id
+      - target_label: application
+        replacement: storix-api
+
+  - job_name: storix-batch
+    metrics_path: /actuator/prometheus
+    ec2_sd_configs:
+      - region: ap-northeast-2
+        port: 9101
+        filters:
+          - name: tag:Service
+            values: [storix-batch]
+          - name: instance-state-name
+            values: [running]
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_Env]
+        target_label: env
+      - source_labels: [__meta_ec2_instance_id]
+        target_label: instance_id
+      - target_label: application
+        replacement: storix-batch

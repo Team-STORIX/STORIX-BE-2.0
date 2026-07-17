@@ -70,7 +70,7 @@ public class ExplorationCacheHelper {
             );
 
         } catch (Exception e) {
-            log.error(">>> Lua script execution 실패: {}", e.getMessage());
+            log.warn(">>> Lua script execution 실패: {}", e.getMessage(), e);
             return -3L;
         }
     }

@@ -2,7 +2,9 @@ package com.storix.domain.domains.plus.repository;
 
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.plus.dto.StandardReaderBoardInfo;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -25,6 +27,49 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
             "FROM ReaderBoard rb " +
             "WHERE rb.userId = :userId AND rb.deleted = false")
     Slice<ReaderBoard> findAllReaderBoardByUserId(Long userId, Pageable pageable);
+
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                rb.id,
+                com.storix.domain.domains.report.domain.TargetContentType.FEED,
+                rb.id,
+                null,
+                null,
+                rb.worksId,
+                rb.content,
+                null,
+                null,
+                rb.likeCount,
+                rb.replyCount,
+                rb.createdAt
+            )
+            FROM ReaderBoard rb
+            WHERE rb.userId = :userId AND rb.deleted = false
+            """)
+    Page<AdminUserContentItemResponse> findAdminBoardContentsByUserId(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                rb.id,
+                com.storix.domain.domains.report.domain.TargetContentType.FEED,
+                rb.id,
+                null,
+                null,
+                rb.worksId,
+                rb.content,
+                null,
+                null,
+                rb.likeCount,
+                rb.replyCount,
+                rb.createdAt
+            )
+            FROM ReaderBoard rb
+            WHERE rb.id IN :ids AND rb.deleted = false
+            """)
+    List<AdminUserContentItemResponse> findAdminBoardContentsByIds(@Param("ids") List<Long> ids);
 
     @Query("SELECT rb " +
             "FROM ReaderBoardLike rl " +
@@ -109,6 +154,8 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
     Optional<ReaderBoard> findByIdAndDeletedFalse(Long id);
 
     boolean existsByIdAndDeletedFalse(Long id);
+
+    long countByUserIdAndDeletedFalse(Long userId);
 
     @Query("SELECT r.id FROM ReaderBoard r WHERE r.deleted = true AND r.deletedAt < :cutoff")
     List<Long> findIdsForHardDelete(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);

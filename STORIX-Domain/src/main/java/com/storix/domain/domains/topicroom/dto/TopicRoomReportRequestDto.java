@@ -15,7 +15,7 @@ public class TopicRoomReportRequestDto {
 
     private Long chatMessageId;
 
-    @NotNull
+    // TO DO: 유저 신고 및 채팅 신고 시 DEFAULT로 들어가며, 기획 측 요청이 들어올 경우 리팩토링 예정
     private ReportReason reason;
 
     @Size(max = 100)

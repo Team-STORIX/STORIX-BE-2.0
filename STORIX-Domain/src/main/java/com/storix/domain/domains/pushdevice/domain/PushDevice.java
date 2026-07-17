@@ -20,7 +20,11 @@ import java.time.LocalDateTime;
         ),
         indexes = {
                 @Index(name = "idx_push_device_user_active", columnList = "user_id, is_active"),
-                @Index(name = "idx_push_device_fcm_token", columnList = "fcm_token")
+                @Index(name = "idx_push_device_fcm_token", columnList = "fcm_token"),
+                // 한 기기의 다른 유저 활성 행 정리용
+                @Index(name = "idx_push_device_installation", columnList = "installation_id, is_active"),
+                // 장기 미활동 디바이스 비활성화 배치 스캔용
+                @Index(name = "idx_push_device_active_updated", columnList = "is_active, updated_at")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

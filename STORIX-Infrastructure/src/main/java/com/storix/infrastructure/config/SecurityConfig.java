@@ -34,6 +34,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final MdcContextFilter mdcContextFilter;
     private final JwtAuthenticationFilter jwtFilter;
     private final OnboardingAuthenticationFilter onboardingFilter;
     private final ErrorHandlingFilter errorHandlingFilter;
@@ -106,6 +107,7 @@ public class SecurityConfig {
                         (requests) -> requests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                 .requestMatchers("/actuator/health").permitAll()
+                                .requestMatchers("/actuator/prometheus").permitAll()
 
                                 // [Onboarding]
                                 .requestMatchers("/api/v1/onboarding/**").permitAll()
@@ -117,30 +119,32 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v1/auth/nickname/valid").permitAll()
                                 .requestMatchers("/api/v1/auth/tokens/refresh").permitAll()
 
-                                .requestMatchers("/api/v1/auth/developer/signup").permitAll()
-                                .requestMatchers("/api/v1/auth/developer/login").permitAll()
-                                .requestMatchers("/api/v1/auth/developer/slack/callback").permitAll()
+                                .requestMatchers("/api/v1/auth/tester/signup").permitAll()
+                                .requestMatchers("/api/v1/auth/tester/login").permitAll()
+                                .requestMatchers("/api/v1/auth/tester/slack/callback").permitAll()
 
                                 .requestMatchers("/api/v1/auth/admin/signup").permitAll()
                                 .requestMatchers("/api/v1/auth/admin/login").permitAll()
                                 .requestMatchers("/api/v1/auth/admin/slack/callback").permitAll()
+                                .requestMatchers("/api/v1/auth/admin/profile").hasRole("ADMIN")
 
                                 // [TopicRoom]
                                 .requestMatchers("/ws-stomp/**").permitAll()
 
-                                // [Admin] 관리자 페이지 (신고/약관) — 관리자(SUPER_ADMIN) 전용
-                                .requestMatchers("/api/v1/admin/**").hasRole("SUPER_ADMIN")
+                                // [Admin] 관리자 페이지 (신고/약관) — 관리자(ADMIN) 전용
+                                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-                                // [Notification] 테스트 엔드포인트는 개발자(ADMIN) 만
-                                .requestMatchers("/api/v1/notifications/developer/**").hasRole("ADMIN")
+                                // [Notification] 테스트 엔드포인트는 테스터(TESTER) 만
+                                .requestMatchers("/api/v1/notifications/tester/**").hasRole("TESTER")
 
                                 .anyRequest().hasRole("READER")
                 )
 
-                // jwt filter
+                // MDC 상관키 -> 에러처리 -> jwt filter
                 .addFilterBefore(errorHandlingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(onboardingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(mdcContextFilter, ErrorHandlingFilter.class)
 
                 // spring security exception handler
                 .exceptionHandling(exceptions -> exceptions
@@ -180,7 +184,7 @@ public class SecurityConfig {
 
     @Bean
     public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_READER");
+        return RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_TESTER > ROLE_READER");
     }
 
 }

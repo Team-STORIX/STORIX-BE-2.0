@@ -1,6 +1,8 @@
 package com.storix.domain.domains.feed.repository;
 
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -58,17 +60,14 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     @Query("SELECT r.userId FROM ReaderBoardReply r WHERE r.id = :replyId AND r.board.id = :boardId AND r.deleted = false")
     Optional<Long> findActiveUserIdByIdAndBoardId(@Param("replyId") Long replyId, @Param("boardId") Long boardId);
 
-    // 피드 댓글 조회 (최상위 댓글 + 답댓글 fetch join) — 삭제된 댓글 제외
-    // FETCH JOIN with ON clause is invalid in JPQL; deleted filter applied via @SQLRestriction on childReplies
+    // 피드 최상위 댓글 조회 (삭제 제외) — 답댓글은 @BatchSize로 배치 로드
     @Query("SELECT r FROM ReaderBoardReply r " +
-            "LEFT JOIN FETCH r.childReplies " +
             "WHERE r.board.id = :boardId AND r.parentReply IS NULL AND r.deleted = false")
     Slice<ReaderBoardReply> findAllByBoard_Id(@Param("boardId") Long boardId, Pageable pageable);
 
-    // 차단 유저 제외 댓글 조회
-    @Query("SELECT DISTINCT r FROM ReaderBoardReply r " +
-            "LEFT JOIN FETCH r.childReplies c " +
-            "WHERE r.board.id = :boardId AND r.parentReply IS NULL AND r.userId NOT IN :blockedIds")
+    // 차단 유저 제외 최상위 댓글 조회 — 답댓글은 @BatchSize로 배치 로드
+    @Query("SELECT r FROM ReaderBoardReply r " +
+            "WHERE r.board.id = :boardId AND r.parentReply IS NULL AND r.deleted = false AND r.userId NOT IN :blockedIds")
     Slice<ReaderBoardReply> findAllByBoard_IdExcludingBlocked(
             @Param("boardId") Long boardId,
             @Param("blockedIds") List<Long> blockedIds,
@@ -83,6 +82,53 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     // 프로필 댓글 조회 (삭제된 댓글 제외)
     @Query("SELECT r FROM ReaderBoardReply r WHERE r.userId = :userId AND r.deleted = false ORDER BY r.createdAt DESC")
     Slice<ReaderBoardReply> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                r.id,
+                com.storix.domain.domains.report.domain.TargetContentType.FEED_REPLY,
+                r.board.id,
+                parent.id,
+                null,
+                null,
+                r.comment,
+                null,
+                null,
+                r.likeCount,
+                0,
+                r.createdAt
+            )
+            FROM ReaderBoardReply r
+            LEFT JOIN r.parentReply parent
+            WHERE r.userId = :userId AND r.deleted = false
+            """)
+    Page<AdminUserContentItemResponse> findAdminReplyContentsByUserId(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT new com.storix.domain.domains.user.dto.AdminUserContentItemResponse(
+                r.id,
+                com.storix.domain.domains.report.domain.TargetContentType.FEED_REPLY,
+                r.board.id,
+                parent.id,
+                null,
+                null,
+                r.comment,
+                null,
+                null,
+                r.likeCount,
+                0,
+                r.createdAt
+            )
+            FROM ReaderBoardReply r
+            LEFT JOIN r.parentReply parent
+            WHERE r.id IN :ids AND r.deleted = false
+            """)
+    List<AdminUserContentItemResponse> findAdminReplyContentsByIds(@Param("ids") List<Long> ids);
+
+    long countByUserIdAndDeletedFalse(Long userId);
 
     // 관리자 댓글 강제 삭제 (이미 삭제된 댓글이면 0건 반영, 중복 카운트 감소 방지)
     @Modifying(clearAutomatically = true, flushAutomatically = true)

@@ -7,34 +7,109 @@ on:
     types:
       - completed
 
-jobs:
-  deploy-to-ec2:
-    name: Deploy to EC2
-    runs-on: self-hosted
-    env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+permissions:
+  id-token: write
+  contents: read
 
+jobs:
+  deploy:
+    name: Deploy to EC2 (via SSM)
+    runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    env:
+      AWS_REGION: ap-northeast-2
 
     steps:
-      - name: Deploy on EC2 Instance
+      - name: Resolve target by branch
+        id: target
         run: |
-          cd ~/storix
-          test -f docker-compose.yml || { echo "ERROR: docker-compose.yml not found"; exit 1; }
-          test -f .env || { echo "ERROR: .env not found"; exit 1; }
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          if [ "$BRANCH" = "main" ]; then
+            echo "instance_id=${{ secrets.PROD_INSTANCE_ID }}" >> "$GITHUB_OUTPUT"
+            echo "pull_batch=true" >> "$GITHUB_OUTPUT"
+            echo "env_tag=prod" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          elif [ "$BRANCH" = "develop" ]; then
+            echo "instance_id=${{ secrets.DEV_INSTANCE_ID }}" >> "$GITHUB_OUTPUT"
+            echo "pull_batch=false" >> "$GITHUB_OUTPUT"
+            echo "env_tag=dev" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Not a deploy branch: $BRANCH — skipping."
+          fi
 
-          echo ">>> Logging in to ECR..."
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      - name: Skip if superseded by a newer commit
+        id: fresh
+        if: ${{ steps.target.outputs.deploy == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          LATEST=$(gh api "repos/${{ github.repository }}/commits/${BRANCH}" --jq .sha)
+          if [ "$LATEST" != "$SHA" ]; then
+            echo "Superseded: branch tip=$LATEST, this run=$SHA — skipping stale deploy."
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+          fi
 
-          echo ">>> Pulling latest images from ECR..."
-          docker compose pull app
-          docker compose pull batch
+      - name: Configure AWS credentials (OIDC)
+        if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' }}
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.APP_DEPLOY_ROLE_ARN }}
+          aws-region: ap-northeast-2
 
-          echo ">>> Starting new containers..."
-          docker compose up -d
+      - name: Deploy via SSM
+        if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' }}
+        env:
+          INSTANCE_ID: ${{ steps.target.outputs.instance_id }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          ENV_TAG: ${{ steps.target.outputs.env_tag }}
+          PULL_BATCH: ${{ steps.target.outputs.pull_batch }}
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+        run: |
+          BATCH_LINE="true"
+          if [ "$PULL_BATCH" = "true" ]; then BATCH_LINE="docker compose pull batch"; fi
 
-          echo ">>> Pruning old images..."
-          docker image prune -af
+          cat > /tmp/params.json << JSON
+          {
+            "commands": [
+              "set -eu",
+              "export HOME=/root",
+              "export IMAGE_TAG=${ENV_TAG}-${SHA}",
+              "cd /home/ubuntu/storix",
+              "test -f docker-compose.yml || { echo 'compose missing'; exit 1; }",
+              "test -f .env || { echo 'env missing'; exit 1; }",
+              "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}",
+              "mkdir -p alloy",
+              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/monitoring/app-side/config.alloy -o alloy/config.alloy",
+              "docker compose pull app",
+              "${BATCH_LINE}",
+              "docker compose up -d",
+              "docker image prune -af"
+            ]
+          }
+          JSON
 
-          echo "✅ Deployment successful!"
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Deploy app ($BRANCH)" \
+            --parameters file:///tmp/params.json \
+            --query "Command.CommandId" --output text)
+          echo "CommandId: $CMD_ID"
+
+          aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" || true
+
+          echo "===== STDOUT ====="
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query StandardOutputContent --output text
+          echo "===== STDERR ====="
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query StandardErrorContent --output text
+
+          STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query Status --output text)
+          echo "Status: $STATUS"
+          [ "$STATUS" = "Success" ] || { echo "deploy failed"; exit 1; }

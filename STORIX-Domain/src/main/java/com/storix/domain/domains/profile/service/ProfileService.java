@@ -1,5 +1,6 @@
 package com.storix.domain.domains.profile.service;
 
+import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.genrescore.adaptor.GenreScoreAdaptor;
 import com.storix.domain.domains.image.publisher.S3CleanupPublisher;
 import com.storix.domain.domains.profile.dto.UserInfo;
@@ -8,6 +9,7 @@ import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.Title;
 import com.storix.domain.domains.user.domain.TitleStage;
 import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.exception.me.ProfileForbiddenNicknameException;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +25,7 @@ public class ProfileService {
     private final UserAdaptor userAdaptor;
     private final GenreScoreAdaptor genreScoreAdaptor;
     private final S3CleanupPublisher s3CleanupPublisher;
+    private final BannedWordAdaptor bannedWordAdaptor;
 
     // 독자 프로필 조회 (V1)
     @Transactional(readOnly = true)
@@ -32,7 +35,7 @@ public class ProfileService {
         return UserInfo.builder()
                 .userId(userId)
                 .role(readerUser.getRole().toString())
-                .nickName(readerUser.getNickName())
+                .nickName(readerUser.getDisplayNickName())
                 .level(1)// level 미사용
                 .point(readerUser.getPoint())
                 .profileDescription(readerUser.getProfileDescription())
@@ -60,7 +63,7 @@ public class ProfileService {
         return UserInfoV2.builder()
                 .userId(userId)
                 .role(readerUser.getRole().toString())
-                .nickName(readerUser.getNickName())
+                .nickName(readerUser.getDisplayNickName())
                 .point(readerUser.getPoint())
                 .profileDescription(readerUser.getProfileDescription())
                 .profileImageUrl(readerUser.getProfileObjectKey() == null
@@ -80,15 +83,24 @@ public class ProfileService {
     // 독자 닉네임 중복 체크
     @Transactional(readOnly = true)
     public void validNickname(String nickName, Long userId) {
+        validateNicknameNotBanned(nickName);
         userAdaptor.checkNicknameDuplicateExceptSelf(nickName, userId);
     }
 
     // 독자 닉네임 변경
     @Transactional
     public String changeNickname(String nickName, Long userId) {
+        validateNicknameNotBanned(nickName);
         User readerUser = userAdaptor.findUserById(userId);
         readerUser.changeNickName(nickName);
         return nickName;
+    }
+
+    // 금칙어 검증
+    private void validateNicknameNotBanned(String nickName) {
+        if (bannedWordAdaptor.containsBannedWord(nickName)) {
+            throw ProfileForbiddenNicknameException.EXCEPTION;
+        }
     }
 
     // 독자 한 줄 소개 변경

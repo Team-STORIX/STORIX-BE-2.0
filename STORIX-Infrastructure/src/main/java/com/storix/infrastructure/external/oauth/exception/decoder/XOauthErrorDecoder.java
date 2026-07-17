@@ -12,16 +12,13 @@ public class XOauthErrorDecoder implements ErrorDecoder {
 
     @Override
     public Exception decode(String methodKey, Response response) {
-        log.error("[X] OAuth 에러 응답 수신: methodKey={}, status={}, reason={}",
-                methodKey, response.status(), response.reason());
-
         XOauthErrorResponse body = XOauthErrorResponse.from(response);
-        log.error("[X] OAuth 에러 본문: error={}, errorDescription={}",
-                body.error(), body.errorDescription());
 
         String error = body.error();
         String desc = body.errorDescription();
         if (error == null) {
+            log.warn("[X] OAuth 에러 응답(error 없음): methodKey={}, status={}, reason={}",
+                    methodKey, response.status(), response.reason());
             return new STORIXCodeException(ErrorCode.XOE_INVALID_REQUEST);
         }
 
@@ -30,23 +27,24 @@ public class XOauthErrorDecoder implements ErrorDecoder {
 
         return switch (error) {
             case "invalid_client", "unauthorized_client" -> {
-                log.error("[X] {}: client_id/client_secret(Basic 인증) 검증 실패 가능성", error);
+                log.error("[X] {}: client_id/client_secret(Basic 인증) 검증 실패 가능성. status={}, desc={}",
+                        error, response.status(), desc);
                 yield new STORIXCodeException(ErrorCode.XOE_UNAUTHORIZED_CLIENT);
             }
             case "invalid_grant" -> {
-                log.error("[X] invalid_grant: 인가 코드 만료/재사용, redirect_uri 또는 code_verifier 불일치 가능성");
+                log.warn("[X] invalid_grant: 인가 코드 만료/재사용, redirect_uri 또는 code_verifier 불일치 가능성. desc={}", desc);
                 yield new STORIXCodeException(ErrorCode.XOE_INVALID_GRANT);
             }
             case "invalid_request" -> {
                 if (isAuthCodeProblem) {
-                    log.error("[X] invalid_request: 인가 코드 만료/무효/재사용 (유효시간 약 30초)");
+                    log.warn("[X] invalid_request: 인가 코드 만료/무효/재사용 (유효시간 약 30초). desc={}", desc);
                     yield new STORIXCodeException(ErrorCode.XOE_INVALID_GRANT);
                 }
-                log.error("[X] invalid_request: 파라미터 누락/형식 오류 가능성");
+                log.warn("[X] invalid_request: 파라미터 누락/형식 오류 가능성. desc={}", desc);
                 yield new STORIXCodeException(ErrorCode.XOE_INVALID_REQUEST);
             }
             default -> {
-                log.error("[X] 처리되지 않은 error 타입: {}", error);
+                log.error("[X] 처리되지 않은 error 타입: {}, status={}, desc={}", error, response.status(), desc);
                 yield new STORIXCodeException(ErrorCode.XOE_INVALID_REQUEST);
             }
         };

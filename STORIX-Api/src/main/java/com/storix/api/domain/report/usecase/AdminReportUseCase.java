@@ -5,7 +5,7 @@ import com.storix.common.annotation.UseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.report.dto.AdminReportDetailResponse;
 import com.storix.domain.domains.report.dto.AdminReportListResponse;
 import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
@@ -30,16 +30,17 @@ public class AdminReportUseCase {
 
     public CustomResponse<Page<AdminReportListResponse>> getReports(
             AuthUserDetails authUserDetails,
-            ReportTargetType targetType,
+            TargetContentType targetType,
             ReportStatus status,
             LocalDateTime startAt,
             LocalDateTime endAt,
             Long reportedUserId,
+            String reportedUserKeyword,
             Pageable pageable
     ) {
         validateAdmin(authUserDetails);
         Page<AdminReportListResponse> result = adminReportQueryService.getReports(
-                new AdminReportSearchCondition(targetType, status, startAt, endAt, reportedUserId),
+                new AdminReportSearchCondition(targetType, status, startAt, endAt, reportedUserId, reportedUserKeyword),
                 pageable
         );
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, result);
@@ -71,12 +72,12 @@ public class AdminReportUseCase {
         validateAdmin(authUserDetails);
         adminReportCommandService.processReport(
                 authUserDetails.getUserId(), reportCaseId,
-                request.status(), request.processAction(), request.processMemo());
+                request.status(), request.processActions(), request.processMemo());
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, null);
     }
 
     private void validateAdmin(AuthUserDetails authUserDetails) {
-        if (authUserDetails == null || authUserDetails.getRole() != Role.SUPER_ADMIN) {
+        if (authUserDetails == null || authUserDetails.getRole() != Role.ADMIN) {
             throw ForbiddenApproachException.EXCEPTION;
         }
     }

@@ -7,6 +7,7 @@ import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.chat.service.ChatAsyncService;
 import com.storix.domain.domains.chat.service.ChatService;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ public class ChatUseCase {
     private final ChatService chatService;
     private final ChatAsyncService chatAsyncService;
     private final UserBlockAdaptor userBlockAdaptor;
+    private final TopicRoomAdaptor topicRoomAdaptor;
 
     @Transactional
     public void sendMessage(Long userId, ChatMessageRequestDto request) {
@@ -56,6 +58,7 @@ public class ChatUseCase {
 
         // 채팅방 입장 시점 확인
         LocalDateTime joinedAt = chatService.getRoomJoinedAt(userId, roomId);
+        Integer activeUserNumber = topicRoomAdaptor.findActiveUserNumberById(roomId);
 
         // 차단 유저 필터링
         List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
@@ -63,6 +66,6 @@ public class ChatUseCase {
         // 과거 메시지 조회 (차단 유저 제외)
         Slice<ChatMessageResponseDto> chatMessages = chatService.getChatMessages(roomId, blockedIds, pageable);
 
-        return new ChatHistoryResponseDto(joinedAt, chatMessages);
+        return ChatHistoryResponseDto.from(joinedAt, activeUserNumber, chatMessages);
     }
 }

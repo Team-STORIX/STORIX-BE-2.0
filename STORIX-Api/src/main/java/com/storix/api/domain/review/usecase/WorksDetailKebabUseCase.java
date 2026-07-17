@@ -34,7 +34,7 @@ public class WorksDetailKebabUseCase {
     // 리뷰 신고
     public CustomResponse<Void> reportReview(Long userId, Long reviewId, ReviewReportRequest req) {
 
-        worksDetailKebabService.reportReview(userId, reviewId, req.reportedUserId(), req.reason(), req.otherReason());
+        worksDetailKebabService.reportReview(userId, reviewId, req.reportedUserId(), req.otherReason());
         return CustomResponse.onSuccess(SuccessCode.WORKS_DETAIL_REVIEW_REPORT_SUCCESS);
     }
 }

@@ -37,8 +37,7 @@ public class WithDrawUseCase {
                 case SLACK -> {} // admin 만 해당 (연결 해제 불필요)
             }
         } catch (Exception e) {
-            log.warn("OAuth unlink failed; continuing withdraw. userId={}, provider={}",
-                    userId, oauthInfo.getProvider(), e);
+            log.warn("OAuth unlink failed; continuing withdraw. provider={}", oauthInfo.getProvider(), e);
             // TODO: best-effort + 재시도 워커 처리 고려중
         }
 

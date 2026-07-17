@@ -1,10 +1,13 @@
 package com.storix.domain.domains.topicroom.service;
 
+import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
+import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.report.adaptor.ReportCaseAdaptor;
 import com.storix.domain.domains.report.domain.ReportCase;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
 import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
@@ -19,12 +22,14 @@ import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
+import com.storix.domain.domains.topicroom.domain.enums.ReportReason;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
+import com.storix.domain.domains.topicroom.publisher.TopicRoomActiveUserNumberPublisher;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
@@ -59,14 +64,15 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final LoadUserPort loadUserPort;
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
-    private final ProfanityFilterService profanityFilterService;
-    private final LoadTopicRoomUserPort loadTopicRoomMemberPort;
+    private final BannedWordAdaptor bannedWordAdaptor;
     private final GenreScorePublisher genreScorePublisher;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
     private final UserAdaptor userAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
+    private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
+    private final NotificationPublisher notificationPublisher;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -118,7 +124,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     @Override
     public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
         // 1. 상위 5개 토픽룸 가져오기
-        List<TopicRoom> rooms = topicRoomAdaptor.loadTop5PopularRooms();
+        List<TopicRoom> rooms = topicRoomAdaptor.loadHotTopicRooms();
         if (rooms.isEmpty()) return Collections.emptyList();
 
         List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
@@ -192,7 +198,9 @@ public class TopicRoomService implements TopicRoomUseCase {
     @Transactional
     public Long createRoom(Long userId, TopicRoomCreateRequestDto request) {
 
-        profanityFilterService.validate(request.getTopicRoomName());
+        if (bannedWordAdaptor.containsBannedWord(request.getTopicRoomName())) {
+            throw InvalidTitleException.EXCEPTION;
+        }
 
         User user = loadUserPort.findById(userId);
         Works works = loadWorksPort.findById(request.getWorksId());
@@ -200,6 +208,11 @@ public class TopicRoomService implements TopicRoomUseCase {
         // 이미 해당 작품의 토픽룸이 존재하는지 확인
         if (loadTopicRoomPort.existsByWorksId(works.getId())) {
             throw TopicRoomAlreadyExistsException.EXCEPTION;
+        }
+
+        // 토픽룸 참여 개수 제한
+        if (loadTopicRoomPort.countJoinedRooms(userId) >= 9) {
+            throw MaxLimitException.EXCEPTION;
         }
 
         if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
@@ -241,6 +254,8 @@ public class TopicRoomService implements TopicRoomUseCase {
         try {
             recordTopicRoomPort.saveParticipation(userId, room, TopicRoomRole.MEMBER);
             recordTopicRoomPort.incrementActiveUserNumber(roomId);
+            Integer activeUserNumber = topicRoomAdaptor.findActiveUserNumberById(roomId);
+            publishActiveUserNumberChanged(roomId, activeUserNumber);
 
             genreScorePublisher.publishWithGenre(
                     userId, works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
@@ -262,13 +277,28 @@ public class TopicRoomService implements TopicRoomUseCase {
 
         try {
             TopicRoom room = loadTopicRoomPort.findById(roomId);
-
-            // 인원수가 0 이하면 방 삭제 로직 실행
             if (room.getActiveUserNumber() <= 0) {
                 recordTopicRoomPort.deleteRoom(roomId);
+            } else {
+                publishActiveUserNumberChanged(room.getId(), room.getActiveUserNumber());
             }
         } catch (UnknownTopicRoomException e) {
             log.info("[leaveRoom] 다른 스레드에 의해 이미 지워진 토픽룸 {}번", roomId);
+        }
+    }
+
+    // 탈퇴 유저가 참여 중인 방 전체 나가기 — 방별 try/catch로 한 방 실패가 나머지를 막지 않게
+    @Override
+    @Transactional
+    public void leaveAllRooms(Long userId) {
+        List<Long> roomIds = topicRoomAdaptor.findAllJoinedRoomIdsByUserId(userId);
+        for (Long roomId : roomIds) {
+            try {
+                leaveRoom(userId, roomId);
+            } catch (Exception e) {
+                log.warn(">>> [TopicRoom] 탈퇴 유저 방 나가기 실패 userId={}, roomId={}, cause={}",
+                        userId, roomId, e.getMessage());
+            }
         }
     }
 
@@ -280,23 +310,30 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw SelfReportException.EXCEPTION;
         }
 
-        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId)) {
+        boolean isChatMessageReport = request.getChatMessageId() != null;
+        Long chatMessageId = isChatMessageReport ? request.getChatMessageId() : 0L;
+
+        if (topicRoomReportAdaptor.hasAlreadyReported(reporterId, request.getReportedUserId(), roomId, chatMessageId)) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
 
+        TargetContentType targetType = isChatMessageReport ? TargetContentType.CHAT : TargetContentType.TOPIC_ROOM;
+        Long targetId = isChatMessageReport ? request.getChatMessageId() : roomId;
+
         ReportCase reportCase = reportCaseAdaptor.findOrCreate(
-                ReportTargetType.TOPIC_ROOM,
-                roomId,
+                targetType,
+                targetId,
                 request.getReportedUserId()
         );
 
+        // 신고 사유(reason)는 별도로 받지 않고 유저/채팅 신고 모두 DEFAULT로 저장한다.
         TopicRoomReport report = TopicRoomReport.builder()
                 .reporterId(reporterId)
                 .reportedUserId(request.getReportedUserId())
                 .topicRoomId(roomId)
-                .chatMessageId(request.getChatMessageId())
-                .reason(request.getReason())
-                .otherReason(request.getOtherReason())
+                .chatMessageId(chatMessageId)
+                .reason(ReportReason.DEFAULT)
+                .otherReason(isChatMessageReport ? request.getOtherReason() : null)
                 .reportCaseId(reportCase.getId())
                 .build();
 
@@ -305,6 +342,7 @@ public class TopicRoomService implements TopicRoomUseCase {
         } catch (DataIntegrityViolationException e) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
+        notificationPublisher.publish(NotificationEvent.reportReceived(reporterId));
     }
 
 
@@ -318,5 +356,9 @@ public class TopicRoomService implements TopicRoomUseCase {
                 }
             });
         }
+    }
+
+    private void publishActiveUserNumberChanged(Long roomId, Integer activeUserNumber) {
+        activeUserNumberPublisher.publish(roomId, activeUserNumber);
     }
 }

@@ -21,20 +21,20 @@ public class SlackNotificationService {
 
     private static final String SLACK_POST_MESSAGE_URL = "https://slack.com/api/chat.postMessage";
 
-    public void sendDeveloperSignupApproval(String pendingId, String nickName) {
+    public void sendTesterSignupApproval(String pendingId, String nickName) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(slackProperties.getBotToken());
 
         Map<String, Object> body = Map.of(
                 "channel", slackProperties.getChannelId(),
-                "text", "개발자 회원가입 승인 요청: " + nickName,
+                "text", "테스터 회원가입 승인 요청: " + nickName,
                 "blocks", List.of(
                         Map.of(
                                 "type", "section",
                                 "text", Map.of(
                                         "type", "mrkdwn",
-                                        "text", "*[👨‍💻 개발자 회원가입 승인 요청]*\n"
+                                        "text", "*[👨‍💻 테스터 회원가입 승인 요청]*\n"
                                                 + "- 권한: `ADMIN`\n"
                                                 + "- 10분 이내로 승인해야 합니다.\n\n"
                                                 + ":bust_in_silhouette: *닉네임:* " + nickName + "\n"
@@ -48,14 +48,14 @@ public class SlackNotificationService {
                                                 "type", "button",
                                                 "text", Map.of("type", "plain_text", "text", "승인"),
                                                 "style", "primary",
-                                                "action_id", "approve_developer_signup",
+                                                "action_id", "approve_tester_signup",
                                                 "value", pendingId
                                         ),
                                         Map.of(
                                                 "type", "button",
                                                 "text", Map.of("type", "plain_text", "text", "거절"),
                                                 "style", "danger",
-                                                "action_id", "reject_developer_signup",
+                                                "action_id", "reject_tester_signup",
                                                 "value", pendingId
                                         )
                                 )
@@ -68,7 +68,7 @@ public class SlackNotificationService {
         try {
             ResponseEntity<String> response = slackRestTemplate.postForEntity(
                     SLACK_POST_MESSAGE_URL, request, String.class);
-            log.info(">>>> [Slack] 개발자 승인 요청 전송 완료");
+            log.info(">>>> [Slack] 테스터 승인 요청 전송 완료");
         } catch (Exception e) {
             log.error(">>>> [Slack] 메시지 전송 실패", e);
         }
@@ -88,7 +88,7 @@ public class SlackNotificationService {
                                 "text", Map.of(
                                         "type", "mrkdwn",
                                         "text", "*[🛡️ 관리자 회원가입 승인 요청]*\n"
-                                                + "- 권한: `SUPER_ADMIN`\n"
+                                                + "- 권한: `ADMIN`\n"
                                                 + "- 10분 이내로 승인해야 합니다.\n\n"
                                                 + ":bust_in_silhouette: *닉네임:* " + nickName + "\n"
                                                 + ":email: *로그인 ID:* `" + email + "`\n"
@@ -127,8 +127,8 @@ public class SlackNotificationService {
         }
     }
 
-    public void sendDeveloperApprovalResult(String pendingId, String nickName, boolean approved, String responseUrl) {
-        sendApprovalResult(buildApprovalResultText("👨‍💻", "개발자", nickName, null, pendingId, approved), responseUrl);
+    public void sendTesterApprovalResult(String pendingId, String nickName, boolean approved, String responseUrl) {
+        sendApprovalResult(buildApprovalResultText("👨‍💻", "테스터", nickName, null, pendingId, approved), responseUrl);
     }
 
     public void sendAdminApprovalResult(String pendingId, String nickName, String email, boolean approved, String responseUrl) {
@@ -147,6 +147,13 @@ public class SlackNotificationService {
         }
         sb.append(":key: *요청 ID:* `").append(pendingId).append("`");
         return sb.toString();
+    }
+
+    public void sendApprovalFailure(String pendingId, String responseUrl, String reason) {
+        String text = "*[⚠️ 승인 처리 실패]*\n" +
+                ":x: *오류:* " + reason + "\n\n" +
+                ":key: *요청 ID:* `" + pendingId + "`";
+        sendApprovalResult(text, responseUrl);
     }
 
     private void sendApprovalResult(String text, String responseUrl) {

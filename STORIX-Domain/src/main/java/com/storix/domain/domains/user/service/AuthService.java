@@ -1,5 +1,6 @@
 package com.storix.domain.domains.user.service;
 
+import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
@@ -18,6 +19,7 @@ import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.dto.ReaderSignUpData;
 import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
+import com.storix.domain.domains.user.exception.me.ProfileForbiddenNicknameException;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
@@ -56,6 +58,7 @@ public class AuthService {
     private final GenreScorePublisher genreScorePublisher;
     private final UserAccessRevokedPublisher userAccessRevokedPublisher;
     private final S3CleanupPublisher s3CleanupPublisher;
+    private final BannedWordAdaptor bannedWordAdaptor;
 
     // 독자 회원 가입 가능 여부 (토큰 검증, 계정 정보 유무)
     // - 카카오
@@ -103,7 +106,7 @@ public class AuthService {
             onboardingWorksHelper.checkReaderSignUpWithOnboardingWorksList(cmd.favoriteWorksIdList());
         }
 
-        userAdaptor.checkNicknameDuplicate(cmd.nickName());
+        validNickname(cmd.nickName());
 
         // 3. 회원 가입 정보 DB 저장
         CreateReaderUserCommand m = CreateReaderUserCommand.builder()
@@ -150,6 +153,9 @@ public class AuthService {
 
     // 독자 닉네임 중복 체크
     public void validNickname(String nickName) {
+        if (bannedWordAdaptor.containsBannedWord(nickName)) {
+            throw ProfileForbiddenNicknameException.EXCEPTION;
+        }
         userAdaptor.checkNicknameDuplicate(nickName);
     }
 
@@ -185,8 +191,8 @@ public class AuthService {
         favoriteWorksAdaptor.deleteFavoriteWorks(userId);
         libraryAdaptor.deleteLibrary(userId);
 
-        // 3. 푸시 알림 디바이스 일괄 비활성화
-        pushDeviceAdaptor.deactivateAllByUserId(userId);
+        // 3. 푸시 알림 토큰 물리 삭제
+        pushDeviceAdaptor.deleteAllByUserId(userId);
 
         // 4. 알림 설정 삭제 (재가입 시 새 row 생성됨)
         notificationSettingAdaptor.deleteByUserId(userId);

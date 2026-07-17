@@ -1,0 +1,120 @@
+{
+  "uid": "storix-service",
+  "title": "STORIX 서비스 지표",
+  "tags": ["storix"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "editable": true,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "application",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": { "query": "label_values(up, application)", "refId": "app" },
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "env",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": { "query": "label_values(up, env)", "refId": "env" },
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "요청 처리량 (RPS)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(http_server_requests_seconds_count{application=~\"$application\", env=~\"$env\"}[1m]))", "legendFormat": "total" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (uri) (rate(http_server_requests_seconds_count{application=~\"$application\", env=~\"$env\"}[1m]))", "legendFormat": "{{uri}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "응답시간 (p50 / p95 / p99)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{application=~\"$application\", env=~\"$env\"}[5m])))", "legendFormat": "p50" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{application=~\"$application\", env=~\"$env\"}[5m])))", "legendFormat": "p95" },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{application=~\"$application\", env=~\"$env\"}[5m])))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "5xx 에러율",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0 }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\", application=~\"$application\", env=~\"$env\"}[1m])) / sum(rate(http_server_requests_seconds_count{application=~\"$application\", env=~\"$env\"}[1m]))", "legendFormat": "5xx rate" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "상태코드별 처리량",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (status) (rate(http_server_requests_seconds_count{application=~\"$application\", env=~\"$env\"}[1m]))", "legendFormat": "{{status}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM 힙 사용률",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (application, instance_id) (jvm_memory_used_bytes{area=\"heap\", application=~\"$application\", env=~\"$env\"}) / sum by (application, instance_id) (jvm_memory_max_bytes{area=\"heap\", application=~\"$application\", env=~\"$env\"})", "legendFormat": "{{application}} {{instance_id}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "GC 시간 비율 (rate of pause)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0 }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (application, instance_id) (rate(jvm_gc_pause_seconds_sum{application=~\"$application\", env=~\"$env\"}[5m]))", "legendFormat": "{{application}} {{instance_id}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "DB 커넥션 풀 (HikariCP)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (application) (hikaricp_connections_active{application=~\"$application\", env=~\"$env\"})", "legendFormat": "active" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (application) (hikaricp_connections_idle{application=~\"$application\", env=~\"$env\"})", "legendFormat": "idle" },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (application) (hikaricp_connections_pending{application=~\"$application\", env=~\"$env\"})", "legendFormat": "pending (대기)" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU 사용률",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "system_cpu_usage{application=~\"$application\", env=~\"$env\"}", "legendFormat": "system {{instance_id}}" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "process_cpu_usage{application=~\"$application\", env=~\"$env\"}", "legendFormat": "process {{instance_id}}" }
+      ]
+    }
+  ]
+}

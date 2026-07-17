@@ -4,8 +4,10 @@ import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.user.exception.auth.AlreadyWithDrawUserException;
 import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.common.model.BaseTimeEntity;
+import com.storix.common.utils.STORIXStatic;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -24,8 +26,8 @@ import java.util.UUID;
                         columnNames = {"oauth_provider", "oauth_oid"}
                 ),
                 @UniqueConstraint(
-                        name = "uk_active_nick_name",
-                        columnNames = "active_nick_name"
+                        name = "uk_nick_name",
+                        columnNames = "nick_name"
                 )
         }
 )
@@ -36,8 +38,17 @@ public class User extends BaseTimeEntity {
     private Long id;
 
     // 계정 정보
-    @Column(name = "nick_name", nullable = false, length = 10)
+    @Getter(AccessLevel.NONE)
+    @Column(name = "nick_name", nullable = false, length = 64)
     private String nickName;
+
+    public String getDisplayNickName() {
+        if (deletedAt != null) {
+            return STORIXStatic.WITHDRAWN_NICK_NAME;
+        }
+        int suffixIndex = nickName.indexOf(STORIXStatic.NICK_NAME_SUFFIX_DELIMITER);
+        return suffixIndex >= 0 ? nickName.substring(0, suffixIndex) : nickName;
+    }
 
     @ElementCollection(targetClass = Genre.class)
     @CollectionTable(
@@ -75,17 +86,11 @@ public class User extends BaseTimeEntity {
     @Column(name = "account_state", nullable = false)
     private AccountState accountState = AccountState.NORMAL;
 
-    @Column(name = "deletedSuffix", length = 36)
-    private String deletedSuffix;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @Column(name = "suspended_until")
     private LocalDateTime suspendedUntil;
-
-    @Column(name = "active_nick_name", insertable = false, updatable = false, length = 50)
-    private String activeNickName;
 
     // 계정 권한
     @Column(name = "last_login_at")
@@ -104,7 +109,7 @@ public class User extends BaseTimeEntity {
     @AttributeOverrides({
             @AttributeOverride(name = "provider", column = @Column(name = "oauth_provider")),
             @AttributeOverride(name = "oid", column = @Column(name = "oauth_oid")),
-            @AttributeOverride(name = "oauthRefreshToken", column = @Column(name = "oauth_refresh_token", length = 1024)),
+            @AttributeOverride(name = "oauthRefreshToken", column = @Column(name = "oauth_refresh_token", length = 2048)),
             @AttributeOverride(name = "email", column = @Column(name = "oauth_email"))
     })
     private OAuthInfo oauthInfo;
@@ -200,10 +205,10 @@ public class User extends BaseTimeEntity {
             throw AlreadyWithDrawUserException.EXCEPTION;
         }
         accountState = AccountState.DELETED;
-        deletedSuffix = UUID.randomUUID().toString();
         favoriteGenreList = null;
         profileObjectKey = null;
-        nickName = "탈퇴한 유저";
+        profileDescription = null;
+        nickName = STORIXStatic.WITHDRAW_PREFIX + UUID.randomUUID() + ":" + nickName;
         oauthInfo = oauthInfo.withDrawOauthInfo();
         ageOver14 = null;
         isAdultVerified = null;

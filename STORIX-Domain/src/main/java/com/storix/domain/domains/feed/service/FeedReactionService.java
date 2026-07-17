@@ -60,7 +60,7 @@ public class FeedReactionService {
         // 3. 알림 발행
         notificationPublisher.publishUnlessSelf(
                 userId,
-                NotificationEvent.commentOnFeed(readerBoard.getUserId(), boardId, profile.nickName(), comment)
+                NotificationEvent.commentOnFeed(readerBoard.getUserId(), userId, boardId, profile.nickName(), comment)
         );
 
         return ReaderBoardReplyResponse.of(profile, reply);
@@ -90,7 +90,7 @@ public class FeedReactionService {
         // 3. 알림
         notificationPublisher.publishUnlessSelf(
                 userId,
-                NotificationEvent.replyOnComment(parentReply.getUserId(), parentReplyId, boardId, profile.nickName(), comment)
+                NotificationEvent.replyOnComment(parentReply.getUserId(), userId, parentReplyId, boardId, profile.nickName(), comment)
         );
 
         return ReaderBoardReplyResponse.of(profile, reply);
@@ -119,7 +119,7 @@ public class FeedReactionService {
         StandardProfileInfo actor = userAdaptor.findStandardProfileInfoByUserId(actorUserId);
         notificationPublisher.publishUnlessSelf(
                 actorUserId,
-                NotificationEvent.likeFeed(boardOwnerUserId, boardId, actor.nickName())
+                NotificationEvent.likeFeed(boardOwnerUserId, actorUserId, boardId, actor.nickName())
         );
     }
 
@@ -127,7 +127,7 @@ public class FeedReactionService {
         StandardProfileInfo actor = userAdaptor.findStandardProfileInfoByUserId(actorUserId);
         notificationPublisher.publishUnlessSelf(
                 actorUserId,
-                NotificationEvent.likeComment(replyOwnerUserId, replyId, boardId, actor.nickName())
+                NotificationEvent.likeComment(replyOwnerUserId, actorUserId, replyId, boardId, actor.nickName())
         );
     }
 }

@@ -12,6 +12,28 @@ public class STORIXStatic {
     public static final String ONBOARDING_TOKEN = "onboarding_token";
     public static final String KID = "kid";
     public static final String WITHDRAW_PREFIX = "DELETED:";
+    public static final String WITHDRAWN_NICK_NAME = "탈퇴한 유저";
+
+    // 일반 유저 선택 불가 닉네임
+    public static final List<String> RESERVED_NICK_NAMES = List.of(
+            WITHDRAWN_NICK_NAME,
+            "관리자",
+            "운영자",
+            "운영진",
+            "개발자",
+            "스토릭스",
+            "STORIX"
+    );
+
+    // 관리자/개발자 닉네임 중복 우회용 suffix 구분자
+    public static final String NICK_NAME_SUFFIX_DELIMITER = ":";
+
+    // JPQL @Query에서 탈퇴 유저 닉네임 마스킹 + 관리자/개발자 suffix 제거용
+    public static final String NICK_NAME_DISPLAY_CASE_WHEN =
+            "CASE WHEN u.deletedAt IS NOT NULL THEN '" + WITHDRAWN_NICK_NAME + "' " +
+            "WHEN LOCATE('" + NICK_NAME_SUFFIX_DELIMITER + "', u.nickName) > 0 " +
+            "THEN SUBSTRING(u.nickName, 1, LOCATE('" + NICK_NAME_SUFFIX_DELIMITER + "', u.nickName) - 1) " +
+            "ELSE u.nickName END";
 
     public static final int MILLI_TO_SECOND = 1000;
 
@@ -23,6 +45,11 @@ public class STORIXStatic {
     // 인기 검색어 Redis 합산 키
     public static final String TRENDING_AGGREGATED_KEY = "search:trending:aggregated";
     public static final String TRENDING_PREV_AGGREGATED_KEY = "search:trending:aggregated:prev";
+
+    // 이벤트 활성 콘텐츠 Redis 캐시 키
+    public static final String ACTIVE_POPUP_KEY = "event::activePopup::v1";
+    public static final String ACTIVE_BANNER_KEY = "event::activeBanner::v1";
+    public static final String PENDING_APP_EVENTS_KEY_PREFIX = "event::pendingAppEvents::v1::";
 
     public static final List<String> SWAGGER_URI= List.of(
             new String[]{"/swagger-resources/", "/swagger-ui/", "/v3/api-docs"}
@@ -37,17 +64,37 @@ public class STORIXStatic {
             "/api/v2/auth/users/reader/signup",
             "/api/v1/auth/tokens/refresh",
 
-            "/api/v1/auth/developer/signup",
-            "/api/v1/auth/developer/login",
-            "/api/v1/auth/developer/slack/callback",
+            "/api/v1/auth/tester/signup",
+            "/api/v1/auth/tester/login",
+            "/api/v1/auth/tester/slack/callback",
 
             "/api/v1/auth/admin/signup",
             "/api/v1/auth/admin/login",
             "/api/v1/auth/admin/slack/callback"
     );
 
+    // MDC 로그 상관키
+    public static class Mdc {
+        public static final String TRACE_ID = "traceId";
+        public static final String USER_ID = "userId";
+        public static final String ENDPOINT = "endpoint";
+        public static final String HTTP_METHOD = "httpMethod";
+        public static final String ADMIN_NOTIFICATION_ID = "adminNotificationId";
+    }
+
+    // S3 업로드 객체 키 prefix
+    public static class S3Prefix {
+        public static final String BOARD   = "public/board/reader";
+        public static final String PROFILE = "public/profile";
+        // 앱 이벤트 이미지 base prefix. 실제 경로는 EVENT + "/{appEventId}/{surface}"
+        public static final String EVENT   = "public/event";
+    }
+
     // 알림 메시지 타이틀/본문 템플릿
     public static class Notification {
+
+        // Android 헤드업 표시용 채널 id
+        public static final String ANDROID_CHANNEL_ID = "storix_default_high";
 
         // 타이틀 — 서비스
         public static final String TITLE_FEED       = "피드";
@@ -90,6 +137,10 @@ public class STORIXStatic {
         // 댓글 본문 미리보기 — 10자 노출 후 ...
         public static final int CONTENT_PREVIEW_MAX = 10;
         public static final String CONTENT_PREVIEW_SUFFIX = "...";
+
+        // 선정 알림 dedup Redis 키 prefix — {prefix}{yyyyMMdd}:{id}
+        public static final String FEATURED_FEED_KEY_PREFIX = "featured:feed:";
+        public static final String FEATURED_TOPIC_ROOM_KEY_PREFIX = "featured:topicroom:";
     }
 
     // 사용자 이력 — 마케팅 동의/거부 모달 표시 문구

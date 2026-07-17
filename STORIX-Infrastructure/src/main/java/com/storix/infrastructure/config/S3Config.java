@@ -29,6 +29,7 @@ public class S3Config {
                 .build();
     }
 
+    // 서버 경유 업로드(팝업/배너 등 관리자 업로드) 및 오브젝트 삭제용
     @Bean
     public S3Client s3Client() {
         return S3Client.builder()

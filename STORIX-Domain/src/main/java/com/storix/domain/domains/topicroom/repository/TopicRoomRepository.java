@@ -68,7 +68,12 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
     // 인기도 순으로 조회
     List<TopicRoom> findTop5ByOrderByPopularityScoreDescLastChatTimeDesc();
 
+    List<TopicRoom> findTop15ByOrderByActivityScoreDescLastChatTimeDesc();
+
     boolean existsByWorksId(Long worksId);
+
+    @Query("SELECT t.activeUserNumber FROM TopicRoom t WHERE t.id = :roomId")
+    Integer findActiveUserNumberById(@Param("roomId") Long roomId);
 
     @Query("SELECT tr FROM TopicRoom tr WHERE tr.activeUserNumber > 1")
     List<TopicRoom> findAllActiveRooms();

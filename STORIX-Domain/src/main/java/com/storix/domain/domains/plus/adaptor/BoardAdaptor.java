@@ -12,9 +12,11 @@ import com.storix.domain.domains.plus.repository.ReaderBoardRepository;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
 import com.storix.domain.domains.plus.exception.DuplicateBoardUploadException;
+import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -132,6 +134,18 @@ public class BoardAdaptor {
         }
 
         return new BoardHardDeleteResult(boardCount, imageCount);
+    }
+
+    public long countActiveBoardsByUserId(Long userId) {
+        return readerBoardRepository.countByUserIdAndDeletedFalse(userId);
+    }
+
+    public Page<AdminUserContentItemResponse> findAdminBoardContentsByUserId(Long userId, Pageable pageable) {
+        return readerBoardRepository.findAdminBoardContentsByUserId(userId, pageable);
+    }
+
+    public List<AdminUserContentItemResponse> findAdminBoardContentsByIds(List<Long> ids) {
+        return readerBoardRepository.findAdminBoardContentsByIds(ids);
     }
 
 }

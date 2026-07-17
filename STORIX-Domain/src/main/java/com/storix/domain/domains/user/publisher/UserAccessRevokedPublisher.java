@@ -20,7 +20,7 @@ public class UserAccessRevokedPublisher {
         try {
             eventPublisher.publishEvent(UserAccessRevokedEvent.suspended(userId, suspendedUntil));
         } catch (Exception e) {
-            log.warn(">>> [UserAccessRevoked] publish failed userId={}, type=SUSPENDED, cause={}", userId, e.getMessage());
+            log.warn(">>> [UserAccessRevoked] publish failed targetUserId={}, type=SUSPENDED, cause={}", userId, e.getMessage());
         }
     }
 
@@ -29,7 +29,7 @@ public class UserAccessRevokedPublisher {
         try {
             eventPublisher.publishEvent(UserAccessRevokedEvent.withdrawn(userId));
         } catch (Exception e) {
-            log.warn(">>> [UserAccessRevoked] publish failed userId={}, type=WITHDRAWN, cause={}", userId, e.getMessage());
+            log.warn(">>> [UserAccessRevoked] publish failed targetUserId={}, type=WITHDRAWN, cause={}", userId, e.getMessage());
         }
     }
 }

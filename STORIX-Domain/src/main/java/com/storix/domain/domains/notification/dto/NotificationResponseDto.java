@@ -19,6 +19,7 @@ public class NotificationResponseDto {
     private TargetType targetType;
     private Long targetId;
     private Long parentTargetId;
+    private String targetLink;
     private String title;
     private String content;
     private boolean isRead;
@@ -32,6 +33,7 @@ public class NotificationResponseDto {
                 .targetType(notification.getTargetType()) // 알림 클릭 시 라우팅 대상 (페이지 이동)
                 .targetId(notification.getTargetId())
                 .parentTargetId(notification.getParentTargetId())
+                .targetLink(notification.getTargetLink())
                 .title(notification.getTitle())
                 .content(notification.getContent())
                 .isRead(notification.isRead())

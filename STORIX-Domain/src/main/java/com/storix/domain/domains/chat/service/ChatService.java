@@ -44,7 +44,7 @@ public class ChatService {
 
         User user = userAdaptor.findUserById(userId);
 
-        return user.getNickName();
+        return user.getDisplayNickName();
     }
 
     public void validateRoomExistence(Long roomId) {

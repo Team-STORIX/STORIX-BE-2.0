@@ -3,19 +3,20 @@ package com.storix.domain.domains.report.dto;
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.report.domain.ReportAction;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 public record AdminReportDetailResponse(
         Long reportCaseId,
-        ReportTargetType targetType,
+        TargetContentType targetType,
         Long targetId,
         ReportStatus status,
         Long processedByAdminId,
         String processMemo,
-        ReportAction processAction,
+        Set<ReportAction> processActions,
         LocalDateTime receivedAt,
         LocalDateTime processedAt,
         boolean reopened,
@@ -47,7 +48,7 @@ public record AdminReportDetailResponse(
     }
 
     public record ReportedContent(
-            ReportTargetType targetType,
+            TargetContentType targetType,
             Long targetId,
             Long parentTargetId,
             Long authorUserId,

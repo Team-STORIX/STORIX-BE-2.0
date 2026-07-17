@@ -2,7 +2,7 @@ package com.storix.domain.domains.report.adaptor;
 
 import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.ReportStatus;
-import com.storix.domain.domains.report.domain.ReportTargetType;
+import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.report.repository.ReportCaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ public class ReportCaseTransactionAdaptor {
      * 호출자는 기존 케이스를 재조회해 재시도할 수 있다.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public ReportCase create(ReportTargetType targetType, Long targetId, Long reportedUserId) {
+    public ReportCase create(TargetContentType targetType, Long targetId, Long reportedUserId) {
         return reportCaseRepository.saveAndFlush(
                 ReportCase.builder()
                         .targetType(targetType)

@@ -21,6 +21,28 @@ public enum SuccessCode {
     NOTIFICATION_TEST_PUSH_SUCCESS(HttpStatus.OK, "NOTI2008", "테스트 푸시 알림 전송에 성공했습니다."),
     NOTIFICATION_MARKETING_CONSENT_UPDATE_SUCCESS(HttpStatus.OK, "NOTI2009", "마케팅 알림 동의 상태가 변경되었습니다."),
 
+    // Event success
+    ADMIN_NOTIFICATION_CREATE_SUCCESS(HttpStatus.CREATED, "ADMIN_NOTIFICATION_SUCCESS_001", "운영자 알림 생성에 성공했습니다."),
+    ADMIN_NOTIFICATION_LOAD_SUCCESS(HttpStatus.OK, "ADMIN_NOTIFICATION_SUCCESS_002", "운영자 알림 조회에 성공했습니다."),
+    ADMIN_NOTIFICATION_UPDATE_SUCCESS(HttpStatus.OK, "ADMIN_NOTIFICATION_SUCCESS_003", "운영자 알림 수정에 성공했습니다."),
+    ADMIN_NOTIFICATION_CANCEL_SUCCESS(HttpStatus.OK, "ADMIN_NOTIFICATION_SUCCESS_004", "운영자 알림 취소에 성공했습니다."),
+    ADMIN_NOTIFICATION_BROADCAST_SUCCESS(HttpStatus.OK, "ADMIN_NOTIFICATION_SUCCESS_005", "운영자 알림 발송 요청에 성공했습니다."),
+    EVENT_POPUP_CREATE_SUCCESS(HttpStatus.CREATED, "EVENT_POPUP_SUCCESS_001", "이벤트 팝업 생성에 성공했습니다."),
+    EVENT_POPUP_LOAD_SUCCESS(HttpStatus.OK, "EVENT_POPUP_SUCCESS_002", "이벤트 팝업 조회에 성공했습니다."),
+    EVENT_POPUP_UPDATE_SUCCESS(HttpStatus.OK, "EVENT_POPUP_SUCCESS_003", "이벤트 팝업 수정에 성공했습니다."),
+    EVENT_POPUP_CANCEL_SUCCESS(HttpStatus.OK, "EVENT_POPUP_SUCCESS_004", "이벤트 팝업 종료에 성공했습니다."),
+    ADMIN_APP_EVENT_CREATE_SUCCESS(HttpStatus.CREATED, "ADMIN_APP_EVENT_SUCCESS_001", "앱 이벤트 생성에 성공했습니다."),
+    ADMIN_APP_EVENT_LOAD_SUCCESS(HttpStatus.OK, "ADMIN_APP_EVENT_SUCCESS_002", "앱 이벤트 조회에 성공했습니다."),
+    ADMIN_APP_EVENT_UPDATE_SUCCESS(HttpStatus.OK, "ADMIN_APP_EVENT_SUCCESS_003", "앱 이벤트 수정에 성공했습니다."),
+    ADMIN_APP_EVENT_CANCEL_SUCCESS(HttpStatus.OK, "ADMIN_APP_EVENT_SUCCESS_004", "앱 이벤트 종료에 성공했습니다."),
+    EVENT_BANNER_CREATE_SUCCESS(HttpStatus.CREATED, "EVENT_BANNER_SUCCESS_001", "이벤트 배너 생성에 성공했습니다."),
+    EVENT_BANNER_LOAD_SUCCESS(HttpStatus.OK, "EVENT_BANNER_SUCCESS_002", "이벤트 배너 조회에 성공했습니다."),
+    EVENT_BANNER_UPDATE_SUCCESS(HttpStatus.OK, "EVENT_BANNER_SUCCESS_003", "이벤트 배너 수정에 성공했습니다."),
+    EVENT_BANNER_CANCEL_SUCCESS(HttpStatus.OK, "EVENT_BANNER_SUCCESS_004", "이벤트 배너 종료에 성공했습니다."),
+    APP_EVENTS_LOAD_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_001", "앱 이벤트 조회에 성공했습니다."),
+    APP_EVENT_ACK_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_002", "앱 이벤트 확인 처리에 성공했습니다."),
+    APP_EVENT_POPUP_DISMISS_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_003", "팝업 오늘 다시 안 보기 처리에 성공했습니다."),
+
     // PushDevice success
     DEVICE_SYNC_SUCCESS(HttpStatus.OK, "DEVICE2001", "디바이스 동기화에 성공했습니다."),
     DEVICE_UNREGISTER_SUCCESS(HttpStatus.OK, "DEVICE2002", "디바이스 해제에 성공했습니다."),
@@ -35,15 +57,16 @@ public enum SuccessCode {
     AUTH_REISSUE_ACCESSTOKEN_SUCCESS(HttpStatus.CREATED, "AUTH_SUCCESS_003", "엑세스 토큰 재발급에 성공했습니다."),
     AUTH_WITHDRAW_SUCCESS(HttpStatus.OK, "AUTH_SUCCESS_006", "회원 탈퇴에 성공했습니다."),
 
-    // Developer Auth success
-    DEVELOPER_SIGNUP_PENDING_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_001", "개발자 회원가입 요청이 Slack으로 전송되었습니다. 승인을 기다려주세요."),
-    DEVELOPER_SIGNUP_APPROVED_SUCCESS(HttpStatus.CREATED, "DEV_AUTH_SUCCESS_002", "개발자 회원가입이 승인되었습니다."),
-    DEVELOPER_LOGIN_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_003", "개발자 로그인에 성공했습니다."),
+    // Tester Auth success
+    TESTER_SIGNUP_PENDING_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_001", "테스터 회원가입 요청이 Slack으로 전송되었습니다. 승인을 기다려주세요."),
+    TESTER_SIGNUP_APPROVED_SUCCESS(HttpStatus.CREATED, "DEV_AUTH_SUCCESS_002", "테스터 회원가입이 승인되었습니다."),
+    TESTER_LOGIN_SUCCESS(HttpStatus.OK, "DEV_AUTH_SUCCESS_003", "테스터 로그인에 성공했습니다."),
 
     // Admin Auth success
     ADMIN_SIGNUP_PENDING_SUCCESS(HttpStatus.OK, "ADMIN_AUTH_SUCCESS_001", "관리자 회원가입 요청이 Slack으로 전송되었습니다. 승인을 기다려주세요."),
     ADMIN_SIGNUP_APPROVED_SUCCESS(HttpStatus.CREATED, "ADMIN_AUTH_SUCCESS_002", "관리자 회원가입이 승인되었습니다."),
     ADMIN_LOGIN_SUCCESS(HttpStatus.OK, "ADMIN_AUTH_SUCCESS_003", "관리자 로그인에 성공했습니다."),
+    ADMIN_PROFILE_LOAD_SUCCESS(HttpStatus.OK, "ADMIN_AUTH_SUCCESS_004", "관리자 프로필 조회에 성공했습니다."),
     ONBOARDING_WORKS_LIST_LOAD_SUCCESS(HttpStatus.OK, "ONBOARDING_SUCCESS_001", "온보딩 작품 리스트 조회에 성공했습니다."),
 
     // Home success
@@ -65,6 +88,7 @@ public enum SuccessCode {
 
     // Image success
     IMAGE_ISSUE_PRESIGNED_URL_SUCCESS(HttpStatus.OK, "IMAGE_SUCCESS_001", "이미지를 업로드할 Presigned Url 발급에 성공했습니다."),
+    IMAGE_UPLOAD_SUCCESS(HttpStatus.OK, "IMAGE_SUCCESS_002", "이미지 업로드에 성공했습니다."),
 
     // Plus success
     PLUS_BOARD_UPLOAD_SUCCESS(HttpStatus.CREATED, "PLUS_SUCCESS_001", "게시물 등록에 성공했습니다."),

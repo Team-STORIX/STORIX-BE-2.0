@@ -26,8 +26,7 @@ public class PushDeviceService {
             return pushDeviceAdaptor.upsert(userId, cmd);
         } catch (DataIntegrityViolationException e) {
             // 1-2. (userId, installationId) unique constraint 충돌 시 > 재시도 (update)
-            log.warn(">>>> [PushDevice] register race detected, retrying. userId={}, installationId={}",
-                    userId, cmd.installationId());
+            log.warn(">>>> [PushDevice] register race detected, retrying. installationId={}", cmd.installationId());
             return pushDeviceAdaptor.upsert(userId, cmd);
         }
     }
@@ -43,5 +42,8 @@ public class PushDeviceService {
     public void refreshFcmToken(Long userId, String installationId, String fcmToken) {
         PushDevice device = pushDeviceAdaptor.getByUserIdAndInstallationId(userId, installationId);
         device.refreshFcmToken(fcmToken);
+
+        // 같은 FCM 토큰을 들고 있는 다른 활성 디바이스 행 비활성화
+        pushDeviceAdaptor.deactivateOtherActiveDevicesByToken(userId, installationId, fcmToken);
     }
 }

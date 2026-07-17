@@ -6,9 +6,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ReportReason {
 
-    ABUSE("욕설/비하"),
     SPAM("스팸"),
-    OTHER("기타");
+    ABUSE("욕설/비하"),
+    OTHER("기타"),
+    DEFAULT("기본");
 
     private final String description;
 }

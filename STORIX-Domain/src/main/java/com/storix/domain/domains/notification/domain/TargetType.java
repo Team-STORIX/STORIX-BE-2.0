@@ -1,10 +1,20 @@
 package com.storix.domain.domains.notification.domain;
 
-// 알림이 가리키는 타겟의 종류. 알림 탭 시 FE 라우팅 분기 + targetId 의 해석 기준.
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum TargetType {
-    FEED,
-    REVIEW,
-    COMMENT,
-    TOPIC_ROOM,
-    NONE         // 운영자/약관 등 타겟 없는 알림
+
+    FEED("피드"),           // targetId = feedId,                    parentTargetId = null
+    REVIEW("리뷰"),         // targetId = reviewId,                  parentTargetId = null
+    COMMENT("댓글"),        // targetId = commentId 또는 parentCommentId, parentTargetId = feedId
+    TOPIC_ROOM("토픽룸"),   // targetId = topicRoomId,               parentTargetId = null
+
+    APP_EVENT("자사 이벤트 상세"),   // targetId = 이벤트 id, parentTargetId = null, link = null
+    EXTERNAL("앱 외부 URL"),       // targetId = null,      parentTargetId = null, link = 외부 url
+    NONE("타겟 없음");             // targetId = null,      parentTargetId = null, link = null
+
+    private final String description;
 }
