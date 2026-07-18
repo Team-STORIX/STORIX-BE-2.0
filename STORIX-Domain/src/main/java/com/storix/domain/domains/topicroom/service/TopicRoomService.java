@@ -44,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,12 +89,20 @@ public class TopicRoomService implements TopicRoomUseCase {
         // works 정보를 한 번에 조회하여 Map으로 변환
         Map<Long, TopicRoomWorksInfo> worksMap = worksAdaptor.loadWorksMapByIds(worksIds);
 
-        return participations.map(participation -> {
-            TopicRoom room = participation.getTopicRoom();
-            TopicRoomWorksInfo worksInfo = worksMap.get(room.getWorksId());
+        List<TopicRoomResponseDto> content = participations.getContent().stream()
+                .map(participation -> {
+                    TopicRoom room = participation.getTopicRoom();
+                    TopicRoomWorksInfo worksInfo = worksMap.get(room.getWorksId());
+                    if (worksInfo == null) {
+                        logMissingWorksInfo(room);
+                        return null;
+                    }
+                    return TopicRoomResponseDto.from(room, worksInfo, true);
+                })
+                .filter(Objects::nonNull)
+                .toList();
 
-            return TopicRoomResponseDto.from(room, worksInfo, true);
-        });
+        return new SliceImpl<>(content, pageable, participations.hasNext());
     }
 
 
@@ -146,11 +155,16 @@ public class TopicRoomService implements TopicRoomUseCase {
         return rooms.stream()
                 .map(room -> {
                     TopicRoomWorksInfo worksInfo = worksMap.get(room.getWorksId());
+                    if (worksInfo == null) {
+                        logMissingWorksInfo(room);
+                        return null;
+                    }
                     boolean isJoined = joinedRoomIds.contains(room.getId());
                     String lastMessageSenderNickname = nicknameMap.get(room.getLastMessageSenderId());
 
                     return TopicRoomPreviewResponseDto.from(room, worksInfo, lastMessageSenderNickname, isJoined);
                 })
+                .filter(Objects::nonNull)
                 .toList();
     }
 
@@ -360,5 +374,13 @@ public class TopicRoomService implements TopicRoomUseCase {
 
     private void publishActiveUserNumberChanged(Long roomId, Integer activeUserNumber) {
         activeUserNumberPublisher.publish(roomId, activeUserNumber);
+    }
+
+    // 참조 작품이 사라진 토픽룸은 응답에서 제외하고 관련 id를 KV로 남긴다
+    private void logMissingWorksInfo(TopicRoom room) {
+        log.atError()
+                .addKeyValue("worksId", room.getWorksId())
+                .addKeyValue("topicRoomId", room.getId())
+                .log(">>> [TopicRoom] works 정보 없음");
     }
 }
