@@ -23,6 +23,7 @@ import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.dto.StandardWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -35,6 +36,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewService {
 
     private final UserAdaptor userAdaptor;
@@ -125,7 +127,11 @@ public class ReviewService {
         List<SliceReviewInfoWithProfile> content = reviews.getContent().stream()
                 .map(review -> {
                     StandardProfileInfo profile = profileMap.get(review.userId());
-                    if (profile == null) return null;
+                    if (profile == null) {
+                        log.atWarn().addKeyValue("userId", review.userId())
+                                .log(">>> [Review] 프로필 정보 없음");
+                        return null;
+                    }
                     return SliceReviewInfoWithProfile.of(
                             StandardSliceReviewInfo.from(review),
                             profile

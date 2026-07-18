@@ -19,6 +19,7 @@ import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReaderBoardHelper {
@@ -193,13 +195,24 @@ public class ReaderBoardHelper {
         // 최종 매핑
         return boards.map(boardInfo -> {
             StandardProfileInfo profile = profileResolver.apply(boardInfo);
+            if (profile == null) {
+                log.atWarn().addKeyValue("userId", boardInfo.userId()).addKeyValue("boardId", boardInfo.boardId())
+                        .log(">>> [ReaderBoard] 프로필 정보 없음");
+            }
 
             Long worksId = boardInfo.worksId();
+            WorksInfo works = worksId == null ? null : worksMap.get(worksId);
+            if (worksId != null && works == null) {
+                log.atError()
+                        .addKeyValue("worksId", worksId)
+                        .addKeyValue("boardId", boardInfo.boardId())
+                        .log(">>> [ReaderBoard] 게시물 참조 works 정보 없음");
+            }
             return ReaderBoardWithProfileInfo.of(
                     profile,
                     boardInfo,
                     imageMap.getOrDefault(boardInfo.boardId(), List.of()),
-                    worksId == null ? null : worksMap.get(worksId),
+                    works,
                     worksId == null ? List.of() : hashtagMap.getOrDefault(worksId, List.of())
             );
         });
@@ -223,6 +236,12 @@ public class ReaderBoardHelper {
 
         if (worksId != null) {
             works = loadWorksPort.findAllWorksInfoByWorksIds(List.of(worksId)).get(worksId);
+            if (works == null) {
+                log.atError()
+                        .addKeyValue("worksId", worksId)
+                        .addKeyValue("boardId", boardId)
+                        .log(">>> [ReaderBoard] 게시물 참조 works 정보 없음");
+            }
             hashtags = hashTagAdaptor.findHashTagsByWorksIds(List.of(worksId))
                     .getOrDefault(worksId, List.of());
         }
@@ -288,7 +307,11 @@ public class ReaderBoardHelper {
         // 4) 최종 매핑 (답댓글 embed, 차단 유저 답댓글 제외)
         return replies.map(reply -> {
             StandardProfileInfo profile = profileMap.get(reply.getUserId());
-            if (profile == null) return null;
+            if (profile == null) {
+                log.atWarn().addKeyValue("userId", reply.getUserId()).addKeyValue("replyId", reply.getId())
+                        .log(">>> [ReaderBoard] 프로필 정보 없음");
+                return null;
+            }
 
             ReaderBoardReplyInfo replyInfo = ReaderBoardReplyInfo.from(reply);
             boolean isLiked = likedReplyIds.contains(reply.getId());
@@ -299,7 +322,11 @@ public class ReaderBoardHelper {
                     .sorted(Comparator.comparing(ReaderBoardReply::getCreatedAt))
                     .map(child -> {
                         StandardProfileInfo childProfile = profileMap.get(child.getUserId());
-                        if (childProfile == null) return null;
+                        if (childProfile == null) {
+                            log.atWarn().addKeyValue("userId", child.getUserId()).addKeyValue("replyId", child.getId())
+                                    .log(">>> [ReaderBoard] 프로필 정보 없음");
+                            return null;
+                        }
 
                         ReaderBoardReplyInfo childInfo = ReaderBoardReplyInfo.from(child);
                         boolean childIsLiked = likedReplyIds.contains(child.getId());

@@ -8,6 +8,7 @@ import com.storix.domain.domains.profile.dto.ReaderBoardWithProfileInfo;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -20,6 +21,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProfileActivityService {
 
     private final UserAdaptor userAdaptor;
@@ -85,7 +87,14 @@ public class ProfileActivityService {
 
         // 3-1) 프로필이 없을 경우 필터링
         List<ReaderBoardInfo> filtered = content.stream()
-                .filter(b -> profileMap.get(b.userId()) != null)
+                .filter(b -> {
+                    if (profileMap.get(b.userId()) == null) {
+                        log.atWarn().addKeyValue("userId", b.userId())
+                                .log(">>> [ProfileActivity] 프로필 정보 없음");
+                        return false;
+                    }
+                    return true;
+                })
                 .toList();
 
         Slice<ReaderBoardInfo> filteredBoards =
