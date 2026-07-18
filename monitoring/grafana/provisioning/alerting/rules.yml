@@ -35,6 +35,34 @@ groups:
               conditions:
                 - evaluator: { type: lt, params: [1] }
 
+      - uid: storix-container-oom
+        title: '컨테이너 OOM 발생'
+        condition: B
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.name }} 컨테이너가 OOM 으로 종료되었습니다.'
+          runbook: 'mem_limit 상향 또는 힙/컨텍스트 축소. docker inspect <name> 로 OOMKilled 확인'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 'sum by (env, name, instance_id) (increase(container_oom_events_total{name=~"storix-.*"}[5m]))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+
       - uid: storix-jvm-heap
         title: 'JVM 힙 사용률 85% 초과'
         condition: B
