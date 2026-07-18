@@ -5,10 +5,12 @@ import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.dto.AdminUserListResponse;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.user.dto.UserNicknameInfo;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.storix.domain.domains.user.domain.User;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -108,6 +110,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "WHERE u.accountState = com.storix.domain.domains.user.domain.AccountState.DELETED " +
             "AND u.deletedAt < :cutoff AND u.oauthInfo.oid IS NOT NULL")
     int purgeOauthOidBefore(@Param("cutoff") LocalDateTime cutoff);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.id = :userId")
+    Optional<User> findByIdForUpdate(@Param("userId") Long userId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE User u SET u.title = null")

@@ -1,8 +1,15 @@
 package com.storix.domain.domains.plus.adaptor;
 
+import com.storix.domain.domains.feed.repository.ReaderBoardLikeRepository;
+import com.storix.domain.domains.feed.repository.ReaderBoardReplyLikeRepository;
+import com.storix.domain.domains.feed.repository.ReaderBoardReplyRepository;
+import com.storix.domain.domains.image.publisher.S3CleanupPublisher;
+import com.storix.domain.domains.plus.domain.BoardImage;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
+import com.storix.domain.domains.plus.dto.BoardHardDeleteResult;
 import com.storix.domain.domains.plus.dto.CreateReaderBoardCommand;
 import com.storix.domain.domains.plus.repository.ReaderBoardRepository;
+import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
 import com.storix.domain.domains.plus.exception.DuplicateBoardUploadException;
 import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
@@ -10,19 +17,28 @@ import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class BoardAdaptor {
 
     private final ReaderBoardRepository readerBoardRepository;
+    private final BoardImageAdaptor boardImageAdaptor;
+    private final ReaderBoardLikeRepository readerBoardLikeRepository;
+    private final ReaderBoardReplyRepository readerBoardReplyRepository;
+    private final ReaderBoardReplyLikeRepository readerBoardReplyLikeRepository;
+    private final S3CleanupPublisher s3CleanupPublisher;
+    private final PlatformTransactionManager transactionManager;
 
     /**
      * 독자
@@ -44,19 +60,19 @@ public class BoardAdaptor {
 
     // 독자 게시글 삭제
     public void deleteSingleReaderBoard(Long userId, Long boardId) {
+        ReaderBoard board = readerBoardRepository.findById(boardId)
+                .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
 
-        Optional<ReaderBoard> readerBoard = readerBoardRepository.findById(boardId);
-        if (readerBoard.isPresent()) {
-            if (readerBoard.get().getUserId().equals(userId)) {
-                readerBoardRepository.deleteById(boardId);
-                readerBoardRepository.flush();
-            } else {
-                throw ForbiddenApproachException.EXCEPTION;
-            }
-        } else {
-            throw InvalidBoardRequestException.EXCEPTION;
+        if (!board.getUserId().equals(userId)) {
+            throw ForbiddenApproachException.EXCEPTION;
         }
 
+        List<String> imageObjectKeys = board.getImages().stream()
+                .map(BoardImage::getImageObjectKey)
+                .toList();
+
+        readerBoardRepository.deleteById(boardId);
+        s3CleanupPublisher.publish(imageObjectKeys);
     }
 
     // 관리자 게시글 강제 삭제 — 이미 삭제된 경우 null 반환 (idempotent)
@@ -96,8 +112,43 @@ public class BoardAdaptor {
         return readerBoardRepository.updatePopularityScoresRecentDays(threshold);
     }
 
-    public int hardDeleteBefore(LocalDateTime cutoff) {
-        return readerBoardRepository.hardDeleteBefore(cutoff);
+    // 하드 삭제 대상 정리 : 댓글 좋아요 → 댓글 → 좋아요 → 이미지
+    public BoardHardDeleteResult hardDeleteBoardsBefore(LocalDateTime cutoff) {
+        TransactionTemplate chunkTx = new TransactionTemplate(transactionManager);
+        chunkTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        int boardCount = 0;
+        int imageCount = 0;
+
+        while (true) {
+            BoardHardDeleteResult chunk = chunkTx.execute(status -> {
+                List<Long> boardIds = readerBoardRepository.findIdsForHardDelete(
+                        cutoff, PageRequest.of(0, STORIXStatic.HARD_DELETE_CHUNK_SIZE));
+                if (boardIds.isEmpty()) {
+                    return new BoardHardDeleteResult(0, 0);
+                }
+
+                List<String> imageObjectKeys = boardImageAdaptor.findObjectKeysByBoardIds(boardIds);
+
+                readerBoardReplyLikeRepository.hardDeleteByBoardIds(boardIds);
+                readerBoardReplyRepository.detachChildRepliesByBoardIds(boardIds);
+                readerBoardReplyRepository.hardDeleteByBoardIds(boardIds);
+                readerBoardLikeRepository.hardDeleteByBoardIds(boardIds);
+                boardImageAdaptor.hardDeleteByBoardIds(boardIds);
+                int deleted = readerBoardRepository.hardDeleteByIds(boardIds);
+
+                s3CleanupPublisher.publish(imageObjectKeys);
+                return new BoardHardDeleteResult(deleted, imageObjectKeys.size());
+            });
+
+            if (chunk == null || chunk.boardCount() == 0) {
+                break;
+            }
+            boardCount += chunk.boardCount();
+            imageCount += chunk.imageCount();
+        }
+
+        return new BoardHardDeleteResult(boardCount, imageCount);
     }
 
     public long countActiveBoardsByUserId(Long userId) {

@@ -39,6 +39,8 @@ public class BoardUseCase {
                 req.objectKeys()
         );
         boardService.createReaderBoard(cmd);
+        // 소비된 키는 캐시에서 제거하고 재사용을 차단
+        s3CacheHelper.evictBoardKeys(userId, req.objectKeys());
         return CustomResponse.onSuccess(SuccessCode.PLUS_BOARD_UPLOAD_SUCCESS);
     }
 
