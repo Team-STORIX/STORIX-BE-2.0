@@ -31,7 +31,7 @@ jobs:
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           elif [ "$BRANCH" = "develop" ]; then
             echo "instance_id=${{ secrets.DEV_INSTANCE_ID }}" >> "$GITHUB_OUTPUT"
-            echo "pull_batch=false" >> "$GITHUB_OUTPUT"
+            echo "pull_batch=true" >> "$GITHUB_OUTPUT"
             echo "env_tag=dev" >> "$GITHUB_OUTPUT"
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           else

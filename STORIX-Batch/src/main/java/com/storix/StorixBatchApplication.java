@@ -8,6 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import com.storix.infrastructure.config.SecurityConfig;
+import com.storix.infrastructure.config.WebSocketConfig;
 
 import java.util.TimeZone;
 
@@ -15,7 +16,10 @@ import java.util.TimeZone;
 @SpringBootApplication
 @ComponentScan(
         basePackages = "com.storix",
-        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class)
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = { SecurityConfig.class, WebSocketConfig.class }
+        )
 )
 public class StorixBatchApplication {
 
