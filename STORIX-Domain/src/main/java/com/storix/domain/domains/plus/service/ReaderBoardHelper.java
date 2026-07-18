@@ -201,8 +201,9 @@ public class ReaderBoardHelper {
             }
 
             Long worksId = boardInfo.worksId();
-            WorksInfo works = worksId == null ? null : worksMap.get(worksId);
-            if (worksId != null && works == null) {
+            boolean useWorks = Boolean.TRUE.equals(boardInfo.isWorksSelected()) && worksId != null;
+            WorksInfo works = useWorks ? worksMap.get(worksId) : null;
+            if (useWorks && works == null) {
                 log.atError()
                         .addKeyValue("worksId", worksId)
                         .addKeyValue("boardId", boardInfo.boardId())
@@ -213,7 +214,7 @@ public class ReaderBoardHelper {
                     boardInfo,
                     imageMap.getOrDefault(boardInfo.boardId(), List.of()),
                     works,
-                    worksId == null ? List.of() : hashtagMap.getOrDefault(worksId, List.of())
+                    useWorks ? hashtagMap.getOrDefault(worksId, List.of()) : List.of()
             );
         });
     }
@@ -234,7 +235,7 @@ public class ReaderBoardHelper {
         WorksInfo works = null;
         List<String> hashtags = List.of();
 
-        if (worksId != null) {
+        if (Boolean.TRUE.equals(boardInfo.isWorksSelected()) && worksId != null) {
             works = loadWorksPort.findAllWorksInfoByWorksIds(List.of(worksId)).get(worksId);
             if (works == null) {
                 log.atError()

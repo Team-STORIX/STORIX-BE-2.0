@@ -57,7 +57,7 @@ public class ReaderBoard extends Board {
                        Long worksId, boolean isSpoiler, String spoilerScript, String content, BoardTheme theme) {
         this.userId = userId;
         this.isWorksSelected = isWorksSelected;
-        this.worksId = worksId;
+        this.worksId = isWorksSelected ? worksId : null;
         this.isSpoiler = isSpoiler;
         this.spoilerScript = isSpoiler ? spoilerScript : null;
         this.content = content;

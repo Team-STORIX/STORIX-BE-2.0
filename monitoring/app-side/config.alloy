@@ -62,3 +62,35 @@ loki.write "monitoring" {
     }
   }
 }
+
+
+prometheus.exporter.cadvisor "storix" {
+  docker_host = "unix:///var/run/docker.sock"
+}
+
+prometheus.exporter.unix "storix" { }
+
+prometheus.scrape "infra" {
+  targets = concat(
+    prometheus.exporter.cadvisor.storix.targets,
+    prometheus.exporter.unix.storix.targets,
+  )
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.monitoring.receiver]
+}
+
+prometheus.remote_write "monitoring" {
+  external_labels = {
+    env         = sys.env("ENV"),
+    instance_id = sys.env("INSTANCE_ID"),
+  }
+
+  endpoint {
+    url = "http://" + sys.env("MONITORING_HOST") + ":9091/api/v1/write"
+
+    basic_auth {
+      username = sys.env("LOKI_USER")
+      password = sys.env("LOKI_PASSWORD")
+    }
+  }
+}
