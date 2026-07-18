@@ -111,6 +111,11 @@ public class UserAdaptor {
         return user.get();
     }
 
+    public User findUserByIdForUpdate(Long userId) {
+        return userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> UnknownUserException.EXCEPTION);
+    }
+
     public List<User> findUsersByIds(Collection<Long> userIds) {
         return userRepository.findAllById(userIds);
     }

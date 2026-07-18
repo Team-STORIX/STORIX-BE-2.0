@@ -1,6 +1,7 @@
 package com.storix.domain.domains.image.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3CacheHelper {
@@ -56,6 +58,26 @@ public class S3CacheHelper {
                 List.of(redisKey),
                 args.toArray()
         );
+    }
+
+    // 소비된 objectKey 캐시 제거
+    public void evictProfileKey(Long userId, String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) return;
+        evictQuietly(keyFor(userId, PROFILE_KEY_PREFIX), List.of(objectKey));
+    }
+
+    public void evictBoardKeys(Long userId, List<String> objectKeys) {
+        if (objectKeys == null || objectKeys.isEmpty()) return;
+        evictQuietly(keyFor(userId, BOARD_KEY_PREFIX), objectKeys);
+    }
+
+    private void evictQuietly(String redisKey, List<String> objectKeys) {
+        try {
+            redisTemplate.opsForSet().remove(redisKey, objectKeys.toArray());
+        } catch (Exception e) {
+            log.warn(">>> [S3CacheHelper] 소비된 objectKey 캐시 제거 실패 — TTL 만료까지 재사용 가능 상태 (redisKey={}, keys={})",
+                    redisKey, objectKeys, e);
+        }
     }
 
     // ObjectKeys 검증 로직

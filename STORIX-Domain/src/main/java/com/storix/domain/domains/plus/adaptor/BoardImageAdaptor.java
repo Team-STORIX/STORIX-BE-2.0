@@ -63,4 +63,22 @@ public class BoardImageAdaptor {
                 ));
     }
 
+    // 게시글 objectKey 목록 조회
+    public List<String> findObjectKeysByBoardIds(List<Long> boardIds) {
+        if (boardIds == null || boardIds.isEmpty()) {
+            return List.of();
+        }
+
+        return readerBoardImageRepository.findObjectKeysByBoardIds(boardIds);
+    }
+
+    // 게시글 이미지 하드 삭제
+    public int hardDeleteByBoardIds(List<Long> boardIds) {
+        if (boardIds == null || boardIds.isEmpty()) {
+            return 0;
+        }
+
+        return readerBoardImageRepository.hardDeleteByBoardIds(boardIds);
+    }
+
 }

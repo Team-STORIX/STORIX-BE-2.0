@@ -23,24 +23,22 @@ public class S3Config {
 
     @Bean
     public S3Presigner s3Presigner() {
-        AwsBasicCredentials credentials =
-                AwsBasicCredentials.create(accessKey, secretKey);
-
         return S3Presigner.builder()
                 .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(credentials))
+                .credentialsProvider(credentialsProvider())
                 .build();
     }
 
-    // 서버 경유 업로드용 (팝업/배너 이미지 등 관리자 업로드)
+    // 서버 경유 업로드(팝업/배너 등 관리자 업로드) 및 오브젝트 삭제용
     @Bean
     public S3Client s3Client() {
-        AwsBasicCredentials credentials =
-                AwsBasicCredentials.create(accessKey, secretKey);
-
         return S3Client.builder()
                 .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(credentials))
+                .credentialsProvider(credentialsProvider())
                 .build();
+    }
+
+    private StaticCredentialsProvider credentialsProvider() {
+        return StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
     }
 }

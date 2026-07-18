@@ -57,6 +57,7 @@ public class ProfileUseCase {
             throw ProfileImageNotExistException.EXCEPTION;
         }
         String imageUrl = profileService.changeProfileImage(objectKey, userId);
+        s3CacheHelper.evictProfileKey(userId, objectKey);
         return CustomResponse.onSuccess(SuccessCode.PROFILE_UPDATE_IMAGE_SUCCESS, imageUrl);
     }
 }

@@ -2,6 +2,7 @@ package com.storix.domain.domains.profile.service;
 
 import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.genrescore.adaptor.GenreScoreAdaptor;
+import com.storix.domain.domains.image.publisher.S3CleanupPublisher;
 import com.storix.domain.domains.profile.dto.UserInfo;
 import com.storix.domain.domains.profile.dto.UserInfoV2;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
@@ -23,6 +24,7 @@ public class ProfileService {
 
     private final UserAdaptor userAdaptor;
     private final GenreScoreAdaptor genreScoreAdaptor;
+    private final S3CleanupPublisher s3CleanupPublisher;
     private final BannedWordAdaptor bannedWordAdaptor;
 
     // 독자 프로필 조회 (V1)
@@ -112,8 +114,13 @@ public class ProfileService {
     // 프로필 사진 변경
     @Transactional
     public String changeProfileImage(String objectKey, Long userId) {
-        User user = userAdaptor.findUserById(userId);
+        User user = userAdaptor.findUserByIdForUpdate(userId);
+        String previousObjectKey = user.getProfileObjectKey();
         user.changeProfileImage(objectKey);
+
+        if (previousObjectKey != null && !previousObjectKey.equals(objectKey)) {
+            s3CleanupPublisher.publish(previousObjectKey);
+        }
         return baseUrl + "/" + objectKey;
     }
 }
