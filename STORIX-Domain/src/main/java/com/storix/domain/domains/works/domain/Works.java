@@ -3,6 +3,7 @@ package com.storix.domain.domains.works.domain;
 import com.storix.domain.domains.hashtag.domain.Hashtag;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -63,8 +64,9 @@ public class Works {
     @Column(name = "reviews_count")
     private Integer reviewsCount;
 
-    @Column(name = "avg_rating")
-    private Double avgRating;
+    @Column(name = "avg_rating", nullable = false)
+    @ColumnDefault("0")
+    private double avgRating;
 
     @Column(name = "works_type", nullable = false)
     private WorksType worksType;

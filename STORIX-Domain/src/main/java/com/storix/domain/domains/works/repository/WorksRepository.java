@@ -71,7 +71,7 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
         SET
           w.avgRating =
             CASE
-              WHEN COALESCE(w.reviewsCount, 0) <= 1 THEN NULL
+              WHEN COALESCE(w.reviewsCount, 0) <= 1 THEN 0.0
               ELSE
                 (COALESCE(w.avgRating, 0.0) * COALESCE(w.reviewsCount, 0) - :deletedRating)
                 / (COALESCE(w.reviewsCount, 0) - 1)
