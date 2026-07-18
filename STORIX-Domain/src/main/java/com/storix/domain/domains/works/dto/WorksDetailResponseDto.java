@@ -42,7 +42,7 @@ public record WorksDetailResponseDto(
                         .map(wp -> wp.getPlatform().getDbValue())
                         .toList())
                 .ageClassification(works.getAgeClassification().getDbValue())
-                .avgRating(works.getAvgRating() != null ? roundAvgRating(works.getAvgRating()) : 0.0)
+                .avgRating(roundAvgRating(works.getAvgRating()))
                 .reviewCount(reviewCount)
                 .description(works.getDescription())
                 .hashtags(works.getHashtags().stream()

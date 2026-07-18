@@ -8,6 +8,7 @@ import com.storix.domain.domains.works.adaptor.WorksPersistenceAdaptor;
 import com.storix.domain.domains.works.application.helper.ArtistNameParseHelper;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -20,6 +21,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LibraryService {
@@ -63,7 +65,12 @@ public class LibraryService {
         List<StandardLibraryWorksInfo> content = reviewInfo.stream()
                 .map(r -> {
                     LibraryWorksInfo works = worksMap.get(r.worksId());
-                    if (works == null) return null;
+                    if (works == null) {
+                        log.atError()
+                                .addKeyValue("worksId", r.worksId())
+                                .log(">>> [Library] 리뷰작품 works 정보 없음");
+                        return null;
+                    }
 
                     String artistName = artistNameParseHelper
                             .buildArtistName(works.originalAuthor(), works.author(), works.illustrator());
@@ -101,7 +108,12 @@ public class LibraryService {
         List<StandardLibraryWorksInfo> content = worksSlice.getContent().stream()
                 .map(w -> {
                     ReviewedWorksIdAndRatingInfo r = reviewMap.get(w.worksId());
-                    if (r == null) return null;
+                    if (r == null) {
+                        log.atError()
+                                .addKeyValue("worksId", w.worksId())
+                                .log(">>> [Library] 검색 작품의 리뷰 정보 없음");
+                        return null;
+                    }
 
                     String artistName = artistNameParseHelper
                             .buildArtistName(w.originalAuthor(), w.author(), w.illustrator());

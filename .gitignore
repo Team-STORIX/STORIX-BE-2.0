@@ -49,8 +49,13 @@ application-*.yml
 !gradle/wrapper/gradle-wrapper.properties
 
 .omc/state
+
+# 서버 관련 작업 스크립트
 /storix-db-tunnel.sh
 /storix-grafana-tunnel.sh
+/storix-maintenance.sh
+/.maintenance-silence-id
+
 .claude
 /tools
 *.sql
