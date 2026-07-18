@@ -76,7 +76,7 @@ public class SearchService {
                 .artistName(works.getArtistName())
                 .thumbnailUrl(works.getThumbnailUrl())
                 .reviewsCount(works.getReviewsCount() != null ? works.getReviewsCount() : 0L)
-                .avgRating(works.getAvgRating() != null ? roundAvgRating(works.getAvgRating()) : 0.0)
+                .avgRating(roundAvgRating(works.getAvgRating()))
                 .worksType(works.getWorksType() != null ? works.getWorksType().getDbValue() : null)
                 .build();
     }
