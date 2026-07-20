@@ -9,11 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Component
 @RequiredArgsConstructor
 public class AttendanceEventUseCase {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final AttendanceEventService attendanceEventService;
 
@@ -25,7 +28,7 @@ public class AttendanceEventUseCase {
 
         return CustomResponse.onSuccess(
                 SuccessCode.ATTENDANCE_EVENT_LOAD_SUCCESS,
-                attendanceEventService.getStatus(attendanceAppEventId, userId, LocalDate.now())
+                attendanceEventService.getStatus(attendanceAppEventId, userId, LocalDateTime.now(KST))
         );
     }
 
@@ -34,7 +37,7 @@ public class AttendanceEventUseCase {
 
         return CustomResponse.onSuccess(
                 SuccessCode.ATTENDANCE_EVENT_CHECK_IN_SUCCESS,
-                attendanceEventService.checkIn(attendanceAppEventId, userId, LocalDate.now())
+                attendanceEventService.checkIn(attendanceAppEventId, userId, LocalDateTime.now(KST))
         );
     }
 }

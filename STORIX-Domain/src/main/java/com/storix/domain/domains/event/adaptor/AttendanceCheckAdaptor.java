@@ -3,6 +3,7 @@ package com.storix.domain.domains.event.adaptor;
 import com.storix.domain.domains.event.domain.AttendanceCheck;
 import com.storix.domain.domains.event.repository.AttendanceCheckRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -15,7 +16,12 @@ public class AttendanceCheckAdaptor {
     private final AttendanceCheckRepository attendanceCheckRepository;
 
     public boolean insertIfAbsent(Long appEventId, Long userId, LocalDate attendedOn) {
-        return attendanceCheckRepository.insertIfAbsent(appEventId, userId, attendedOn) > 0;
+        try {
+            attendanceCheckRepository.insert(appEventId, userId, attendedOn);
+            return true;
+        } catch (DuplicateKeyException e) {
+            return false;
+        }
     }
 
     public List<LocalDate> findAttendedDates(Long appEventId, Long userId) {

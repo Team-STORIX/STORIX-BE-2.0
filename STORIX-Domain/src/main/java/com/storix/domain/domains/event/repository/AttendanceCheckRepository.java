@@ -16,13 +16,13 @@ public interface AttendanceCheckRepository extends JpaRepository<AttendanceCheck
     long countByAppEventIdAndUserId(Long appEventId, Long userId);
 
     // (app_event_id, user_id, attended_on) 유니크 기반 원자적 insert
-    // 이미 출석한 날이면 0 반환
+    // 중복이면 DuplicateKeyException, 그 외 무결성 위반은 그대로 전파된다
     @Modifying
     @Query(value = """
-            INSERT IGNORE INTO event_attendance_checks (app_event_id, user_id, attended_on, created_at, updated_at)
+            INSERT INTO event_attendance_checks (app_event_id, user_id, attended_on, created_at, updated_at)
             VALUES (:appEventId, :userId, :attendedOn, NOW(), NOW())
             """, nativeQuery = true)
-    int insertIfAbsent(@Param("appEventId") Long appEventId,
-                       @Param("userId") Long userId,
-                       @Param("attendedOn") LocalDate attendedOn);
+    int insert(@Param("appEventId") Long appEventId,
+               @Param("userId") Long userId,
+               @Param("attendedOn") LocalDate attendedOn);
 }

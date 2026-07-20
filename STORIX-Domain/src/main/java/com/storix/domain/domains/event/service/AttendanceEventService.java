@@ -33,8 +33,9 @@ public class AttendanceEventService {
     private final AttendanceCheckAdaptor attendanceCheckAdaptor;
 
     @Transactional(readOnly = true)
-    public AttendanceStatusResponse getStatus(Long appEventId, Long userId, LocalDate today) {
+    public AttendanceStatusResponse getStatus(Long appEventId, Long userId, LocalDateTime now) {
         AppEvent event = resolveEvent(appEventId);
+        LocalDate today = now.toLocalDate();
         NavigableMap<Integer, Integer> schedule = rewardScheduleOf(event);
         List<LocalDate> attendedDates = attendanceCheckAdaptor.findAttendedDates(event.getId(), userId);
         return AttendanceStatusResponse.builder()
@@ -45,21 +46,22 @@ public class AttendanceEventService {
                 .totalAttendedDays(attendedDates.size())
                 .attendedToday(attendedDates.contains(today))
                 .issuedTickets(issuedTicketsFor(schedule, attendedDates.size()))
-                .eventActive(isActiveOn(event, today))
+                .eventActive(isActiveOn(event, now))
                 .build();
     }
 
     @Transactional
-    public AttendanceCheckInResponse checkIn(Long appEventId, Long userId, LocalDate today) {
+    public AttendanceCheckInResponse checkIn(Long appEventId, Long userId, LocalDateTime now) {
         AppEvent event = resolveEvent(appEventId);
-        if (!isActiveOn(event, today)) {
+        if (!isActiveOn(event, now)) {
             throw AttendanceEventNotActiveException.EXCEPTION;
         }
+        LocalDate today = now.toLocalDate();
         if (!attendanceCheckAdaptor.insertIfAbsent(event.getId(), userId, today)) {
             throw AttendanceAlreadyCheckedInException.EXCEPTION;
         }
         NavigableMap<Integer, Integer> schedule = rewardScheduleOf(event);
-        int totalAttendedDays = (int) attendanceCheckAdaptor.countAttendedDays(event.getId(), userId);
+        int totalAttendedDays = Math.toIntExact(attendanceCheckAdaptor.countAttendedDays(event.getId(), userId));
         int issuedTickets = issuedTicketsFor(schedule, totalAttendedDays);
         return AttendanceCheckInResponse.builder()
                 .attendedDate(today)
@@ -77,8 +79,8 @@ public class AttendanceEventService {
                 .orElseThrow(() -> AttendanceEventNotFoundException.EXCEPTION);
     }
 
-    private boolean isActiveOn(AppEvent event, LocalDate today) {
-        return !today.isBefore(startDateOf(event)) && !today.isAfter(endDateOf(event));
+    private boolean isActiveOn(AppEvent event, LocalDateTime now) {
+        return !now.isBefore(event.getStartAt()) && now.isBefore(event.getEndAt());
     }
 
     private static LocalDate startDateOf(AppEvent event) {
