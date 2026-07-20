@@ -9,6 +9,7 @@ import com.storix.domain.domains.user.domain.Title;
 import com.storix.domain.domains.user.domain.TitleStage;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.exception.me.ProfileForbiddenNicknameException;
+import com.storix.domain.domains.user.exception.me.ProfileNicknameBannedWordException;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -94,10 +95,13 @@ public class ProfileService {
         return nickName;
     }
 
-    // 금칙어 검증
+    // 닉네임 금칙어/예약어 검증
     private void validateNicknameNotBanned(String nickName) {
-        if (bannedWordAdaptor.containsBannedWord(nickName)) {
+        if (bannedWordAdaptor.containsAdminKeyword(nickName)) {
             throw ProfileForbiddenNicknameException.EXCEPTION;
+        }
+        if (bannedWordAdaptor.containsBannedWord(nickName)) {
+            throw ProfileNicknameBannedWordException.EXCEPTION;
         }
     }
 
