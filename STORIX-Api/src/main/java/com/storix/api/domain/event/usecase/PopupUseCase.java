@@ -48,10 +48,10 @@ public class PopupUseCase {
     }
 
     // 이벤트 팝업 목록 조회
-    public CustomResponse<PageResponseWrapperDTO<PopupResponse>> getPopups(int page) {
+    public CustomResponse<PageResponseWrapperDTO<PopupResponse>> getPopups(int page, String keyword) {
 
         PageResponseWrapperDTO<PopupResponse> result = PageResponseWrapperDTO.from(
-                eventPopupService.getPopups(page)
+                eventPopupService.getPopups(page, keyword)
                         .map(popup -> PopupResponse.from(popup).withBaseUrl(baseUrl)));
         return CustomResponse.onSuccess(SuccessCode.EVENT_POPUP_LOAD_SUCCESS, result);
     }
