@@ -27,9 +27,9 @@ public class AdminAppEventUseCase {
     }
 
     // 앱 이벤트 목록 조회
-    public CustomResponse<PageResponseWrapperDTO<AppEventResponse>> getAppEvents(int page) {
+    public CustomResponse<PageResponseWrapperDTO<AppEventResponse>> getAppEvents(int page, String keyword) {
 
-        PageResponseWrapperDTO<AppEventResponse> result = PageResponseWrapperDTO.from(appEventService.getAppEvents(page));
+        PageResponseWrapperDTO<AppEventResponse> result = PageResponseWrapperDTO.from(appEventService.getAppEvents(page, keyword));
         return CustomResponse.onSuccess(SuccessCode.ADMIN_APP_EVENT_LOAD_SUCCESS, result);
     }
 
