@@ -40,6 +40,10 @@ public class AdminNotificationAdaptor {
         return adminNotificationRepository.findAllByOrderByIdDesc(pageable);
     }
 
+    public Page<AdminNotification> searchByTitle(String keyword, Pageable pageable) {
+        return adminNotificationRepository.searchByTitle(keyword, pageable);
+    }
+
     public List<AdminNotification> findDue(LocalDateTime now, Pageable pageable) {
         return adminNotificationRepository.findDueNotifications(
                 AdminNotificationStatus.SCHEDULED, now, pageable

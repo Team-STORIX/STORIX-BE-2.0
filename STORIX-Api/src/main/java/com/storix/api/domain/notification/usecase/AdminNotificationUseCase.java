@@ -44,10 +44,10 @@ public class AdminNotificationUseCase {
     }
 
     // 운영자 알림 목록 조회
-    public CustomResponse<PageResponseWrapperDTO<AdminNotificationSummaryResponse>> getNotifications(int page) {
+    public CustomResponse<PageResponseWrapperDTO<AdminNotificationSummaryResponse>> getNotifications(int page, String keyword) {
 
         PageResponseWrapperDTO<AdminNotificationSummaryResponse> result = PageResponseWrapperDTO.from(
-                adminNotificationService.getNotifications(page).map(AdminNotificationSummaryResponse::from));
+                adminNotificationService.getNotifications(page, keyword).map(AdminNotificationSummaryResponse::from));
         return CustomResponse.onSuccess(SuccessCode.ADMIN_NOTIFICATION_LOAD_SUCCESS, result);
     }
 

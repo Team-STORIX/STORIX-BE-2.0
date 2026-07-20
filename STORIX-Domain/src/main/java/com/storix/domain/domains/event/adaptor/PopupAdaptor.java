@@ -32,6 +32,10 @@ public class PopupAdaptor {
         return eventPopupRepository.findAllByOrderByIdDesc(pageable);
     }
 
+    public Page<Popup> searchByTitle(String keyword, Pageable pageable) {
+        return eventPopupRepository.searchByPopupTitle(keyword, pageable);
+    }
+
     public Optional<Popup> findActivePopup(LocalDateTime now) {
         return eventPopupRepository.findActivePopup(PopupStatus.ACTIVE, now);
     }

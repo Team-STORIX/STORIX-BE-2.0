@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -85,8 +86,9 @@ public class PopupService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Popup> getPopups(int page) {
-        return eventPopupAdaptor.findAll(PageRequest.of(page, POPUP_PAGE_SIZE));
+    public Page<Popup> getPopups(int page, String keyword) {
+        String normalized = StringUtils.hasText(keyword) ? keyword.trim() : null;
+        return eventPopupAdaptor.searchByTitle(normalized, PageRequest.of(page, POPUP_PAGE_SIZE));
     }
 
     // objectKey 형태로 반환, baseUrl/캐시는 UseCase 담당

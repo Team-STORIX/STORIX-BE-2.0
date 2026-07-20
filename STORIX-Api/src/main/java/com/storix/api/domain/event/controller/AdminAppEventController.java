@@ -34,11 +34,12 @@ public class AdminAppEventController {
     }
 
     @GetMapping
-    @Operation(summary = "앱 이벤트 목록 조회", description = "최신순 번호형 페이지네이션. 페이지당 10개 고정이며 totalPages/totalElements 를 함께 반환합니다.")
+    @Operation(summary = "앱 이벤트 목록 조회", description = "최신순 번호형 페이지네이션. 페이지당 10개 고정이며 totalPages/totalElements 를 함께 반환합니다. 검색 시 keyword로 이벤트명을 보내주세요.")
     public CustomResponse<PageResponseWrapperDTO<AppEventResponse>> getAppEvents(
-            @RequestParam(defaultValue = "0") @Min(0) int page
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(required = false) String keyword
     ) {
-        return adminAppEventUseCase.getAppEvents(page);
+        return adminAppEventUseCase.getAppEvents(page, keyword);
     }
 
     @GetMapping("/{appEventId}")
