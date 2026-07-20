@@ -137,8 +137,27 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             "WHERE r.id = :replyId AND r.deleted = false")
     int softDeleteByAdminIfNotDeleted(@Param("replyId") Long replyId, @Param("now") LocalDateTime now);
 
+    @Query("SELECT r.id FROM ReaderBoardReply r " +
+            "WHERE r.deleted = true AND r.deletedAt < :cutoff " +
+            "AND NOT EXISTS (SELECT 1 FROM ReaderBoardReply c WHERE c.parentReply.id = r.id AND c.deleted = false) " +
+            "ORDER BY r.id ASC")
+    List<Long> findIdsForHardDelete(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM ReaderBoardReply r WHERE r.deleted = true AND r.deletedAt < :cutoff")
-    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
+    @Query("UPDATE ReaderBoardReply r SET r.parentReply = null WHERE r.parentReply.id IN :replyIds")
+    int detachChildRepliesOf(@Param("replyIds") List<Long> replyIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ReaderBoardReply r WHERE r.id IN :replyIds")
+    int hardDeleteByIds(@Param("replyIds") List<Long> replyIds);
+
+    // 게시글 벌크 삭제 전 해당 게시글의 댓글 정리
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ReaderBoardReply r SET r.parentReply = null WHERE r.board.id IN :boardIds")
+    int detachChildRepliesByBoardIds(@Param("boardIds") List<Long> boardIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ReaderBoardReply r WHERE r.board.id IN :boardIds")
+    int hardDeleteByBoardIds(@Param("boardIds") List<Long> boardIds);
 
 }

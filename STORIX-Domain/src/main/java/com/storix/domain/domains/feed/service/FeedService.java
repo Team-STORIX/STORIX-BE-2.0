@@ -17,6 +17,7 @@ import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -31,6 +32,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FeedService {
 
     private final UserAdaptor userAdaptor;
@@ -189,7 +191,11 @@ public class FeedService {
         return filtered.stream()
                 .map(board -> {
                     StandardProfileInfo profile = profileMap.get(board.userId());
-                    if (profile == null) return null;
+                    if (profile == null) {
+                        log.atWarn().addKeyValue("userId", board.userId())
+                                .log(">>> [Feed] 프로필 정보 없음");
+                        return null;
+                    }
                     return SlicedReaderBoardWithProfileInfo.of(profile, board);
                 })
                 .filter(Objects::nonNull)

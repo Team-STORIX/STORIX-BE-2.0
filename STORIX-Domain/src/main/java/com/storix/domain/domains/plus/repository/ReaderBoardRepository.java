@@ -157,8 +157,12 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
 
     long countByUserIdAndDeletedFalse(Long userId);
 
+    // 하드 delete 대상 선정 — id 정렬로 청크 반복 시 반환 순서를 결정적으로 유지
+    @Query("SELECT r.id FROM ReaderBoard r WHERE r.deleted = true AND r.deletedAt < :cutoff ORDER BY r.id ASC")
+    List<Long> findIdsForHardDelete(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM ReaderBoard r WHERE r.deleted = true AND r.deletedAt < :cutoff")
-    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
+    @Query("DELETE FROM ReaderBoard r WHERE r.id IN :ids")
+    int hardDeleteByIds(@Param("ids") List<Long> ids);
 
 }

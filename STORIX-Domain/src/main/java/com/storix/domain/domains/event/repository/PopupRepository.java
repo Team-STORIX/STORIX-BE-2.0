@@ -18,6 +18,11 @@ public interface PopupRepository extends JpaRepository<Popup, Long> {
     @EntityGraph(attributePaths = "appEvent")
     Page<Popup> findAllByOrderByIdDesc(Pageable pageable);
 
+    // 팝업명 검색 — keyword null이면 전체 조회
+    @EntityGraph(attributePaths = "appEvent")
+    @Query("SELECT p FROM Popup p WHERE (:keyword IS NULL OR p.popupTitle LIKE %:keyword%) ORDER BY p.id DESC")
+    Page<Popup> searchByPopupTitle(@Param("keyword") String keyword, Pageable pageable);
+
     // 스케줄러: 노출 시작이 지난 예약 팝업
     List<Popup> findAllByStatusAndDisplayStartAtLessThanEqual(PopupStatus status, LocalDateTime now);
 

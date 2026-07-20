@@ -52,8 +52,8 @@ public record AppEventResponse(
                 .endAt(appEvent.getEndAt())
                 .status(AppEventStatus.resolve(appEvent.getStartAt(), appEvent.getEndAt(), LocalDateTime.now()))
                 .hasWinner(appEvent.isHasWinner())
-                .promotionTypes(appEvent.getPromotionTypes())
-                .attendanceRewards(appEvent.getAttendanceRewards())
+                .promotionTypes(Set.copyOf(appEvent.getPromotionTypes()))
+                .attendanceRewards(Map.copyOf(appEvent.getAttendanceRewards()))
                 .createdAt(appEvent.getCreatedAt())
                 .updatedAt(appEvent.getUpdatedAt())
                 .build();

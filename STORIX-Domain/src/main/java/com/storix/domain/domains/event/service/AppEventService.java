@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -74,8 +75,9 @@ public class AppEventService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AppEventResponse> getAppEvents(int page) {
-        return appEventAdaptor.findAll(PageRequest.of(page, APP_EVENT_PAGE_SIZE))
+    public Page<AppEventResponse> getAppEvents(int page, String keyword) {
+        String normalized = StringUtils.hasText(keyword) ? keyword.trim() : null;
+        return appEventAdaptor.searchByName(normalized, PageRequest.of(page, APP_EVENT_PAGE_SIZE))
                 .map(AppEventResponse::from);
     }
 

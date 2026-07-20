@@ -33,7 +33,7 @@ public record AdminReportListResponse(
                 reportCase.getStatus(),
                 reportCount,
                 reportCase.getProcessedByAdminId(),
-                reportCase.getProcessActions(),
+                Set.copyOf(reportCase.getProcessActions()),
                 reportCase.getCreatedAt(),
                 reportCase.getProcessedAt(),
                 reportCase.hasPreviousProcessHistory()

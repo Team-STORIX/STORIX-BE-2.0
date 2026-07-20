@@ -13,6 +13,7 @@ import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -23,6 +24,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProfileFavoriteService {
@@ -70,7 +72,13 @@ public class ProfileFavoriteService {
         List<FavoriteWorksWithReviewInfo> ordered = worksIds.stream()
                 .map(worksId -> {
                     WorksInfo worksInfo = worksMap.get(worksId);
-                    if (worksInfo == null) return null;
+                    if (worksInfo == null) {
+                        log.atError()
+                                .addKeyValue("worksId", worksId)
+                                .addKeyValue("userId", userId)
+                                .log(">>> [Favorite] 관심작품 works 정보 없음");
+                        return null;
+                    }
 
                     Rating ratingEnum = ratingMap.get(worksId);
                     boolean isReviewed = ratingEnum != null;

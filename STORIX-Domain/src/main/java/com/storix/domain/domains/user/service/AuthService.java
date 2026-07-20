@@ -4,6 +4,7 @@ import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
+import com.storix.domain.domains.image.publisher.S3CleanupPublisher;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
@@ -57,6 +58,7 @@ public class AuthService {
     private final OnboardingWorksHelper onboardingWorksHelper; // -> usecase 리팩토링 필요
     private final GenreScorePublisher genreScorePublisher;
     private final UserAccessRevokedPublisher userAccessRevokedPublisher;
+    private final S3CleanupPublisher s3CleanupPublisher;
     private final BannedWordAdaptor bannedWordAdaptor;
 
     // 독자 회원 가입 가능 여부 (토큰 검증, 계정 정보 유무)
@@ -183,8 +185,10 @@ public class AuthService {
     @Transactional
     public void withDrawUser(Long userId, Set<WithdrawReason> reasons, String detail) {
         // 1. 유저 soft-delete
-        User user = userAdaptor.findUserById(userId);
+        User user = userAdaptor.findUserByIdForUpdate(userId);
+        String profileObjectKey = user.getProfileObjectKey();
         user.withdraw();
+        s3CleanupPublisher.publish(profileObjectKey);
 
         // 2. 유저 관련 정보 (관심 작품, 서재) 삭제 + Redis 반영(refreshToken 삭제, blacklist 등록)은 커밋 후 처리
         userAccessRevokedPublisher.publishWithdrawn(userId);
