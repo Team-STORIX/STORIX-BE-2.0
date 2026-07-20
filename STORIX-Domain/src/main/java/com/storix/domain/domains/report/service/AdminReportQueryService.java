@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -416,7 +417,7 @@ public class AdminReportQueryService {
                 reportCase.getStatus(),
                 reportCase.getProcessedByAdminId(),
                 reportCase.getProcessMemo(),
-                reportCase.getProcessActions(),
+                Set.copyOf(reportCase.getProcessActions()),
                 reportCase.getCreatedAt(),
                 reportCase.getProcessedAt(),
                 reportCase.hasPreviousProcessHistory(),
