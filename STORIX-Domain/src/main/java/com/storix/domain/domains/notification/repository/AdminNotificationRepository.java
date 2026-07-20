@@ -20,6 +20,10 @@ public interface AdminNotificationRepository extends JpaRepository<AdminNotifica
 
     Page<AdminNotification> findAllByOrderByIdDesc(Pageable pageable);
 
+    // 알림 제목 검색 — keyword null이면 전체 조회
+    @Query("SELECT e FROM AdminNotification e WHERE (:keyword IS NULL OR e.title LIKE %:keyword%) ORDER BY e.id DESC")
+    Page<AdminNotification> searchByTitle(@Param("keyword") String keyword, Pageable pageable);
+
     // 상태별 알림 수
     long countByStatus(AdminNotificationStatus status);
 

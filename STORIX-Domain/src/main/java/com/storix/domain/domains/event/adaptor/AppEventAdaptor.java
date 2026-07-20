@@ -26,4 +26,8 @@ public class AppEventAdaptor {
     public Page<AppEvent> findAll(Pageable pageable) {
         return appEventRepository.findAllByOrderByIdDesc(pageable);
     }
+
+    public Page<AppEvent> searchByName(String keyword, Pageable pageable) {
+        return appEventRepository.searchByName(keyword, pageable);
+    }
 }

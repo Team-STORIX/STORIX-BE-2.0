@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -62,9 +63,10 @@ public class AdminNotificationService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AdminNotification> getNotifications(int page) {
+    public Page<AdminNotification> getNotifications(int page, String keyword) {
         int safePage = Math.max(0, page);
-        return adminNotificationAdaptor.findAll(PageRequest.of(safePage, NOTIFICATION_PAGE_SIZE));
+        String normalized = StringUtils.hasText(keyword) ? keyword.trim() : null;
+        return adminNotificationAdaptor.searchByTitle(normalized, PageRequest.of(safePage, NOTIFICATION_PAGE_SIZE));
     }
 
     @Transactional

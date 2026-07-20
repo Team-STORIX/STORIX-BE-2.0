@@ -37,11 +37,12 @@ public class AdminPopupController {
     }
 
     @GetMapping
-    @Operation(summary = "이벤트 팝업 목록 조회", description = "최신순 번호형 페이지네이션. 페이지당 10개 고정이며 totalPages/totalElements 를 함께 반환합니다.")
+    @Operation(summary = "이벤트 팝업 목록 조회", description = "최신순 번호형 페이지네이션. 페이지당 10개 고정이며 totalPages/totalElements 를 함께 반환합니다. 검색 시 keyword로 팝업명을 보내주세요.")
     public CustomResponse<PageResponseWrapperDTO<PopupResponse>> getPopups(
-            @RequestParam(defaultValue = "0") @Min(0) int page
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(required = false) String keyword
     ) {
-        return eventPopupUseCase.getPopups(page);
+        return eventPopupUseCase.getPopups(page, keyword);
     }
 
     @GetMapping("/{popupId}")

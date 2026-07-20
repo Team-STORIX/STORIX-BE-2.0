@@ -33,11 +33,12 @@ public class AdminNotificationController {
     }
 
     @GetMapping
-    @Operation(summary = "운영자 알림 목록 조회", description = "최신순 번호형 페이지네이션. 페이지당 10개 고정이며 totalPages/totalElements 를 함께 반환합니다.")
+    @Operation(summary = "운영자 알림 목록 조회", description = "최신순 번호형 페이지네이션. 페이지당 10개 고정이며 totalPages/totalElements 를 함께 반환합니다. 검색 시 keyword로 알림 제목을 보내주세요.")
     public CustomResponse<PageResponseWrapperDTO<AdminNotificationSummaryResponse>> getNotifications(
-            @RequestParam(defaultValue = "0") @Min(0) int page
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(required = false) String keyword
     ) {
-        return adminNotificationUseCase.getNotifications(page);
+        return adminNotificationUseCase.getNotifications(page, keyword);
     }
 
     @GetMapping("/{adminNotificationId}")
