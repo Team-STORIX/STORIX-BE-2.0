@@ -130,6 +130,7 @@ public enum ErrorCode {
     ADMIN_APP_EVENT_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_002", "앱 이벤트명은 필수입니다."),
     ADMIN_APP_EVENT_PERIOD_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_003", "앱 이벤트 시작/종료 일시는 필수입니다."),
     ADMIN_APP_EVENT_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_004", "앱 이벤트 종료 일시는 시작 일시 이후여야 합니다."),
+    ADMIN_APP_EVENT_INVALID_ATTENDANCE_REWARDS(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_005", "출석 응모권 지급 기준은 출석일 1 이상, 응모권 0 이상이며 출석일이 늘수록 누적 응모권이 줄어들 수 없습니다."),
 
     // App Event error
     APP_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "APP_EVENT_ERROR_001", "존재하지 않는 앱 이벤트입니다."),

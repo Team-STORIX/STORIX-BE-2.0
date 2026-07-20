@@ -24,8 +24,9 @@ import java.util.TreeMap;
 @RequiredArgsConstructor
 public class AttendanceEventService {
 
+    // 이벤트에 지급표를 지정하지 않았을 때 사용하는 기본값
     // 누적 출석일 → 누적 지급 응모권 (3~6일 1개, 7~13일 2개, 14일 5개)
-    private static final NavigableMap<Integer, Integer> TICKET_TOTALS_BY_ATTENDED_DAYS =
+    private static final NavigableMap<Integer, Integer> DEFAULT_TICKET_TOTALS_BY_ATTENDED_DAYS =
             new TreeMap<>(Map.of(3, 1, 7, 2, 14, 5));
 
     private final AppEventAdaptor appEventAdaptor;
@@ -34,6 +35,7 @@ public class AttendanceEventService {
     @Transactional(readOnly = true)
     public AttendanceStatusResponse getStatus(Long appEventId, Long userId, LocalDate today) {
         AppEvent event = resolveEvent(appEventId);
+        NavigableMap<Integer, Integer> schedule = rewardScheduleOf(event);
         List<LocalDate> attendedDates = attendanceCheckAdaptor.findAttendedDates(event.getId(), userId);
         return AttendanceStatusResponse.builder()
                 .appEventId(event.getId())
@@ -42,7 +44,7 @@ public class AttendanceEventService {
                 .attendedDates(attendedDates)
                 .totalAttendedDays(attendedDates.size())
                 .attendedToday(attendedDates.contains(today))
-                .issuedTickets(issuedTicketsFor(attendedDates.size()))
+                .issuedTickets(issuedTicketsFor(schedule, attendedDates.size()))
                 .eventActive(isActiveOn(event, today))
                 .build();
     }
@@ -56,12 +58,13 @@ public class AttendanceEventService {
         if (!attendanceCheckAdaptor.insertIfAbsent(event.getId(), userId, today)) {
             throw AttendanceAlreadyCheckedInException.EXCEPTION;
         }
+        NavigableMap<Integer, Integer> schedule = rewardScheduleOf(event);
         int totalAttendedDays = (int) attendanceCheckAdaptor.countAttendedDays(event.getId(), userId);
-        int issuedTickets = issuedTicketsFor(totalAttendedDays);
+        int issuedTickets = issuedTicketsFor(schedule, totalAttendedDays);
         return AttendanceCheckInResponse.builder()
                 .attendedDate(today)
                 .totalAttendedDays(totalAttendedDays)
-                .newlyIssuedTickets(issuedTickets - issuedTicketsFor(totalAttendedDays - 1))
+                .newlyIssuedTickets(issuedTickets - issuedTicketsFor(schedule, totalAttendedDays - 1))
                 .issuedTickets(issuedTickets)
                 .build();
     }
@@ -90,8 +93,16 @@ public class AttendanceEventService {
                 : endAt.toLocalDate();
     }
 
-    private static int issuedTicketsFor(int totalAttendedDays) {
-        Map.Entry<Integer, Integer> reached = TICKET_TOTALS_BY_ATTENDED_DAYS.floorEntry(totalAttendedDays);
+    // 이벤트에 지급표가 지정돼 있으면 그것을, 없으면 기본 지급표를 사용한다
+    private static NavigableMap<Integer, Integer> rewardScheduleOf(AppEvent event) {
+        Map<Integer, Integer> configured = event.getAttendanceRewards();
+        return (configured == null || configured.isEmpty())
+                ? DEFAULT_TICKET_TOTALS_BY_ATTENDED_DAYS
+                : new TreeMap<>(configured);
+    }
+
+    private static int issuedTicketsFor(NavigableMap<Integer, Integer> schedule, int totalAttendedDays) {
+        Map.Entry<Integer, Integer> reached = schedule.floorEntry(totalAttendedDays);
         return reached == null ? 0 : reached.getValue();
     }
 }

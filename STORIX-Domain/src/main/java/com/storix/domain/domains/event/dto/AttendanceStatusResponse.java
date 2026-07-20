@@ -25,7 +25,7 @@ public record AttendanceStatusResponse(
         @Schema(description = "오늘 출석 완료 여부")
         boolean attendedToday,
 
-        @Schema(description = "지금까지 발급된 응모권 수 (3일 1개, 7일 2개, 14일 5개)")
+        @Schema(description = "지금까지 발급된 응모권 수 (이벤트 지급표 기준, 미지정 시 기본표 3일 1개/7일 2개/14일 5개)")
         int issuedTickets,
 
         @Schema(description = "이벤트 진행 중 여부 (기간 외면 false)")

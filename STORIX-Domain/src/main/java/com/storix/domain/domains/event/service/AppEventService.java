@@ -4,6 +4,7 @@ import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import com.storix.domain.domains.event.dto.AppEventResponse;
+import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
 import com.storix.domain.domains.event.exception.AppEventNameRequiredException;
 import com.storix.domain.domains.event.exception.AppEventPeriodRequiredException;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class AppEventService {
                 .endAt(cmd.endAt())
                 .hasWinner(cmd.hasWinner())
                 .promotionTypes(cmd.promotionTypes())
+                .attendanceRewards(cmd.attendanceRewards())
                 .assigneeAdminId(adminUserId)
                 .build());
         return AppEventResponse.from(saved);
@@ -53,7 +57,8 @@ public class AppEventService {
                 cmd.startAt(),
                 cmd.endAt(),
                 cmd.hasWinner(),
-                cmd.promotionTypes()
+                cmd.promotionTypes(),
+                cmd.attendanceRewards()
         );
         // 이벤트 기간이 바뀌면 소속 팝업/배너 노출기간을 이벤트 기간 안으로 clamp (앱 이벤트 ⊇ 팝업/배너)
         if (periodChanged) {
@@ -93,6 +98,26 @@ public class AppEventService {
         }
         if (!cmd.startAt().isBefore(cmd.endAt())) {
             throw AppEventInvalidPeriodException.EXCEPTION;
+        }
+        validateAttendanceRewards(cmd.attendanceRewards());
+    }
+
+    // 지정하지 않으면(null/빈 값) 출석 이벤트 지급표는 서비스 기본값을 사용한다.
+    // 지정 시 출석일 ≥ 1, 응모권 ≥ 0, 출석일이 늘수록 누적 응모권이 감소하지 않아야 한다.
+    private void validateAttendanceRewards(Map<Integer, Integer> attendanceRewards) {
+        if (attendanceRewards == null || attendanceRewards.isEmpty()) {
+            return;
+        }
+        int prevCumulativeTickets = 0;
+        for (Map.Entry<Integer, Integer> reward : new TreeMap<>(attendanceRewards).entrySet()) {
+            Integer attendedDays = reward.getKey();
+            Integer cumulativeTickets = reward.getValue();
+            if (attendedDays == null || attendedDays < 1
+                    || cumulativeTickets == null || cumulativeTickets < 0
+                    || cumulativeTickets < prevCumulativeTickets) {
+                throw AppEventInvalidAttendanceRewardsException.EXCEPTION;
+            }
+            prevCumulativeTickets = cumulativeTickets;
         }
     }
 }

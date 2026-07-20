@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +59,17 @@ class AttendanceEventServiceTest {
 
     private AppEvent defaultEvent() {
         return event(START.atStartOfDay(), END.atTime(23, 59));
+    }
+
+    private AppEvent eventWithRewards(Map<Integer, Integer> rewards) {
+        AppEvent e = AppEvent.builder()
+                .name("커스텀 출석 이벤트").description("설명")
+                .startAt(START.atStartOfDay()).endAt(END.atTime(23, 59))
+                .hasWinner(true)
+                .attendanceRewards(rewards)
+                .build();
+        ReflectionTestUtils.setField(e, "id", EVENT_ID);
+        return e;
     }
 
     @Nested
@@ -169,6 +181,22 @@ class AttendanceEventServiceTest {
 
             assertThat(response.newlyIssuedTickets()).isEqualTo(3);
             assertThat(response.issuedTickets()).isEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("이벤트에 지정된 지급표를 사용해 응모권을 계산한다 (기본표 대신)")
+        void checkIn_uses_event_reward_schedule() {
+            // 이벤트가 5일차부터 3개 지급하도록 지정 → 기본표(3일 1개)와 다른 결과
+            LocalDate today = START.plusDays(4);
+            given(appEventAdaptor.findOptionalById(EVENT_ID))
+                    .willReturn(Optional.of(eventWithRewards(Map.of(5, 3, 10, 8))));
+            given(attendanceCheckAdaptor.insertIfAbsent(EVENT_ID, USER_ID, today)).willReturn(true);
+            given(attendanceCheckAdaptor.countAttendedDays(EVENT_ID, USER_ID)).willReturn(5L);
+
+            AttendanceCheckInResponse response = attendanceEventService.checkIn(EVENT_ID, USER_ID, today);
+
+            assertThat(response.newlyIssuedTickets()).isEqualTo(3); // 4일차 0개 → 5일차 3개
+            assertThat(response.issuedTickets()).isEqualTo(3);
         }
 
         @Test
