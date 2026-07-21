@@ -18,24 +18,22 @@ public class PushDeviceUseCase {
     public void sync(Long userId, DeviceSyncRequest request) {
         boolean isNew = pushDeviceService.sync(userId, request.toCommand());
 
-        if (isNew) {
-            log.info(">>>> [PushDevice] register installationId={}", request.installationId());
-        } else {
-            log.info(">>>> [PushDevice] refresh installationId={}", request.installationId());
-        }
+        log.info(">>> [PushDevice] 동기화 installationId={} isNew={}", request.installationId(), isNew);
     }
 
     // 2. 단일 디바이스 푸시 알림 해제
     public void unregister(Long userId, String installationId) {
         int affected = pushDeviceService.unregister(userId, installationId);
         if (affected == 0) {
-            log.warn(">>>> [PushDevice] unregister target not found (already inactive or never registered) installationId={}",
-                    installationId);
+            log.warn(">>> [PushDevice] 해제 대상 없음 installationId={}", installationId);
+            return;
         }
+        log.info(">>> [PushDevice] 해제 installationId={}", installationId);
     }
 
     // 3. FCM 토큰 갱신
     public void refreshFcmToken(Long userId, RefreshFcmTokenRequest request) {
         pushDeviceService.refreshFcmToken(userId, request.installationId(), request.fcmToken());
+        log.info(">>> [PushDevice] FCM 토큰 갱신 installationId={}", request.installationId());
     }
 }

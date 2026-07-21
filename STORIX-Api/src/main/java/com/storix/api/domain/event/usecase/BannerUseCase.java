@@ -13,10 +13,12 @@ import com.storix.domain.domains.event.service.EventContentCacheHelper;
 import com.storix.domain.domains.image.domain.EventImageSurface;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class BannerUseCase {
@@ -32,6 +34,7 @@ public class BannerUseCase {
 
         // 1. 이벤트 이미지 S3 업로드
         String imageObjectKey = s3UploadHelper.uploadEventImage(file, req.appEventId(), EventImageSurface.BANNER);
+        log.info(">>> [Banner] 이미지 업로드 objectKey={}", imageObjectKey);
 
         // 2. 배너 생성. 검증 실패 시 올린 이미지 롤백
         Banner banner;
@@ -39,11 +42,13 @@ public class BannerUseCase {
             banner = eventBannerService.create(req.toCommand(imageObjectKey), authUser.getUserId());
         } catch (Exception e) {
             s3UploadHelper.delete(imageObjectKey);
+            log.warn(">>> [Banner] 생성 실패로 이미지 롤백 objectKey={}", imageObjectKey);
             throw e;
         }
 
         // 3. 이벤트 배너 캐시 무효화
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
+        log.info(">>> [Banner] 생성 완료 bannerId={}", banner.getId());
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_CREATE_SUCCESS, BannerResponse.from(banner).withBaseUrl(baseUrl));
     }
 
@@ -72,19 +77,24 @@ public class BannerUseCase {
         String imageObjectKey = replaceImage
                 ? s3UploadHelper.uploadEventImage(file, req.appEventId(), EventImageSurface.BANNER)
                 : oldImageObjectKey;
+        if (replaceImage) log.info(">>> [Banner] 이미지 교체 업로드 objectKey={}", imageObjectKey);
 
         // 2. 배너 수정. 실패 시 새로 올린 이미지 롤백
         Banner banner;
         try {
             banner = eventBannerService.update(bannerId, req.toCommand(imageObjectKey));
         } catch (Exception e) {
-            if (replaceImage) s3UploadHelper.delete(imageObjectKey);
+            if (replaceImage) {
+                s3UploadHelper.delete(imageObjectKey);
+                log.warn(">>> [Banner] 수정 실패로 이미지 롤백 objectKey={}", imageObjectKey);
+            }
             throw e;
         }
 
         // 3. 교체 성공 시 옛 이미지 정리 + 캐시 무효화
         if (replaceImage) s3UploadHelper.delete(oldImageObjectKey);
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
+        log.info(">>> [Banner] 수정 완료 bannerId={} imageReplaced={}", bannerId, replaceImage);
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_UPDATE_SUCCESS, BannerResponse.from(banner).withBaseUrl(baseUrl));
     }
 
@@ -96,6 +106,7 @@ public class BannerUseCase {
 
         // 2. 이벤트 배너 캐시 무효화
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
+        log.info(">>> [Banner] 강제 종료 bannerId={}", bannerId);
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_CANCEL_SUCCESS, BannerResponse.from(banner).withBaseUrl(baseUrl));
     }
 }

@@ -10,8 +10,10 @@ import com.storix.domain.domains.event.service.AppEventService;
 import com.storix.domain.domains.event.service.EventContentCacheHelper;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AdminAppEventUseCase {
@@ -23,6 +25,7 @@ public class AdminAppEventUseCase {
     public CustomResponse<AppEventResponse> createAppEvent(AuthUserDetails authUser, AppEventRequest req) {
 
         AppEventResponse result = appEventService.create(req.toCommand(), authUser.getUserId());
+        log.info(">>> [AppEvent] 생성 완료 appEventId={}", result.id());
         return CustomResponse.onSuccess(SuccessCode.ADMIN_APP_EVENT_CREATE_SUCCESS, result);
     }
 
@@ -49,6 +52,7 @@ public class AdminAppEventUseCase {
         // 2. 소속 팝업·배너 노출기간도 함께 바뀌므로 캐시 무효화
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
+        log.info(">>> [AppEvent] 수정 완료 appEventId={}", appEventId);
         return CustomResponse.onSuccess(SuccessCode.ADMIN_APP_EVENT_UPDATE_SUCCESS, result);
     }
 
@@ -61,6 +65,7 @@ public class AdminAppEventUseCase {
         // 2. 소속 팝업·배너도 함께 종료되므로 캐시 무효화
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
+        log.info(">>> [AppEvent] 강제 종료 appEventId={}", appEventId);
         return CustomResponse.onSuccess(SuccessCode.ADMIN_APP_EVENT_CANCEL_SUCCESS, result);
     }
 }

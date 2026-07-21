@@ -13,8 +13,10 @@ import com.storix.domain.domains.notification.service.AdminNotificationBroadcast
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AdminNotificationUseCase {
@@ -34,6 +36,8 @@ public class AdminNotificationUseCase {
 
         // 1. 운영자 알림 생성 (생성 관리자 id 저장)
         Long adminNotificationId = adminNotificationService.create(req.toCommand(), authUser.getUserId());
+        log.info(">>> [AdminNotification] 생성 완료 adminNotificationId={} sendType={}",
+                adminNotificationId, req.sendType());
 
         // 2. 즉시 발송인 경우, 브로드캐스트 발송
         if (req.sendType() == AdminNotificationSendType.IMMEDIATE) {
@@ -70,6 +74,8 @@ public class AdminNotificationUseCase {
         // 1. 운영자 알림 수정
         AdminNotificationResponse result =
                 AdminNotificationResponse.from(adminNotificationService.update(adminNotificationId, req.toCommand()));
+        log.info(">>> [AdminNotification] 수정 완료 adminNotificationId={} sendType={}",
+                adminNotificationId, req.sendType());
 
         // 2. 즉시 발송으로 변경된 경우, 브로드캐스트 발송
         if (req.sendType() == AdminNotificationSendType.IMMEDIATE) {
@@ -84,6 +90,7 @@ public class AdminNotificationUseCase {
 
         AdminNotificationResponse result =
                 AdminNotificationResponse.from(adminNotificationService.cancel(adminNotificationId));
+        log.info(">>> [AdminNotification] 예약 취소 adminNotificationId={}", adminNotificationId);
         return CustomResponse.onSuccess(SuccessCode.ADMIN_NOTIFICATION_CANCEL_SUCCESS, result);
     }
 
