@@ -18,10 +18,10 @@ public class LogoutUseCase {
     private final CookieHelper cookieHelper;
 
     // 로그아웃
-    public ResponseEntity<CustomResponse<Void>> execute(Long userId, String installationId) {
+    public ResponseEntity<CustomResponse<Void>> execute(Long userId, String installationId, String refreshToken) {
 
         // refreshToken 삭제 + [Native] 해당 디바이스 FCM 토큰 비활성화
-        authService.logout(userId, installationId);
+        authService.logout(userId, installationId, refreshToken);
 
         return ResponseEntity.ok()
                     .body(CustomResponse.onSuccess(SuccessCode.AUTH_LOGOUT_SUCCESS));
