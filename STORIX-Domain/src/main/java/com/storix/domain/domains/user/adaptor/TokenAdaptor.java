@@ -85,6 +85,13 @@ public class TokenAdaptor {
         }
     }
 
+    public void deleteRefreshToken(Long userId, String refreshToken) {
+        Long deleted = redisTemplate.opsForHash().delete(refreshTokenKey(userId), refreshToken);
+        if (deleted == null || deleted == 0L) {
+            throw InvalidLogoutException.EXCEPTION;
+        }
+    }
+
     public void deleteRefreshTokenByUserId(Long userId) {
         if (Boolean.FALSE.equals(redisTemplate.delete(refreshTokenKey(userId)))) {
             throw InvalidLogoutException.EXCEPTION;
