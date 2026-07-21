@@ -1,4 +1,5 @@
 package com.storix.domain.domains.user.domain;
+import com.storix.common.utils.RedisKeyStatic;
 
 
 import lombok.Builder;
@@ -8,7 +9,7 @@ import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
 import org.springframework.data.redis.core.index.Indexed;
 
-@RedisHash(value = "onboardingToken")
+@RedisHash(value = RedisKeyStatic.Hash.ONBOARDING_TOKEN)
 @Getter
 public class OnboardingToken {
 

@@ -1,4 +1,5 @@
 package com.storix.domain.domains.preference.service;
+import com.storix.common.utils.RedisKeyStatic;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -30,11 +31,11 @@ public class ExplorationCacheHelper {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
-    private static final String CHART_KEY_PREFIX = "exploration::chart::total::";
-    private static final String DONE_KEY_PREFIX = "exploration::done::today::";
-    private static final String PENDING_LIST_PREFIX = "exploration::pending::detail::";
-    private static final String GLOBAL_QUEUE_KEY = "exploration::queue";
-    private static final String DAILY_COUNT_KEY_PREFIX = "exploration::count::today::";
+    private static final String CHART_KEY_PREFIX = RedisKeyStatic.Exploration.CHART_PREFIX;
+    private static final String DONE_KEY_PREFIX = RedisKeyStatic.Exploration.DONE_PREFIX;
+    private static final String PENDING_LIST_PREFIX = RedisKeyStatic.Exploration.PENDING_PREFIX;
+    private static final String GLOBAL_QUEUE_KEY = RedisKeyStatic.Exploration.GLOBAL_QUEUE;
+    private static final String DAILY_COUNT_KEY_PREFIX = RedisKeyStatic.Exploration.DAILY_COUNT_PREFIX;
     private static final int MAX_QUEUE_SIZE = 10000;
 
     private static final String SUBMIT_SCRIPT =

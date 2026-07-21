@@ -2,7 +2,7 @@ package com.storix.api.domain.event.usecase;
 
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
-import com.storix.common.utils.STORIXStatic;
+import com.storix.common.utils.RedisKeyStatic;
 import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.api.domain.event.controller.dto.PopupRequest;
 import com.storix.api.domain.image.helper.S3UploadHelper;
@@ -43,7 +43,7 @@ public class PopupUseCase {
         }
 
         // 3. 이벤트 팝업 캐시 무효화
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_POPUP_KEY);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
         return CustomResponse.onSuccess(SuccessCode.EVENT_POPUP_CREATE_SUCCESS, PopupResponse.from(popup).withBaseUrl(baseUrl));
     }
 
@@ -84,7 +84,7 @@ public class PopupUseCase {
 
         // 3. 교체 성공 시 옛 이미지 정리 + 캐시 무효화
         if (replaceImage) s3UploadHelper.delete(oldImageObjectKey);
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_POPUP_KEY);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
         return CustomResponse.onSuccess(SuccessCode.EVENT_POPUP_UPDATE_SUCCESS, PopupResponse.from(popup).withBaseUrl(baseUrl));
     }
 
@@ -95,7 +95,7 @@ public class PopupUseCase {
         Popup popup = eventPopupService.cancel(popupId);
 
         // 2. 이벤트 팝업 캐시 무효화
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_POPUP_KEY);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
         return CustomResponse.onSuccess(SuccessCode.EVENT_POPUP_CANCEL_SUCCESS, PopupResponse.from(popup).withBaseUrl(baseUrl));
     }
 }

@@ -1,4 +1,5 @@
 package com.storix.domain.domains.image.service;
+import com.storix.common.utils.RedisKeyStatic;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +19,8 @@ public class S3CacheHelper {
 
     private final StringRedisTemplate redisTemplate;
 
-    private static final String BOARD_KEY_PREFIX = "image:public:board:";
-    private static final String PROFILE_KEY_PREFIX = "image:public:profile:";
+    private static final String BOARD_KEY_PREFIX = RedisKeyStatic.Image.BOARD_PREFIX;
+    private static final String PROFILE_KEY_PREFIX = RedisKeyStatic.Image.PROFILE_PREFIX;
 
     private static final long IMAGE_KEY_TTL_MINUTE = 20;
 

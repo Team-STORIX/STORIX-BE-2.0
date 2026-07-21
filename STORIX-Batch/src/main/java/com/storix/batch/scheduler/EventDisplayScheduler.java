@@ -1,6 +1,6 @@
 package com.storix.batch.scheduler;
 
-import com.storix.common.utils.STORIXStatic;
+import com.storix.common.utils.RedisKeyStatic;
 import com.storix.domain.domains.event.service.BannerService;
 import com.storix.domain.domains.event.service.EventContentCacheHelper;
 import com.storix.domain.domains.event.service.PopupService;
@@ -43,7 +43,7 @@ public class EventDisplayScheduler {
         } finally {
             // 앞 단계가 커밋됐으면 뒤 단계가 실패해도 캐시는 무효화
             if (changed) {
-                eventContentCacheHelper.evict(STORIXStatic.ACTIVE_POPUP_KEY);
+                eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
             }
         }
     }
@@ -62,7 +62,7 @@ public class EventDisplayScheduler {
             log.error(">>> [EventDisplayScheduler] banner 전환 실패", e);
         } finally {
             if (changed) {
-                eventContentCacheHelper.evict(STORIXStatic.ACTIVE_BANNER_KEY);
+                eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
             }
         }
     }
