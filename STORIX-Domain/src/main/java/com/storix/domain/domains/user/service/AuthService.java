@@ -167,9 +167,13 @@ public class AuthService {
 
     // 유저 로그아웃
     @Transactional
-    public void logout(Long userId, String installationId) {
+    public void logout(Long userId, String installationId, String refreshToken) {
         // 1. refreshToken 삭제 (Redis)
-        tokenAdaptor.deleteRefreshTokenByUserId(userId);
+        if (StringUtils.hasText(refreshToken)) {
+            tokenAdaptor.deleteRefreshToken(userId, refreshToken);
+        } else {
+            tokenAdaptor.deleteRefreshTokenByUserId(userId);
+        }
 
         // 2. [Native] 해당 디바이스 FCM 토큰 비활성화
         if (StringUtils.hasText(installationId)) {

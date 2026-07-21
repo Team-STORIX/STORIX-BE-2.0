@@ -46,14 +46,17 @@ public class AuthV2Controller {
 
     @Operation(summary = "[v2] 로그아웃", description = "로그아웃용 api 입니다. 헤더로 액세스 토큰을 보내주세요.  \n" +
             "- Native: RequestBody에 installationId(기기 식별자)를 함께 보내주세요.  \n" +
-            "          —> BE에서 해당 디바이스의 FCM 토큰을 즉시 비활성화 합니다.  \n")
+            "          —> BE에서 해당 디바이스의 FCM 토큰을 즉시 비활성화 합니다.  \n" +
+            "- refreshToken을 함께 보내면 해당 기기만 로그아웃합니다.  \n" +
+            "          —> 보내지 않으면 모든 기기가 로그아웃됩니다.  \n")
     @PostMapping("/user/logout")
     public ResponseEntity<CustomResponse<Void>> logout(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @RequestBody LogoutRequest body
+            @Valid @RequestBody(required = false) LogoutRequest body
     ) {
         String installationId = body != null ? body.installationId() : null;
-        return logoutUseCase.execute(authUserDetails.getUserId(), installationId);
+        String refreshToken = body != null ? body.refreshToken() : null;
+        return logoutUseCase.execute(authUserDetails.getUserId(), installationId, refreshToken);
     }
 
     @Operation(summary = "[v2] 회원 탈퇴", description = "회원 탈퇴용 api 입니다.   \n" +

@@ -28,7 +28,8 @@ public class AuthorizationUseCase {
 
         if (refreshToken == null || refreshToken.isBlank()) throw RefreshTokenNotExistException.EXCEPTION;
 
-        LoginWithTokenResponse tokenResponse = tokenGenerateHelper.reissueTokens(refreshToken);
+        Long userId = tokenGenerateHelper.validateRefreshToken(refreshToken);
+        LoginWithTokenResponse tokenResponse = tokenGenerateHelper.reissueTokens(userId);
 
         // Native: body로 access/refresh 둘 다 반환
         if (useBodyToken) {
