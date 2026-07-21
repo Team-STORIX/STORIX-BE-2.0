@@ -72,6 +72,7 @@ public class STORIXStatic {
         public static final String ENDPOINT = "endpoint";
         public static final String HTTP_METHOD = "httpMethod";
         public static final String ROLE = "role";
+        public static final String ALB_TRACE_ID = "albTraceId";
         public static final String RECIPIENT_USER_ID = "recipientUserId";
         public static final String ADMIN_NOTIFICATION_ID = "adminNotificationId";
     }

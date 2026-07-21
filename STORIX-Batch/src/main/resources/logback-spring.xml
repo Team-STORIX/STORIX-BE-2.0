@@ -15,7 +15,7 @@
         <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <timeZone>Asia/Seoul</timeZone>
-                <customFields>{"app":"storix-batch"}</customFields>
+                <customFields>{"app":"storix-batch","instance":"${HOSTNAME}"}</customFields>
             </encoder>
         </appender>
         <root level="INFO">
