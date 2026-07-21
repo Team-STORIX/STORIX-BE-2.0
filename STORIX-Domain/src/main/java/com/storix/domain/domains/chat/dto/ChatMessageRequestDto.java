@@ -2,11 +2,12 @@ package com.storix.domain.domains.chat.dto;
 
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.domain.MessageType;
+import jakarta.validation.constraints.NotNull;
 
 public record ChatMessageRequestDto(
-        Long roomId,
-        String message,
-        MessageType messageType
+        @NotNull Long roomId,
+        @NotNull String message,
+        @NotNull MessageType messageType
 ) {
     public ChatMessage toEntity(Long senderId) {
         return ChatMessage.builder()
