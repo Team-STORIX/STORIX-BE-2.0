@@ -52,7 +52,7 @@ public class AuthV2Controller {
     @PostMapping("/user/logout")
     public ResponseEntity<CustomResponse<Void>> logout(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @RequestBody LogoutRequest body
+            @Valid @RequestBody(required = false) LogoutRequest body
     ) {
         String installationId = body != null ? body.installationId() : null;
         String refreshToken = body != null ? body.refreshToken() : null;
