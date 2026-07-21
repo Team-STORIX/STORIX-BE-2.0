@@ -2,7 +2,7 @@ package com.storix.api.domain.event.usecase;
 
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
-import com.storix.common.utils.STORIXStatic;
+import com.storix.common.utils.RedisKeyStatic;
 import com.storix.domain.domains.event.dto.BannerResponse;
 import com.storix.domain.domains.event.dto.OneTimeAppEventResponse;
 import com.storix.domain.domains.event.dto.PopupResponse;
@@ -37,7 +37,7 @@ public class AppEventUseCase {
     public CustomResponse<PopupResponse> getActivePopup(Long userId) {
 
         LocalDate today = LocalDate.now();
-        PopupResponse popup = eventContentCacheHelper.getActive(STORIXStatic.ACTIVE_POPUP_KEY, PopupResponse.class,
+        PopupResponse popup = eventContentCacheHelper.getActive(RedisKeyStatic.Event.ACTIVE_POPUP, PopupResponse.class,
                         () -> eventPopupService.findActivePopup(LocalDateTime.now()), PopupResponse::displayEndAt)
                 .filter(p -> !popupDismissService.isSuppressed(userId, p.id(), p.exposurePolicy(), today))
                 .map(p -> p.withBaseUrl(baseUrl))
@@ -59,7 +59,7 @@ public class AppEventUseCase {
     // 노출 중인 배너 조회
     public CustomResponse<List<BannerResponse>> getActiveBanner() {
 
-        List<BannerResponse> banners = eventContentCacheHelper.getActiveList(STORIXStatic.ACTIVE_BANNER_KEY, BannerResponse.class,
+        List<BannerResponse> banners = eventContentCacheHelper.getActiveList(RedisKeyStatic.Event.ACTIVE_BANNER, BannerResponse.class,
                         () -> eventBannerService.findActiveBanners(LocalDateTime.now()), BannerResponse::displayEndAt)
                 .stream()
                 .map(b -> b.withBaseUrl(baseUrl))

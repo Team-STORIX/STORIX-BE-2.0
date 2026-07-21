@@ -1,7 +1,8 @@
 package com.storix.domain.domains.search.service;
+import com.storix.common.utils.RedisKeyStatic;
 
-import static com.storix.common.utils.STORIXStatic.TRENDING_AGGREGATED_KEY;
-import static com.storix.common.utils.STORIXStatic.TRENDING_PREV_AGGREGATED_KEY;
+import static com.storix.common.utils.RedisKeyStatic.Search.TRENDING_AGGREGATED;
+import static com.storix.common.utils.RedisKeyStatic.Search.TRENDING_PREV_AGGREGATED;
 
 import com.storix.domain.domains.search.dto.TrendingItem;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,9 @@ public class SearchHistoryService {
     private final StringRedisTemplate redisTemplate;
 
     // 날짜별 키 접두사
-    private static final String TRENDING_KEY_PREFIX = "search:trending:";
-    private static final String RECENT_KEY_PREFIX = "search:recent:";
-    private static final String LIBRARY_RECENT_KEY_PREFIX = "library:recent";
+    private static final String TRENDING_KEY_PREFIX = RedisKeyStatic.Search.TRENDING_PREFIX;
+    private static final String RECENT_KEY_PREFIX = RedisKeyStatic.Search.RECENT_PREFIX;
+    private static final String LIBRARY_RECENT_KEY_PREFIX = RedisKeyStatic.Library.RECENT_PREFIX;
 
     // 최근 검색어 개수 (10)
     private static final int MAX_RECENT_SIZE = 10;
@@ -96,7 +97,7 @@ public class SearchHistoryService {
 
         // 합산 키에서 Top 10 조회
         Set<ZSetOperations.TypedTuple<String>> currentKeywordsWithScores =
-                redisTemplate.opsForZSet().reverseRangeWithScores(TRENDING_AGGREGATED_KEY, 0, 9);
+                redisTemplate.opsForZSet().reverseRangeWithScores(TRENDING_AGGREGATED, 0, 9);
 
         if (currentKeywordsWithScores == null || currentKeywordsWithScores.isEmpty()) {
             return List.of();
@@ -114,7 +115,7 @@ public class SearchHistoryService {
                 break;
             }
 
-            Long prevRankIndex = redisTemplate.opsForZSet().reverseRank(TRENDING_PREV_AGGREGATED_KEY, keyword);
+            Long prevRankIndex = redisTemplate.opsForZSet().reverseRank(TRENDING_PREV_AGGREGATED, keyword);
 
             String status = "SAME";
 
@@ -168,7 +169,7 @@ public class SearchHistoryService {
     public String getFallbackRecommendation() {
 
         try {
-            Set<String> rank11to20 = redisTemplate.opsForZSet().reverseRange(TRENDING_AGGREGATED_KEY, 10, 19);
+            Set<String> rank11to20 = redisTemplate.opsForZSet().reverseRange(TRENDING_AGGREGATED, 10, 19);
 
             if (rank11to20 == null || rank11to20.isEmpty()) {
                 return null;

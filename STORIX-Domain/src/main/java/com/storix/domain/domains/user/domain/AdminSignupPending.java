@@ -1,4 +1,5 @@
 package com.storix.domain.domains.user.domain;
+import com.storix.common.utils.RedisKeyStatic;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -6,7 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
 
-@RedisHash(value = "adminSignupPending")
+@RedisHash(value = RedisKeyStatic.Hash.ADMIN_SIGNUP_PENDING)
 @Getter
 public class AdminSignupPending {
 

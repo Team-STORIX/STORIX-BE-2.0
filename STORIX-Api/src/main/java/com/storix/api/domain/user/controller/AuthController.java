@@ -158,7 +158,7 @@ public class AuthController {
     public ResponseEntity<CustomResponse<Void>> logout(
             @AuthenticationPrincipal AuthUserDetails authUserDetails
     ) {
-        return logoutUseCase.execute(authUserDetails.getUserId(), null);
+        return logoutUseCase.execute(authUserDetails.getUserId(), null, null);
     }
 
     @Operation(summary = "[v1] 회원 탈퇴", description = "[v1 > v2 마이그레이션 필요] 회원 탈퇴용 api 입니다.   \n" +

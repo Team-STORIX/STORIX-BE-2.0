@@ -42,15 +42,6 @@ public class STORIXStatic {
     // S3 DeleteObjects API 요청당 최대 키 수 (고정 한도가 1000)
     public static final int S3_MAX_KEYS_PER_DELETE_REQUEST = 1000;
 
-    // 인기 검색어 Redis 합산 키
-    public static final String TRENDING_AGGREGATED_KEY = "search:trending:aggregated";
-    public static final String TRENDING_PREV_AGGREGATED_KEY = "search:trending:aggregated:prev";
-
-    // 이벤트 활성 콘텐츠 Redis 캐시 키
-    public static final String ACTIVE_POPUP_KEY = "event::activePopup::v1";
-    public static final String ACTIVE_BANNER_KEY = "event::activeBanner::v1";
-    public static final String PENDING_APP_EVENTS_KEY_PREFIX = "event::pendingAppEvents::v1::";
-
     public static final List<String> SWAGGER_URI= List.of(
             new String[]{"/swagger-resources/", "/swagger-ui/", "/v3/api-docs"}
     );
@@ -138,10 +129,6 @@ public class STORIXStatic {
         // 댓글 본문 미리보기 — 10자 노출 후 ...
         public static final int CONTENT_PREVIEW_MAX = 10;
         public static final String CONTENT_PREVIEW_SUFFIX = "...";
-
-        // 선정 알림 dedup Redis 키 prefix — {prefix}{yyyyMMdd}:{id}
-        public static final String FEATURED_FEED_KEY_PREFIX = "featured:feed:";
-        public static final String FEATURED_TOPIC_ROOM_KEY_PREFIX = "featured:topicroom:";
     }
 
     // 사용자 이력 — 마케팅 동의/거부 모달 표시 문구

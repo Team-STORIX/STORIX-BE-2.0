@@ -1,4 +1,5 @@
 package com.storix.domain.domains.hashtag.service;
+import com.storix.common.utils.RedisKeyStatic;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +19,8 @@ public class HashtagCacheHelper {
 
     private final StringRedisTemplate redisTemplate;
 
-    private static final String TOTAL_WORKS_KEY = "hashtag:meta:total_works";
-    private static final String DF_HASH_KEY = "hashtag:df";
+    private static final String TOTAL_WORKS_KEY = RedisKeyStatic.Hashtag.TOTAL_WORKS;
+    private static final String DF_HASH_KEY = RedisKeyStatic.Hashtag.DF;
     private static final Duration META_TTL = Duration.ofDays(7);
 
     public long getOrLoadTotalWorksCount(Supplier<Long> loader) {

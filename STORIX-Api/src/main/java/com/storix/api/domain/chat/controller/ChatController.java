@@ -3,6 +3,7 @@ package com.storix.api.domain.chat.controller;
 import com.storix.api.domain.chat.usecase.ChatUseCase;
 import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.*;
@@ -18,7 +19,7 @@ public class ChatController {
     private final ChatUseCase chatUseCase;
 
     @MessageMapping("/chat/message")
-    public void message(@Payload ChatMessageRequestDto request, SimpMessageHeaderAccessor accessor) {
+    public void message(@Valid @Payload ChatMessageRequestDto request, SimpMessageHeaderAccessor accessor) {
         Authentication auth = (Authentication) accessor.getUser();
 
         if (auth == null) {

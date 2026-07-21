@@ -87,7 +87,7 @@ public interface PushDeviceRepository extends JpaRepository<PushDevice, Long> {
     @Query("""
         UPDATE PushDevice d SET d.isActive = false
         WHERE d.isActive = true
-          AND d.updatedAt < :threshold
+          AND d.lastSyncedAt < :threshold
     """)
     int deactivateStaleDevices(@Param("threshold") LocalDateTime threshold);
 }

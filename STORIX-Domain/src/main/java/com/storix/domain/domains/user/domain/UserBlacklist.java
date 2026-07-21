@@ -1,4 +1,5 @@
 package com.storix.domain.domains.user.domain;
+import com.storix.common.utils.RedisKeyStatic;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -6,7 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
 
-@RedisHash(value = "userBlacklist")
+@RedisHash(value = RedisKeyStatic.Hash.USER_BLACKLIST)
 @Getter
 public class UserBlacklist {
 

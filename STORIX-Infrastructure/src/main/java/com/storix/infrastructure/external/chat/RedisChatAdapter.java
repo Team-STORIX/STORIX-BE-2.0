@@ -1,4 +1,5 @@
 package com.storix.infrastructure.external.chat;
+import com.storix.common.utils.RedisKeyStatic;
 
 import com.storix.domain.domains.chat.application.port.PublishChatPort;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
@@ -25,7 +26,7 @@ public class RedisChatAdapter implements PublishChatPort {
 
         try {
             // "room:1" 형식으로 메시지 전송
-            jsonRedisTemplate.convertAndSend("room:" + response.roomId(), response);
+            jsonRedisTemplate.convertAndSend(RedisKeyStatic.Channel.CHAT_ROOM_PREFIX + response.roomId(), response);
         } catch (RedisConnectionFailureException e) {
 
             // Redis 연결 실패
