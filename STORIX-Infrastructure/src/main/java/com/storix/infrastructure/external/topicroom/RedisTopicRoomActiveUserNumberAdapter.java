@@ -1,4 +1,5 @@
 package com.storix.infrastructure.external.topicroom;
+import com.storix.common.utils.RedisKeyStatic;
 
 import com.storix.domain.domains.topicroom.dto.TopicRoomActiveUserNumberResponseDto;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class RedisTopicRoomActiveUserNumberAdapter {
 
-    private static final String CHANNEL_PREFIX = "topic-room:active-users:";
+    private static final String CHANNEL_PREFIX = RedisKeyStatic.Channel.TOPIC_ROOM_ACTIVE_USERS_PREFIX;
 
     private final RedisTemplate<String, Object> jsonRedisTemplate;
 

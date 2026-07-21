@@ -1,4 +1,5 @@
 package com.storix.domain.domains.user.domain;
+import com.storix.common.utils.RedisKeyStatic;
 
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.Builder;
@@ -9,7 +10,7 @@ import org.springframework.data.redis.core.TimeToLive;
 
 import java.util.Set;
 
-@RedisHash(value = "testerSignupPending")
+@RedisHash(value = RedisKeyStatic.Hash.TESTER_SIGNUP_PENDING)
 @Getter
 public class TesterSignupPending {
 

@@ -2,7 +2,7 @@ package com.storix.api.domain.event.usecase;
 
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
-import com.storix.common.utils.STORIXStatic;
+import com.storix.common.utils.RedisKeyStatic;
 import com.storix.api.domain.event.controller.dto.BannerRequest;
 import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.api.domain.image.helper.S3UploadHelper;
@@ -43,7 +43,7 @@ public class BannerUseCase {
         }
 
         // 3. 이벤트 배너 캐시 무효화
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_BANNER_KEY);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_CREATE_SUCCESS, BannerResponse.from(banner).withBaseUrl(baseUrl));
     }
 
@@ -84,7 +84,7 @@ public class BannerUseCase {
 
         // 3. 교체 성공 시 옛 이미지 정리 + 캐시 무효화
         if (replaceImage) s3UploadHelper.delete(oldImageObjectKey);
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_BANNER_KEY);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_UPDATE_SUCCESS, BannerResponse.from(banner).withBaseUrl(baseUrl));
     }
 
@@ -95,7 +95,7 @@ public class BannerUseCase {
         Banner banner = eventBannerService.cancel(bannerId);
 
         // 2. 이벤트 배너 캐시 무효화
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_BANNER_KEY);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
         return CustomResponse.onSuccess(SuccessCode.EVENT_BANNER_CANCEL_SUCCESS, BannerResponse.from(banner).withBaseUrl(baseUrl));
     }
 }

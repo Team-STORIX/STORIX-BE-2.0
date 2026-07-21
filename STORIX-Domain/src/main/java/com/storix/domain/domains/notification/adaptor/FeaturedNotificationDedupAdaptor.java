@@ -1,6 +1,6 @@
 package com.storix.domain.domains.notification.adaptor;
 
-import com.storix.common.utils.STORIXStatic;
+import com.storix.common.utils.RedisKeyStatic;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -19,11 +19,11 @@ public class FeaturedNotificationDedupAdaptor {
     private final StringRedisTemplate redisTemplate;
 
     public boolean markFeedIfFirstToday(Long feedId) {
-        return markIfFirstToday(STORIXStatic.Notification.FEATURED_FEED_KEY_PREFIX, feedId);
+        return markIfFirstToday(RedisKeyStatic.Notification.FEATURED_FEED_PREFIX, feedId);
     }
 
     public boolean markTopicRoomIfFirstToday(Long topicRoomId) {
-        return markIfFirstToday(STORIXStatic.Notification.FEATURED_TOPIC_ROOM_KEY_PREFIX, topicRoomId);
+        return markIfFirstToday(RedisKeyStatic.Notification.FEATURED_TOPIC_ROOM_PREFIX, topicRoomId);
     }
 
     // SETNX + TTL 원자 연산 -> 오늘 첫 선정이면 true, 이미 보냈으면 false
