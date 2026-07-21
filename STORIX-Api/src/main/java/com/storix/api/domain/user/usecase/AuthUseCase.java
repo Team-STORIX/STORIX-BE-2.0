@@ -74,7 +74,8 @@ public class AuthUseCase {
     public ResponseEntity<CustomResponse<AuthorizationResponse>> readerSignup(ReaderSignUpData data, String jti) {
         AuthUserDetails userDetails = authService.signUpReaderUser(data, jti);
         LoginWithTokenResponse tokenResponse = tokenGenerateHelper.generateLoginWithToken(userDetails);
-        AuthorizationResponse result = AuthorizationResponse.webRefresh(tokenResponse.accessToken());
+        AuthorizationResponse result = AuthorizationResponse.nativeRefresh(
+                tokenResponse.accessToken(), tokenResponse.refreshToken());
 
         return ResponseEntity.ok()
                 .headers(cookieHelper.getTokenCookie(tokenResponse.refreshToken()))
