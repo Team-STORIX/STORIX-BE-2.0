@@ -37,6 +37,7 @@ public class ChatMessage extends BaseTimeEntity {
     private String message;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private MessageType messageType;
 
     @Builder.Default
