@@ -79,7 +79,7 @@ public class AdminNotificationDispatcher {
         // 3. 유저별 FCM 발송 -> 결과 분류
         Map<Long, AdminNotificationDeliveryOutcome> outcomes = new LinkedHashMap<>();
         for (Long userId : targets) {
-            MDC.put(STORIXStatic.Mdc.USER_ID, String.valueOf(userId)); // 유저 단위 로그 상관키 (FcmSender 로그까지 전파)
+            MDC.put(STORIXStatic.Mdc.RECIPIENT_USER_ID, String.valueOf(userId)); // FcmSender 로그까지 전파
             try {
                 List<String> tokens = tokensByUserId.getOrDefault(userId, List.of());
                 if (tokens.isEmpty()) {
@@ -102,15 +102,13 @@ public class AdminNotificationDispatcher {
                     }
                 } catch (FcmTransientException e) {
                     outcomes.put(userId, AdminNotificationDeliveryOutcome.TRANSIENT_FAILURE);
-                    log.warn(">>> [AdminNotification] 푸시 일시 실패 recipientUserId={}, code={}",
-                            userId, e.getMessagingErrorCode());
+                    log.warn(">>> [AdminNotification] 푸시 일시 실패 code={}", e.getMessagingErrorCode());
                 } catch (Exception e) {
                     outcomes.put(userId, AdminNotificationDeliveryOutcome.PERMANENT_FAILURE);
-                    log.warn(">>> [AdminNotification] 푸시 영구 실패 recipientUserId={}, cause={}",
-                            userId, e.getMessage());
+                    log.warn(">>> [AdminNotification] 푸시 영구 실패 cause={}", e.getMessage());
                 }
             } finally {
-                MDC.remove(STORIXStatic.Mdc.USER_ID);
+                MDC.remove(STORIXStatic.Mdc.RECIPIENT_USER_ID);
             }
         }
 

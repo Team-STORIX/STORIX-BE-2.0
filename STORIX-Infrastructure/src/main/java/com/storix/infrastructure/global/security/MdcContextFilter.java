@@ -11,7 +11,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -20,8 +22,17 @@ public class MdcContextFilter extends OncePerRequestFilter {
 
     private static final String TRACE_ID_HEADER = "X-Trace-Id";
     private static final Pattern TRACE_ID_PATTERN = Pattern.compile("[A-Za-z0-9_-]{1,64}");
-    private static final String ADMIN_URI_PREFIX = "/api/v1/admin";
-    private static final String ADMIN_AUTH_URI_PREFIX = "/api/v1/auth/admin";
+
+    private static final String ALB_TRACE_ID_HEADER = "X-Amzn-Trace-Id";
+    private static final Pattern ALB_TRACE_ID_PATTERN = Pattern.compile("[A-Za-z0-9=;:_-]{1,128}");
+
+    // 주기적으로 호출돼 추적 가치가 없는 경로
+    private static final List<String> UNLOGGED_URI_PREFIXES = List.of(
+            "/actuator",
+            "/swagger-ui",
+            "/v3/api-docs",
+            "/favicon.ico"
+    );
 
     @Override
     protected void doFilterInternal(
@@ -30,29 +41,47 @@ public class MdcContextFilter extends OncePerRequestFilter {
         String traceId = resolveTraceId(request.getHeader(TRACE_ID_HEADER));
         response.setHeader(TRACE_ID_HEADER, traceId);
 
+        String uri = request.getRequestURI();
+
         MDC.put(STORIXStatic.Mdc.TRACE_ID, traceId);
-        MDC.put(STORIXStatic.Mdc.ENDPOINT, request.getRequestURI());
+        MDC.put(STORIXStatic.Mdc.ENDPOINT, uri);
         MDC.put(STORIXStatic.Mdc.HTTP_METHOD, request.getMethod());
 
-        boolean admin = isAdminRequest(request.getRequestURI());
-        if (admin) {
-            log.info(">>> [Admin] 요청 진입 query={}", request.getQueryString());
+        String albTraceId = request.getHeader(ALB_TRACE_ID_HEADER);
+        if (albTraceId != null && ALB_TRACE_ID_PATTERN.matcher(albTraceId).matches()) {
+            MDC.put(STORIXStatic.Mdc.ALB_TRACE_ID, albTraceId);
+        }
+
+        boolean logged = isLogged(uri);
+        long startedAt = System.nanoTime();
+
+        if (logged) {
+            String query = request.getQueryString();
+            if (query == null) {
+                log.info(">>> [Http] 요청 진입");
+            } else {
+                log.info(">>> [Http] 요청 진입 query={}", query);
+            }
         }
         try {
             filterChain.doFilter(request, response);
         } finally {
-            if (admin) {
-                log.info(">>> [Admin] 요청 완료 status={}", response.getStatus());
+            if (logged) {
+                log.info(">>> [Http] 요청 완료 status={} tookMs={}",
+                        response.getStatus(),
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt));
             }
             MDC.remove(STORIXStatic.Mdc.TRACE_ID);
             MDC.remove(STORIXStatic.Mdc.ENDPOINT);
             MDC.remove(STORIXStatic.Mdc.HTTP_METHOD);
+            MDC.remove(STORIXStatic.Mdc.ALB_TRACE_ID);
             MDC.remove(STORIXStatic.Mdc.USER_ID);
+            MDC.remove(STORIXStatic.Mdc.ROLE);
         }
     }
 
-    private boolean isAdminRequest(String uri) {
-        return uri.startsWith(ADMIN_URI_PREFIX) || uri.startsWith(ADMIN_AUTH_URI_PREFIX);
+    private boolean isLogged(String uri) {
+        return UNLOGGED_URI_PREFIXES.stream().noneMatch(uri::startsWith);
     }
 
     private String resolveTraceId(String fromHeader) {

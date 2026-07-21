@@ -13,10 +13,12 @@ import com.storix.domain.domains.event.service.PopupService;
 import com.storix.domain.domains.image.domain.EventImageSurface;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PopupUseCase {
@@ -32,6 +34,7 @@ public class PopupUseCase {
 
         // 1. 이벤트 이미지 S3 업로드
         String imageObjectKey = s3UploadHelper.uploadEventImage(file, req.appEventId(), EventImageSurface.POPUP);
+        log.info(">>> [Popup] 이미지 업로드 objectKey={}", imageObjectKey);
 
         // 2. 팝업 생성. 검증 실패 시 올린 이미지 롤백
         Popup popup;
@@ -39,11 +42,13 @@ public class PopupUseCase {
             popup = eventPopupService.create(req.toCommand(imageObjectKey), authUser.getUserId());
         } catch (Exception e) {
             s3UploadHelper.delete(imageObjectKey);
+            log.warn(">>> [Popup] 생성 실패로 이미지 롤백 objectKey={}", imageObjectKey);
             throw e;
         }
 
         // 3. 이벤트 팝업 캐시 무효화
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
+        log.info(">>> [Popup] 생성 완료 popupId={}", popup.getId());
         return CustomResponse.onSuccess(SuccessCode.EVENT_POPUP_CREATE_SUCCESS, PopupResponse.from(popup).withBaseUrl(baseUrl));
     }
 
@@ -72,19 +77,24 @@ public class PopupUseCase {
         String imageObjectKey = replaceImage
                 ? s3UploadHelper.uploadEventImage(file, req.appEventId(), EventImageSurface.POPUP)
                 : oldImageObjectKey;
+        if (replaceImage) log.info(">>> [Popup] 이미지 교체 업로드 objectKey={}", imageObjectKey);
 
         // 2. 팝업 수정. 실패 시 새로 올린 이미지 롤백
         Popup popup;
         try {
             popup = eventPopupService.update(popupId, req.toCommand(imageObjectKey));
         } catch (Exception e) {
-            if (replaceImage) s3UploadHelper.delete(imageObjectKey);
+            if (replaceImage) {
+                s3UploadHelper.delete(imageObjectKey);
+                log.warn(">>> [Popup] 수정 실패로 이미지 롤백 objectKey={}", imageObjectKey);
+            }
             throw e;
         }
 
         // 3. 교체 성공 시 옛 이미지 정리 + 캐시 무효화
         if (replaceImage) s3UploadHelper.delete(oldImageObjectKey);
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
+        log.info(">>> [Popup] 수정 완료 popupId={} imageReplaced={}", popupId, replaceImage);
         return CustomResponse.onSuccess(SuccessCode.EVENT_POPUP_UPDATE_SUCCESS, PopupResponse.from(popup).withBaseUrl(baseUrl));
     }
 
@@ -96,6 +106,7 @@ public class PopupUseCase {
 
         // 2. 이벤트 팝업 캐시 무효화
         eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
+        log.info(">>> [Popup] 강제 종료 popupId={}", popupId);
         return CustomResponse.onSuccess(SuccessCode.EVENT_POPUP_CANCEL_SUCCESS, PopupResponse.from(popup).withBaseUrl(baseUrl));
     }
 }
