@@ -228,7 +228,10 @@ public enum ErrorCode {
     // Banned Word error
     BANNED_WORD_NOT_FOUND(HttpStatus.NOT_FOUND, "BANNED_WORD_ERROR_001", "해당 금칙어를 찾을 수 없습니다."),
     DUPLICATE_BANNED_WORD(HttpStatus.CONFLICT, "BANNED_WORD_ERROR_002", "이미 등록된 금칙어입니다."),
-    BANNED_WORD_CSV_PARSE_ERROR(HttpStatus.BAD_REQUEST, "BANNED_WORD_ERROR_003", "금칙어 CSV 파일을 읽을 수 없습니다.");
+    BANNED_WORD_CSV_PARSE_ERROR(HttpStatus.BAD_REQUEST, "BANNED_WORD_ERROR_003", "금칙어 CSV 파일을 읽을 수 없습니다."),
+
+    // App version error
+    INVALID_APP_VERSION_FORMAT(HttpStatus.BAD_REQUEST, "APP_VERSION_ERROR_002", "앱 버전 형식이 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

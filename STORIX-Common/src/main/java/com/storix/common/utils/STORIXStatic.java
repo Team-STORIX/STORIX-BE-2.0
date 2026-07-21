@@ -57,6 +57,7 @@ public class STORIXStatic {
 
     // JWT 인증 필터를 타지 않는 URI
     public static final List<String> PERMIT_ALL_URI = List.of(
+            "/api/v1/app-version/",
             "/api/v1/onboarding/",
             "/api/v1/auth/oauth/",
             "/api/v1/auth/nickname/valid",
