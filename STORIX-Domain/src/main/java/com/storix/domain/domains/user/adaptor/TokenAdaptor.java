@@ -1,5 +1,6 @@
 package com.storix.domain.domains.user.adaptor;
 
+import com.storix.common.utils.RedisKeyStatic;
 import com.storix.domain.domains.user.domain.OnboardingToken;
 import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.repository.OnboardingTokenRepository;
@@ -23,7 +24,7 @@ public class TokenAdaptor {
     private final OnboardingTokenRepository onboardingTokenRepository;
     private final StringRedisTemplate redisTemplate;
 
-    private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
+    private static final String REFRESH_TOKEN_KEY_PREFIX = RedisKeyStatic.Hash.REFRESH_TOKEN + ":";
     private static final int MAX_DEVICE_COUNT = 10;
 
     private static final RedisScript<Long> SAVE_SCRIPT = new DefaultRedisScript<>("""
