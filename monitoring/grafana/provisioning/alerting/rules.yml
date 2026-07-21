@@ -63,6 +63,34 @@ groups:
               conditions:
                 - evaluator: { type: gt, params: [0] }
 
+      - uid: storix-host-oom
+        title: '호스트 OOM 발생'
+        condition: B
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.instance_id }} 호스트가 메모리 고갈로 프로세스를 OOM 종료했습니다.'
+          runbook: '박스 메모리 오버서브. dmesg | grep -i oom 확인 후 mem_limit 하향 또는 인스턴스 상향'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 'sum by (env, instance_id) (increase(node_vmstat_oom_kill[5m]))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+
       - uid: storix-jvm-heap
         title: 'JVM 힙 사용률 85% 초과'
         condition: B
