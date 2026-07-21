@@ -49,8 +49,7 @@ public class TokenGenerateHelper {
                 .build();
     }
 
-    @Transactional
-    public LoginWithTokenResponse reissueTokens(String refreshToken) {
+    public Long validateRefreshToken(String refreshToken) {
 
         try {
             tokenProvider.isRefreshToken(refreshToken);
@@ -59,12 +58,16 @@ public class TokenGenerateHelper {
         }
 
         Long userId = tokenProvider.parseRefreshToken(refreshToken);
+        tokenAdaptor.consumeRefreshToken(userId, refreshToken);
+        return userId;
+    }
+
+    @Transactional
+    public LoginWithTokenResponse reissueTokens(Long userId) {
+
         User user = userAdaptor.findUserById(userId);
         user.login();
 
-        tokenAdaptor.deleteRefreshToken(refreshToken);
-
-        // AccessToken, RefreshToken 재발급
         return generateLoginWithToken(new AuthUserDetails(userId, user.getRole()));
     }
 

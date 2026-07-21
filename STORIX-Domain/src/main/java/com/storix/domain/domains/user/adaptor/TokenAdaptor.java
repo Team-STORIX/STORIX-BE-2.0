@@ -6,10 +6,15 @@ import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.repository.OnboardingTokenRepository;
 import com.storix.domain.domains.user.repository.RefreshTokenRepository;
 import com.storix.domain.domains.user.exception.auth.InvalidLogoutException;
+import com.storix.domain.domains.user.exception.token.InvalidRefreshTokenException;
 import com.storix.domain.domains.user.exception.token.InvalidTokenException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Optional;
 
 @Service
@@ -18,10 +23,36 @@ public class TokenAdaptor {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final OnboardingTokenRepository onboardingTokenRepository;
+    private final StringRedisTemplate redisTemplate;
+
+    private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
+    private static final String REFRESH_TOKEN_FIELD = "refreshToken";
+
+    // 저장된 토큰과 일치할 때만 삭제하고 1을 반환. 동시 요청 중 하나만 1을 받는다.
+    private static final String CONSUME_REFRESH_TOKEN_SCRIPT = """
+            if redis.call('HGET', KEYS[1], ARGV[1]) == ARGV[2] then
+                redis.call('DEL', KEYS[1])
+                return 1
+            end
+            return 0
+            """;
 
     // RefreshToken
     public void saveRefreshToken(RefreshToken refreshToken) {
         refreshTokenRepository.save(refreshToken);
+    }
+
+    public void consumeRefreshToken(Long userId, String refreshToken) {
+        RedisScript<Long> script = new DefaultRedisScript<>(CONSUME_REFRESH_TOKEN_SCRIPT, Long.class);
+
+        Long consumed = redisTemplate.execute(script,
+                Collections.singletonList(REFRESH_TOKEN_KEY_PREFIX + userId),
+                REFRESH_TOKEN_FIELD,
+                refreshToken);
+
+        if (consumed == null || consumed == 0L) {
+            throw InvalidRefreshTokenException.EXCEPTION;
+        }
     }
 
     public void deleteRefreshTokenByUserId(Long userId) {
@@ -36,10 +67,6 @@ public class TokenAdaptor {
     public void deleteRefreshTokenByUserIdIfPresent(Long userId) {
         refreshTokenRepository.findById(userId)
                 .ifPresent(refreshTokenRepository::delete);
-    }
-
-    public void deleteRefreshToken(String refreshToken) {
-        refreshTokenRepository.deleteByRefreshToken(refreshToken);
     }
 
     // OnboardingToken
