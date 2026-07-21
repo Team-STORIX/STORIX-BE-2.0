@@ -24,6 +24,7 @@ public class LogoutUseCase {
         authService.logout(userId, installationId, refreshToken);
 
         return ResponseEntity.ok()
+                    .headers(cookieHelper.deleteCookie())
                     .body(CustomResponse.onSuccess(SuccessCode.AUTH_LOGOUT_SUCCESS));
     }
 
