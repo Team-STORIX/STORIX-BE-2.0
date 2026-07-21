@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
                 // 한 기기의 다른 유저 활성 행 정리용
                 @Index(name = "idx_push_device_installation", columnList = "installation_id, is_active"),
                 // 장기 미활동 디바이스 비활성화 배치 스캔용
-                @Index(name = "idx_push_device_active_updated", columnList = "is_active, updated_at")
+                @Index(name = "idx_push_device_active_synced", columnList = "is_active, last_synced_at")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -69,6 +69,9 @@ public class PushDevice extends BaseTimeEntity {
     @Column(name = "last_success_at")
     private LocalDateTime lastSuccessAt;
 
+    @Column(name = "last_synced_at")
+    private LocalDateTime lastSyncedAt;
+
 
     /** 생성자 메서드 */
     @Builder
@@ -87,6 +90,7 @@ public class PushDevice extends BaseTimeEntity {
         this.osVersion = osVersion;
         this.deviceModel = deviceModel;
         this.isActive = true;
+        this.lastSyncedAt = LocalDateTime.now();
     }
 
     public static PushDevice from(Long userId, SyncDeviceCommand cmd) {
@@ -109,11 +113,13 @@ public class PushDevice extends BaseTimeEntity {
         this.appVersion = cmd.appVersion();
         this.osVersion = cmd.osVersion();
         this.isActive = true;
+        this.lastSyncedAt = LocalDateTime.now();
     }
 
     // 2. FCM 토큰 갱신
     public void refreshFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
         this.isActive = true;
+        this.lastSyncedAt = LocalDateTime.now();
     }
 }
