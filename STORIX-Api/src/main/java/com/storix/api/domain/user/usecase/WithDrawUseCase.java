@@ -36,13 +36,15 @@ public class WithDrawUseCase {
                 case APPLE -> oauthHelper.unlinkAppleUser(oauthInfo.getOauthRefreshToken());
                 case SLACK -> {} // admin 만 해당 (연결 해제 불필요)
             }
+            log.info(">>> [Withdraw] OAuth 연결 해제 provider={}", oauthInfo.getProvider());
         } catch (Exception e) {
-            log.warn("OAuth unlink failed; continuing withdraw. provider={}", oauthInfo.getProvider(), e);
+            log.warn(">>> [Withdraw] OAuth 연결 해제 실패 provider={}", oauthInfo.getProvider(), e);
             // TODO: best-effort + 재시도 워커 처리 고려중
         }
 
         // 2. 유저 탈퇴 처리 (RefreshToken / 관심작품 / 서재 삭제 + 푸시 알림 발송 대상 제외 + 탈퇴 사유 로그)
         authService.withDrawUser(userId, reasons, detail);
+        log.info(">>> [Withdraw] 탈퇴 완료 reasons={}", reasons);
 
         return ResponseEntity.ok()
                 .headers(cookieHelper.deleteCookie())
