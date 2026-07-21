@@ -65,6 +65,7 @@ public class AsyncConfig {
         executor.setQueueCapacity(100);
 
         executor.setThreadNamePrefix("Log-Thread-");
+        executor.setTaskDecorator(mdcTaskDecorator());
 
         executor.initialize();
         return executor;
@@ -77,6 +78,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(10);
         executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("ChatAsync-");
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.initialize();
         return executor;
     }
@@ -88,6 +90,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(5);
         executor.setQueueCapacity(10);
         executor.setThreadNamePrefix("SlackAsync-");
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.initialize();
         return executor;
     }
