@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ErrorHandlingFilter extends OncePerRequestFilter {
@@ -38,6 +40,9 @@ public class ErrorHandlingFilter extends OncePerRequestFilter {
 
     private void responseToClient(HttpServletResponse response, ErrorCode errorCode, ErrorResponse body)
             throws IOException {
+        log.warn(">>> [Http] 인증 실패 code={} status={} message={}",
+                errorCode.getCode(), errorCode.getHttpStatus().value(), errorCode.getMessage());
+
         response.setStatus(errorCode.getHttpStatus().value());
         response.setContentType("application/json;charset=UTF-8");
         objectMapper.writeValue(response.getWriter(), body);

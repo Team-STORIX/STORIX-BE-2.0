@@ -55,6 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             AuthUserDetails userDetails = (AuthUserDetails) authentication.getPrincipal();
             MDC.put(STORIXStatic.Mdc.USER_ID, String.valueOf(userDetails.getUserId()));
+            MDC.put(STORIXStatic.Mdc.ROLE, userDetails.getRole().getStringValue());
         }
 
         filterChain.doFilter(request, response);
