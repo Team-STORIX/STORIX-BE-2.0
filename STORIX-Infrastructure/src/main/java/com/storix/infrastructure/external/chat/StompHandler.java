@@ -54,12 +54,12 @@ public class StompHandler implements ChannelInterceptor {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (accessor == null) {
-            log.warn(">>>> [STOMP_DIAG] inbound message without StompHeaderAccessor headers={}", message.getHeaders().keySet());
+            log.warn(">>> [Stomp] 헤더 없는 인바운드 메시지 headers={}", message.getHeaders().keySet());
             return message;
         }
 
         StompCommand command = accessor.getCommand();
-        log.info(">>>> [STOMP_DIAG] inbound command={}, sessionId={}, destination={}, subscriptionId={}, nativeHeaderKeys={}, user={}",
+        log.debug(">>> [Stomp] 인바운드 command={}, sessionId={}, destination={}, subscriptionId={}, nativeHeaderKeys={}, user={}",
                 command,
                 accessor.getSessionId(),
                 accessor.getDestination(),
