@@ -225,11 +225,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageConversionException.class)
     public ResponseEntity<ErrorResponse> handleConversion(HttpMessageConversionException e) {
 
-        ErrorCode errorCode = ErrorCode.INVALID_JSON_REQUEST;
+        ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
         ErrorResponse response = new ErrorResponse(errorCode);
 
-        // 응답 직렬화 실패면 서버 결함이라 스택이 필요하다
-        log.warn(">>> [Http] 처리 실패 code={} status={} message={}",
+        // 응답 직렬화 실패라 서버 결함이다
+        log.error(">>> [Http] 처리 실패 code={} status={} message={}",
                 errorCode.getCode(), errorCode.getHttpStatus().value(), errorCode.getMessage(), e);
 
         return ResponseEntity
