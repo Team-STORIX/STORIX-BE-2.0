@@ -109,6 +109,9 @@ public class SecurityConfig {
                                 .requestMatchers("/actuator/health").permitAll()
                                 .requestMatchers("/actuator/prometheus").permitAll()
 
+                                // [App Version]
+                                .requestMatchers("/api/v1/app-version/**").permitAll()
+
                                 // [Onboarding]
                                 .requestMatchers("/api/v1/onboarding/**").permitAll()
 
