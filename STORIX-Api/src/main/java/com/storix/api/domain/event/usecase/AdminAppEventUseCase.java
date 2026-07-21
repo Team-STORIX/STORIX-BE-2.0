@@ -4,7 +4,7 @@ import com.storix.api.domain.event.controller.dto.AppEventRequest;
 import com.storix.common.payload.PageResponseWrapperDTO;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
-import com.storix.common.utils.STORIXStatic;
+import com.storix.common.utils.RedisKeyStatic;
 import com.storix.domain.domains.event.dto.AppEventResponse;
 import com.storix.domain.domains.event.service.AppEventService;
 import com.storix.domain.domains.event.service.EventContentCacheHelper;
@@ -47,8 +47,8 @@ public class AdminAppEventUseCase {
         AppEventResponse result = appEventService.update(appEventId, req.toCommand());
 
         // 2. 소속 팝업·배너 노출기간도 함께 바뀌므로 캐시 무효화
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_POPUP_KEY);
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_BANNER_KEY);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
         return CustomResponse.onSuccess(SuccessCode.ADMIN_APP_EVENT_UPDATE_SUCCESS, result);
     }
 
@@ -59,8 +59,8 @@ public class AdminAppEventUseCase {
         AppEventResponse result = appEventService.cancel(appEventId);
 
         // 2. 소속 팝업·배너도 함께 종료되므로 캐시 무효화
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_POPUP_KEY);
-        eventContentCacheHelper.evict(STORIXStatic.ACTIVE_BANNER_KEY);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_POPUP);
+        eventContentCacheHelper.evict(RedisKeyStatic.Event.ACTIVE_BANNER);
         return CustomResponse.onSuccess(SuccessCode.ADMIN_APP_EVENT_CANCEL_SUCCESS, result);
     }
 }

@@ -1,4 +1,5 @@
 package com.storix.infrastructure.external.chat;
+import com.storix.common.utils.RedisKeyStatic;
 
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.Role;
@@ -170,7 +171,7 @@ public class StompHandler implements ChannelInterceptor {
 
         if (count == 1) {
             chatTopics.computeIfAbsent(roomId, id -> {
-                ChannelTopic topic = new ChannelTopic("room:" + id);
+                ChannelTopic topic = new ChannelTopic(RedisKeyStatic.Channel.CHAT_ROOM_PREFIX + id);
                 container.addMessageListener(subscriber, topic);
                 log.info(">>>> [Redis] 첫 번째 구독자 발생 - 리스너 등록됨: room:{}", id);
                 return topic;
