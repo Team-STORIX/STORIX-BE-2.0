@@ -168,7 +168,7 @@ public class AuthService {
     // 유저 로그아웃
     @Transactional
     public void logout(Long userId, String installationId, String refreshToken) {
-        // 1. refreshToken 삭제 (Redis) - 토큰을 받으면 해당 기기만, 없으면 전체
+        // 1. refreshToken 삭제 (Redis)
         if (StringUtils.hasText(refreshToken)) {
             tokenAdaptor.deleteRefreshToken(userId, refreshToken);
         } else {
