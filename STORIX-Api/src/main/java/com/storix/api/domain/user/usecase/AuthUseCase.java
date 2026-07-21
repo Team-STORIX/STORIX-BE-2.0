@@ -4,7 +4,6 @@ import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.api.domain.user.controller.dto.AuthorizationResponse;
 import com.storix.api.domain.user.controller.dto.LoginWithTokenResponse;
-import com.storix.api.domain.user.helper.CookieHelper;
 import com.storix.api.domain.user.helper.TokenGenerateHelper;
 import com.storix.domain.domains.user.service.AuthService;
 import com.storix.api.domain.user.helper.OAuthHelper;
@@ -27,7 +26,6 @@ public class AuthUseCase {
 
     private final OAuthHelper oauthHelper;
     private final TokenGenerateHelper tokenGenerateHelper;
-    private final CookieHelper cookieHelper;
 
     // 독자 회원 가입 가능 여부 (Web)
     // - authCode로 토큰을 얻은 뒤 공통 검증
@@ -78,7 +76,6 @@ public class AuthUseCase {
                 tokenResponse.accessToken(), tokenResponse.refreshToken());
 
         return ResponseEntity.ok()
-                .headers(cookieHelper.getTokenCookie(tokenResponse.refreshToken()))
                 .body(CustomResponse.onSuccess(SuccessCode.AUTH_SIGNUP_SUCCESS, result));
     }
 
