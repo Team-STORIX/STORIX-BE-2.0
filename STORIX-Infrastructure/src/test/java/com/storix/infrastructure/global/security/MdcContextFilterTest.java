@@ -1,14 +1,21 @@
 package com.storix.infrastructure.global.security;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.storix.common.utils.STORIXStatic;
 import jakarta.servlet.FilterChain;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,6 +26,25 @@ class MdcContextFilterTest {
     private final MdcContextFilter filter = new MdcContextFilter();
 
     private static final String HEADER = "X-Trace-Id";
+
+    private final Logger filterLogger = (Logger) LoggerFactory.getLogger(MdcContextFilter.class);
+    private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+
+    @BeforeEach
+    void attachAppender() {
+        appender.start();
+        filterLogger.addAppender(appender);
+    }
+
+    @AfterEach
+    void detachAppender() {
+        filterLogger.detachAppender(appender);
+        appender.stop();
+    }
+
+    private List<String> loggedMessages() {
+        return appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+    }
 
     // 필터가 finally 에서 지우므로 체인이 도는 순간에 떠둔다
     private Map<String, String> captured;
@@ -89,17 +115,53 @@ class MdcContextFilterTest {
     @Test
     @DisplayName("요청이 끝나면 MDC 를 비운다 — 스레드 재사용 시 남으면 안 된다")
     void clearsMdcAfterRequest() throws Exception {
-        FilterChain chainPuttingUserId = (req, res) -> MDC.put(STORIXStatic.Mdc.USER_ID, "1");
+        // userId·role 은 뒤에 오는 JwtAuthenticationFilter 가 채운다
+        FilterChain chainPuttingPrincipal = (req, res) -> {
+            MDC.put(STORIXStatic.Mdc.USER_ID, "1");
+            MDC.put(STORIXStatic.Mdc.ROLE, "READER");
+        };
 
         filter.doFilter(
                 new MockHttpServletRequest("GET", "/api/v1/works/1"),
                 new MockHttpServletResponse(),
-                chainPuttingUserId
+                chainPuttingPrincipal
         );
 
         assertThat(MDC.get(STORIXStatic.Mdc.TRACE_ID)).isNull();
         assertThat(MDC.get(STORIXStatic.Mdc.ENDPOINT)).isNull();
         assertThat(MDC.get(STORIXStatic.Mdc.HTTP_METHOD)).isNull();
         assertThat(MDC.get(STORIXStatic.Mdc.USER_ID)).isNull();
+        assertThat(MDC.get(STORIXStatic.Mdc.ROLE)).isNull();
+    }
+
+    @Test
+    @DisplayName("관리자 경로가 아니어도 진입·완료 로그를 남긴다")
+    void logsEveryRequest() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/works/1");
+        request.setQueryString("page=0");
+
+        run(request);
+
+        List<String> messages = loggedMessages();
+        assertThat(messages).hasSize(2);
+        assertThat(messages.get(0)).isEqualTo(">>> [Http] 요청 진입 query=page=0");
+        assertThat(messages.get(1)).matches(">>> \\[Http] 요청 완료 status=200 tookMs=\\d+");
+    }
+
+    @Test
+    @DisplayName("쿼리스트링이 없으면 진입 로그에 붙이지 않는다")
+    void omitsQueryWhenAbsent() throws Exception {
+        run(new MockHttpServletRequest("GET", "/api/v1/works/1"));
+
+        assertThat(loggedMessages().get(0)).isEqualTo(">>> [Http] 요청 진입");
+    }
+
+    @Test
+    @DisplayName("actuator 등 추적 가치가 없는 경로는 로그를 남기지 않는다")
+    void skipsUnloggedPaths() throws Exception {
+        run(new MockHttpServletRequest("GET", "/actuator/prometheus"));
+
+        assertThat(loggedMessages()).isEmpty();
+        assertThat(captured.get(STORIXStatic.Mdc.TRACE_ID)).hasSize(32);
     }
 }

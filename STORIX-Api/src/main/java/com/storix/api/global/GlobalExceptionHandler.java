@@ -40,6 +40,8 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ex.getErrorCode();
         ErrorResponse response = new ErrorResponse(errorCode);
 
+        warnFailure(errorCode);
+
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(response);
@@ -50,6 +52,8 @@ public class GlobalExceptionHandler {
 
         ErrorCode errorCode = ex.getErrorCode();
         ErrorResponse body = new ErrorResponse(errorCode);
+
+        warnFailure(errorCode);
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
@@ -73,6 +77,8 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
         ErrorResponse response = new ErrorResponse(errorCode, fieldErrors);
 
+        warnFailure(errorCode, fieldErrors);
+
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(response);
@@ -92,6 +98,8 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
         ErrorResponse response = new ErrorResponse(errorCode, fieldErrors);
 
+        warnFailure(errorCode, fieldErrors);
+
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(response);
@@ -108,6 +116,8 @@ public class GlobalExceptionHandler {
 
         ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
         ErrorResponse response = new ErrorResponse(errorCode, List.of(fer));
+
+        warnFailure(errorCode, List.of(fer));
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
@@ -155,6 +165,8 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.DATA_INTEGRITY_VIOLATION_REQUEST;
         ErrorResponse response = new ErrorResponse(errorCode, java.util.List.of(fer));
 
+        warnFailure(errorCode, List.of(fer));
+
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(response);
@@ -167,8 +179,6 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException e) {
-
-        log.warn("Body parse exception", e);
 
         if (e.getCause() instanceof InvalidFormatException ife) {
             String field = ife.getPath().stream()
@@ -196,12 +206,16 @@ public class GlobalExceptionHandler {
                     .build();
 
             ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
+            warnFailure(errorCode, List.of(fer));
+
             return ResponseEntity
                     .status(errorCode.getHttpStatus())
                     .body(new ErrorResponse(errorCode, List.of(fer)));
         }
 
         ErrorCode errorCode = ErrorCode.INVALID_JSON_REQUEST;
+        warnFailure(errorCode);
+
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(new ErrorResponse(errorCode));
@@ -211,10 +225,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageConversionException.class)
     public ResponseEntity<ErrorResponse> handleConversion(HttpMessageConversionException e) {
 
-        log.warn("Format exception", e);
-
         ErrorCode errorCode = ErrorCode.INVALID_JSON_REQUEST;
         ErrorResponse response = new ErrorResponse(errorCode);
+
+        // 응답 직렬화 실패면 서버 결함이라 스택이 필요하다
+        log.warn(">>> [Http] 처리 실패 code={} status={} message={}",
+                errorCode.getCode(), errorCode.getHttpStatus().value(), errorCode.getMessage(), e);
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
@@ -225,10 +241,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException e) {
 
-        log.warn("Upload size exceeded", e);
-
         ErrorCode errorCode = ErrorCode.IMAGE_FILE_TOO_LARGE;
         ErrorResponse response = new ErrorResponse(errorCode);
+
+        warnFailure(errorCode);
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
@@ -238,14 +254,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAll(Exception e) {
 
-        log.error("Unhandled exception", e);
-
         ErrorCode errorCode = ErrorCode.UNHANDLED_ERROR;
         ErrorResponse response = new ErrorResponse(errorCode);
+
+        log.error(">>> [Http] 처리 실패 code={} status={} message={}",
+                errorCode.getCode(), errorCode.getHttpStatus().value(), errorCode.getMessage(), e);
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(response);
+    }
+
+    private void warnFailure(ErrorCode errorCode) {
+        log.warn(">>> [Http] 처리 실패 code={} status={} message={}",
+                errorCode.getCode(), errorCode.getHttpStatus().value(), errorCode.getMessage());
+    }
+
+    // 입력값은 개인정보일 수 있어 필드명만 남긴다
+    private void warnFailure(ErrorCode errorCode, List<FieldErrorResponse> fieldErrors) {
+        log.warn(">>> [Http] 처리 실패 code={} status={} message={} fields={}",
+                errorCode.getCode(),
+                errorCode.getHttpStatus().value(),
+                errorCode.getMessage(),
+                fieldErrors.stream().map(FieldErrorResponse::field).toList());
     }
 
 }
