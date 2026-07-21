@@ -25,7 +25,7 @@ public class AuthorizationUseCase {
     public ResponseEntity<CustomResponse<AuthorizationResponse>> getTokenRefresh(
             String cookieRefreshToken, String bodyRefreshToken
     ) {
-        boolean useBodyToken = cookieRefreshToken == null || cookieRefreshToken.isBlank();
+        boolean useBodyToken = bodyRefreshToken != null && !bodyRefreshToken.isBlank();
         String refreshToken = useBodyToken ? bodyRefreshToken : cookieRefreshToken;
 
         if (refreshToken == null || refreshToken.isBlank()) throw RefreshTokenNotExistException.EXCEPTION;
