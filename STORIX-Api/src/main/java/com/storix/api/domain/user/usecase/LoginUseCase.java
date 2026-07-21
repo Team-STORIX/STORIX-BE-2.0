@@ -16,8 +16,10 @@ import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 public class LoginUseCase {
@@ -39,6 +41,7 @@ public class LoginUseCase {
 
         AuthUserDetails userDetails = readerLoginService.execute(oauthInfo, oauthRefreshToken);
         LoginWithTokenResponse loginToken = tokenGenerateHelper.generateLoginWithToken(userDetails);
+        log.info(">>> [Auth] 로그인 userId={} provider={} native={}", userDetails.getUserId(), provider, isNative);
 
         // Native: body로 access/refresh 둘 다 반환
         if (isNative) {

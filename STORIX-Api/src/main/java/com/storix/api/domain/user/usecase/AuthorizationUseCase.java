@@ -9,8 +9,10 @@ import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
 import com.storix.domain.domains.user.exception.token.RefreshTokenNotExistException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 public class AuthorizationUseCase {
@@ -30,6 +32,7 @@ public class AuthorizationUseCase {
 
         Long userId = tokenGenerateHelper.validateRefreshToken(refreshToken);
         LoginWithTokenResponse tokenResponse = tokenGenerateHelper.reissueTokens(userId);
+        log.info(">>> [Auth] 토큰 재발급 userId={} native={}", userId, useBodyToken);
 
         // Native: body로 access/refresh 둘 다 반환
         if (useBodyToken) {
