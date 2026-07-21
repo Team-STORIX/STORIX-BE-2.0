@@ -2,7 +2,7 @@ package com.storix.domain.domains.event.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.storix.common.utils.STORIXStatic;
+import com.storix.common.utils.RedisKeyStatic;
 import com.storix.domain.domains.event.dto.OneTimeAppEventResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -53,6 +53,6 @@ public class UserAppEventCacheHelper {
     }
 
     private String key(Long userId) {
-        return STORIXStatic.PENDING_APP_EVENTS_KEY_PREFIX + userId;
+        return RedisKeyStatic.Event.PENDING_APP_EVENTS_PREFIX + userId;
     }
 }

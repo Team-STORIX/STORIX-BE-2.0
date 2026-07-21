@@ -1,4 +1,5 @@
 package com.storix.domain.domains.onboarding.service;
+import com.storix.common.utils.RedisKeyStatic;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +24,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class OnboardingWorksHelper {
 
-    private static final String KEY = "onboarding::onboardingWorksList::v1";
+    private static final String KEY = RedisKeyStatic.Onboarding.WORKS_LIST;
     private static final Duration TTL = Duration.ofDays(7);
 
     private final RedisTemplate<String, Object> redisTemplate;

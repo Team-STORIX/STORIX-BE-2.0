@@ -1,8 +1,9 @@
 package com.storix.batch.scheduler;
 
-import static com.storix.common.utils.STORIXStatic.TRENDING_AGGREGATED_KEY;
-import static com.storix.common.utils.STORIXStatic.TRENDING_PREV_AGGREGATED_KEY;
+import static com.storix.common.utils.RedisKeyStatic.Search.TRENDING_AGGREGATED;
+import static com.storix.common.utils.RedisKeyStatic.Search.TRENDING_PREV_AGGREGATED;
 
+import com.storix.common.utils.RedisKeyStatic;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -21,7 +22,7 @@ public class TrendingKeywordScheduler {
 
     private final StringRedisTemplate redisTemplate;
 
-    private static final String TRENDING_KEY_PREFIX = "search:trending:";
+    private static final String TRENDING_KEY_PREFIX = RedisKeyStatic.Search.TRENDING_PREFIX;
 
     /** 최근 3일 합산 키 갱신 (20분 주기) — 오늘 + 이전 합산(어제+그저께) */
     @Scheduled(cron = "0 */20 * * * *")
@@ -31,8 +32,8 @@ public class TrendingKeywordScheduler {
         LocalDate now = LocalDate.now();
         String todayKey = TRENDING_KEY_PREFIX + now.format(DateTimeFormatter.BASIC_ISO_DATE);
 
-        redisTemplate.opsForZSet().unionAndStore(todayKey, List.of(TRENDING_PREV_AGGREGATED_KEY), TRENDING_AGGREGATED_KEY);
-        redisTemplate.expire(TRENDING_AGGREGATED_KEY, 2, TimeUnit.DAYS);
+        redisTemplate.opsForZSet().unionAndStore(todayKey, List.of(TRENDING_PREV_AGGREGATED), TRENDING_AGGREGATED);
+        redisTemplate.expire(TRENDING_AGGREGATED, 2, TimeUnit.DAYS);
 
         log.info(">>>> [Scheduler] 인기 검색어 합산 키 갱신 완료");
     }
@@ -48,8 +49,8 @@ public class TrendingKeywordScheduler {
         String yesterdayKey = TRENDING_KEY_PREFIX + now.minusDays(1).format(fmt);
         String twoDaysAgoKey = TRENDING_KEY_PREFIX + now.minusDays(2).format(fmt);
 
-        redisTemplate.opsForZSet().unionAndStore(yesterdayKey, List.of(twoDaysAgoKey), TRENDING_PREV_AGGREGATED_KEY);
-        redisTemplate.expire(TRENDING_PREV_AGGREGATED_KEY, 2, TimeUnit.DAYS);
+        redisTemplate.opsForZSet().unionAndStore(yesterdayKey, List.of(twoDaysAgoKey), TRENDING_PREV_AGGREGATED);
+        redisTemplate.expire(TRENDING_PREV_AGGREGATED, 2, TimeUnit.DAYS);
 
         log.info(">>>> [Scheduler] 이전 비교 기준 합산 키 갱신 완료");
     }
