@@ -8,6 +8,7 @@ import com.storix.domain.domains.user.exception.auth.InvalidLogoutException;
 import com.storix.domain.domains.user.exception.token.InvalidRefreshTokenException;
 import com.storix.domain.domains.user.exception.token.InvalidTokenException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TokenAdaptor {
@@ -50,17 +52,20 @@ public class TokenAdaptor {
 
     // RefreshToken
     public void saveRefreshToken(Long userId, String refreshToken, long ttlSeconds) {
-        redisTemplate.execute(SAVE_SCRIPT,
+        Long deviceCount = redisTemplate.execute(SAVE_SCRIPT,
                 Collections.singletonList(refreshTokenKey(userId)),
                 refreshToken,
                 String.valueOf(now()),
                 String.valueOf(ttlSeconds),
                 String.valueOf(MAX_DEVICE_COUNT));
+        log.info(">>> [Auth] Refresh Token 저장 userId={} deviceCount={}", userId, deviceCount);
     }
 
     public void consumeRefreshToken(Long userId, String refreshToken) {
         Long consumed = redisTemplate.opsForHash().delete(refreshTokenKey(userId), refreshToken);
         if (consumed == null || consumed == 0L) {
+            Long remaining = redisTemplate.opsForHash().size(refreshTokenKey(userId));
+            log.warn(">>> [Auth] Refresh Token 불일치 userId={} remainingDeviceCount={}", userId, remaining);
             throw InvalidRefreshTokenException.EXCEPTION;
         }
     }
