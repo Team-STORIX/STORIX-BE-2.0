@@ -46,7 +46,7 @@ public final class RedisKeyStatic {
     }
 
     public static final class Library {
-        public static final String RECENT_PREFIX = "library:recent";
+        public static final String RECENT_PREFIX = "library:recent:";
 
         private Library() {
         }
