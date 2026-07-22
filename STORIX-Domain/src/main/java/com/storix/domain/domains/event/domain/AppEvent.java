@@ -9,7 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -51,6 +53,17 @@ public class AppEvent extends BaseTimeEntity {
     @Column(name = "assignee_admin_id")
     private Long assigneeAdminId;
 
+    // 출석 이벤트 응모권 지급 기준: 누적 출석일 → 누적 지급 응모권. 비어 있으면 서비스의 기본 지급표를 사용한다.
+    @ElementCollection
+    @CollectionTable(
+            name = "app_event_attendance_rewards",
+            joinColumns = @JoinColumn(name = "app_event_id")
+    )
+    @MapKeyColumn(name = "attended_days")
+    @Column(name = "cumulative_tickets", nullable = false)
+    @BatchSize(size = 100)
+    private Map<Integer, Integer> attendanceRewards = new HashMap<>();
+
     @Builder
     public AppEvent(String name,
                     String description,
@@ -58,6 +71,7 @@ public class AppEvent extends BaseTimeEntity {
                     LocalDateTime endAt,
                     boolean hasWinner,
                     Set<PromotionType> promotionTypes,
+                    Map<Integer, Integer> attendanceRewards,
                     Long assigneeAdminId) {
         this.name = name;
         this.description = description;
@@ -67,6 +81,9 @@ public class AppEvent extends BaseTimeEntity {
         if (promotionTypes != null) {
             this.promotionTypes.addAll(promotionTypes);
         }
+        if (attendanceRewards != null) {
+            this.attendanceRewards.putAll(attendanceRewards);
+        }
         this.assigneeAdminId = assigneeAdminId;
     }
 
@@ -75,7 +92,8 @@ public class AppEvent extends BaseTimeEntity {
                        LocalDateTime startAt,
                        LocalDateTime endAt,
                        boolean hasWinner,
-                       Set<PromotionType> promotionTypes) {
+                       Set<PromotionType> promotionTypes,
+                       Map<Integer, Integer> attendanceRewards) {
         this.name = name;
         this.description = description;
         this.startAt = startAt;
@@ -85,6 +103,11 @@ public class AppEvent extends BaseTimeEntity {
         this.promotionTypes.clear();
         if (promotionTypes != null) {
             this.promotionTypes.addAll(promotionTypes);
+        }
+
+        this.attendanceRewards.clear();
+        if (attendanceRewards != null) {
+            this.attendanceRewards.putAll(attendanceRewards);
         }
     }
 

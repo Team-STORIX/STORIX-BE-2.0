@@ -56,6 +56,17 @@ public class AppEventUseCase {
         return CustomResponse.onSuccess(SuccessCode.APP_EVENT_POPUP_DISMISS_SUCCESS);
     }
 
+    // 팝업 다시 보지 않기 (노출 기간 내내)
+    public CustomResponse<Void> dismissPopupForever(Long userId, Long popupId) {
+
+        // 1. 팝업 존재 검증
+        eventPopupService.getById(popupId);
+
+        // 2. 다시 보지 않기 처리
+        popupDismissService.dismissForever(userId, popupId, LocalDate.now());
+        return CustomResponse.onSuccess(SuccessCode.APP_EVENT_POPUP_NEVER_SHOW_SUCCESS);
+    }
+
     // 노출 중인 배너 조회
     public CustomResponse<List<BannerResponse>> getActiveBanner() {
 

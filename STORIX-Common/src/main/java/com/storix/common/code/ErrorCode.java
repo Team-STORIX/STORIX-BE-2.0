@@ -37,6 +37,7 @@ public enum ErrorCode {
     ONBOARDING_DUPLICATE_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_001", "이미 사용 중인 닉네임입니다."),
     PROFILE_DUPLICATE_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_002", "이미 사용 중인 닉네임입니다."),
     PROFILE_FORBIDDEN_NICKNAME(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_003", "사용할 수 없는 닉네임입니다."),
+    PROFILE_NICKNAME_BANNED_WORD(HttpStatus.BAD_REQUEST, "NICKNAME_ERROR_004", "닉네임에 금칙어가 포함되어 있습니다."),
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "USER_ERROR_001", "로그인이 필요합니다."),
     FORBIDDEN_APPROACH(HttpStatus.FORBIDDEN, "USER_ERROR_002", "해당 요청을 수행할 권한이 없습니다."),
 
@@ -130,12 +131,18 @@ public enum ErrorCode {
     ADMIN_APP_EVENT_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_002", "앱 이벤트명은 필수입니다."),
     ADMIN_APP_EVENT_PERIOD_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_003", "앱 이벤트 시작/종료 일시는 필수입니다."),
     ADMIN_APP_EVENT_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_004", "앱 이벤트 종료 일시는 시작 일시 이후여야 합니다."),
+    ADMIN_APP_EVENT_INVALID_ATTENDANCE_REWARDS(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_005", "출석 응모권 지급 기준은 출석일 1 이상, 응모권 0 이상이며 출석일이 늘수록 누적 응모권이 줄어들 수 없습니다."),
 
     // App Event error
     APP_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "APP_EVENT_ERROR_001", "존재하지 않는 앱 이벤트입니다."),
     APP_EVENT_FORBIDDEN(HttpStatus.FORBIDDEN, "APP_EVENT_ERROR_002", "앱 이벤트를 확인할 권한이 없습니다."),
     APP_EVENT_PAYLOAD_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_003", "앱 이벤트 payload 직렬화에 실패했습니다."),
     APP_EVENT_WINNER_FINALIZER_NOT_IMPLEMENTED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_004", "당첨자 이벤트(hasWinner=true)는 종료 시 당첨자 확정(EventWinnerFinalizer) 구현이 필수입니다."),
+
+    // Attendance Event error
+    ATTENDANCE_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ATTENDANCE_EVENT_ERROR_001", "진행 중인 출석 이벤트가 없습니다."),
+    ATTENDANCE_EVENT_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "ATTENDANCE_EVENT_ERROR_002", "출석 이벤트 기간이 아닙니다."),
+    ATTENDANCE_ALREADY_CHECKED_IN(HttpStatus.CONFLICT, "ATTENDANCE_EVENT_ERROR_003", "오늘은 이미 출석 체크를 완료했습니다."),
 
     // OIDC error
     OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),
@@ -154,13 +161,14 @@ public enum ErrorCode {
     ADULT_VERIFICATION_REQUIRED(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_001", "성인인증이 되지 않은 사용자입니다."),
     TOPIC_ROOM_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_002", "토픽룸 최대 개수는 9개입니다."),
     TOPIC_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_003", "해당 토픽룸을 찾을 수 없습니다."),
-    INVALID_TOPIC_ROOM_TITLE(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_004", "토픽룸에 금칙어가 포함되어 있습니다."),
+    INVALID_TOPIC_ROOM_TITLE(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_004", "토픽룸에 금칙어가 포함되어 있습니다."), // 제목에 금칙어 포함
     ALREADY_JOINED_ROOM(HttpStatus.CONFLICT, "TOPIC_ROOM_ERROR_005", "이미 참여 중인 토픽룸입니다."),
     SELF_REPORT_ERROR(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_006", "자기 자신은 신고할 수 없습니다."),
     TOPIC_ROOM_ALREADY_EXISTS(HttpStatus.CONFLICT, "TOPIC_ROOM_ERROR_007", "이미 해당 작품에 대한 토픽룸이 존재합니다."),
     TOPIC_ROOM_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_008", "해당 토픽룸에 참여하지 않은 유저입니다."),
     TODAY_TOPIC_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_009", "오늘의 토픽룸이 없습니다."),
     DUPLICATE_TOPIC_ROOM_REPORT(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_010", "이미 신고한 사용자입니다."),
+    TOPIC_ROOM_ADMIN_KEYWORD_TITLE(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_011", "사용할 수 없는 토픽룸 제목입니다."), // 제목에 관리자/운영 예약 키워드 포함
 
     // Search error
     SEARCH_NO_TOPIC_ROOM_FOUND(HttpStatus.NOT_FOUND, "SEARCH_ERROR_001", "검색한 키워드로 조회되는 토픽룸이 없습니다."),
