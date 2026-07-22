@@ -170,12 +170,12 @@ class AttendanceEventServiceTest {
         }
 
         @Test
-        @DisplayName("14일 달성 시 누적 응모권이 5개가 된다 (+3)")
-        void checkIn_fourteen_days_issues_tickets() {
-            LocalDate today = END;
+        @DisplayName("12일 달성 시 누적 응모권이 5개가 된다 (+3)")
+        void checkIn_twelve_days_issues_tickets() {
+            LocalDate today = START.plusDays(11);
             given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
             given(attendanceCheckAdaptor.insertIfAbsent(EVENT_ID, USER_ID, today)).willReturn(true);
-            given(attendanceCheckAdaptor.countAttendedDays(EVENT_ID, USER_ID)).willReturn(14L);
+            given(attendanceCheckAdaptor.countAttendedDays(EVENT_ID, USER_ID)).willReturn(12L);
 
             AttendanceCheckInResponse response = attendanceEventService.checkIn(EVENT_ID, USER_ID, today.atStartOfDay());
 

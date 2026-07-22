@@ -3,7 +3,7 @@ package com.storix.domain.domains.event.adaptor;
 import com.storix.domain.domains.event.domain.AttendanceCheck;
 import com.storix.domain.domains.event.repository.AttendanceCheckRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -19,7 +19,7 @@ public class AttendanceCheckAdaptor {
         try {
             attendanceCheckRepository.insert(appEventId, userId, attendedOn);
             return true;
-        } catch (DuplicateKeyException e) {
+        } catch (DataIntegrityViolationException e) {
             return false;
         }
     }

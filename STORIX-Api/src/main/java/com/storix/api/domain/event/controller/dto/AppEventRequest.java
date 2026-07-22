@@ -40,8 +40,8 @@ public record AppEventRequest(
         Set<PromotionType> promotionTypes,
 
         @Schema(
-                description = "출석 이벤트 응모권 지급 기준. 키=누적 출석일, 값=누적 지급 응모권. 미지정 시 기본표(3일 1개, 7일 2개, 14일 5개) 적용",
-                example = "{\"3\": 1, \"7\": 2, \"14\": 5}"
+                description = "출석 이벤트 응모권 지급 기준. 키=누적 출석일, 값=누적 지급 응모권. 미지정 시 기본표(3일 1개, 7일 2개, 12일 5개) 적용",
+                example = "{\"3\": 1, \"7\": 2, \"12\": 5}"
         )
         Map<Integer, Integer> attendanceRewards
 ) {

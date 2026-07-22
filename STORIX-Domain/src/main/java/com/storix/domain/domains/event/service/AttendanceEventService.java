@@ -25,9 +25,9 @@ import java.util.TreeMap;
 public class AttendanceEventService {
 
     // 이벤트에 지급표를 지정하지 않았을 때 사용하는 기본값
-    // 누적 출석일 → 누적 지급 응모권 (3~6일 1개, 7~13일 2개, 14일 5개)
+    // 누적 출석일 → 누적 지급 응모권 (3~6일 1개, 7~11일 2개, 12일 5개)
     private static final NavigableMap<Integer, Integer> DEFAULT_TICKET_TOTALS_BY_ATTENDED_DAYS =
-            new TreeMap<>(Map.of(3, 1, 7, 2, 14, 5));
+            new TreeMap<>(Map.of(3, 1, 7, 2, 12, 5));
 
     private final AppEventAdaptor appEventAdaptor;
     private final AttendanceCheckAdaptor attendanceCheckAdaptor;
