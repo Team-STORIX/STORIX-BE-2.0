@@ -212,6 +212,10 @@ public class TopicRoomService implements TopicRoomUseCase {
     @Transactional
     public Long createRoom(Long userId, TopicRoomCreateRequestDto request) {
 
+        // 제목 예약어/금칙어 검증
+        if (bannedWordAdaptor.containsAdminKeyword(request.getTopicRoomName())) {
+            throw InvalidTitleAdminKeywordException.EXCEPTION;
+        }
         if (bannedWordAdaptor.containsBannedWord(request.getTopicRoomName())) {
             throw InvalidTitleException.EXCEPTION;
         }

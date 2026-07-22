@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 
 public record AppEventRequest(
@@ -36,7 +37,13 @@ public record AppEventRequest(
         boolean hasWinner,
 
         @Schema(description = "홍보 수단, 다중 선택 (PUSH / POPUP / BANNER)", example = "[\"PUSH\", \"POPUP\", \"BANNER\"]")
-        Set<PromotionType> promotionTypes
+        Set<PromotionType> promotionTypes,
+
+        @Schema(
+                description = "출석 이벤트 응모권 지급 기준. 키=누적 출석일, 값=누적 지급 응모권. 미지정 시 기본표(3일 1개, 7일 2개, 12일 5개) 적용",
+                example = "{\"3\": 1, \"7\": 2, \"12\": 5}"
+        )
+        Map<Integer, Integer> attendanceRewards
 ) {
     @AssertTrue(message = "이벤트 종료 일시는 시작 일시 이후여야 합니다.")
     private boolean isPeriodValid() {
@@ -45,6 +52,6 @@ public record AppEventRequest(
     }
 
     public AppEventCommand toCommand() {
-        return new AppEventCommand(name, description, startAt, endAt, hasWinner, promotionTypes);
+        return new AppEventCommand(name, description, startAt, endAt, hasWinner, promotionTypes, attendanceRewards);
     }
 }

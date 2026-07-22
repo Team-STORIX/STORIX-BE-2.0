@@ -36,10 +36,15 @@ public class PopupDismiss extends BaseTimeEntity {
     @Column(name = "dismissed_on", nullable = false)
     private LocalDate dismissedOn;
 
+    // "다시 보지 않기" - true면 노출 기간 내내 숨김
+    @Column(name = "is_permanent", nullable = false)
+    private boolean permanent;
+
     @Builder
-    public PopupDismiss(Long userId, Popup popup, LocalDate dismissedOn) {
+    public PopupDismiss(Long userId, Popup popup, LocalDate dismissedOn, boolean permanent) {
         this.userId = userId;
         this.popup = popup;
         this.dismissedOn = dismissedOn;
+        this.permanent = permanent;
     }
 }
