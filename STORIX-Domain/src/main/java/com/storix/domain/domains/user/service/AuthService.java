@@ -20,6 +20,7 @@ import com.storix.domain.domains.user.dto.ReaderSignUpData;
 import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
 import com.storix.domain.domains.user.exception.me.ProfileForbiddenNicknameException;
+import com.storix.domain.domains.user.exception.me.ProfileNicknameBannedWordException;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
@@ -151,10 +152,13 @@ public class AuthService {
         return authUserDetails;
     }
 
-    // 독자 닉네임 중복 체크
+    // 독자 닉네임 중복/금칙어/예약어 체크
     public void validNickname(String nickName) {
-        if (bannedWordAdaptor.containsBannedWord(nickName)) {
+        if (bannedWordAdaptor.containsAdminKeyword(nickName)) {
             throw ProfileForbiddenNicknameException.EXCEPTION;
+        }
+        if (bannedWordAdaptor.containsBannedWord(nickName)) {
+            throw ProfileNicknameBannedWordException.EXCEPTION;
         }
         userAdaptor.checkNicknameDuplicate(nickName);
     }

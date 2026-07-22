@@ -3,6 +3,7 @@ package com.storix.domain.domains.event.dto;
 import com.storix.domain.domains.event.domain.PromotionType;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 
 public record AppEventCommand(
@@ -11,6 +12,7 @@ public record AppEventCommand(
         LocalDateTime startAt,
         LocalDateTime endAt,
         boolean hasWinner,
-        Set<PromotionType> promotionTypes
+        Set<PromotionType> promotionTypes,
+        Map<Integer, Integer> attendanceRewards
 ) {
 }

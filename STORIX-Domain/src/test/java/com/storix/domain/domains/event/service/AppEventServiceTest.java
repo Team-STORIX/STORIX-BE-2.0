@@ -5,6 +5,7 @@ import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventStatus;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import com.storix.domain.domains.event.dto.AppEventResponse;
+import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
 import com.storix.domain.domains.event.exception.AppEventNameRequiredException;
 import com.storix.domain.domains.event.exception.AppEventPeriodRequiredException;
@@ -19,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,7 +51,7 @@ class AppEventServiceTest {
     private AppEventService appEventService;
 
     private AppEventCommand command(LocalDateTime startAt, LocalDateTime endAt) {
-        return new AppEventCommand("앱 출시 이벤트", "설명", startAt, endAt, false, Set.of());
+        return new AppEventCommand("앱 출시 이벤트", "설명", startAt, endAt, false, Set.of(), Map.of());
     }
 
     private AppEvent appEvent(LocalDateTime startAt, LocalDateTime endAt) {
@@ -86,7 +88,7 @@ class AppEventServiceTest {
         @DisplayName("이름이 비면 예외 - 저장하지 않는다")
         void reject_blank_name() {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
-            AppEventCommand cmd = new AppEventCommand("  ", "설명", start, start.plusDays(1), false, Set.of());
+            AppEventCommand cmd = new AppEventCommand("  ", "설명", start, start.plusDays(1), false, Set.of(), Map.of());
 
             assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
                     .isInstanceOf(AppEventNameRequiredException.class);
@@ -107,6 +109,46 @@ class AppEventServiceTest {
             LocalDateTime start = LocalDateTime.now().plusDays(5);
             assertThatThrownBy(() -> appEventService.create(command(start, start), ADMIN_ID))
                     .isInstanceOf(AppEventInvalidPeriodException.class);
+            verify(appEventAdaptor, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("출석 지급표를 지정하면 그대로 저장한다")
+        void create_with_attendance_rewards() {
+            LocalDateTime start = LocalDateTime.now().plusDays(1);
+            LocalDateTime end = start.plusDays(20);
+            Map<Integer, Integer> rewards = Map.of(5, 1, 10, 3, 20, 10);
+            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", start, end, false, Set.of(), rewards);
+            given(appEventAdaptor.save(any(AppEvent.class))).willAnswer(inv -> inv.getArgument(0));
+
+            AppEventResponse saved = appEventService.create(cmd, ADMIN_ID);
+
+            assertThat(saved.attendanceRewards()).containsExactlyInAnyOrderEntriesOf(rewards);
+        }
+
+        @Test
+        @DisplayName("누적 응모권이 출석일 증가에 따라 감소하면 예외 - 저장하지 않는다")
+        void reject_non_monotonic_rewards() {
+            LocalDateTime start = LocalDateTime.now().plusDays(1);
+            LocalDateTime end = start.plusDays(20);
+            Map<Integer, Integer> rewards = Map.of(5, 3, 10, 1); // 10일차 누적이 5일차보다 작음
+            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", start, end, false, Set.of(), rewards);
+
+            assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
+                    .isInstanceOf(AppEventInvalidAttendanceRewardsException.class);
+            verify(appEventAdaptor, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("출석일이 1 미만이면 예외 - 저장하지 않는다")
+        void reject_non_positive_day() {
+            LocalDateTime start = LocalDateTime.now().plusDays(1);
+            LocalDateTime end = start.plusDays(20);
+            Map<Integer, Integer> rewards = Map.of(0, 1); // 출석일 0
+            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", start, end, false, Set.of(), rewards);
+
+            assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
+                    .isInstanceOf(AppEventInvalidAttendanceRewardsException.class);
             verify(appEventAdaptor, never()).save(any());
         }
     }

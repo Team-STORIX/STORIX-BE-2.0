@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 
 @Builder
@@ -33,6 +34,9 @@ public record AppEventResponse(
         @Schema(description = "홍보 수단, 다중 선택 (PUSH / POPUP / BANNER)")
         Set<PromotionType> promotionTypes,
 
+        @Schema(description = "출석 이벤트 응모권 지급 기준 (키=누적 출석일, 값=누적 지급 응모권). 미지정 시 빈 값")
+        Map<Integer, Integer> attendanceRewards,
+
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime createdAt,
 
@@ -49,6 +53,7 @@ public record AppEventResponse(
                 .status(AppEventStatus.resolve(appEvent.getStartAt(), appEvent.getEndAt(), LocalDateTime.now()))
                 .hasWinner(appEvent.isHasWinner())
                 .promotionTypes(Set.copyOf(appEvent.getPromotionTypes()))
+                .attendanceRewards(Map.copyOf(appEvent.getAttendanceRewards()))
                 .createdAt(appEvent.getCreatedAt())
                 .updatedAt(appEvent.getUpdatedAt())
                 .build();
