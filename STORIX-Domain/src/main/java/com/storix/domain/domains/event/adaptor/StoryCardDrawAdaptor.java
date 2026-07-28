@@ -1,9 +1,9 @@
 package com.storix.domain.domains.event.adaptor;
 
 import com.storix.domain.domains.event.domain.StoryCardDraw;
+import com.storix.domain.domains.event.exception.StoryCardDrawFailedException;
 import com.storix.domain.domains.event.repository.StoryCardDrawRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -24,13 +24,22 @@ public class StoryCardDrawAdaptor {
     }
 
     public StoryCardDraw saveIfAbsent(StoryCardDraw draw) {
-        try {
-            return storyCardDrawRepository.saveAndFlush(draw);
-        } catch (DataIntegrityViolationException e) {
-            return storyCardDrawRepository
-                    .findByAppEventIdAndUserIdAndDrawnOn(draw.getAppEventId(), draw.getUserId(), draw.getDrawnOn())
-                    .orElseThrow(() -> e);
-        }
+        storyCardDrawRepository.insertIfAbsent(
+                draw.getAppEventId(),
+                draw.getUserId(),
+                draw.getDrawnOn(),
+                draw.getGenre().getDbValue(),
+                draw.getMessage(),
+                draw.getImmersion(),
+                draw.getLuckyWorkTitle(),
+                draw.getLuckyWorkType().name(),
+                draw.getLuckyWorkPlatform().name(),
+                draw.getLuckyWorkLandingUrl(),
+                draw.getDrawnAt()
+        );
+        return storyCardDrawRepository
+                .findByAppEventIdAndUserIdAndDrawnOn(draw.getAppEventId(), draw.getUserId(), draw.getDrawnOn())
+                .orElseThrow(() -> StoryCardDrawFailedException.EXCEPTION);
     }
 
     public int deleteDrawnBefore(LocalDate cutoff) {

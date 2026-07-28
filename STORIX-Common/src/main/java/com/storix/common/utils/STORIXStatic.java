@@ -69,7 +69,6 @@ public class STORIXStatic {
     public static class StoryCard {
         public static final int RESET_HOUR = 6;
         public static final int RETENTION_DAYS = 0;
-        public static final int SUPPORTED_GENRE_COUNT = 9;
     }
 
     // MDC 로그 상관키

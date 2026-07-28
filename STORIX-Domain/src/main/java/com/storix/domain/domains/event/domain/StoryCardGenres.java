@@ -1,6 +1,7 @@
 package com.storix.domain.domains.event.domain;
 
 import com.storix.common.utils.STORIXStatic;
+import com.storix.domain.domains.event.exception.StoryCardContentNotFoundException;
 import com.storix.domain.domains.works.domain.Genre;
 
 import java.util.EnumMap;
@@ -40,10 +41,11 @@ public final class StoryCardGenres {
         return genre != null && IMAGE_OBJECT_KEYS.containsKey(genre);
     }
 
+    // 이미 뽑힌 카드의 장르가 나중에 목록에서 빠지면 조회 시 여기로 들어온다
     public static String imageObjectKeyOf(Genre genre) {
         String objectKey = IMAGE_OBJECT_KEYS.get(genre);
         if (objectKey == null) {
-            throw new IllegalArgumentException("스토리 카드에서 지원하지 않는 장르입니다: " + genre);
+            throw StoryCardContentNotFoundException.EXCEPTION;
         }
         return objectKey;
     }
