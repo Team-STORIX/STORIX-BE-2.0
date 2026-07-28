@@ -19,9 +19,6 @@ public class StoryCardEventUseCase {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final StoryCardEventService storyCardEventService;
 
-    // 현재 진행 중인 오늘의 스토리 카드 이벤트의 app_event_id (미설정 시 0 → 404)
-    @Value("${story-card-event.app-event-id:0}") private Long storyCardAppEventId;
-
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
     // 오늘의 스토리 카드 현황 조회
@@ -29,7 +26,7 @@ public class StoryCardEventUseCase {
 
         return CustomResponse.onSuccess(
                 SuccessCode.STORY_CARD_LOAD_SUCCESS,
-                storyCardEventService.getStatus(storyCardAppEventId, userId, LocalDateTime.now(KST))
+                storyCardEventService.getStatus(userId, LocalDateTime.now(KST))
                         .withBaseUrl(baseUrl)
         );
     }
@@ -39,7 +36,7 @@ public class StoryCardEventUseCase {
 
         return CustomResponse.onSuccess(
                 SuccessCode.STORY_CARD_DRAW_SUCCESS,
-                storyCardEventService.draw(storyCardAppEventId, userId, LocalDateTime.now(KST))
+                storyCardEventService.draw(userId, LocalDateTime.now(KST))
                         .withBaseUrl(baseUrl)
         );
     }

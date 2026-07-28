@@ -31,6 +31,10 @@ public class AppEvent extends BaseTimeEntity {
     @Column(name = "description", length = 500)
     private String description;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "event_type", nullable = false, length = 20)
+    private AppEventType eventType;
+
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
 
@@ -67,6 +71,7 @@ public class AppEvent extends BaseTimeEntity {
     @Builder
     public AppEvent(String name,
                     String description,
+                    AppEventType eventType,
                     LocalDateTime startAt,
                     LocalDateTime endAt,
                     boolean hasWinner,
@@ -75,6 +80,7 @@ public class AppEvent extends BaseTimeEntity {
                     Long assigneeAdminId) {
         this.name = name;
         this.description = description;
+        this.eventType = eventType == null ? AppEventType.GENERAL : eventType;
         this.startAt = startAt;
         this.endAt = endAt;
         this.hasWinner = hasWinner;
@@ -89,6 +95,7 @@ public class AppEvent extends BaseTimeEntity {
 
     public void update(String name,
                        String description,
+                       AppEventType eventType,
                        LocalDateTime startAt,
                        LocalDateTime endAt,
                        boolean hasWinner,
@@ -96,6 +103,9 @@ public class AppEvent extends BaseTimeEntity {
                        Map<Integer, Integer> attendanceRewards) {
         this.name = name;
         this.description = description;
+        if (eventType != null) {
+            this.eventType = eventType;
+        }
         this.startAt = startAt;
         this.endAt = endAt;
         this.hasWinner = hasWinner;

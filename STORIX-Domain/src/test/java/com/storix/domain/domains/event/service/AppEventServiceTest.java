@@ -3,11 +3,13 @@ package com.storix.domain.domains.event.service;
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventStatus;
+import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import com.storix.domain.domains.event.dto.AppEventResponse;
 import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
 import com.storix.domain.domains.event.exception.AppEventNameRequiredException;
+import com.storix.domain.domains.event.exception.AppEventOverlappingTypeException;
 import com.storix.domain.domains.event.exception.AppEventPeriodRequiredException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -51,7 +53,7 @@ class AppEventServiceTest {
     private AppEventService appEventService;
 
     private AppEventCommand command(LocalDateTime startAt, LocalDateTime endAt) {
-        return new AppEventCommand("앱 출시 이벤트", "설명", startAt, endAt, false, Set.of(), Map.of());
+        return new AppEventCommand("앱 출시 이벤트", "설명", null, startAt, endAt, false, Set.of(), Map.of());
     }
 
     private AppEvent appEvent(LocalDateTime startAt, LocalDateTime endAt) {
@@ -62,6 +64,67 @@ class AppEventServiceTest {
                 .build();
         ReflectionTestUtils.setField(e, "id", ID);
         return e;
+    }
+
+    @Nested
+    @DisplayName("eventType - 미전달 우회와 동일 타입 기간 중복 검증")
+    class EventTypeHandling {
+
+        private AppEventCommand typedCommand(AppEventType eventType, LocalDateTime startAt, LocalDateTime endAt) {
+            return new AppEventCommand("출석 이벤트", "설명", eventType, startAt, endAt, false, Set.of(), Map.of());
+        }
+
+        @Test
+        @DisplayName("생성 시 미전달(null)이면 GENERAL로 저장하고 중복 검증을 타지 않는다")
+        void create_null_type_defaults_to_general() {
+            LocalDateTime start = LocalDateTime.now().plusDays(1);
+            given(appEventAdaptor.save(any(AppEvent.class))).willAnswer(inv -> inv.getArgument(0));
+
+            AppEventResponse saved = appEventService.create(command(start, start.plusDays(10)), ADMIN_ID);
+
+            assertThat(saved.eventType()).isEqualTo(AppEventType.GENERAL);
+            verify(appEventAdaptor, never()).existsOverlappingByType(any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("수정 시 미전달(null)이면 기존 종류를 유지한다")
+        void update_null_type_keeps_existing() {
+            LocalDateTime start = LocalDateTime.now().plusDays(1);
+            LocalDateTime end = start.plusDays(10);
+            AppEvent existing = appEvent(start, end);
+            ReflectionTestUtils.setField(existing, "eventType", AppEventType.ATTENDANCE);
+            given(appEventAdaptor.findById(ID)).willReturn(existing);
+
+            AppEventResponse updated = appEventService.update(ID, command(start, end));
+
+            assertThat(updated.eventType()).isEqualTo(AppEventType.ATTENDANCE);
+        }
+
+        @Test
+        @DisplayName("같은 타입 이벤트와 기간이 겹치면 예외 - 저장하지 않는다")
+        void reject_overlapping_exclusive_type() {
+            LocalDateTime start = LocalDateTime.now().plusDays(1);
+            LocalDateTime end = start.plusDays(10);
+            given(appEventAdaptor.existsOverlappingByType(eq(AppEventType.ATTENDANCE), eq(start), eq(end), eq(null)))
+                    .willReturn(true);
+
+            assertThatThrownBy(() ->
+                    appEventService.create(typedCommand(AppEventType.ATTENDANCE, start, end), ADMIN_ID))
+                    .isInstanceOf(AppEventOverlappingTypeException.class);
+            verify(appEventAdaptor, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("GENERAL은 기간이 겹쳐도 제한하지 않는다")
+        void general_type_allows_overlap() {
+            LocalDateTime start = LocalDateTime.now().plusDays(1);
+            given(appEventAdaptor.save(any(AppEvent.class))).willAnswer(inv -> inv.getArgument(0));
+
+            appEventService.create(typedCommand(AppEventType.GENERAL, start, start.plusDays(10)), ADMIN_ID);
+
+            verify(appEventAdaptor, never()).existsOverlappingByType(any(), any(), any(), any());
+            verify(appEventAdaptor).save(any(AppEvent.class));
+        }
     }
 
     @Nested
@@ -88,7 +151,7 @@ class AppEventServiceTest {
         @DisplayName("이름이 비면 예외 - 저장하지 않는다")
         void reject_blank_name() {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
-            AppEventCommand cmd = new AppEventCommand("  ", "설명", start, start.plusDays(1), false, Set.of(), Map.of());
+            AppEventCommand cmd = new AppEventCommand("  ", "설명", null, start, start.plusDays(1), false, Set.of(), Map.of());
 
             assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
                     .isInstanceOf(AppEventNameRequiredException.class);
@@ -118,7 +181,7 @@ class AppEventServiceTest {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
             LocalDateTime end = start.plusDays(20);
             Map<Integer, Integer> rewards = Map.of(5, 1, 10, 3, 20, 10);
-            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", start, end, false, Set.of(), rewards);
+            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", null, start, end, false, Set.of(), rewards);
             given(appEventAdaptor.save(any(AppEvent.class))).willAnswer(inv -> inv.getArgument(0));
 
             AppEventResponse saved = appEventService.create(cmd, ADMIN_ID);
@@ -132,7 +195,7 @@ class AppEventServiceTest {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
             LocalDateTime end = start.plusDays(20);
             Map<Integer, Integer> rewards = Map.of(5, 3, 10, 1); // 10일차 누적이 5일차보다 작음
-            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", start, end, false, Set.of(), rewards);
+            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", null, start, end, false, Set.of(), rewards);
 
             assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
                     .isInstanceOf(AppEventInvalidAttendanceRewardsException.class);
@@ -145,7 +208,7 @@ class AppEventServiceTest {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
             LocalDateTime end = start.plusDays(20);
             Map<Integer, Integer> rewards = Map.of(0, 1); // 출석일 0
-            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", start, end, false, Set.of(), rewards);
+            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", null, start, end, false, Set.of(), rewards);
 
             assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
                     .isInstanceOf(AppEventInvalidAttendanceRewardsException.class);

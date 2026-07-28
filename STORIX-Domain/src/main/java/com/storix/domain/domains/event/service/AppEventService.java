@@ -2,11 +2,13 @@ package com.storix.domain.domains.event.service;
 
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
+import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import com.storix.domain.domains.event.dto.AppEventResponse;
 import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
 import com.storix.domain.domains.event.exception.AppEventNameRequiredException;
+import com.storix.domain.domains.event.exception.AppEventOverlappingTypeException;
 import com.storix.domain.domains.event.exception.AppEventPeriodRequiredException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -33,9 +35,12 @@ public class AppEventService {
     @Transactional
     public AppEventResponse create(AppEventCommand cmd, Long adminUserId) {
         validateCommand(cmd);
+        AppEventType eventType = cmd.eventType() == null ? AppEventType.GENERAL : cmd.eventType();
+        validateNoOverlap(eventType, cmd.startAt(), cmd.endAt(), null);
         AppEvent saved = appEventAdaptor.save(AppEvent.builder()
                 .name(cmd.name())
                 .description(cmd.description())
+                .eventType(eventType)
                 .startAt(cmd.startAt())
                 .endAt(cmd.endAt())
                 .hasWinner(cmd.hasWinner())
@@ -50,11 +55,15 @@ public class AppEventService {
     public AppEventResponse update(Long appEventId, AppEventCommand cmd) {
         validateCommand(cmd);
         AppEvent appEvent = appEventAdaptor.findById(appEventId);
+        // 미전달 시 기존 종류를 유지한다 (update()도 null을 "변경 없음"으로 처리)
+        AppEventType eventType = cmd.eventType() == null ? appEvent.getEventType() : cmd.eventType();
+        validateNoOverlap(eventType, cmd.startAt(), cmd.endAt(), appEventId);
         boolean periodChanged = !appEvent.getStartAt().equals(cmd.startAt())
                 || !appEvent.getEndAt().equals(cmd.endAt());
         appEvent.update(
                 cmd.name(),
                 cmd.description(),
+                eventType,
                 cmd.startAt(),
                 cmd.endAt(),
                 cmd.hasWinner(),
@@ -102,6 +111,18 @@ public class AppEventService {
             throw AppEventInvalidPeriodException.EXCEPTION;
         }
         validateAttendanceRewards(cmd.attendanceRewards());
+    }
+
+    private void validateNoOverlap(AppEventType eventType,
+                                   LocalDateTime startAt,
+                                   LocalDateTime endAt,
+                                   Long excludeAppEventId) {
+        if (!eventType.isExclusive()) {
+            return;
+        }
+        if (appEventAdaptor.existsOverlappingByType(eventType, startAt, endAt, excludeAppEventId)) {
+            throw AppEventOverlappingTypeException.EXCEPTION;
+        }
     }
 
     // 지정하지 않으면(null/빈 값) 출석 이벤트 지급표는 서비스 기본값을 사용한다.

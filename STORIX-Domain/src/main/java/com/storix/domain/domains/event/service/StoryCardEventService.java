@@ -4,6 +4,7 @@ import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.event.adaptor.StoryCardContentAdaptor;
 import com.storix.domain.domains.event.adaptor.StoryCardDrawAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
+import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.domain.StoryCardDraw;
 import com.storix.domain.domains.event.domain.StoryCardGenres;
 import com.storix.domain.domains.event.dto.StoryCardResponse;
@@ -30,8 +31,8 @@ public class StoryCardEventService {
     private final StoryCardContentAdaptor storyCardContentAdaptor;
 
     @Transactional(readOnly = true)
-    public StoryCardStatusResponse getStatus(Long appEventId, Long userId, LocalDateTime now) {
-        AppEvent event = resolveEvent(appEventId);
+    public StoryCardStatusResponse getStatus(Long userId, LocalDateTime now) {
+        AppEvent event = resolveEvent(now);
         LocalDate serviceDate = StoryCardDraw.serviceDateOf(now);
 
         StoryCardResponse card = storyCardDrawAdaptor.findTodayDraw(event.getId(), userId, serviceDate)
@@ -50,8 +51,8 @@ public class StoryCardEventService {
     }
 
     @Transactional
-    public StoryCardResponse draw(Long appEventId, Long userId, LocalDateTime now) {
-        AppEvent event = resolveEvent(appEventId);
+    public StoryCardResponse draw(Long userId, LocalDateTime now) {
+        AppEvent event = resolveEvent(now);
         if (!isActiveOn(event, now)) {
             throw StoryCardEventNotActiveException.EXCEPTION;
         }
@@ -74,7 +75,6 @@ public class StoryCardEventService {
                 now
         ));
 
-        // 동시 요청이면 saveIfAbsent가 먼저 저장된 행을 돌려주므로, 저장된 결과 기준으로 카드를 만든다
         return StoryCardResponse.of(draw, false);
     }
 
@@ -83,11 +83,9 @@ public class StoryCardEventService {
                 ThreadLocalRandom.current().nextInt(StoryCardGenres.SUPPORTED.size()));
     }
 
-    private AppEvent resolveEvent(Long appEventId) {
-        if (appEventId == null || appEventId <= 0) {
-            throw StoryCardEventNotFoundException.EXCEPTION;
-        }
-        return appEventAdaptor.findOptionalById(appEventId)
+    // 진행 중인 STORY_CARD 이벤트를 검색
+    private AppEvent resolveEvent(LocalDateTime now) {
+        return appEventAdaptor.findActiveOrLatestByType(AppEventType.STORY_CARD, now)
                 .orElseThrow(() -> StoryCardEventNotFoundException.EXCEPTION);
     }
 

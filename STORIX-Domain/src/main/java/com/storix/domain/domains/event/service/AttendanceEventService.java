@@ -3,6 +3,7 @@ package com.storix.domain.domains.event.service;
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.event.adaptor.AttendanceCheckAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
+import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AttendanceCheckInResponse;
 import com.storix.domain.domains.event.dto.AttendanceStatusResponse;
 import com.storix.domain.domains.event.exception.AttendanceAlreadyCheckedInException;
@@ -33,8 +34,8 @@ public class AttendanceEventService {
     private final AttendanceCheckAdaptor attendanceCheckAdaptor;
 
     @Transactional(readOnly = true)
-    public AttendanceStatusResponse getStatus(Long appEventId, Long userId, LocalDateTime now) {
-        AppEvent event = resolveEvent(appEventId);
+    public AttendanceStatusResponse getStatus(Long userId, LocalDateTime now) {
+        AppEvent event = resolveEvent(now);
         LocalDate today = now.toLocalDate();
         NavigableMap<Integer, Integer> schedule = rewardScheduleOf(event);
         List<LocalDate> attendedDates = attendanceCheckAdaptor.findAttendedDates(event.getId(), userId);
@@ -51,8 +52,8 @@ public class AttendanceEventService {
     }
 
     @Transactional
-    public AttendanceCheckInResponse checkIn(Long appEventId, Long userId, LocalDateTime now) {
-        AppEvent event = resolveEvent(appEventId);
+    public AttendanceCheckInResponse checkIn(Long userId, LocalDateTime now) {
+        AppEvent event = resolveEvent(now);
         if (!isActiveOn(event, now)) {
             throw AttendanceEventNotActiveException.EXCEPTION;
         }
@@ -71,11 +72,10 @@ public class AttendanceEventService {
                 .build();
     }
 
-    private AppEvent resolveEvent(Long appEventId) {
-        if (appEventId == null || appEventId <= 0) {
-            throw AttendanceEventNotFoundException.EXCEPTION;
-        }
-        return appEventAdaptor.findOptionalById(appEventId)
+    // 진행 중인 ATTENDANCE 이벤트를 DB에서 찾는다. 없으면 가장 최근 이벤트로 폴백해
+    // 기간 정보를 내려주고 eventActive=false로 응답한다
+    private AppEvent resolveEvent(LocalDateTime now) {
+        return appEventAdaptor.findActiveOrLatestByType(AppEventType.ATTENDANCE, now)
                 .orElseThrow(() -> AttendanceEventNotFoundException.EXCEPTION);
     }
 
