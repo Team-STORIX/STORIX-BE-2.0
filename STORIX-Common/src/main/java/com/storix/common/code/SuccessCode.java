@@ -45,6 +45,8 @@ public enum SuccessCode {
     APP_EVENT_POPUP_NEVER_SHOW_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_004", "팝업 다시 보지 않기 처리에 성공했습니다."),
     ATTENDANCE_EVENT_LOAD_SUCCESS(HttpStatus.OK, "ATTENDANCE_EVENT_SUCCESS_001", "출석 이벤트 현황 조회에 성공했습니다."),
     ATTENDANCE_EVENT_CHECK_IN_SUCCESS(HttpStatus.OK, "ATTENDANCE_EVENT_SUCCESS_002", "출석 체크에 성공했습니다."),
+    STORY_CARD_LOAD_SUCCESS(HttpStatus.OK, "STORY_CARD_SUCCESS_001", "오늘의 스토리 카드 현황 조회에 성공했습니다."),
+    STORY_CARD_DRAW_SUCCESS(HttpStatus.OK, "STORY_CARD_SUCCESS_002", "오늘의 스토리 카드 뽑기에 성공했습니다."),
 
     // PushDevice success
     DEVICE_SYNC_SUCCESS(HttpStatus.OK, "DEVICE2001", "디바이스 동기화에 성공했습니다."),
