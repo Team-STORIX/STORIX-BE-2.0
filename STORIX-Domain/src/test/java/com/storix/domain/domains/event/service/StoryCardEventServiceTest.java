@@ -4,6 +4,7 @@ import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.event.adaptor.StoryCardContentAdaptor;
 import com.storix.domain.domains.event.adaptor.StoryCardDrawAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
+import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.domain.StoryCardDraw;
 import com.storix.domain.domains.event.domain.StoryCardGenres;
 import com.storix.domain.domains.event.domain.StoryCardImmersion;
@@ -33,6 +34,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -69,6 +71,12 @@ class StoryCardEventServiceTest {
                 .build();
         ReflectionTestUtils.setField(e, "id", EVENT_ID);
         return e;
+    }
+
+    // 서비스가 이벤트를 id가 아니라 STORY_CARD 타입으로 찾는다
+    private void givenEvent(AppEvent event) {
+        given(appEventAdaptor.findActiveOrLatestByType(eq(AppEventType.STORY_CARD), any(LocalDateTime.class)))
+                .willReturn(Optional.of(event));
     }
 
     private AppEvent defaultEvent() {
@@ -131,11 +139,11 @@ class StoryCardEventServiceTest {
         @DisplayName("아직 안 뽑았으면 card는 null이고 drawnToday=false다")
         void status_not_drawn() {
             LocalDateTime now = START.plusDays(1).atTime(10, 0);
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            givenEvent(defaultEvent());
             given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, START.plusDays(1)))
                     .willReturn(Optional.empty());
 
-            StoryCardStatusResponse status = storyCardEventService.getStatus(EVENT_ID, USER_ID, now);
+            StoryCardStatusResponse status = storyCardEventService.getStatus(USER_ID, now);
 
             assertThat(status.appEventId()).isEqualTo(EVENT_ID);
             assertThat(status.eventStartDate()).isEqualTo(START);
@@ -151,11 +159,11 @@ class StoryCardEventServiceTest {
         void status_already_drawn() {
             LocalDate serviceDate = START.plusDays(1);
             LocalDateTime now = serviceDate.atTime(10, 0);
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            givenEvent(defaultEvent());
             given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, serviceDate))
                     .willReturn(Optional.of(draw(Genre.FANTASY, serviceDate)));
 
-            StoryCardStatusResponse status = storyCardEventService.getStatus(EVENT_ID, USER_ID, now);
+            StoryCardStatusResponse status = storyCardEventService.getStatus(USER_ID, now);
 
             assertThat(status.drawnToday()).isTrue();
             assertThat(status.card()).isNotNull();
@@ -174,11 +182,11 @@ class StoryCardEventServiceTest {
         void status_before_reset_hour_uses_previous_day() {
             LocalDate serviceDate = START.plusDays(1);
             LocalDateTime beforeReset = serviceDate.plusDays(1).atTime(5, 30);
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            givenEvent(defaultEvent());
             given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, serviceDate))
                     .willReturn(Optional.empty());
 
-            StoryCardStatusResponse status = storyCardEventService.getStatus(EVENT_ID, USER_ID, beforeReset);
+            StoryCardStatusResponse status = storyCardEventService.getStatus(USER_ID, beforeReset);
 
             assertThat(status.serviceDate()).isEqualTo(serviceDate);
         }
@@ -187,23 +195,22 @@ class StoryCardEventServiceTest {
         @DisplayName("이벤트 기간 외에는 eventActive=false로 반환한다")
         void status_inactive_after_end() {
             LocalDateTime now = END.plusDays(2).atTime(10, 0);
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            givenEvent(defaultEvent());
             given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, END.plusDays(2)))
                     .willReturn(Optional.empty());
 
-            StoryCardStatusResponse status = storyCardEventService.getStatus(EVENT_ID, USER_ID, now);
+            StoryCardStatusResponse status = storyCardEventService.getStatus(USER_ID, now);
 
             assertThat(status.eventActive()).isFalse();
         }
 
         @Test
-        @DisplayName("이벤트가 설정되지 않았거나(0) 존재하지 않으면 404를 던진다")
+        @DisplayName("등록된 스토리 카드 이벤트가 없으면 404를 던진다")
         void status_event_not_found() {
-            assertThatThrownBy(() -> storyCardEventService.getStatus(0L, USER_ID, START.atTime(10, 0)))
-                    .isInstanceOf(StoryCardEventNotFoundException.class);
+            given(appEventAdaptor.findActiveOrLatestByType(eq(AppEventType.STORY_CARD), any(LocalDateTime.class)))
+                    .willReturn(Optional.empty());
 
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.empty());
-            assertThatThrownBy(() -> storyCardEventService.getStatus(EVENT_ID, USER_ID, START.atTime(10, 0)))
+            assertThatThrownBy(() -> storyCardEventService.getStatus(USER_ID, START.atTime(10, 0)))
                     .isInstanceOf(StoryCardEventNotFoundException.class);
         }
     }
@@ -216,7 +223,7 @@ class StoryCardEventServiceTest {
         @DisplayName("이미지/한마디/작품이 모두 같은 장르로 배정된다")
         void draw_uses_single_genre() {
             LocalDate serviceDate = START.plusDays(1);
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            givenEvent(defaultEvent());
             given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, serviceDate)).willReturn(Optional.empty());
             givenPickedContent();
 
@@ -224,7 +231,7 @@ class StoryCardEventServiceTest {
             ArgumentCaptor<Genre> luckyWorkGenre = ArgumentCaptor.forClass(Genre.class);
             ArgumentCaptor<StoryCardDraw> saved = ArgumentCaptor.forClass(StoryCardDraw.class);
 
-            storyCardEventService.draw(EVENT_ID, USER_ID, serviceDate.atTime(10, 0));
+            storyCardEventService.draw(USER_ID, serviceDate.atTime(10, 0));
 
             verify(storyCardContentAdaptor).pickMessage(messageGenre.capture());
             verify(storyCardContentAdaptor).pickLuckyWork(luckyWorkGenre.capture());
@@ -240,13 +247,13 @@ class StoryCardEventServiceTest {
         @DisplayName("뽑은 콘텐츠가 draw 행에 그대로 복사되어 저장된다")
         void draw_snapshots_content() {
             LocalDate serviceDate = START.plusDays(1);
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            givenEvent(defaultEvent());
             given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, serviceDate)).willReturn(Optional.empty());
             givenPickedContent();
 
             ArgumentCaptor<StoryCardDraw> saved = ArgumentCaptor.forClass(StoryCardDraw.class);
 
-            storyCardEventService.draw(EVENT_ID, USER_ID, serviceDate.atTime(10, 0));
+            storyCardEventService.draw(USER_ID, serviceDate.atTime(10, 0));
 
             verify(storyCardDrawAdaptor).saveIfAbsent(saved.capture());
             StoryCardDraw row = saved.getValue();
@@ -262,11 +269,11 @@ class StoryCardEventServiceTest {
         @DisplayName("뽑은 카드는 서비스 날짜로 저장되고 alreadyDrawn=false로 반환된다")
         void draw_ok() {
             LocalDate serviceDate = START.plusDays(1);
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            givenEvent(defaultEvent());
             given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, serviceDate)).willReturn(Optional.empty());
             givenPickedContent();
 
-            StoryCardResponse card = storyCardEventService.draw(EVENT_ID, USER_ID, serviceDate.atTime(10, 0));
+            StoryCardResponse card = storyCardEventService.draw(USER_ID, serviceDate.atTime(10, 0));
 
             assertThat(card.drawnOn()).isEqualTo(serviceDate);
             assertThat(card.alreadyDrawn()).isFalse();
@@ -279,11 +286,11 @@ class StoryCardEventServiceTest {
         @DisplayName("같은 날 재요청하면 새로 뽑지 않고 처음 카드를 그대로 반환한다")
         void draw_same_day_returns_existing() {
             LocalDate serviceDate = START.plusDays(1);
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            givenEvent(defaultEvent());
             given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, serviceDate))
                     .willReturn(Optional.of(draw(Genre.HISTORICAL, serviceDate)));
 
-            StoryCardResponse card = storyCardEventService.draw(EVENT_ID, USER_ID, serviceDate.atTime(20, 0));
+            StoryCardResponse card = storyCardEventService.draw(USER_ID, serviceDate.atTime(20, 0));
 
             assertThat(card.alreadyDrawn()).isTrue();
             assertThat(card.genre()).isEqualTo("무협");
@@ -295,17 +302,20 @@ class StoryCardEventServiceTest {
         @DisplayName("이벤트 기간 외 뽑기 요청은 400을 던지고 아무것도 저장하지 않는다")
         void draw_not_active() {
             LocalDateTime beforeStart = START.minusDays(1).atTime(10, 0);
-            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
+            givenEvent(defaultEvent());
 
-            assertThatThrownBy(() -> storyCardEventService.draw(EVENT_ID, USER_ID, beforeStart))
+            assertThatThrownBy(() -> storyCardEventService.draw(USER_ID, beforeStart))
                     .isInstanceOf(StoryCardEventNotActiveException.class);
             verify(storyCardDrawAdaptor, never()).saveIfAbsent(any(StoryCardDraw.class));
         }
 
         @Test
-        @DisplayName("이벤트가 설정되지 않았으면(0) 404를 던진다")
+        @DisplayName("등록된 스토리 카드 이벤트가 없으면 404를 던진다")
         void draw_event_not_found() {
-            assertThatThrownBy(() -> storyCardEventService.draw(0L, USER_ID, START.atTime(10, 0)))
+            given(appEventAdaptor.findActiveOrLatestByType(eq(AppEventType.STORY_CARD), any(LocalDateTime.class)))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> storyCardEventService.draw(USER_ID, START.atTime(10, 0)))
                     .isInstanceOf(StoryCardEventNotFoundException.class);
         }
     }
