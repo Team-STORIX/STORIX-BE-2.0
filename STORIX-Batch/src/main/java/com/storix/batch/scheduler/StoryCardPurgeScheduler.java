@@ -11,11 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class StoryCardPurgeScheduler {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final StoryCardDrawAdaptor storyCardDrawAdaptor;
 
@@ -23,7 +26,7 @@ public class StoryCardPurgeScheduler {
     @Scheduled(cron = "0 0 6 * * *", zone = "Asia/Seoul")
     @Transactional
     public void purgeExpiredDraws() {
-        LocalDate cutoff = StoryCardDraw.serviceDateOf(LocalDateTime.now())
+        LocalDate cutoff = StoryCardDraw.serviceDateOf(LocalDateTime.now(KST))
                 .minusDays(STORIXStatic.StoryCard.RETENTION_DAYS);
 
         log.info(">>>> [StoryCardPurgeScheduler] 시작 — cutoff: {} (미만 삭제)", cutoff);

@@ -148,6 +148,7 @@ public enum ErrorCode {
     STORY_CARD_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STORY_CARD_ERROR_001", "진행 중인 오늘의 스토리 카드 이벤트가 없습니다."),
     STORY_CARD_EVENT_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "STORY_CARD_ERROR_002", "오늘의 스토리 카드 이벤트 기간이 아닙니다."),
     STORY_CARD_CONTENT_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "STORY_CARD_ERROR_003", "오늘의 스토리 카드 콘텐츠가 등록되어 있지 않습니다."),
+    STORY_CARD_DRAW_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORY_CARD_ERROR_004", "오늘의 스토리 카드 저장에 실패했습니다."),
 
     // OIDC error
     OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),
