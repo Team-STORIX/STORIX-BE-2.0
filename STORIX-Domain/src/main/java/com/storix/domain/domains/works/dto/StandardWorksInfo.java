@@ -18,8 +18,8 @@ public record StandardWorksInfo(
                 worksInfo.thumbnailUrl(),
                 worksInfo.worksName(),
                 worksInfo.artistName(),
-                worksInfo.worksType().getDbValue(),
-                worksInfo.genre().getDbValue()
+                worksInfo.worksType() != null ? worksInfo.worksType().getDbValue() : null,
+                worksInfo.genre() != null ? worksInfo.genre().getDbValue() : null
         );
     }
 }

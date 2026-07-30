@@ -27,8 +27,8 @@ public record BoardWorksInfo(
                 works.thumbnailUrl(),
                 works.worksName(),
                 works.artistName(),
-                works.worksType().getDbValue(),
-                works.genre().getDbValue(),
+                works.worksType() != null ? works.worksType().getDbValue() : null,
+                works.genre() != null ? works.genre().getDbValue() : null,
                 hashtags
         );
     }
