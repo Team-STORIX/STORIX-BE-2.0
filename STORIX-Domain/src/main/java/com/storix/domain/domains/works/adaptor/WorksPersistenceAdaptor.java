@@ -11,6 +11,7 @@ import com.storix.domain.domains.works.repository.WorksRepository;
 import com.storix.domain.domains.plus.exception.WorksNotExistException;
 import com.storix.domain.domains.works.exception.UnknownWorksException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -24,6 +25,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class WorksPersistenceAdaptor implements LoadWorksPort {
@@ -119,6 +121,7 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
         }
 
         List<WorksInfo> worksInfos = worksRepository.findWorksInfoByIds(worksIds);
+        worksInfos.forEach(this::warnIfEnumMissing);
 
         return worksInfos.stream()
                 .collect(Collectors.toMap(
@@ -134,7 +137,17 @@ public class WorksPersistenceAdaptor implements LoadWorksPort {
         if (worksInfo.isEmpty()) {
             throw UnknownWorksException.EXCEPTION;
         }
+        warnIfEnumMissing(worksInfo.get());
         return worksInfo.get();
+    }
+
+    private void warnIfEnumMissing(WorksInfo works) {
+        if (works.worksType() != null && works.genre() != null) return;
+        log.atWarn()
+                .addKeyValue("worksId", works.worksId())
+                .addKeyValue("worksTypeMissing", works.worksType() == null)
+                .addKeyValue("genreMissing", works.genre() == null)
+                .log(">>> [Works] enum 컬럼 값 없음");
     }
 
     // 관심 작품 리스트 조회 용

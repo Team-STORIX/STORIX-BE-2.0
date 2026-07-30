@@ -9,6 +9,7 @@ import lombok.Builder;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Objects;
 
 @Builder
 public record WorksDetailResponseDto(
@@ -32,16 +33,18 @@ public record WorksDetailResponseDto(
         return WorksDetailResponseDto.builder()
                 .worksId(works.getId())
                 .worksName(works.getWorksName())
-                .worksType(works.getWorksType().getDbValue())
+                .worksType(works.getWorksType() != null ? works.getWorksType().getDbValue() : null)
                 .thumbnailUrl(works.getThumbnailUrl())
                 .author(works.getAuthor())
                 .illustrator(resolveIllustrator(works.getAuthor(), works.getIllustrator()))
                 .originalAuthor(works.getOriginalAuthor())
-                .genre(works.getGenre().getDbValue())
+                .genre(works.getGenre() != null ? works.getGenre().getDbValue() : null)
                 .platforms(works.getPlatforms().stream()
-                        .map(wp -> wp.getPlatform().getDbValue())
+                        .map(WorksPlatform::getPlatform)
+                        .filter(Objects::nonNull)
+                        .map(Platform::getDbValue)
                         .toList())
-                .ageClassification(works.getAgeClassification().getDbValue())
+                .ageClassification(works.getAgeClassification() != null ? works.getAgeClassification().getDbValue() : null)
                 .avgRating(roundAvgRating(works.getAvgRating()))
                 .reviewCount(reviewCount)
                 .description(works.getDescription())

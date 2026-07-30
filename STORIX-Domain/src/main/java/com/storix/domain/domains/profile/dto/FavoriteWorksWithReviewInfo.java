@@ -22,7 +22,7 @@ public record FavoriteWorksWithReviewInfo(
                 base.worksName(),
                 base.artistName(),
                 base.thumbnailUrl(),
-                base.worksType().getDbValue(),
+                base.worksType() != null ? base.worksType().getDbValue() : null,
                 isReviewed,
                 rating
         );
