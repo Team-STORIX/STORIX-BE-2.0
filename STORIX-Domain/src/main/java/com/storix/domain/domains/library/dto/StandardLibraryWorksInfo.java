@@ -28,12 +28,12 @@ public record StandardLibraryWorksInfo(
                 worksInfo.worksName(),
                 artistName,
                 worksInfo.thumbnailUrl(),
-                worksInfo.worksType().getDbValue(),
-                worksInfo.genre().getDbValue(),
+                worksInfo.worksType() != null ? worksInfo.worksType().getDbValue() : null,
+                worksInfo.genre() != null ? worksInfo.genre().getDbValue() : null,
 
                 // 리뷰 정보
                 reviewId,
-                rating.getDbValue()
+                rating != null ? rating.getDbValue() : null
         );
     }
 }

@@ -5,14 +5,17 @@ import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.application.usecase.WorksUseCase;
+import com.storix.domain.domains.works.domain.AgeClassification;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.WorksDetailResponseDto;
 import com.storix.domain.domains.topicroom.exception.UnverifiedException;
 import com.storix.domain.domains.user.exception.auth.LoginRequiredException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WorksService implements WorksUseCase {
@@ -29,8 +32,17 @@ public class WorksService implements WorksUseCase {
 
         Works works = loadWorksPort.findByIdWithHashtags(worksId);
 
+        if (works.getWorksType() == null || works.getGenre() == null || works.getAgeClassification() == null) {
+            log.atWarn()
+                    .addKeyValue("worksId", worksId)
+                    .addKeyValue("worksTypeMissing", works.getWorksType() == null)
+                    .addKeyValue("genreMissing", works.getGenre() == null)
+                    .addKeyValue("ageClassificationMissing", works.getAgeClassification() == null)
+                    .log(">>> [Works] enum 컬럼 값 없음");
+        }
+
         // 18세 이용가 작품인지 확인
-        if ("18세 이용가".equals(works.getAgeClassification().getDbValue())) {
+        if (works.getAgeClassification() == AgeClassification.AGE_18) {
 
             // 비로그인 유저
             if (userId == null) {
