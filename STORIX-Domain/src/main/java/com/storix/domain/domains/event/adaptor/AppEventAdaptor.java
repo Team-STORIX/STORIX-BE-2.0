@@ -51,10 +51,14 @@ public class AppEventAdaptor {
                 .or(() -> appEventRepository.findFirstByEventTypeOrderByStartAtDesc(eventType));
     }
 
-    public boolean existsOverlappingByType(AppEventType eventType,
-                                           LocalDateTime startAt,
-                                           LocalDateTime endAt,
-                                           Long excludeAppEventId) {
-        return appEventRepository.existsOverlappingByType(eventType, startAt, endAt, excludeAppEventId);
+    /**
+     * 같은 타입 이벤트끼리 기간이 겹치는지 확인하면서 해당 구간에 쓰기 락
+     */
+    public boolean lockAndCheckOverlappingByType(AppEventType eventType,
+                                                 LocalDateTime startAt,
+                                                 LocalDateTime endAt,
+                                                 Long excludeAppEventId) {
+        return appEventRepository.findOverlappingByTypeForUpdate(eventType, startAt, endAt).stream()
+                .anyMatch(overlapping -> !overlapping.getId().equals(excludeAppEventId));
     }
 }

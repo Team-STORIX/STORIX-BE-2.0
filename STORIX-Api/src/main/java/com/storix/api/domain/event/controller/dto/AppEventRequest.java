@@ -31,12 +31,19 @@ public record AppEventRequest(
         )
         AppEventType eventType,
 
-        @Schema(description = "이벤트 시작 시각", example = "2026-07-01 00:00")
+        @Schema(
+                description = "이벤트 시작 시각. ATTENDANCE는 00:00, STORY_CARD는 06:00(카드 초기화 시각)에 맞춰야 합니다.",
+                example = "2026-07-01 00:00"
+        )
         @NotNull(message = "이벤트 시작 일시는 필수입니다.")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime startAt,
 
-        @Schema(description = "이벤트 종료 시각", example = "2026-07-31 23:59")
+        @Schema(
+                description = "이벤트 종료 시각(exclusive). 시작 시각과 같은 경계에 맞춰야 하며, "
+                        + "마지막 참여일의 다음 경계를 넣습니다. (7/31까지 출석 → 2026-08-01 00:00)",
+                example = "2026-08-01 00:00"
+        )
         @NotNull(message = "이벤트 종료 일시는 필수입니다.")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime endAt,

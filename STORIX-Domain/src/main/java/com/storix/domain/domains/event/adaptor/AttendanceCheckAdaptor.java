@@ -1,6 +1,7 @@
 package com.storix.domain.domains.event.adaptor;
 
 import com.storix.domain.domains.event.domain.AttendanceCheck;
+import com.storix.domain.domains.event.dto.AttendanceAttendeeCount;
 import com.storix.domain.domains.event.repository.AttendanceCheckRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,5 +34,9 @@ public class AttendanceCheckAdaptor {
 
     public long countAttendedDays(Long appEventId, Long userId) {
         return attendanceCheckRepository.countByAppEventIdAndUserId(appEventId, userId);
+    }
+
+    public List<AttendanceAttendeeCount> findAttendeeCounts(Long appEventId) {
+        return attendanceCheckRepository.findAttendeeCountsByAppEventId(appEventId);
     }
 }

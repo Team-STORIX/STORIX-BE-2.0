@@ -1,7 +1,7 @@
 package com.storix.domain.domains.event.domain;
 
 import com.storix.common.model.BaseTimeEntity;
-import com.storix.common.utils.STORIXStatic;
+import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Platform;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -59,7 +59,6 @@ public class StoryCardDraw extends BaseTimeEntity {
     @Column(name = "lucky_work_title", nullable = false, length = 100)
     private String luckyWorkTitle;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "lucky_work_type", nullable = false, length = 20)
     private WorksType luckyWorkType;
 
@@ -98,14 +97,15 @@ public class StoryCardDraw extends BaseTimeEntity {
         this.drawnAt = drawnAt;
     }
 
-    // 뽑은 콘텐츠를 그대로 복사해 카드 한 장을 만든다
+    // 뽑은 콘텐츠를 그대로 복사해 카드 한 장을 만든다.
+    // 작품 정보도 복사해두므로 이후 works 쪽이 바뀌어도 이미 뽑은 카드는 그대로 유지된다
     public static StoryCardDraw of(Long appEventId,
                                    Long userId,
                                    LocalDate drawnOn,
                                    Genre genre,
                                    StoryCardMessage message,
                                    StoryCardImmersion immersion,
-                                   StoryCardLuckyWork luckyWork,
+                                   StoryCardLuckyWorkPick luckyWork,
                                    LocalDateTime drawnAt) {
         return StoryCardDraw.builder()
                 .appEventId(appEventId)
@@ -114,12 +114,21 @@ public class StoryCardDraw extends BaseTimeEntity {
                 .genre(genre)
                 .message(message.getContent())
                 .immersion(immersion.getContent())
-                .luckyWorkTitle(luckyWork.getTitle())
-                .luckyWorkType(luckyWork.getWorksType())
-                .luckyWorkPlatform(luckyWork.getPlatform())
-                .luckyWorkLandingUrl(luckyWork.getLandingUrl())
+                .luckyWorkTitle(luckyWork.title())
+                .luckyWorkType(luckyWork.worksType())
+                .luckyWorkPlatform(luckyWork.platform())
+                .luckyWorkLandingUrl(luckyWork.landingUrl())
                 .drawnAt(drawnAt)
                 .build();
+    }
+
+    // 같은 내용의 카드인지 판별하는 데에 이용
+    public boolean isSameCardAs(StoryCardDraw candidate) {
+        return candidate != null
+                && genre == candidate.genre
+                && message.equals(candidate.message)
+                && immersion.equals(candidate.immersion)
+                && luckyWorkTitle.equals(candidate.luckyWorkTitle);
     }
 
     // 카드 레이아웃용 줄 배열
@@ -135,10 +144,5 @@ public class StoryCardDraw extends BaseTimeEntity {
     // "웹툰 ㅣ 화산귀환"
     public String luckyWorkLabel() {
         return luckyWorkType.getDbValue() + " ㅣ " + luckyWorkTitle;
-    }
-
-    // 06:00 초기화 기준 서비스 날짜. 07/28 05:59 → 07/27, 07/28 06:00 → 07/28
-    public static LocalDate serviceDateOf(LocalDateTime now) {
-        return now.minusHours(STORIXStatic.StoryCard.RESET_HOUR).toLocalDate();
     }
 }

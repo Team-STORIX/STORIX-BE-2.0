@@ -1,6 +1,7 @@
 package com.storix.domain.domains.event.adaptor;
 
 import com.storix.domain.domains.event.domain.StoryCardDraw;
+import com.storix.domain.domains.event.dto.StoryCardDrawResult;
 import com.storix.domain.domains.event.exception.StoryCardDrawFailedException;
 import com.storix.domain.domains.event.repository.StoryCardDrawRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,27 +20,29 @@ public class StoryCardDrawAdaptor {
         return storyCardDrawRepository.findByAppEventIdAndUserIdAndDrawnOn(appEventId, userId, serviceDate);
     }
 
-    public boolean hasDrawn(Long appEventId, Long userId, LocalDate serviceDate) {
-        return storyCardDrawRepository.existsByAppEventIdAndUserIdAndDrawnOn(appEventId, userId, serviceDate);
-    }
-
-    public StoryCardDraw saveIfAbsent(StoryCardDraw draw) {
+    /**
+     * 하루 한 장 제약을 지키며 저장한다. 중복이면 기존 행을 그대로 두는 no-op upsert라 예외가 나지 않는다.
+     */
+    public StoryCardDrawResult saveIfAbsent(StoryCardDraw candidate) {
         storyCardDrawRepository.insertIfAbsent(
-                draw.getAppEventId(),
-                draw.getUserId(),
-                draw.getDrawnOn(),
-                draw.getGenre().getDbValue(),
-                draw.getMessage(),
-                draw.getImmersion(),
-                draw.getLuckyWorkTitle(),
-                draw.getLuckyWorkType().name(),
-                draw.getLuckyWorkPlatform().name(),
-                draw.getLuckyWorkLandingUrl(),
-                draw.getDrawnAt()
+                candidate.getAppEventId(),
+                candidate.getUserId(),
+                candidate.getDrawnOn(),
+                candidate.getGenre().getDbValue(),
+                candidate.getMessage(),
+                candidate.getImmersion(),
+                candidate.getLuckyWorkTitle(),
+                candidate.getLuckyWorkType().getDbValue(),
+                candidate.getLuckyWorkPlatform().name(),
+                candidate.getLuckyWorkLandingUrl(),
+                candidate.getDrawnAt()
         );
-        return storyCardDrawRepository
-                .findByAppEventIdAndUserIdAndDrawnOn(draw.getAppEventId(), draw.getUserId(), draw.getDrawnOn())
+        StoryCardDraw saved = storyCardDrawRepository
+                .findByAppEventIdAndUserIdAndDrawnOn(
+                        candidate.getAppEventId(), candidate.getUserId(), candidate.getDrawnOn())
                 .orElseThrow(() -> StoryCardDrawFailedException.EXCEPTION);
+
+        return new StoryCardDrawResult(saved, saved.isSameCardAs(candidate));
     }
 
     public int deleteDrawnBefore(LocalDate cutoff) {

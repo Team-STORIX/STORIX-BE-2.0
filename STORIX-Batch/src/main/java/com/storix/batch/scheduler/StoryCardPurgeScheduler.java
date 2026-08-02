@@ -2,7 +2,7 @@ package com.storix.batch.scheduler;
 
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.event.adaptor.StoryCardDrawAdaptor;
-import com.storix.domain.domains.event.domain.StoryCardDraw;
+import com.storix.domain.domains.event.domain.AppEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,7 +26,7 @@ public class StoryCardPurgeScheduler {
     @Scheduled(cron = "0 0 6 * * *", zone = "Asia/Seoul")
     @Transactional
     public void purgeExpiredDraws() {
-        LocalDate cutoff = StoryCardDraw.serviceDateOf(LocalDateTime.now(KST))
+        LocalDate cutoff = AppEventType.STORY_CARD.serviceDateOf(LocalDateTime.now(KST))
                 .minusDays(STORIXStatic.StoryCard.RETENTION_DAYS);
 
         log.info(">>>> [StoryCardPurgeScheduler] 시작 — cutoff: {} (미만 삭제)", cutoff);

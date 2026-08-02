@@ -6,6 +6,7 @@ import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import com.storix.domain.domains.event.dto.AppEventResponse;
 import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
+import com.storix.domain.domains.event.exception.AppEventInvalidPeriodBoundaryException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
 import com.storix.domain.domains.event.exception.AppEventNameRequiredException;
 import com.storix.domain.domains.event.exception.AppEventOverlappingTypeException;
@@ -36,6 +37,7 @@ public class AppEventService {
     public AppEventResponse create(AppEventCommand cmd, Long adminUserId) {
         validateCommand(cmd);
         AppEventType eventType = cmd.eventType() == null ? AppEventType.GENERAL : cmd.eventType();
+        validatePeriodBoundary(eventType, cmd.startAt(), cmd.endAt());
         validateNoOverlap(eventType, cmd.startAt(), cmd.endAt(), null);
         AppEvent saved = appEventAdaptor.save(AppEvent.builder()
                 .name(cmd.name())
@@ -57,9 +59,13 @@ public class AppEventService {
         AppEvent appEvent = appEventAdaptor.findById(appEventId);
         // 미전달 시 기존 종류를 유지한다 (update()도 null을 "변경 없음"으로 처리)
         AppEventType eventType = cmd.eventType() == null ? appEvent.getEventType() : cmd.eventType();
-        validateNoOverlap(eventType, cmd.startAt(), cmd.endAt(), appEventId);
         boolean periodChanged = !appEvent.getStartAt().equals(cmd.startAt())
                 || !appEvent.getEndAt().equals(cmd.endAt());
+        // 바뀔때만 검증
+        if (periodChanged || eventType != appEvent.getEventType()) {
+            validatePeriodBoundary(eventType, cmd.startAt(), cmd.endAt());
+        }
+        validateNoOverlap(eventType, cmd.startAt(), cmd.endAt(), appEventId);
         appEvent.update(
                 cmd.name(),
                 cmd.description(),
@@ -113,6 +119,13 @@ public class AppEventService {
         validateAttendanceRewards(cmd.attendanceRewards());
     }
 
+    // 출석(자정) / 스토리 카드(06:00)처럼 하루가 바뀌는 기준이 있는 이벤트는 기간 경계도 그 시각에 맞춤
+    private void validatePeriodBoundary(AppEventType eventType, LocalDateTime startAt, LocalDateTime endAt) {
+        if (!eventType.hasValidBoundary(startAt) || !eventType.hasValidBoundary(endAt)) {
+            throw AppEventInvalidPeriodBoundaryException.EXCEPTION;
+        }
+    }
+
     private void validateNoOverlap(AppEventType eventType,
                                    LocalDateTime startAt,
                                    LocalDateTime endAt,
@@ -120,7 +133,7 @@ public class AppEventService {
         if (!eventType.isExclusive()) {
             return;
         }
-        if (appEventAdaptor.existsOverlappingByType(eventType, startAt, endAt, excludeAppEventId)) {
+        if (appEventAdaptor.lockAndCheckOverlappingByType(eventType, startAt, endAt, excludeAppEventId)) {
             throw AppEventOverlappingTypeException.EXCEPTION;
         }
     }

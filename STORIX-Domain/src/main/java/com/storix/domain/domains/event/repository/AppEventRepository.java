@@ -2,9 +2,11 @@ package com.storix.domain.domains.event.repository;
 
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventType;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -35,16 +37,17 @@ public interface AppEventRepository extends JpaRepository<AppEvent, Long> {
     // 진행 중인 이벤트가 없을 때 기간 정보를 내려주기 위한 폴백
     Optional<AppEvent> findFirstByEventTypeOrderByStartAtDesc(AppEventType eventType);
 
-    // 같은 타입 이벤트끼리 기간이 겹치는지. 수정 시에는 자기 자신을 제외한다
+    /**
+     * 같은 타입 이벤트끼리 기간이 겹치는 행을 조회하면서 쓰기 락
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
-            SELECT COUNT(e) > 0 FROM AppEvent e
+            SELECT e FROM AppEvent e
             WHERE e.eventType = :eventType
-              AND (:excludeId IS NULL OR e.id <> :excludeId)
               AND e.startAt < :endAt
               AND e.endAt > :startAt
             """)
-    boolean existsOverlappingByType(@Param("eventType") AppEventType eventType,
-                                    @Param("startAt") LocalDateTime startAt,
-                                    @Param("endAt") LocalDateTime endAt,
-                                    @Param("excludeId") Long excludeId);
+    List<AppEvent> findOverlappingByTypeForUpdate(@Param("eventType") AppEventType eventType,
+                                                  @Param("startAt") LocalDateTime startAt,
+                                                  @Param("endAt") LocalDateTime endAt);
 }
