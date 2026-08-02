@@ -33,15 +33,11 @@ public final class StoryCardGenres {
     private StoryCardGenres() {
     }
 
-    public static Set<Genre> supported() {
-        return IMAGE_OBJECT_KEYS.keySet();
-    }
-
     public static boolean isSupported(Genre genre) {
         return genre != null && IMAGE_OBJECT_KEYS.containsKey(genre);
     }
 
-    // 이미 뽑힌 카드의 장르가 나중에 목록에서 빠지면 조회 시 여기로 들어온다
+    // 이미 뽑힌 카드의 장르가 나중에 목록에서 빠지면 예외
     public static String imageObjectKeyOf(Genre genre) {
         String objectKey = IMAGE_OBJECT_KEYS.get(genre);
         if (objectKey == null) {

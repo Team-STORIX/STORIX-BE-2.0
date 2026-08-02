@@ -151,6 +151,22 @@ public class UserAdaptor {
                 ));
     }
 
+    // 관리자 화면용 유저 정보 (닉네임 + 이메일 + 프로필 이미지 URL)
+    public Map<Long, AdminUserContactInfo> findAdminUserContactInfoByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return userRepository.findAdminUserContactInfoByUserIds(userIds).stream()
+                .map(info -> info.withBaseUrl(baseUrl))
+                .collect(Collectors.toMap(
+                        AdminUserContactInfo::userId,
+                        Function.identity(),
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+    }
+
     // suspendedUntil 기준으로 정지 만료된 유저 일괄 복구 — ReportCase 상태와 독립적
     public int restoreExpiredSuspensions(LocalDateTime now) {
         return userRepository.restoreExpiredSuspensions(AccountState.SUSPENDED, now);

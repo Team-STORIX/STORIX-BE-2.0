@@ -83,6 +83,9 @@ public class Works {
     @Column(name = "is_onboarding")
     private Boolean isOnboarding;
 
+    @Column(name = "is_story_card_lucky_work")
+    private Boolean isStoryCardLuckyWork;
+
     @Builder
     private Works(String worksName,
                   String artistName, String author, String illustrator,
@@ -107,7 +110,12 @@ public class Works {
     }
 
     public void addPlatform(Platform platform) {
-        this.platforms.add(new WorksPlatform(this, platform));
+        addPlatform(platform, null);
+    }
+
+    // landingUrl은 해당 플랫폼의 작품 페이지 외부 링크 (미확보 시 null)
+    public void addPlatform(Platform platform, String landingUrl) {
+        this.platforms.add(new WorksPlatform(this, platform, landingUrl));
     }
 
     public Set<Hashtag> getHashtags() {

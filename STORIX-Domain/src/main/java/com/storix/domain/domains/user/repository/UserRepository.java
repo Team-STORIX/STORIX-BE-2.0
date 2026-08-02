@@ -2,6 +2,7 @@ package com.storix.domain.domains.user.repository;
 
 import com.storix.domain.domains.user.domain.AccountState;
 import com.storix.domain.domains.user.domain.OAuthProvider;
+import com.storix.domain.domains.user.dto.AdminUserContactInfo;
 import com.storix.domain.domains.user.dto.AdminUserListResponse;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.user.dto.UserNicknameInfo;
@@ -95,6 +96,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     int restoreExpiredSuspensions(
             @Param("state") AccountState state,
             @Param("now") LocalDateTime now);
+
+    // 관리자 화면용 유저 정보 조회 (닉네임 + 이메일 + 프로필 이미지 키)
+    @Query("SELECT new com.storix.domain.domains.user.dto.AdminUserContactInfo(" +
+            "   u.id, " +
+            "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN + ", " +
+            "   u.oauthInfo.email, u.profileObjectKey " +
+            ") " +
+            "FROM User u " +
+            "WHERE u.id IN :userIds ")
+    List<AdminUserContactInfo> findAdminUserContactInfoByUserIds(@Param("userIds") List<Long> userIds);
 
     @Query("SELECT new com.storix.domain.domains.user.dto.UserNicknameInfo(" +
             "   u.id, " +
