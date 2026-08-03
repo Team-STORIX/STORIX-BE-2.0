@@ -5,7 +5,7 @@ import com.storix.domain.domains.notification.adaptor.AdminNotificationLogAdapto
 import com.storix.domain.domains.notification.domain.AdminNotificationLog;
 import com.storix.domain.domains.notification.domain.AdminNotificationTargetAudience;
 import com.storix.domain.domains.notification.dto.AdminNotificationBroadcastInfo;
-import com.storix.domain.domains.event.adaptor.AppEventParticipantAdaptor;
+import com.storix.domain.domains.event.adaptor.AppEventWinnerAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class AdminNotificationTargetService {
     private final AdminNotificationLogAdaptor adminNotificationLogAdaptor;
 
     private final UserAdaptor userAdaptor;
-    private final AppEventParticipantAdaptor appEventParticipantAdaptor;
+    private final AppEventWinnerAdaptor appEventWinnerAdaptor;
 
     // 발송용 어드민 알림 조회
     @Transactional(readOnly = true)
@@ -42,7 +42,7 @@ public class AdminNotificationTargetService {
         return switch (audience) {
             case ALL -> userAdaptor.findAdminNotificationTargetUserIds(lastUserId, null, page);
             case NEW_USERS -> userAdaptor.findAdminNotificationTargetUserIds(lastUserId, now.minusMonths(1), page);
-            case EVENT_WINNERS -> appEventParticipantAdaptor.findWinnerUserIds(eventTargetId, lastUserId, page);
+            case EVENT_WINNERS -> appEventWinnerAdaptor.findWinnerUserIds(eventTargetId, lastUserId, page);
         };
     }
 
