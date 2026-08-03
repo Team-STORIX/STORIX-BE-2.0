@@ -44,12 +44,12 @@ public class AppEventAdaptor {
         return appEventRepository.searchByName(keyword, pageable);
     }
 
-    // 진행 중 → 가장 먼저 시작하는 예정 → 가장 최근에 종료된 이벤트 순으로 폴백
+    // 진행 중 → 가장 최근에 종료된 → 가장 먼저 시작하는 예정 이벤트 순으로 폴백
     public Optional<AppEvent> findActiveOrNearestByType(AppEventType eventType, LocalDateTime now) {
         return appEventRepository.findActiveByType(eventType, now).stream()
                 .findFirst()
-                .or(() -> appEventRepository.findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(eventType, now))
-                .or(() -> appEventRepository.findFirstByEventTypeAndEndAtLessThanEqualOrderByEndAtDesc(eventType, now));
+                .or(() -> appEventRepository.findFirstByEventTypeAndEndAtLessThanEqualOrderByEndAtDesc(eventType, now))
+                .or(() -> appEventRepository.findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(eventType, now));
     }
 
     // 같은 타입 이벤트끼리 기간이 겹치는지 확인하면서 해당 구간에 쓰기 락

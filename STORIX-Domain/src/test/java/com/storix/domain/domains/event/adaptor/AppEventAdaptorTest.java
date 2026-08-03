@@ -21,7 +21,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("[앱 이벤트] 어댑터 - 진행 중 → 예정 → 종료 폴백")
+@DisplayName("[앱 이벤트] 어댑터 - 진행 중 → 종료 → 예정 폴백")
 class AppEventAdaptorTest {
 
     private static final AppEventType TYPE = AppEventType.ATTENDANCE;
@@ -46,8 +46,8 @@ class AppEventAdaptorTest {
         given(appEventRepository.findActiveByType(eq(TYPE), eq(NOW))).willReturn(List.of());
     }
 
-    private void givenNoUpcoming() {
-        given(appEventRepository.findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(eq(TYPE), eq(NOW)))
+    private void givenNoEnded() {
+        given(appEventRepository.findFirstByEventTypeAndEndAtLessThanEqualOrderByEndAtDesc(eq(TYPE), eq(NOW)))
                 .willReturn(Optional.empty());
     }
 
@@ -66,38 +66,39 @@ class AppEventAdaptorTest {
     }
 
     // 종료된 7월 이벤트와 예정된 9월 이벤트가 함께 있는 8/3 시점
+    // 방금 끝난 이벤트의 결과를 계속 보여주는 편이 자연스러우므로 예정 이벤트보다 먼저 본다
     @Test
-    @DisplayName("진행 중인 이벤트가 없고 예정 이벤트가 있으면 예정 이벤트를 반환한다")
-    void fallsBackToUpcomingEvent() {
-        AppEvent upcoming = event("9월 출석 이벤트");
-        givenNoActive();
-        given(appEventRepository.findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(eq(TYPE), eq(NOW)))
-                .willReturn(Optional.of(upcoming));
-
-        assertThat(appEventAdaptor.findActiveOrNearestByType(TYPE, NOW)).contains(upcoming);
-
-        verify(appEventRepository, never())
-                .findFirstByEventTypeAndEndAtLessThanEqualOrderByEndAtDesc(eq(TYPE), eq(NOW));
-    }
-
-    @Test
-    @DisplayName("진행 중/예정 이벤트가 모두 없으면 가장 최근 종료 이벤트를 반환한다")
+    @DisplayName("진행 중인 이벤트가 없으면 가장 최근 종료 이벤트를 먼저 반환한다")
     void fallsBackToLatestEndedEvent() {
         AppEvent ended = event("7월 출석 이벤트");
         givenNoActive();
-        givenNoUpcoming();
         given(appEventRepository.findFirstByEventTypeAndEndAtLessThanEqualOrderByEndAtDesc(eq(TYPE), eq(NOW)))
                 .willReturn(Optional.of(ended));
 
         assertThat(appEventAdaptor.findActiveOrNearestByType(TYPE, NOW)).contains(ended);
+
+        verify(appEventRepository, never())
+                .findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(eq(TYPE), eq(NOW));
+    }
+
+    @Test
+    @DisplayName("진행 중/종료 이벤트가 모두 없으면 가장 먼저 시작하는 예정 이벤트를 반환한다")
+    void fallsBackToUpcomingEvent() {
+        AppEvent upcoming = event("9월 출석 이벤트");
+        givenNoActive();
+        givenNoEnded();
+        given(appEventRepository.findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(eq(TYPE), eq(NOW)))
+                .willReturn(Optional.of(upcoming));
+
+        assertThat(appEventAdaptor.findActiveOrNearestByType(TYPE, NOW)).contains(upcoming);
     }
 
     @Test
     @DisplayName("해당 타입 이벤트가 하나도 없으면 빈 값을 반환한다")
     void returnsEmptyWhenNoEventOfType() {
         givenNoActive();
-        givenNoUpcoming();
-        given(appEventRepository.findFirstByEventTypeAndEndAtLessThanEqualOrderByEndAtDesc(eq(TYPE), eq(NOW)))
+        givenNoEnded();
+        given(appEventRepository.findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(eq(TYPE), eq(NOW)))
                 .willReturn(Optional.empty());
 
         assertThat(appEventAdaptor.findActiveOrNearestByType(TYPE, NOW)).isEmpty();
