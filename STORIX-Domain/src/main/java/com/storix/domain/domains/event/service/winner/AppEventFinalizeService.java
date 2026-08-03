@@ -8,14 +8,18 @@ import com.storix.domain.domains.event.dto.EventWinner;
 import com.storix.domain.domains.event.exception.AppEventInvalidWinnerCountException;
 import com.storix.domain.domains.event.exception.AppEventNoWinnerException;
 import com.storix.domain.domains.event.exception.EventWinnerFinalizerNotImplementedException;
+import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AppEventFinalizeService {
@@ -38,9 +42,13 @@ public class AppEventFinalizeService {
         if (!event.isHasWinner()) {
             throw AppEventNoWinnerException.EXCEPTION;
         }
+        // 이후 확정 과정의 로그(EventWinnerFinalizer 포함)에 이벤트 유형을 실음
+        MDC.put(STORIXStatic.Mdc.APP_EVENT_TYPE, event.getEventType().name());
 
+        // 확정된 결과는 다시 뽑지 않는다
         List<EventWinner> confirmed = appEventWinnerService.findWinners(appEventId);
         if (!confirmed.isEmpty()) {
+            log.info(">>> [AppEvent] 이미 확정된 이벤트 - 재추첨 없이 반환 당첨={}명", confirmed.size());
             return toResponse(appEventId, true, confirmed);
         }
 
@@ -51,6 +59,7 @@ public class AppEventFinalizeService {
 
         List<EventWinner> winners = finalizer.resolveWinners(event, winnerCount);
         appEventWinnerService.saveWinners(appEventId, winners);
+        log.info(">>> [AppEvent] 당첨자 확정 완료 요청={}명, 확정={}명", winnerCount, winners.size());
         return toResponse(appEventId, false, winners);
     }
 
