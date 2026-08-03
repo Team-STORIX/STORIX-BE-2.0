@@ -37,12 +37,12 @@ public record PopupRequest(
         @Size(max = 40, message = "CTA 텍스트는 40자 이하여야 합니다.")
         String ctaText,
 
-        @Schema(description = "노출 시작 시각", example = "2026-06-25 00:00")
+        @Schema(description = "노출 시작 시각", example = "2026-06-25 00:00", type = "string")
         @NotNull(message = "노출 시작 일시는 필수입니다.")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime displayStartAt,
 
-        @Schema(description = "노출 종료 시각", example = "2026-06-30 23:59")
+        @Schema(description = "노출 종료 시각", example = "2026-06-30 00:00", type = "string")
         @NotNull(message = "노출 종료 일시는 필수입니다.")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime displayEndAt
