@@ -81,6 +81,8 @@ public class STORIXStatic {
         public static final String ALB_TRACE_ID = "albTraceId";
         public static final String RECIPIENT_USER_ID = "recipientUserId";
         public static final String ADMIN_NOTIFICATION_ID = "adminNotificationId";
+        public static final String APP_EVENT_ID = "appEventId";
+        public static final String APP_EVENT_TYPE = "appEventType";
     }
 
     // S3 업로드 객체 키 prefix
