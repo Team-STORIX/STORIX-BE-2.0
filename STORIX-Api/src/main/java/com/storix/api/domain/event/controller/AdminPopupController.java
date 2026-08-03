@@ -6,6 +6,9 @@ import com.storix.api.domain.event.controller.dto.PopupRequest;
 import com.storix.domain.domains.event.dto.PopupResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -28,6 +31,9 @@ public class AdminPopupController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "이벤트 팝업 생성", description = "multipart 요청: 'data'(application/json) 파트에 팝업 정보, 'file' 파트에 이미지. 서버가 이미지를 S3 업로드 후 생성합니다. 활성 팝업 노출 기간이 겹치면 생성할 수 없습니다.")
+    @RequestBody(content = @Content(
+            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+            encoding = @Encoding(name = "data", contentType = MediaType.APPLICATION_JSON_VALUE)))
     public CustomResponse<PopupResponse> createPopup(
             @AuthenticationPrincipal AuthUserDetails authUser,
             @Valid @RequestPart("data") PopupRequest req,
@@ -55,6 +61,9 @@ public class AdminPopupController {
 
     @PutMapping(value = "/{popupId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "이벤트 팝업 수정", description = "multipart 요청: 'data' 파트에 팝업 정보, 'file' 파트에 새 이미지(선택 - 없으면 기존 이미지 유지). 수정 즉시 앱 active 조회 응답에 반영됩니다.")
+    @RequestBody(content = @Content(
+            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+            encoding = @Encoding(name = "data", contentType = MediaType.APPLICATION_JSON_VALUE)))
     public CustomResponse<PopupResponse> updatePopup(
             @PathVariable Long popupId,
             @Valid @RequestPart("data") PopupRequest req,
