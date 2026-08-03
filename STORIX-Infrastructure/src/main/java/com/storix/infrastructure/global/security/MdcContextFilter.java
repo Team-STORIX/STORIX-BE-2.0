@@ -77,8 +77,6 @@ public class MdcContextFilter extends OncePerRequestFilter {
             MDC.remove(STORIXStatic.Mdc.ALB_TRACE_ID);
             MDC.remove(STORIXStatic.Mdc.USER_ID);
             MDC.remove(STORIXStatic.Mdc.ROLE);
-            MDC.remove(STORIXStatic.Mdc.APP_EVENT_ID);
-            MDC.remove(STORIXStatic.Mdc.APP_EVENT_TYPE);
         }
     }
 

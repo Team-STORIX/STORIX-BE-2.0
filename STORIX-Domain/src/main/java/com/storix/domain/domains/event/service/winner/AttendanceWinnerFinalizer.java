@@ -39,16 +39,22 @@ public class AttendanceWinnerFinalizer implements EventWinnerFinalizer {
         );
         List<AttendanceTicketHolder> drawn = WeightedTicketDraw.draw(candidates, winnerCount, RANDOM);
 
-        // 추첨은 되돌릴 수 없으므로 어떤 모수로 뽑았는지 남긴다 (appEventId/appEventType 은 MDC)
-        log.info(">>> [AttendanceEvent] 응모권 가중 추첨 완료 모수={}명/{}장, 요청={}명, 확정={}명",
-                candidates.size(),
-                candidates.stream().mapToInt(AttendanceTicketHolder::ticketCount).sum(),
-                winnerCount, drawn.size());
+        // 추첨은 되돌릴 수 없으므로 어떤 모수로 뽑았는지 남긴다
+        log.atInfo()
+                .addKeyValue("appEventId", event.getId())
+                .addKeyValue("candidateCount", candidates.size())
+                .addKeyValue("totalTickets", candidates.stream().mapToInt(AttendanceTicketHolder::ticketCount).sum())
+                .addKeyValue("requestedWinnerCount", winnerCount)
+                .addKeyValue("winnerCount", drawn.size())
+                .log(">>> [AttendanceEvent] 응모권 가중 추첨 완료");
 
         // 모수가 요청 인원보다 적어 상품이 남는 경우
         if (drawn.size() < winnerCount) {
-            log.warn(">>> [AttendanceEvent] 추첨 모수 부족 - 요청 인원보다 적게 확정됨 요청={}명, 확정={}명",
-                    winnerCount, drawn.size());
+            log.atWarn()
+                    .addKeyValue("appEventId", event.getId())
+                    .addKeyValue("requestedWinnerCount", winnerCount)
+                    .addKeyValue("winnerCount", drawn.size())
+                    .log(">>> [AttendanceEvent] 추첨 모수 부족 - 요청 인원보다 적게 확정됨");
         }
 
         return IntStream.range(0, drawn.size())
