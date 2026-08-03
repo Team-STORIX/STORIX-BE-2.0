@@ -26,9 +26,10 @@ public record AppEventRequest(
 
         @Schema(
                 description = "이벤트 종류. ATTENDANCE / STORY_CARD는 전용 API가 이 값으로 진행 중인 이벤트를 찾으므로 "
-                        + "같은 타입끼리 기간이 겹칠 수 없습니다. 미지정 시 GENERAL",
+                        + "같은 타입끼리 기간이 겹칠 수 없습니다. 특별한 종류가 없으면 GENERAL",
                 example = "STORY_CARD"
         )
+        @NotNull(message = "이벤트 종류는 필수입니다.")
         AppEventType eventType,
 
         @Schema(

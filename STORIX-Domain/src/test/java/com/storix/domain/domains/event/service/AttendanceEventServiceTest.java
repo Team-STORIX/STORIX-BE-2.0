@@ -66,7 +66,7 @@ class AttendanceEventServiceTest {
 
     // 서비스가 이벤트를 id가 아니라 ATTENDANCE 타입으로 찾는다
     private void givenEvent(AppEvent event) {
-        given(appEventAdaptor.findActiveOrLatestByType(eq(AppEventType.ATTENDANCE), any(LocalDateTime.class)))
+        given(appEventAdaptor.findActiveOrNearestByType(eq(AppEventType.ATTENDANCE), any(LocalDateTime.class)))
                 .willReturn(Optional.of(event));
     }
 
@@ -134,7 +134,7 @@ class AttendanceEventServiceTest {
         @Test
         @DisplayName("등록된 출석 이벤트가 없으면 404를 던진다")
         void status_event_not_found() {
-            given(appEventAdaptor.findActiveOrLatestByType(eq(AppEventType.ATTENDANCE), any(LocalDateTime.class)))
+            given(appEventAdaptor.findActiveOrNearestByType(eq(AppEventType.ATTENDANCE), any(LocalDateTime.class)))
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> attendanceEventService.getStatus(USER_ID, START.atStartOfDay()))

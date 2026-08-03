@@ -140,6 +140,7 @@ public enum ErrorCode {
     APP_EVENT_FORBIDDEN(HttpStatus.FORBIDDEN, "APP_EVENT_ERROR_002", "앱 이벤트를 확인할 권한이 없습니다."),
     APP_EVENT_PAYLOAD_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_003", "앱 이벤트 payload 직렬화에 실패했습니다."),
     APP_EVENT_WINNER_FINALIZER_NOT_IMPLEMENTED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_004", "당첨자 이벤트(hasWinner=true)는 종료 시 당첨자 확정(EventWinnerFinalizer) 구현이 필수입니다."),
+    APP_EVENT_NO_WINNER(HttpStatus.BAD_REQUEST, "APP_EVENT_ERROR_005", "당첨자를 뽑지 않는 이벤트입니다."),
 
     // Attendance Event error
     ATTENDANCE_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ATTENDANCE_EVENT_ERROR_001", "진행 중인 출석 이벤트가 없습니다."),

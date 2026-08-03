@@ -7,54 +7,62 @@ import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AttendanceDrawResponse;
 import com.storix.domain.domains.event.dto.AttendanceDrawWinner;
 import com.storix.domain.domains.event.dto.AttendanceTicketHolder;
+import com.storix.domain.domains.event.dto.EventWinner;
 import com.storix.domain.domains.event.exception.AttendanceDrawInvalidWinnerCountException;
 import com.storix.domain.domains.event.exception.AttendanceEventNotFoundException;
+import com.storix.domain.domains.event.service.winner.AppEventFinalizeService;
+import com.storix.domain.domains.event.service.winner.AppEventWinnerService;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.user.dto.AdminUserContactInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
-import java.util.random.RandomGenerator;
-import java.util.stream.IntStream;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AttendanceDrawService {
 
-    // 추첨 결과가 예측 가능하면 안 되므로 SecureRandom 사용
-    private static final RandomGenerator RANDOM = new SecureRandom();
-
     private final AppEventAdaptor appEventAdaptor;
     private final AttendanceCheckAdaptor attendanceCheckAdaptor;
+    private final AppEventFinalizeService appEventFinalizeService;
+    private final AppEventWinnerService appEventWinnerService;
     private final UserAdaptor userAdaptor;
 
-    // 응모권 수를 가중치로 당첨자를 뽑아 1위부터 순위순으로 반환한다.
-    // 결과를 저장하지 않으므로 호출할 때마다 새로 추첨된다.
-    @Transactional(readOnly = true)
+    // 당첨자 확정
+    @Transactional
     public AttendanceDrawResponse draw(Long appEventId, int winnerCount) {
         if (winnerCount <= 0) {
             throw AttendanceDrawInvalidWinnerCountException.EXCEPTION;
         }
         AppEvent event = resolveEvent(appEventId);
 
-        List<AttendanceTicketHolder> candidates = ticketHoldersOf(event);
-        List<AttendanceTicketHolder> drawn = WeightedTicketDraw.draw(candidates, winnerCount, RANDOM);
+        return toResponse(event, appEventFinalizeService.finalizeWinners(appEventId, winnerCount));
+    }
 
-        Map<Long, AdminUserContactInfo> userInfos = userAdaptor.findAdminUserContactInfoByUserIds(
-                drawn.stream().map(AttendanceTicketHolder::userId).toList()
+    // 당첨자 조회
+    // 아직 추첨하지 않은 이벤트면 당첨자 목록은 비어 있고 모수 통계만 채워진다.
+    @Transactional(readOnly = true)
+    public AttendanceDrawResponse findWinners(Long appEventId) {
+        AppEvent event = resolveEvent(appEventId);
+
+        return toResponse(event, appEventWinnerService.findWinners(appEventId));
+    }
+
+    // 모수 통계와 당첨자별 응모권 수는 저장하지 않고 매번 계산, 당첨자는 변경되지 않음
+    private AttendanceDrawResponse toResponse(AppEvent event, List<EventWinner> winners) {
+        List<AttendanceTicketHolder> candidates = AttendanceTicketPolicy.ticketHoldersOf(
+                event, attendanceCheckAdaptor.findAttendeeCounts(event.getId())
         );
 
         return AttendanceDrawResponse.builder()
                 .appEventId(event.getId())
-                .requestedWinnerCount(winnerCount)
                 .candidateCount(candidates.size())
                 .totalTickets(candidates.stream().mapToInt(AttendanceTicketHolder::ticketCount).sum())
-                .winners(toWinners(drawn, userInfos))
+                .winners(toWinners(winners, candidates))
                 .build();
     }
 
@@ -69,36 +77,23 @@ public class AttendanceDrawService {
                 .orElseThrow(() -> AttendanceEventNotFoundException.EXCEPTION);
     }
 
-    // 참여자별 누적 출석일을 이벤트 지급표에 태워 응모권 수로 환산한다. 응모권이 없으면 추첨 모수에서 빠진다.
-    private List<AttendanceTicketHolder> ticketHoldersOf(AppEvent event) {
-        NavigableMap<Integer, Integer> schedule = AttendanceTicketPolicy.scheduleOf(event);
-        return attendanceCheckAdaptor.findAttendeeCounts(event.getId()).stream()
-                .map(attendee -> {
-                    int attendedDays = Math.toIntExact(attendee.attendedDays());
-                    return new AttendanceTicketHolder(
-                            attendee.userId(),
-                            attendedDays,
-                            AttendanceTicketPolicy.issuedTicketsFor(schedule, attendedDays)
-                    );
-                })
-                .filter(holder -> holder.ticketCount() > 0)
-                .toList();
-    }
+    private List<AttendanceDrawWinner> toWinners(List<EventWinner> winners,
+                                                 List<AttendanceTicketHolder> candidates) {
+        Map<Long, AttendanceTicketHolder> holderByUserId = candidates.stream()
+                .collect(Collectors.toMap(AttendanceTicketHolder::userId, Function.identity()));
+        Map<Long, String> nickNames = userAdaptor.findNicknameMapByUserIds(
+                winners.stream().map(EventWinner::userId).toList()
+        );
 
-    private static List<AttendanceDrawWinner> toWinners(List<AttendanceTicketHolder> drawn,
-                                                        Map<Long, AdminUserContactInfo> userInfos) {
-        return IntStream.range(0, drawn.size())
-                .mapToObj(index -> {
-                    AttendanceTicketHolder holder = drawn.get(index);
-                    AdminUserContactInfo info = userInfos.get(holder.userId());
+        return winners.stream()
+                .map(winner -> {
+                    AttendanceTicketHolder holder = holderByUserId.get(winner.userId());
                     return AttendanceDrawWinner.builder()
-                            .rank(index + 1)
-                            .userId(holder.userId())
-                            .nickName(info == null ? null : info.nickName())
-                            .email(info == null ? null : info.email())
-                            .profileImageUrl(info == null ? null : info.profileImageUrl())
-                            .ticketCount(holder.ticketCount())
-                            .totalAttendedDays(holder.totalAttendedDays())
+                            .drawOrder(winner.drawOrder())
+                            .userId(winner.userId())
+                            .nickName(nickNames.get(winner.userId()))
+                            .ticketCount(holder == null ? 0 : holder.ticketCount())
+                            .totalAttendedDays(holder == null ? 0 : holder.totalAttendedDays())
                             .build();
                 })
                 .toList();

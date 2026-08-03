@@ -83,7 +83,7 @@ class StoryCardEventServiceTest {
 
     // 서비스가 이벤트를 id가 아니라 STORY_CARD 타입으로 찾는다
     private void givenEvent(AppEvent event) {
-        given(appEventAdaptor.findActiveOrLatestByType(eq(AppEventType.STORY_CARD), any(LocalDateTime.class)))
+        given(appEventAdaptor.findActiveOrNearestByType(eq(AppEventType.STORY_CARD), any(LocalDateTime.class)))
                 .willReturn(Optional.of(event));
     }
 
@@ -222,7 +222,7 @@ class StoryCardEventServiceTest {
         @Test
         @DisplayName("등록된 스토리 카드 이벤트가 없으면 404를 던진다")
         void status_event_not_found() {
-            given(appEventAdaptor.findActiveOrLatestByType(eq(AppEventType.STORY_CARD), any(LocalDateTime.class)))
+            given(appEventAdaptor.findActiveOrNearestByType(eq(AppEventType.STORY_CARD), any(LocalDateTime.class)))
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> storyCardEventService.getStatus(USER_ID, START.atTime(10, 0)))
@@ -364,7 +364,7 @@ class StoryCardEventServiceTest {
         @Test
         @DisplayName("등록된 스토리 카드 이벤트가 없으면 404를 던진다")
         void draw_event_not_found() {
-            given(appEventAdaptor.findActiveOrLatestByType(eq(AppEventType.STORY_CARD), any(LocalDateTime.class)))
+            given(appEventAdaptor.findActiveOrNearestByType(eq(AppEventType.STORY_CARD), any(LocalDateTime.class)))
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> storyCardEventService.draw(USER_ID, START.atTime(10, 0)))

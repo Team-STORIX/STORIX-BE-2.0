@@ -31,6 +31,11 @@ public class AppEventAdaptor {
         return appEventRepository.findById(appEventId);
     }
 
+    public AppEvent findByIdForUpdate(Long appEventId) {
+        return appEventRepository.findByIdForUpdate(appEventId)
+                .orElseThrow(() -> AppEventNotFoundException.EXCEPTION);
+    }
+
     public Page<AppEvent> findAll(Pageable pageable) {
         return appEventRepository.findAllByOrderByIdDesc(pageable);
     }
@@ -39,21 +44,15 @@ public class AppEventAdaptor {
         return appEventRepository.searchByName(keyword, pageable);
     }
 
-    /**
-     * 전용 API가 대상 이벤트를 찾는 경로.
-     *
-     * 진행 중인 이벤트를 우선 반환하고, 없으면 해당 타입의 가장 최근 이벤트로 폴백한다.
-     * 폴백이 있어야 기간 종료 후에도 이벤트 기간을 내려주며 eventActive=false로 응답할 수 있다.
-     */
-    public Optional<AppEvent> findActiveOrLatestByType(AppEventType eventType, LocalDateTime now) {
+    // 진행 중 → 가장 먼저 시작하는 예정 → 가장 최근에 종료된 이벤트 순으로 폴백
+    public Optional<AppEvent> findActiveOrNearestByType(AppEventType eventType, LocalDateTime now) {
         return appEventRepository.findActiveByType(eventType, now).stream()
                 .findFirst()
-                .or(() -> appEventRepository.findFirstByEventTypeOrderByStartAtDesc(eventType));
+                .or(() -> appEventRepository.findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(eventType, now))
+                .or(() -> appEventRepository.findFirstByEventTypeAndEndAtLessThanEqualOrderByEndAtDesc(eventType, now));
     }
 
-    /**
-     * 같은 타입 이벤트끼리 기간이 겹치는지 확인하면서 해당 구간에 쓰기 락
-     */
+    // 같은 타입 이벤트끼리 기간이 겹치는지 확인하면서 해당 구간에 쓰기 락
     public boolean lockAndCheckOverlappingByType(AppEventType eventType,
                                                  LocalDateTime startAt,
                                                  LocalDateTime endAt,

@@ -6,19 +6,15 @@ import lombok.Builder;
 @Builder
 public record AttendanceDrawWinner(
 
-        @Schema(description = "당첨 순위 (1위부터)", example = "1")
-        int rank,
+        @Schema(description = "뽑힌 순서 (1부터). 상품이 나뉘는 이벤트는 이 순서로 앞에서 N명씩 끊어 씁니다.", example = "1")
+        int drawOrder,
 
+        @Schema(description = "유저 ID", example = "42")
         Long userId,
 
-        @Schema(description = "닉네임")
+        // 당첨 안내는 푸시 알림 + 구글 폼으로 진행
+        @Schema(description = "닉네임 (탈퇴 시 마스킹된 표시명)")
         String nickName,
-
-        @Schema(description = "소셜 로그인 이메일 (경품 발송 연락처)")
-        String email,
-
-        @Schema(description = "프로필 이미지 URL (미설정 시 null)")
-        String profileImageUrl,
 
         @Schema(description = "보유 응모권 수 (추첨 가중치)", example = "5")
         int ticketCount,
