@@ -24,16 +24,8 @@ public class WorksPlatform {
     @Column(nullable = false)
     private Platform platform;
 
-    @Column(name = "landing_url", length = 500)
-    private String landingUrl;
-
     public WorksPlatform(Works works, Platform platform) {
-        this(works, platform, null);
-    }
-
-    public WorksPlatform(Works works, Platform platform, String landingUrl) {
         this.works = works;
         this.platform = platform;
-        this.landingUrl = landingUrl;
     }
 }

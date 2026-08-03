@@ -1,8 +1,6 @@
 package com.storix.domain.domains.works.repository;
 
-import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
 import com.storix.domain.domains.onboarding.dto.OnboardingWorksInfo;
-import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
@@ -128,16 +126,6 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
             "WHERE w.isOnboarding = true " +
             "ORDER BY w.id ASC ")
     List<OnboardingWorksInfo> findAllOnboardingWorksInfo();
-
-    // 오늘의 스토리 카드 '행운의 작품' 후보 조회용
-    @Query("SELECT new com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick(" +
-            "w.id, w.worksName, w.worksType, p.platform, p.landingUrl) " +
-            "FROM Works w " +
-            "JOIN w.platforms p " +
-            "WHERE w.isStoryCardLuckyWork = true " +
-            "AND w.genre = :genre " +
-            "ORDER BY w.id ASC")
-    List<StoryCardLuckyWorkPick> findStoryCardLuckyWorksByGenre(@Param("genre") Genre genre);
 
     // 피드 관심 작품 리스트 조회용
     @Query("SELECT new com.storix.domain.domains.works.dto.SlicedWorksInfo(w.id, w.thumbnailUrl, w.worksName) " +

@@ -132,27 +132,17 @@ public enum ErrorCode {
     ADMIN_APP_EVENT_PERIOD_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_003", "앱 이벤트 시작/종료 일시는 필수입니다."),
     ADMIN_APP_EVENT_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_004", "앱 이벤트 종료 일시는 시작 일시 이후여야 합니다."),
     ADMIN_APP_EVENT_INVALID_ATTENDANCE_REWARDS(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_005", "출석 응모권 지급 기준은 출석일 1 이상, 응모권 0 이상이며 출석일이 늘수록 누적 응모권이 줄어들 수 없습니다."),
-    ADMIN_APP_EVENT_OVERLAPPING_TYPE(HttpStatus.CONFLICT, "ADMIN_APP_EVENT_ERROR_006", "같은 종류의 이벤트를 같은 기간에 두 개 이상 진행할 수 없습니다."),
-    ADMIN_APP_EVENT_INVALID_PERIOD_BOUNDARY(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_007", "이벤트 종류별 기준 시각에 시작/종료 일시를 맞춰야 합니다. (출석 체크 00:00, 오늘의 스토리 카드 06:00)"),
 
     // App Event error
     APP_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "APP_EVENT_ERROR_001", "존재하지 않는 앱 이벤트입니다."),
     APP_EVENT_FORBIDDEN(HttpStatus.FORBIDDEN, "APP_EVENT_ERROR_002", "앱 이벤트를 확인할 권한이 없습니다."),
     APP_EVENT_PAYLOAD_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_003", "앱 이벤트 payload 직렬화에 실패했습니다."),
     APP_EVENT_WINNER_FINALIZER_NOT_IMPLEMENTED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_004", "당첨자 이벤트(hasWinner=true)는 종료 시 당첨자 확정(EventWinnerFinalizer) 구현이 필수입니다."),
-    APP_EVENT_NO_WINNER(HttpStatus.BAD_REQUEST, "APP_EVENT_ERROR_005", "당첨자를 뽑지 않는 이벤트입니다."),
-    APP_EVENT_INVALID_WINNER_COUNT(HttpStatus.BAD_REQUEST, "APP_EVENT_ERROR_006", "추첨 인원은 1명 이상이어야 합니다."),
 
     // Attendance Event error
     ATTENDANCE_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ATTENDANCE_EVENT_ERROR_001", "진행 중인 출석 이벤트가 없습니다."),
     ATTENDANCE_EVENT_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "ATTENDANCE_EVENT_ERROR_002", "출석 이벤트 기간이 아닙니다."),
     ATTENDANCE_ALREADY_CHECKED_IN(HttpStatus.CONFLICT, "ATTENDANCE_EVENT_ERROR_003", "오늘은 이미 출석 체크를 완료했습니다."),
-
-    // Story Card Event error
-    STORY_CARD_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STORY_CARD_ERROR_001", "진행 중인 오늘의 스토리 카드 이벤트가 없습니다."),
-    STORY_CARD_EVENT_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "STORY_CARD_ERROR_002", "오늘의 스토리 카드 이벤트 기간이 아닙니다."),
-    STORY_CARD_CONTENT_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "STORY_CARD_ERROR_003", "오늘의 스토리 카드 콘텐츠가 등록되어 있지 않습니다."),
-    STORY_CARD_DRAW_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORY_CARD_ERROR_004", "오늘의 스토리 카드 저장에 실패했습니다."),
 
     // OIDC error
     OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),

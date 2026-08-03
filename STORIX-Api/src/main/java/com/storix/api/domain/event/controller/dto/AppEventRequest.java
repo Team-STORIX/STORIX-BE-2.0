@@ -1,7 +1,6 @@
 package com.storix.api.domain.event.controller.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.domain.PromotionType;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,27 +23,12 @@ public record AppEventRequest(
         @Size(max = 500, message = "앱 이벤트 설명은 500자 이하여야 합니다.")
         String description,
 
-        @Schema(
-                description = "이벤트 종류. ATTENDANCE / STORY_CARD는 전용 API가 이 값으로 진행 중인 이벤트를 찾으므로 "
-                        + "같은 타입끼리 기간이 겹칠 수 없습니다. 특별한 종류가 없으면 GENERAL",
-                example = "STORY_CARD"
-        )
-        @NotNull(message = "이벤트 종류는 필수입니다.")
-        AppEventType eventType,
-
-        @Schema(
-                description = "이벤트 시작 시각. ATTENDANCE는 00:00, STORY_CARD는 06:00(카드 초기화 시각)에 맞춰야 합니다.",
-                example = "2026-07-01 00:00"
-        )
+        @Schema(description = "이벤트 시작 시각", example = "2026-07-01 00:00")
         @NotNull(message = "이벤트 시작 일시는 필수입니다.")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime startAt,
 
-        @Schema(
-                description = "이벤트 종료 시각(exclusive). 시작 시각과 같은 경계에 맞춰야 하며, "
-                        + "마지막 참여일의 다음 경계를 넣습니다. (7/31까지 출석 → 2026-08-01 00:00)",
-                example = "2026-08-01 00:00"
-        )
+        @Schema(description = "이벤트 종료 시각", example = "2026-07-31 23:59")
         @NotNull(message = "이벤트 종료 일시는 필수입니다.")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime endAt,
@@ -68,6 +52,6 @@ public record AppEventRequest(
     }
 
     public AppEventCommand toCommand() {
-        return new AppEventCommand(name, description, eventType, startAt, endAt, hasWinner, promotionTypes, attendanceRewards);
+        return new AppEventCommand(name, description, startAt, endAt, hasWinner, promotionTypes, attendanceRewards);
     }
 }

@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,12 +16,7 @@ import java.util.Set;
 
 @Entity
 @Getter
-@Table(
-        name = "app_events",
-        // 같은 타입 이벤트의 기간 겹침 검사(SELECT ... FOR UPDATE)가 타는 인덱스.
-        // 없으면 풀스캔이라 InnoDB가 테이블 전체에 락을 걸어 이벤트 생성/수정이 전부 직렬화된다
-        indexes = @Index(name = "idx_app_event_type_period", columnList = "event_type, start_at, end_at")
-)
+@Table(name = "app_events")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AppEvent extends BaseTimeEntity {
 
@@ -36,10 +30,6 @@ public class AppEvent extends BaseTimeEntity {
 
     @Column(name = "description", length = 500)
     private String description;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "event_type", nullable = false, length = 20)
-    private AppEventType eventType;
 
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
@@ -77,7 +67,6 @@ public class AppEvent extends BaseTimeEntity {
     @Builder
     public AppEvent(String name,
                     String description,
-                    AppEventType eventType,
                     LocalDateTime startAt,
                     LocalDateTime endAt,
                     boolean hasWinner,
@@ -86,7 +75,6 @@ public class AppEvent extends BaseTimeEntity {
                     Long assigneeAdminId) {
         this.name = name;
         this.description = description;
-        this.eventType = eventType == null ? AppEventType.GENERAL : eventType;
         this.startAt = startAt;
         this.endAt = endAt;
         this.hasWinner = hasWinner;
@@ -101,7 +89,6 @@ public class AppEvent extends BaseTimeEntity {
 
     public void update(String name,
                        String description,
-                       AppEventType eventType,
                        LocalDateTime startAt,
                        LocalDateTime endAt,
                        boolean hasWinner,
@@ -109,9 +96,6 @@ public class AppEvent extends BaseTimeEntity {
                        Map<Integer, Integer> attendanceRewards) {
         this.name = name;
         this.description = description;
-        if (eventType != null) {
-            this.eventType = eventType;
-        }
         this.startAt = startAt;
         this.endAt = endAt;
         this.hasWinner = hasWinner;
@@ -129,23 +113,5 @@ public class AppEvent extends BaseTimeEntity {
 
     public void endNow(LocalDateTime now) {
         this.endAt = now;
-    }
-
-    public boolean isActiveAt(LocalDateTime now) {
-        return !now.isBefore(startAt) && now.isBefore(endAt);
-    }
-
-    // 이벤트 종류별 기준 시각(출석 자정 / 스토리 카드 06:00)으로 계산한 서비스 날짜
-    public LocalDate serviceDateOf(LocalDateTime now) {
-        return eventType.serviceDateOf(now);
-    }
-
-    // 참여 가능한 첫 날. end_at은 exclusive 경계라 마지막 날은 그 직전 시점 기준으로 계산한다
-    public LocalDate participationStartDate() {
-        return eventType.firstParticipableDate(startAt);
-    }
-
-    public LocalDate participationEndDate() {
-        return eventType.lastParticipableDate(endAt);
     }
 }

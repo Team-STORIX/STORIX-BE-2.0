@@ -65,12 +65,6 @@ public class STORIXStatic {
             "/api/v1/auth/admin/slack/callback"
     );
 
-    // 오늘의 스토리 카드
-    public static class StoryCard {
-        public static final int RESET_HOUR = 6;
-        public static final int RETENTION_DAYS = 0;
-    }
-
     // MDC 로그 상관키
     public static class Mdc {
         public static final String TRACE_ID = "traceId";

@@ -1,6 +1,5 @@
 package com.storix.domain.domains.event.dto;
 
-import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.domain.PromotionType;
 
 import java.time.LocalDateTime;
@@ -10,7 +9,6 @@ import java.util.Set;
 public record AppEventCommand(
         String name,
         String description,
-        AppEventType eventType,
         LocalDateTime startAt,
         LocalDateTime endAt,
         boolean hasWinner,

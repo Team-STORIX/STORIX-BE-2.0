@@ -7,25 +7,24 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-// 확정된 당첨자만 남기는 테이블
 @Entity
 @Getter
 @Table(
-        name = "app_event_winners",
+        name = "app_event_participants",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_app_event_winner_user",
+                name = "uk_app_event_participant_user",
                 columnNames = {"app_event_id", "user_id"}
         ),
         indexes = {
-                @Index(name = "idx_app_event_winner_order", columnList = "app_event_id, draw_order")
+                @Index(name = "idx_app_event_participant_winner", columnList = "app_event_id, is_winner, user_id")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AppEventWinner extends BaseTimeEntity {
+public class AppEventParticipant extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "app_event_winner_id")
+    @Column(name = "app_event_participant_id")
     private Long id;
 
     @Column(name = "app_event_id", nullable = false)
@@ -34,14 +33,17 @@ public class AppEventWinner extends BaseTimeEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    // 뽑힌 순서 (1부터)
-    @Column(name = "draw_order", nullable = false)
-    private int drawOrder;
+    @Column(name = "is_winner", nullable = false)
+    private boolean winner;
 
     @Builder
-    public AppEventWinner(Long appEventId, Long userId, int drawOrder) {
+    public AppEventParticipant(Long appEventId, Long userId, boolean winner) {
         this.appEventId = appEventId;
         this.userId = userId;
-        this.drawOrder = drawOrder;
+        this.winner = winner;
+    }
+
+    public void markWinner() {
+        this.winner = true;
     }
 }

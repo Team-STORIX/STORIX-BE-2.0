@@ -3,7 +3,6 @@ package com.storix.domain.domains.event.service;
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.event.adaptor.AttendanceCheckAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
-import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AttendanceCheckInResponse;
 import com.storix.domain.domains.event.dto.AttendanceStatusResponse;
 import com.storix.domain.domains.event.exception.AttendanceAlreadyCheckedInException;
@@ -26,8 +25,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -64,12 +61,6 @@ class AttendanceEventServiceTest {
         return event(START.atStartOfDay(), END.atTime(23, 59));
     }
 
-    // 서비스가 이벤트를 id가 아니라 ATTENDANCE 타입으로 찾는다
-    private void givenEvent(AppEvent event) {
-        given(appEventAdaptor.findActiveOrNearestByType(eq(AppEventType.ATTENDANCE), any(LocalDateTime.class)))
-                .willReturn(Optional.of(event));
-    }
-
     private AppEvent eventWithRewards(Map<Integer, Integer> rewards) {
         AppEvent e = AppEvent.builder()
                 .name("커스텀 출석 이벤트").description("설명")
@@ -90,10 +81,10 @@ class AttendanceEventServiceTest {
         void status_ok() {
             LocalDate today = START.plusDays(3);
             List<LocalDate> attended = List.of(START, START.plusDays(1), START.plusDays(3));
-            givenEvent(defaultEvent());
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
             given(attendanceCheckAdaptor.findAttendedDates(EVENT_ID, USER_ID)).willReturn(attended);
 
-            AttendanceStatusResponse status = attendanceEventService.getStatus(USER_ID, today.atStartOfDay());
+            AttendanceStatusResponse status = attendanceEventService.getStatus(EVENT_ID, USER_ID, today.atStartOfDay());
 
             assertThat(status.appEventId()).isEqualTo(EVENT_ID);
             assertThat(status.eventStartDate()).isEqualTo(START);
@@ -109,10 +100,10 @@ class AttendanceEventServiceTest {
         @DisplayName("이벤트 기간 외에는 eventActive=false 로 반환한다")
         void status_inactive_after_end() {
             LocalDate today = END.plusDays(1);
-            givenEvent(defaultEvent());
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
             given(attendanceCheckAdaptor.findAttendedDates(EVENT_ID, USER_ID)).willReturn(List.of());
 
-            AttendanceStatusResponse status = attendanceEventService.getStatus(USER_ID, today.atStartOfDay());
+            AttendanceStatusResponse status = attendanceEventService.getStatus(EVENT_ID, USER_ID, today.atStartOfDay());
 
             assertThat(status.eventActive()).isFalse();
             assertThat(status.attendedToday()).isFalse();
@@ -122,22 +113,24 @@ class AttendanceEventServiceTest {
         @Test
         @DisplayName("end_at이 자정(exclusive)이면 종료일은 그 전날이다")
         void status_end_at_midnight() {
-            givenEvent(event(START.atStartOfDay(), END.plusDays(1).atStartOfDay()));
+            given(appEventAdaptor.findOptionalById(EVENT_ID))
+                    .willReturn(Optional.of(event(START.atStartOfDay(), END.plusDays(1).atStartOfDay())));
             given(attendanceCheckAdaptor.findAttendedDates(EVENT_ID, USER_ID)).willReturn(List.of());
 
-            AttendanceStatusResponse status = attendanceEventService.getStatus(USER_ID, END.atStartOfDay());
+            AttendanceStatusResponse status = attendanceEventService.getStatus(EVENT_ID, USER_ID, END.atStartOfDay());
 
             assertThat(status.eventEndDate()).isEqualTo(END);
             assertThat(status.eventActive()).isTrue();
         }
 
         @Test
-        @DisplayName("등록된 출석 이벤트가 없으면 404를 던진다")
+        @DisplayName("이벤트가 설정되지 않았거나(0) 존재하지 않으면 404를 던진다")
         void status_event_not_found() {
-            given(appEventAdaptor.findActiveOrNearestByType(eq(AppEventType.ATTENDANCE), any(LocalDateTime.class)))
-                    .willReturn(Optional.empty());
+            assertThatThrownBy(() -> attendanceEventService.getStatus(0L, USER_ID, START.atStartOfDay()))
+                    .isInstanceOf(AttendanceEventNotFoundException.class);
 
-            assertThatThrownBy(() -> attendanceEventService.getStatus(USER_ID, START.atStartOfDay()))
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.empty());
+            assertThatThrownBy(() -> attendanceEventService.getStatus(EVENT_ID, USER_ID, START.atStartOfDay()))
                     .isInstanceOf(AttendanceEventNotFoundException.class);
         }
     }
@@ -150,11 +143,11 @@ class AttendanceEventServiceTest {
         @DisplayName("정상 출석 시 누적 출석일과 응모권 정보를 반환한다 (마일스톤 미달성)")
         void checkIn_ok_no_milestone() {
             LocalDate today = START.plusDays(1);
-            givenEvent(defaultEvent());
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
             given(attendanceCheckAdaptor.insertIfAbsent(EVENT_ID, USER_ID, today)).willReturn(true);
             given(attendanceCheckAdaptor.countAttendedDays(EVENT_ID, USER_ID)).willReturn(2L);
 
-            AttendanceCheckInResponse response = attendanceEventService.checkIn(USER_ID, today.atStartOfDay());
+            AttendanceCheckInResponse response = attendanceEventService.checkIn(EVENT_ID, USER_ID, today.atStartOfDay());
 
             assertThat(response.attendedDate()).isEqualTo(today);
             assertThat(response.totalAttendedDays()).isEqualTo(2);
@@ -166,11 +159,11 @@ class AttendanceEventServiceTest {
         @DisplayName("7일 달성 시 누적 응모권이 2개가 된다 (+1)")
         void checkIn_seven_days_issues_ticket() {
             LocalDate today = START.plusDays(6);
-            givenEvent(defaultEvent());
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
             given(attendanceCheckAdaptor.insertIfAbsent(EVENT_ID, USER_ID, today)).willReturn(true);
             given(attendanceCheckAdaptor.countAttendedDays(EVENT_ID, USER_ID)).willReturn(7L);
 
-            AttendanceCheckInResponse response = attendanceEventService.checkIn(USER_ID, today.atStartOfDay());
+            AttendanceCheckInResponse response = attendanceEventService.checkIn(EVENT_ID, USER_ID, today.atStartOfDay());
 
             assertThat(response.newlyIssuedTickets()).isEqualTo(1);
             assertThat(response.issuedTickets()).isEqualTo(2);
@@ -180,11 +173,11 @@ class AttendanceEventServiceTest {
         @DisplayName("12일 달성 시 누적 응모권이 5개가 된다 (+3)")
         void checkIn_twelve_days_issues_tickets() {
             LocalDate today = START.plusDays(11);
-            givenEvent(defaultEvent());
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
             given(attendanceCheckAdaptor.insertIfAbsent(EVENT_ID, USER_ID, today)).willReturn(true);
             given(attendanceCheckAdaptor.countAttendedDays(EVENT_ID, USER_ID)).willReturn(12L);
 
-            AttendanceCheckInResponse response = attendanceEventService.checkIn(USER_ID, today.atStartOfDay());
+            AttendanceCheckInResponse response = attendanceEventService.checkIn(EVENT_ID, USER_ID, today.atStartOfDay());
 
             assertThat(response.newlyIssuedTickets()).isEqualTo(3);
             assertThat(response.issuedTickets()).isEqualTo(5);
@@ -195,11 +188,12 @@ class AttendanceEventServiceTest {
         void checkIn_uses_event_reward_schedule() {
             // 이벤트가 5일차부터 3개 지급하도록 지정 → 기본표(3일 1개)와 다른 결과
             LocalDate today = START.plusDays(4);
-            givenEvent(eventWithRewards(Map.of(5, 3, 10, 8)));
+            given(appEventAdaptor.findOptionalById(EVENT_ID))
+                    .willReturn(Optional.of(eventWithRewards(Map.of(5, 3, 10, 8))));
             given(attendanceCheckAdaptor.insertIfAbsent(EVENT_ID, USER_ID, today)).willReturn(true);
             given(attendanceCheckAdaptor.countAttendedDays(EVENT_ID, USER_ID)).willReturn(5L);
 
-            AttendanceCheckInResponse response = attendanceEventService.checkIn(USER_ID, today.atStartOfDay());
+            AttendanceCheckInResponse response = attendanceEventService.checkIn(EVENT_ID, USER_ID, today.atStartOfDay());
 
             assertThat(response.newlyIssuedTickets()).isEqualTo(3); // 4일차 0개 → 5일차 3개
             assertThat(response.issuedTickets()).isEqualTo(3);
@@ -209,10 +203,10 @@ class AttendanceEventServiceTest {
         @DisplayName("이미 출석한 날 재요청 시 409를 던진다")
         void checkIn_duplicate() {
             LocalDate today = START.plusDays(1);
-            givenEvent(defaultEvent());
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
             given(attendanceCheckAdaptor.insertIfAbsent(EVENT_ID, USER_ID, today)).willReturn(false);
 
-            assertThatThrownBy(() -> attendanceEventService.checkIn(USER_ID, today.atStartOfDay()))
+            assertThatThrownBy(() -> attendanceEventService.checkIn(EVENT_ID, USER_ID, today.atStartOfDay()))
                     .isInstanceOf(AttendanceAlreadyCheckedInException.class);
         }
 
@@ -220,9 +214,9 @@ class AttendanceEventServiceTest {
         @DisplayName("이벤트 기간 외 출석 요청 시 400을 던지고 출석을 기록하지 않는다")
         void checkIn_not_active() {
             LocalDate today = START.minusDays(1);
-            givenEvent(defaultEvent());
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(defaultEvent()));
 
-            assertThatThrownBy(() -> attendanceEventService.checkIn(USER_ID, today.atStartOfDay()))
+            assertThatThrownBy(() -> attendanceEventService.checkIn(EVENT_ID, USER_ID, today.atStartOfDay()))
                     .isInstanceOf(AttendanceEventNotActiveException.class);
             verify(attendanceCheckAdaptor, never()).insertIfAbsent(EVENT_ID, USER_ID, today);
         }
@@ -231,10 +225,10 @@ class AttendanceEventServiceTest {
         @DisplayName("시작 시각 이전에는 같은 날이어도 400을 던진다 (시:분 경계)")
         void checkIn_before_start_time() {
             AppEvent startsAtThreePm = event(START.atTime(15, 0), END.atTime(23, 59));
-            givenEvent(startsAtThreePm);
+            given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.of(startsAtThreePm));
 
             LocalDateTime beforeStart = START.atTime(9, 0);
-            assertThatThrownBy(() -> attendanceEventService.checkIn(USER_ID, beforeStart))
+            assertThatThrownBy(() -> attendanceEventService.checkIn(EVENT_ID, USER_ID, beforeStart))
                     .isInstanceOf(AttendanceEventNotActiveException.class);
             verify(attendanceCheckAdaptor, never()).insertIfAbsent(EVENT_ID, USER_ID, START);
         }
