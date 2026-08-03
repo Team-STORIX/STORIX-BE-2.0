@@ -3,6 +3,7 @@ package com.storix.domain.domains.event.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventStatus;
+import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.domain.PromotionType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -18,6 +19,9 @@ public record AppEventResponse(
         String name,
 
         String description,
+
+        @Schema(description = "이벤트 종류 (GENERAL / ATTENDANCE / STORY_CARD)")
+        AppEventType eventType,
 
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime startAt,
@@ -48,6 +52,7 @@ public record AppEventResponse(
                 .id(appEvent.getId())
                 .name(appEvent.getName())
                 .description(appEvent.getDescription())
+                .eventType(appEvent.getEventType())
                 .startAt(appEvent.getStartAt())
                 .endAt(appEvent.getEndAt())
                 .status(AppEventStatus.resolve(appEvent.getStartAt(), appEvent.getEndAt(), LocalDateTime.now()))
