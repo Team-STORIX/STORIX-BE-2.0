@@ -64,10 +64,9 @@ public class AttendanceEventService {
                 .build();
     }
 
-    // 진행 중인 ATTENDANCE 이벤트를 DB에서 찾는다. 없으면 가장 최근 이벤트로 폴백해
-    // 기간 정보를 내려주고 eventActive=false로 응답한다
+    // 진행 중인 ATTENDANCE 이벤트 검색 및 폴백
     private AppEvent resolveEvent(LocalDateTime now) {
-        return appEventAdaptor.findActiveOrLatestByType(AppEventType.ATTENDANCE, now)
+        return appEventAdaptor.findActiveOrNearestByType(AppEventType.ATTENDANCE, now)
                 .orElseThrow(() -> AttendanceEventNotFoundException.EXCEPTION);
     }
 }

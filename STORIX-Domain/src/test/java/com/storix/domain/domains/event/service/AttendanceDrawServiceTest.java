@@ -7,10 +7,11 @@ import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AttendanceAttendeeCount;
 import com.storix.domain.domains.event.dto.AttendanceDrawResponse;
 import com.storix.domain.domains.event.dto.AttendanceDrawWinner;
+import com.storix.domain.domains.event.dto.EventWinner;
 import com.storix.domain.domains.event.exception.AttendanceDrawInvalidWinnerCountException;
 import com.storix.domain.domains.event.exception.AttendanceEventNotFoundException;
+import com.storix.domain.domains.event.service.winner.AppEventFinalizeService;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.user.dto.AdminUserContactInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,13 +27,15 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("[출석 이벤트] 당첨자 추첨 - 응모권 가중치 랜덤")
+@DisplayName("[출석 이벤트] 당첨자 확정 API - 확정 결과 + 모수 통계 조립")
 class AttendanceDrawServiceTest {
 
     private static final Long EVENT_ID = 100L;
@@ -44,6 +47,9 @@ class AttendanceDrawServiceTest {
 
     @Mock
     private AttendanceCheckAdaptor attendanceCheckAdaptor;
+
+    @Mock
+    private AppEventFinalizeService appEventFinalizeService;
 
     @Mock
     private UserAdaptor userAdaptor;
@@ -72,51 +78,45 @@ class AttendanceDrawServiceTest {
         given(attendanceCheckAdaptor.findAttendeeCounts(EVENT_ID)).willReturn(List.of(counts));
     }
 
-    private static AdminUserContactInfo userInfo(long userId) {
-        return new AdminUserContactInfo(
-                userId, "닉네임" + userId, "user" + userId + "@storix.kr", "https://cdn/profile" + userId + ".png");
+    private void givenConfirmedWinners(EventWinner... winners) {
+        given(appEventFinalizeService.finalizeWinners(anyLong(), anyInt())).willReturn(List.of(winners));
     }
 
     @Test
-    @DisplayName("당첨자를 1위부터 순위순으로, 유저 정보·응모권 수·출석일과 함께 반환한다")
-    void draw_returns_ranked_winners() {
+    @DisplayName("확정된 당첨자를 뽑힌 순서대로, 닉네임·응모권 수·출석일과 함께 반환한다")
+    void draw_returns_confirmed_winners() {
         // 기본 지급표(3일 1개 / 7일 2개 / 12일 5개) 기준
         givenAttendees(
                 new AttendanceAttendeeCount(1L, 3L),   // 응모권 1
                 new AttendanceAttendeeCount(2L, 12L)   // 응모권 5
         );
-        given(userAdaptor.findAdminUserContactInfoByUserIds(anyList()))
-                .willReturn(Map.of(1L, userInfo(1L), 2L, userInfo(2L)));
+        givenConfirmedWinners(new EventWinner(2L, 1), new EventWinner(1L, 2));
+        given(userAdaptor.findNicknameMapByUserIds(anyList()))
+                .willReturn(Map.of(1L, "닉네임1", 2L, "닉네임2"));
 
         AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 2);
 
         assertThat(response.appEventId()).isEqualTo(EVENT_ID);
-        assertThat(response.requestedWinnerCount()).isEqualTo(2);
         assertThat(response.candidateCount()).isEqualTo(2);
         assertThat(response.totalTickets()).isEqualTo(6); // 1 + 5
-        assertThat(response.winners()).extracting(AttendanceDrawWinner::rank).containsExactly(1, 2);
-        assertThat(response.winners()).extracting(AttendanceDrawWinner::userId).containsExactlyInAnyOrder(1L, 2L);
+        assertThat(response.winners()).extracting(AttendanceDrawWinner::drawOrder).containsExactly(1, 2);
+        assertThat(response.winners()).extracting(AttendanceDrawWinner::userId).containsExactly(2L, 1L);
 
-        AttendanceDrawWinner winner = response.winners().stream()
-                .filter(w -> w.userId() == 2L)
-                .findFirst()
-                .orElseThrow();
-        assertThat(winner.nickName()).isEqualTo("닉네임2");
-        assertThat(winner.email()).isEqualTo("user2@storix.kr");
-        assertThat(winner.profileImageUrl()).isEqualTo("https://cdn/profile2.png");
-        assertThat(winner.ticketCount()).isEqualTo(5);
-        assertThat(winner.totalAttendedDays()).isEqualTo(12);
+        AttendanceDrawWinner first = response.winners().get(0);
+        assertThat(first.nickName()).isEqualTo("닉네임2");
+        assertThat(first.ticketCount()).isEqualTo(5);
+        assertThat(first.totalAttendedDays()).isEqualTo(12);
     }
 
     @Test
-    @DisplayName("응모권이 0개인 참여자는 추첨 모수에서 제외한다")
-    void draw_excludes_zero_ticket_attendees() {
+    @DisplayName("응모권이 0개인 참여자는 모수 통계에서 제외한다")
+    void draw_excludes_zero_ticket_attendees_from_stats() {
         givenAttendees(
                 new AttendanceAttendeeCount(1L, 2L),   // 3일 미만 → 응모권 0
                 new AttendanceAttendeeCount(2L, 7L)    // 응모권 2
         );
-        given(userAdaptor.findAdminUserContactInfoByUserIds(anyList()))
-                .willReturn(Map.of(2L, userInfo(2L)));
+        givenConfirmedWinners(new EventWinner(2L, 1));
+        given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of(2L, "닉네임2"));
 
         AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 5);
 
@@ -132,8 +132,8 @@ class AttendanceDrawServiceTest {
                 .willReturn(Optional.of(event(Map.of(5, 3, 10, 8))));
         given(attendanceCheckAdaptor.findAttendeeCounts(EVENT_ID))
                 .willReturn(List.of(new AttendanceAttendeeCount(1L, 10L)));
-        given(userAdaptor.findAdminUserContactInfoByUserIds(anyList()))
-                .willReturn(Map.of(1L, userInfo(1L)));
+        givenConfirmedWinners(new EventWinner(1L, 1));
+        given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of(1L, "닉네임1"));
 
         AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 1);
 
@@ -142,10 +142,10 @@ class AttendanceDrawServiceTest {
     }
 
     @Test
-    @DisplayName("추첨 모수가 없으면 빈 당첨자 목록을 반환한다")
-    void draw_without_candidates() {
+    @DisplayName("확정된 당첨자가 없으면 빈 목록을 반환한다")
+    void draw_without_winners() {
         givenAttendees();
-        given(userAdaptor.findAdminUserContactInfoByUserIds(List.of())).willReturn(Map.of());
+        givenConfirmedWinners();
 
         AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 3);
 
@@ -154,28 +154,31 @@ class AttendanceDrawServiceTest {
         assertThat(response.winners()).isEmpty();
     }
 
+    // 확정 이후 출석 데이터가 정리되는 등으로 당첨자가 현재 모수에 없을 수 있다
     @Test
-    @DisplayName("유저 정보를 찾지 못해도 순위·userId 는 그대로 반환한다")
-    void draw_tolerates_missing_user_info() {
-        givenAttendees(new AttendanceAttendeeCount(1L, 12L));
-        given(userAdaptor.findAdminUserContactInfoByUserIds(anyList())).willReturn(Map.of());
+    @DisplayName("당첨자가 현재 모수에 없어도 순서·userId 는 그대로 반환한다")
+    void draw_tolerates_winner_missing_from_candidates() {
+        givenAttendees(new AttendanceAttendeeCount(2L, 12L));
+        givenConfirmedWinners(new EventWinner(1L, 1));
+        given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of());
 
         AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 1);
 
         AttendanceDrawWinner winner = response.winners().get(0);
-        assertThat(winner.rank()).isEqualTo(1);
+        assertThat(winner.drawOrder()).isEqualTo(1);
         assertThat(winner.userId()).isEqualTo(1L);
         assertThat(winner.nickName()).isNull();
-        assertThat(winner.email()).isNull();
+        assertThat(winner.ticketCount()).isZero();
     }
 
     @Test
-    @DisplayName("추첨 인원이 1명 미만이면 400을 던지고 조회하지 않는다")
+    @DisplayName("추첨 인원이 1명 미만이면 400을 던지고 확정하지 않는다")
     void draw_invalid_winner_count() {
         assertThatThrownBy(() -> attendanceDrawService.draw(EVENT_ID, 0))
                 .isInstanceOf(AttendanceDrawInvalidWinnerCountException.class);
 
         verify(appEventAdaptor, never()).findOptionalById(EVENT_ID);
+        verify(appEventFinalizeService, never()).finalizeWinners(anyLong(), anyInt());
     }
 
     @Test
@@ -187,6 +190,8 @@ class AttendanceDrawServiceTest {
         given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.empty());
         assertThatThrownBy(() -> attendanceDrawService.draw(EVENT_ID, 3))
                 .isInstanceOf(AttendanceEventNotFoundException.class);
+
+        verify(appEventFinalizeService, never()).finalizeWinners(anyLong(), anyInt());
     }
 
     @Test
@@ -199,5 +204,6 @@ class AttendanceDrawServiceTest {
                 .isInstanceOf(AttendanceEventNotFoundException.class);
 
         verify(attendanceCheckAdaptor, never()).findAttendeeCounts(EVENT_ID);
+        verify(appEventFinalizeService, never()).finalizeWinners(anyLong(), anyInt());
     }
 }

@@ -46,6 +46,7 @@ public enum SuccessCode {
     ATTENDANCE_EVENT_LOAD_SUCCESS(HttpStatus.OK, "ATTENDANCE_EVENT_SUCCESS_001", "출석 이벤트 현황 조회에 성공했습니다."),
     ATTENDANCE_EVENT_CHECK_IN_SUCCESS(HttpStatus.OK, "ATTENDANCE_EVENT_SUCCESS_002", "출석 체크에 성공했습니다."),
     ATTENDANCE_EVENT_DRAW_SUCCESS(HttpStatus.OK, "ATTENDANCE_EVENT_SUCCESS_003", "출석 이벤트 추첨에 성공했습니다."),
+    ATTENDANCE_EVENT_WINNERS_LOAD_SUCCESS(HttpStatus.OK, "ATTENDANCE_EVENT_SUCCESS_004", "출석 이벤트 당첨자 조회에 성공했습니다."),
     STORY_CARD_LOAD_SUCCESS(HttpStatus.OK, "STORY_CARD_SUCCESS_001", "오늘의 스토리 카드 현황 조회에 성공했습니다."),
     STORY_CARD_DRAW_SUCCESS(HttpStatus.OK, "STORY_CARD_SUCCESS_002", "오늘의 스토리 카드 뽑기에 성공했습니다."),
 

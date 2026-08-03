@@ -34,12 +34,20 @@ public interface AppEventRepository extends JpaRepository<AppEvent, Long> {
     List<AppEvent> findActiveByType(@Param("eventType") AppEventType eventType,
                                     @Param("now") LocalDateTime now);
 
-    // 진행 중인 이벤트가 없을 때 기간 정보를 내려주기 위한 폴백
-    Optional<AppEvent> findFirstByEventTypeOrderByStartAtDesc(AppEventType eventType);
+    // 폴백 1순위 — 아직 시작하지 않은 이벤트 중 가장 먼저 시작하는 것
+    Optional<AppEvent> findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(AppEventType eventType,
+                                                                                 LocalDateTime now);
 
-    /**
-     * 같은 타입 이벤트끼리 기간이 겹치는 행을 조회하면서 쓰기 락
-     */
+    // 폴백 2순위 — 이미 종료된 이벤트 중 가장 최근에 끝난 것 (endAt은 exclusive)
+    Optional<AppEvent> findFirstByEventTypeAndEndAtLessThanEqualOrderByEndAtDesc(AppEventType eventType,
+                                                                                LocalDateTime now);
+
+    // 당첨자 확정처럼 이벤트 단위로 직렬화가 필요한 작업에서 이벤트 행에 쓰기 락
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM AppEvent e WHERE e.id = :appEventId")
+    Optional<AppEvent> findByIdForUpdate(@Param("appEventId") Long appEventId);
+
+    // 같은 타입 이벤트끼리 기간이 겹치는 행을 조회하면서 쓰기 락
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT e FROM AppEvent e

@@ -1,8 +1,11 @@
 package com.storix.domain.domains.event.service;
 
 import com.storix.domain.domains.event.domain.AppEvent;
+import com.storix.domain.domains.event.dto.AttendanceAttendeeCount;
+import com.storix.domain.domains.event.dto.AttendanceTicketHolder;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -30,5 +33,23 @@ public final class AttendanceTicketPolicy {
     public static int issuedTicketsFor(NavigableMap<Integer, Integer> schedule, int totalAttendedDays) {
         Map.Entry<Integer, Integer> reached = schedule.floorEntry(totalAttendedDays);
         return reached == null ? 0 : reached.getValue();
+    }
+
+    // 참여자별 누적 출석일을 이벤트 지급표에 태워 응모권 수로 환산한다.
+    // 응모권이 없으면 추첨 모수에서 빠진다. (추첨 실행 / 추첨 결과 확인 공용)
+    public static List<AttendanceTicketHolder> ticketHoldersOf(AppEvent event,
+                                                               List<AttendanceAttendeeCount> attendees) {
+        NavigableMap<Integer, Integer> schedule = scheduleOf(event);
+        return attendees.stream()
+                .map(attendee -> {
+                    int attendedDays = Math.toIntExact(attendee.attendedDays());
+                    return new AttendanceTicketHolder(
+                            attendee.userId(),
+                            attendedDays,
+                            issuedTicketsFor(schedule, attendedDays)
+                    );
+                })
+                .filter(holder -> holder.ticketCount() > 0)
+                .toList();
     }
 }
