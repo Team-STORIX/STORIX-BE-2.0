@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-public record AttendanceDrawRequest(
+public record AppEventWinnerDrawRequest(
 
         @Schema(description = "몇 위까지 뽑을지 (당첨 인원)", example = "10")
         @NotNull(message = "추첨 인원은 필수입니다.")

@@ -94,7 +94,7 @@ public class StoryCardEventService {
                 .orElseThrow(() -> StoryCardContentNotFoundException.EXCEPTION);
     }
 
-    // 진행 중인 STORY_CARD 이벤트를 검색. 없으면 예정 → 종료 순으로 폴백
+    // 진행 중인 STORY_CARD 이벤트를 검색. 없으면 종료 → 예정 순으로 폴백
     private AppEvent resolveEvent(LocalDateTime now) {
         return appEventAdaptor.findActiveOrNearestByType(AppEventType.STORY_CARD, now)
                 .orElseThrow(() -> StoryCardEventNotFoundException.EXCEPTION);

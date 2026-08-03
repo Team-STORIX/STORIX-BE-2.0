@@ -34,13 +34,13 @@ public interface AppEventRepository extends JpaRepository<AppEvent, Long> {
     List<AppEvent> findActiveByType(@Param("eventType") AppEventType eventType,
                                     @Param("now") LocalDateTime now);
 
-    // 폴백 1순위 — 아직 시작하지 않은 이벤트 중 가장 먼저 시작하는 것
-    Optional<AppEvent> findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(AppEventType eventType,
-                                                                                 LocalDateTime now);
-
-    // 폴백 2순위 — 이미 종료된 이벤트 중 가장 최근에 끝난 것 (endAt은 exclusive)
+    // 폴백 1순위 — 이미 종료된 이벤트 중 가장 최근에 끝난 것 (endAt은 exclusive)
     Optional<AppEvent> findFirstByEventTypeAndEndAtLessThanEqualOrderByEndAtDesc(AppEventType eventType,
                                                                                 LocalDateTime now);
+
+    // 폴백 2순위 — 아직 시작하지 않은 이벤트 중 가장 먼저 시작하는 것
+    Optional<AppEvent> findFirstByEventTypeAndStartAtGreaterThanOrderByStartAtAsc(AppEventType eventType,
+                                                                                 LocalDateTime now);
 
     // 당첨자 확정처럼 이벤트 단위로 직렬화가 필요한 작업에서 이벤트 행에 쓰기 락
     @Lock(LockModeType.PESSIMISTIC_WRITE)

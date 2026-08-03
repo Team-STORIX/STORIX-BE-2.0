@@ -8,9 +8,8 @@ import com.storix.domain.domains.event.dto.AttendanceAttendeeCount;
 import com.storix.domain.domains.event.dto.AttendanceDrawResponse;
 import com.storix.domain.domains.event.dto.AttendanceDrawWinner;
 import com.storix.domain.domains.event.dto.EventWinner;
-import com.storix.domain.domains.event.exception.AttendanceDrawInvalidWinnerCountException;
 import com.storix.domain.domains.event.exception.AttendanceEventNotFoundException;
-import com.storix.domain.domains.event.service.winner.AppEventFinalizeService;
+import com.storix.domain.domains.event.service.winner.AppEventWinnerService;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,15 +26,13 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("[출석 이벤트] 당첨자 확정 API - 확정 결과 + 모수 통계 조립")
+@DisplayName("[출석 이벤트] 당첨자 조회 API - 확정 결과 + 모수 통계 조립")
 class AttendanceDrawServiceTest {
 
     private static final Long EVENT_ID = 100L;
@@ -49,7 +46,7 @@ class AttendanceDrawServiceTest {
     private AttendanceCheckAdaptor attendanceCheckAdaptor;
 
     @Mock
-    private AppEventFinalizeService appEventFinalizeService;
+    private AppEventWinnerService appEventWinnerService;
 
     @Mock
     private UserAdaptor userAdaptor;
@@ -79,12 +76,12 @@ class AttendanceDrawServiceTest {
     }
 
     private void givenConfirmedWinners(EventWinner... winners) {
-        given(appEventFinalizeService.finalizeWinners(anyLong(), anyInt())).willReturn(List.of(winners));
+        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of(winners));
     }
 
     @Test
     @DisplayName("확정된 당첨자를 뽑힌 순서대로, 닉네임·응모권 수·출석일과 함께 반환한다")
-    void draw_returns_confirmed_winners() {
+    void returns_confirmed_winners() {
         // 기본 지급표(3일 1개 / 7일 2개 / 12일 5개) 기준
         givenAttendees(
                 new AttendanceAttendeeCount(1L, 3L),   // 응모권 1
@@ -94,7 +91,7 @@ class AttendanceDrawServiceTest {
         given(userAdaptor.findNicknameMapByUserIds(anyList()))
                 .willReturn(Map.of(1L, "닉네임1", 2L, "닉네임2"));
 
-        AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 2);
+        AttendanceDrawResponse response = attendanceDrawService.findWinners(EVENT_ID);
 
         assertThat(response.appEventId()).isEqualTo(EVENT_ID);
         assertThat(response.candidateCount()).isEqualTo(2);
@@ -110,7 +107,7 @@ class AttendanceDrawServiceTest {
 
     @Test
     @DisplayName("응모권이 0개인 참여자는 모수 통계에서 제외한다")
-    void draw_excludes_zero_ticket_attendees_from_stats() {
+    void excludes_zero_ticket_attendees_from_stats() {
         givenAttendees(
                 new AttendanceAttendeeCount(1L, 2L),   // 3일 미만 → 응모권 0
                 new AttendanceAttendeeCount(2L, 7L)    // 응모권 2
@@ -118,7 +115,7 @@ class AttendanceDrawServiceTest {
         givenConfirmedWinners(new EventWinner(2L, 1));
         given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of(2L, "닉네임2"));
 
-        AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 5);
+        AttendanceDrawResponse response = attendanceDrawService.findWinners(EVENT_ID);
 
         assertThat(response.candidateCount()).isEqualTo(1);
         assertThat(response.totalTickets()).isEqualTo(2);
@@ -127,7 +124,7 @@ class AttendanceDrawServiceTest {
 
     @Test
     @DisplayName("이벤트에 지정된 지급표로 응모권을 계산한다 (기본표 대신)")
-    void draw_uses_event_reward_schedule() {
+    void uses_event_reward_schedule() {
         given(appEventAdaptor.findOptionalById(EVENT_ID))
                 .willReturn(Optional.of(event(Map.of(5, 3, 10, 8))));
         given(attendanceCheckAdaptor.findAttendeeCounts(EVENT_ID))
@@ -135,19 +132,20 @@ class AttendanceDrawServiceTest {
         givenConfirmedWinners(new EventWinner(1L, 1));
         given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of(1L, "닉네임1"));
 
-        AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 1);
+        AttendanceDrawResponse response = attendanceDrawService.findWinners(EVENT_ID);
 
         assertThat(response.totalTickets()).isEqualTo(8);
         assertThat(response.winners().get(0).ticketCount()).isEqualTo(8);
     }
 
+    // 아직 추첨하지 않은 이벤트도 모수 통계 확인용으로 조회할 수 있어야 한다
     @Test
     @DisplayName("확정된 당첨자가 없으면 빈 목록을 반환한다")
-    void draw_without_winners() {
+    void returns_empty_winners_before_draw() {
         givenAttendees();
         givenConfirmedWinners();
 
-        AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 3);
+        AttendanceDrawResponse response = attendanceDrawService.findWinners(EVENT_ID);
 
         assertThat(response.candidateCount()).isZero();
         assertThat(response.totalTickets()).isZero();
@@ -157,12 +155,12 @@ class AttendanceDrawServiceTest {
     // 확정 이후 출석 데이터가 정리되는 등으로 당첨자가 현재 모수에 없을 수 있다
     @Test
     @DisplayName("당첨자가 현재 모수에 없어도 순서·userId 는 그대로 반환한다")
-    void draw_tolerates_winner_missing_from_candidates() {
+    void tolerates_winner_missing_from_candidates() {
         givenAttendees(new AttendanceAttendeeCount(2L, 12L));
         givenConfirmedWinners(new EventWinner(1L, 1));
         given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of());
 
-        AttendanceDrawResponse response = attendanceDrawService.draw(EVENT_ID, 1);
+        AttendanceDrawResponse response = attendanceDrawService.findWinners(EVENT_ID);
 
         AttendanceDrawWinner winner = response.winners().get(0);
         assertThat(winner.drawOrder()).isEqualTo(1);
@@ -172,38 +170,28 @@ class AttendanceDrawServiceTest {
     }
 
     @Test
-    @DisplayName("추첨 인원이 1명 미만이면 400을 던지고 확정하지 않는다")
-    void draw_invalid_winner_count() {
-        assertThatThrownBy(() -> attendanceDrawService.draw(EVENT_ID, 0))
-                .isInstanceOf(AttendanceDrawInvalidWinnerCountException.class);
-
-        verify(appEventAdaptor, never()).findOptionalById(EVENT_ID);
-        verify(appEventFinalizeService, never()).finalizeWinners(anyLong(), anyInt());
-    }
-
-    @Test
     @DisplayName("존재하지 않는 이벤트면 404를 던진다")
-    void draw_event_not_found() {
-        assertThatThrownBy(() -> attendanceDrawService.draw(0L, 3))
+    void event_not_found() {
+        assertThatThrownBy(() -> attendanceDrawService.findWinners(0L))
                 .isInstanceOf(AttendanceEventNotFoundException.class);
 
         given(appEventAdaptor.findOptionalById(EVENT_ID)).willReturn(Optional.empty());
-        assertThatThrownBy(() -> attendanceDrawService.draw(EVENT_ID, 3))
+        assertThatThrownBy(() -> attendanceDrawService.findWinners(EVENT_ID))
                 .isInstanceOf(AttendanceEventNotFoundException.class);
 
-        verify(appEventFinalizeService, never()).finalizeWinners(anyLong(), anyInt());
+        verify(appEventWinnerService, never()).findWinners(EVENT_ID);
     }
 
     @Test
     @DisplayName("출석 이벤트가 아니면 404를 던진다 (응모권 개념이 없음)")
-    void draw_rejects_non_attendance_event() {
+    void rejects_non_attendance_event() {
         given(appEventAdaptor.findOptionalById(EVENT_ID))
                 .willReturn(Optional.of(event(AppEventType.STORY_CARD, null)));
 
-        assertThatThrownBy(() -> attendanceDrawService.draw(EVENT_ID, 3))
+        assertThatThrownBy(() -> attendanceDrawService.findWinners(EVENT_ID))
                 .isInstanceOf(AttendanceEventNotFoundException.class);
 
         verify(attendanceCheckAdaptor, never()).findAttendeeCounts(EVENT_ID);
-        verify(appEventFinalizeService, never()).finalizeWinners(anyLong(), anyInt());
+        verify(appEventWinnerService, never()).findWinners(EVENT_ID);
     }
 }
