@@ -23,9 +23,11 @@ public record AppEventResponse(
         @Schema(description = "이벤트 종류 (GENERAL / ATTENDANCE / STORY_CARD)")
         AppEventType eventType,
 
+        @Schema(description = "이벤트 시작 시각", example = "2026-07-01 00:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime startAt,
 
+        @Schema(description = "이벤트 종료 시각(exclusive)", example = "2026-08-01 00:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime endAt,
 
@@ -41,9 +43,11 @@ public record AppEventResponse(
         @Schema(description = "출석 이벤트 응모권 지급 기준 (키=누적 출석일, 값=누적 지급 응모권). 미지정 시 빈 값")
         Map<Integer, Integer> attendanceRewards,
 
+        @Schema(example = "2026-06-20 10:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime createdAt,
 
+        @Schema(example = "2026-06-20 10:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime updatedAt
 ) {
