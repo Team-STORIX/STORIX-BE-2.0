@@ -27,6 +27,7 @@ public record AdminNotificationResponse(
         @Schema(description = "발송 방식 (IMMEDIATE: 즉시 발송, SCHEDULED: 예약 발송)")
         AdminNotificationSendType sendType,
 
+        @Schema(description = "예약 발송 시각 (KST)", example = "2026-07-04 14:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime scheduledAt,
 
@@ -45,9 +46,11 @@ public record AdminNotificationResponse(
         @Schema(description = "이동할 앱 외부 URL (targetType=EXTERNAL 일 때만, 그 외 null)")
         String targetLink,
 
+        @Schema(example = "2026-06-20 10:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime createdAt,
 
+        @Schema(example = "2026-06-20 10:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime updatedAt
 ) {

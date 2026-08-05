@@ -25,18 +25,22 @@ public record BannerResponse(
 
         String imageUrl,
 
+        @Schema(description = "노출 시작 시각", example = "2026-06-25 00:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime displayStartAt,
 
+        @Schema(description = "노출 종료 시각", example = "2026-06-30 00:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime displayEndAt,
 
         @Schema(description = "배너 상태")
         BannerStatus status,
 
+        @Schema(example = "2026-06-20 10:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime createdAt,
 
+        @Schema(example = "2026-06-20 10:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime updatedAt
 ) {
