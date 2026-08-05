@@ -18,6 +18,10 @@ public class AppEventWinnerAdaptor {
         return appEventWinnerRepository.findWinnerUserIds(appEventId, lastUserId, pageable);
     }
 
+    public boolean existsWinner(Long appEventId) {
+        return appEventWinnerRepository.existsByAppEventId(appEventId);
+    }
+
     public List<EventWinner> findWinners(Long appEventId) {
         return appEventWinnerRepository.findWinners(appEventId);
     }

@@ -7,6 +7,7 @@ import com.storix.domain.domains.event.dto.AppEventWinnerDrawResponse;
 import com.storix.domain.domains.event.dto.EventWinner;
 import com.storix.domain.domains.event.exception.AppEventInvalidWinnerCountException;
 import com.storix.domain.domains.event.exception.AppEventNoWinnerException;
+import com.storix.domain.domains.event.exception.AppEventNotEndedException;
 import com.storix.domain.domains.event.exception.EventWinnerFinalizerNotImplementedException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +51,12 @@ public class AppEventFinalizeService {
                     .addKeyValue("winnerCount", confirmed.size())
                     .log(">>> [AppEvent] 이미 확정된 이벤트 - 재추첨 없이 반환");
             return toResponse(appEventId, true, confirmed);
+        }
+
+        // 추첨은 되돌릴 수 없어 진행 중 확정 시 남은 기간 참여자가 영구 제외된다.
+        // 조기 확정이 필요하면 이벤트를 강제 종료해 end_at을 당긴 뒤 확정한다
+        if (!event.isEndedAt(LocalDateTime.now())) {
+            throw AppEventNotEndedException.EXCEPTION;
         }
 
         EventWinnerFinalizer finalizer = finalizers.stream()

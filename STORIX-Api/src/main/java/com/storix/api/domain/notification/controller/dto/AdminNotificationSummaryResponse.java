@@ -27,7 +27,8 @@ public record AdminNotificationSummaryResponse(
         @Schema(description = "발송 방식 (IMMEDIATE: 즉시 발송, SCHEDULED: 예약 발송)")
         AdminNotificationSendType sendType,
 
-        @Schema(description = "발송 일시 (KST). 예약 발송(SCHEDULED)은 지정한 예약 시각, 즉시 발송(IMMEDIATE)은 발송 시점이 기록됩니다.")
+        @Schema(description = "발송 일시 (KST). 예약 발송(SCHEDULED)은 지정한 예약 시각, 즉시 발송(IMMEDIATE)은 발송 시점이 기록됩니다.",
+                example = "2026-07-04 14:00", type = "string")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime scheduledAt,
 

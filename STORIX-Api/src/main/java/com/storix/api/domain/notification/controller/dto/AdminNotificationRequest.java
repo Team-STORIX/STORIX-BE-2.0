@@ -74,6 +74,12 @@ public record AdminNotificationRequest(
         return targetAudience != AdminNotificationTargetAudience.EVENT_WINNERS || eventTargetId != null;
     }
 
+    @AssertTrue(message = "이벤트 당첨자 발송(EVENT_WINNERS)은 외부 링크(EXTERNAL) 이동만 지원합니다.")
+    private boolean isExternalWhenEventWinners() {
+        return targetAudience != AdminNotificationTargetAudience.EVENT_WINNERS
+                || targetType == AdminNotificationTargetType.EXTERNAL;
+    }
+
     @AssertTrue(message = "타겟 타입에 필요한 값이 없습니다. (APP_EVENT: eventTargetId, EXTERNAL: targetLink)")
     private boolean isTargetConsistent() {
         if (targetType == null) return true;
