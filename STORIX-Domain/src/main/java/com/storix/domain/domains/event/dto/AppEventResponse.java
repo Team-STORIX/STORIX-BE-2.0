@@ -20,6 +20,9 @@ public record AppEventResponse(
 
         String description,
 
+        @Schema(description = "이벤트 상세 웹페이지가 그릴 화면을 고르는 키. 비어 있으면 종류별 기본 화면", example = "attendance-2026-08-10")
+        String pageKey,
+
         @Schema(description = "이벤트 종류 (GENERAL / ATTENDANCE / STORY_CARD)")
         AppEventType eventType,
 
@@ -56,6 +59,7 @@ public record AppEventResponse(
                 .id(appEvent.getId())
                 .name(appEvent.getName())
                 .description(appEvent.getDescription())
+                .pageKey(appEvent.getPageKey())
                 .eventType(appEvent.getEventType())
                 .startAt(appEvent.getStartAt())
                 .endAt(appEvent.getEndAt())
