@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,15 @@ public record AppEventRequest(
         @Schema(description = "앱 이벤트 설명", example = "앱 출시를 기념한 첫 이벤트입니다.")
         @Size(max = 500, message = "앱 이벤트 설명은 500자 이하여야 합니다.")
         String description,
+
+        @Schema(
+                description = "이벤트 상세 웹페이지가 그릴 화면을 고르는 키. 같은 종류라도 회차마다 구성이 바뀌면 다른 값을 넣습니다. "
+                        + "비우면 종류별 기본 화면을 사용합니다. 쓸 수 있는 값은 프론트와 맞춰주세요.",
+                example = "attendance-2026-08-10"
+        )
+        @Size(max = 50, message = "페이지 키는 50자 이하여야 합니다.")
+        @Pattern(regexp = "^[a-z0-9]+(-[a-z0-9]+)*$", message = "페이지 키는 영소문자, 숫자, 하이픈만 사용할 수 있습니다.")
+        String pageKey,
 
         @Schema(
                 description = "이벤트 종류. ATTENDANCE / STORY_CARD는 전용 API가 이 값으로 진행 중인 이벤트를 찾으므로 "
@@ -68,6 +78,6 @@ public record AppEventRequest(
     }
 
     public AppEventCommand toCommand() {
-        return new AppEventCommand(name, description, eventType, startAt, endAt, hasWinner, promotionTypes, attendanceRewards);
+        return new AppEventCommand(name, description, pageKey, eventType, startAt, endAt, hasWinner, promotionTypes, attendanceRewards);
     }
 }

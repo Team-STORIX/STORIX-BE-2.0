@@ -7,6 +7,8 @@ import com.storix.domain.domains.event.domain.AppEventStatus;
 import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import com.storix.domain.domains.event.dto.AppEventResponse;
+import com.storix.domain.domains.event.exception.AppEventNotFoundException;
+import com.storix.domain.domains.event.dto.AppEventPageResponse;
 import com.storix.domain.domains.event.exception.AppEventFinalizedNotModifiableException;
 import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodBoundaryException;
@@ -60,7 +62,7 @@ class AppEventServiceTest {
     private AppEventService appEventService;
 
     private AppEventCommand command(LocalDateTime startAt, LocalDateTime endAt) {
-        return new AppEventCommand("앱 출시 이벤트", "설명", null, startAt, endAt, false, Set.of(), Map.of());
+        return new AppEventCommand("앱 출시 이벤트", "설명", null, null, startAt, endAt, false, Set.of(), Map.of());
     }
 
     private AppEvent appEvent(LocalDateTime startAt, LocalDateTime endAt) {
@@ -82,7 +84,7 @@ class AppEventServiceTest {
         private final LocalDateTime END = LocalDate.of(2026, 8, 11).atStartOfDay();
 
         private AppEventCommand typedCommand(AppEventType eventType, LocalDateTime startAt, LocalDateTime endAt) {
-            return new AppEventCommand("출석 이벤트", "설명", eventType, startAt, endAt, false, Set.of(), Map.of());
+            return new AppEventCommand("출석 이벤트", "설명", null, eventType, startAt, endAt, false, Set.of(), Map.of());
         }
 
         @Test
@@ -142,7 +144,7 @@ class AppEventServiceTest {
         private final LocalDate DAY = LocalDate.of(2026, 8, 1);
 
         private AppEventCommand typedCommand(AppEventType eventType, LocalDateTime startAt, LocalDateTime endAt) {
-            return new AppEventCommand("이벤트", "설명", eventType, startAt, endAt, false, Set.of(), Map.of());
+            return new AppEventCommand("이벤트", "설명", null, eventType, startAt, endAt, false, Set.of(), Map.of());
         }
 
         @Test
@@ -268,7 +270,7 @@ class AppEventServiceTest {
         @DisplayName("이름이 비면 예외 - 저장하지 않는다")
         void reject_blank_name() {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
-            AppEventCommand cmd = new AppEventCommand("  ", "설명", null, start, start.plusDays(1), false, Set.of(), Map.of());
+            AppEventCommand cmd = new AppEventCommand("  ", "설명", null, null, start, start.plusDays(1), false, Set.of(), Map.of());
 
             assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
                     .isInstanceOf(AppEventNameRequiredException.class);
@@ -298,12 +300,83 @@ class AppEventServiceTest {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
             LocalDateTime end = start.plusDays(20);
             Map<Integer, Integer> rewards = Map.of(5, 1, 10, 3, 20, 10);
-            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", null, start, end, false, Set.of(), rewards);
+            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", null, null, start, end, false, Set.of(), rewards);
             given(appEventAdaptor.save(any(AppEvent.class))).willAnswer(inv -> inv.getArgument(0));
 
             AppEventResponse saved = appEventService.create(cmd, ADMIN_ID);
 
             assertThat(saved.attendanceRewards()).containsExactlyInAnyOrderEntriesOf(rewards);
+        }
+
+        // 같은 종류라도 회차마다 다른 화면을 그릴 수 있어야 한다
+        @Test
+        @DisplayName("페이지 키를 지정하면 그대로 저장하고, 없으면 null 로 둔다")
+        void create_with_page_key() {
+            LocalDateTime start = LocalDateTime.now().plusDays(1);
+            LocalDateTime end = start.plusDays(20);
+            given(appEventAdaptor.save(any(AppEvent.class))).willAnswer(inv -> inv.getArgument(0));
+
+            AppEventResponse withKey = appEventService.create(
+                    new AppEventCommand("출석 이벤트", "설명", "attendance-2026-08-10", null, start, end, false, Set.of(), Map.of()),
+                    ADMIN_ID);
+            AppEventResponse withoutKey = appEventService.create(
+                    new AppEventCommand("출석 이벤트", "설명", null, null, start, end, false, Set.of(), Map.of()),
+                    ADMIN_ID);
+
+            assertThat(withKey.pageKey()).isEqualTo("attendance-2026-08-10");
+            assertThat(withoutKey.pageKey()).isNull();
+        }
+    }
+
+    // 웹페이지용 공개 조회는 인증이 없으므로 노출 범위를 좁게 잡는다
+    @Nested
+    @DisplayName("getAppEventPage - 이벤트 상세 웹페이지용 공개 조회")
+    class GetAppEventPage {
+
+        private AppEvent appEventOf(LocalDateTime startAt, LocalDateTime endAt) {
+            AppEvent e = AppEvent.builder()
+                    .name("출석 이벤트").description("설명")
+                    .pageKey("attendance-2026-08-10")
+                    .eventType(AppEventType.ATTENDANCE)
+                    .startAt(startAt).endAt(endAt)
+                    .build();
+            ReflectionTestUtils.setField(e, "id", ID);
+            return e;
+        }
+
+        @Test
+        @DisplayName("진행 중인 이벤트는 종류와 페이지 키를 함께 반환한다")
+        void active_event_ok() {
+            LocalDateTime now = LocalDateTime.now();
+            given(appEventAdaptor.findById(ID)).willReturn(appEventOf(now.minusDays(1), now.plusDays(10)));
+
+            AppEventPageResponse page = appEventService.getAppEventPage(ID);
+
+            assertThat(page.id()).isEqualTo(ID);
+            assertThat(page.eventType()).isEqualTo(AppEventType.ATTENDANCE);
+            assertThat(page.pageKey()).isEqualTo("attendance-2026-08-10");
+            assertThat(page.status()).isEqualTo(AppEventStatus.ACTIVE);
+        }
+
+        // 과거 링크로 들어온 유저에게 종료 안내를 보여줄 수 있어야 한다
+        @Test
+        @DisplayName("종료된 이벤트는 status=ENDED 로 조회된다")
+        void ended_event_ok() {
+            LocalDateTime now = LocalDateTime.now();
+            given(appEventAdaptor.findById(ID)).willReturn(appEventOf(now.minusDays(20), now.minusDays(1)));
+
+            assertThat(appEventService.getAppEventPage(ID).status()).isEqualTo(AppEventStatus.ENDED);
+        }
+
+        // id를 훑어 오픈 전 이벤트 내용을 미리 볼 수 있으면 안 된다
+        @Test
+        @DisplayName("아직 시작하지 않은 이벤트는 404를 던진다")
+        void scheduled_event_hidden() {
+            LocalDateTime now = LocalDateTime.now();
+            given(appEventAdaptor.findById(ID)).willReturn(appEventOf(now.plusDays(3), now.plusDays(10)));
+
+            assertThatThrownBy(() -> appEventService.getAppEventPage(ID))
+                    .isInstanceOf(AppEventNotFoundException.class);
         }
 
         @Test
@@ -312,7 +385,7 @@ class AppEventServiceTest {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
             LocalDateTime end = start.plusDays(20);
             Map<Integer, Integer> rewards = Map.of(5, 3, 10, 1); // 10일차 누적이 5일차보다 작음
-            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", null, start, end, false, Set.of(), rewards);
+            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", null, null, start, end, false, Set.of(), rewards);
 
             assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
                     .isInstanceOf(AppEventInvalidAttendanceRewardsException.class);
@@ -325,7 +398,7 @@ class AppEventServiceTest {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
             LocalDateTime end = start.plusDays(20);
             Map<Integer, Integer> rewards = Map.of(0, 1); // 출석일 0
-            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", null, start, end, false, Set.of(), rewards);
+            AppEventCommand cmd = new AppEventCommand("출석 이벤트", "설명", null, null, start, end, false, Set.of(), rewards);
 
             assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
                     .isInstanceOf(AppEventInvalidAttendanceRewardsException.class);
@@ -393,7 +466,7 @@ class AppEventServiceTest {
 
         private AppEventCommand commandOf(String name, LocalDateTime startAt, LocalDateTime endAt,
                                           boolean hasWinner, Map<Integer, Integer> rewards) {
-            return new AppEventCommand(name, "설명", AppEventType.ATTENDANCE, startAt, endAt, hasWinner, Set.of(), rewards);
+            return new AppEventCommand(name, "설명", null, AppEventType.ATTENDANCE, startAt, endAt, hasWinner, Set.of(), rewards);
         }
 
         private void givenFinalizedEvent(boolean hasWinner, Map<Integer, Integer> rewards) {

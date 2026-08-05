@@ -131,6 +131,9 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v1/auth/admin/slack/callback").permitAll()
                                 .requestMatchers("/api/v1/auth/admin/profile").hasRole("ADMIN")
 
+                                // [App Event] 이벤트 상세 페이지
+                                .requestMatchers(HttpMethod.GET, "/api/v1/app-events/{appEventId:[0-9]+}").permitAll()
+
                                 // [TopicRoom]
                                 .requestMatchers("/ws-stomp/**").permitAll()
 
