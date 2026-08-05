@@ -3,9 +3,11 @@ package com.storix.api.domain.event.usecase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.utils.RedisKeyStatic;
+import com.storix.domain.domains.event.dto.AppEventPageResponse;
 import com.storix.domain.domains.event.dto.BannerResponse;
 import com.storix.domain.domains.event.dto.OneTimeAppEventResponse;
 import com.storix.domain.domains.event.dto.PopupResponse;
+import com.storix.domain.domains.event.service.AppEventService;
 import com.storix.domain.domains.event.service.BannerService;
 import com.storix.domain.domains.event.service.EventContentCacheHelper;
 import com.storix.domain.domains.event.service.PopupDismissService;
@@ -24,6 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AppEventUseCase {
 
+    private final AppEventService appEventService;
     private final PopupService eventPopupService;
     private final PopupDismissService popupDismissService;
     private final BannerService eventBannerService;
@@ -32,6 +35,14 @@ public class AppEventUseCase {
     private final UserAppEventCacheHelper userAppEventCacheHelper;
 
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
+
+    // 이벤트 상세 웹페이지 렌더용 조회
+    public CustomResponse<AppEventPageResponse> getAppEventPage(Long appEventId) {
+
+        return CustomResponse.onSuccess(
+                SuccessCode.APP_EVENT_PAGE_LOAD_SUCCESS,
+                appEventService.getAppEventPage(appEventId));
+    }
 
     // 노출 중인 팝업 조회
     public CustomResponse<PopupResponse> getActivePopup(Long userId) {

@@ -44,6 +44,7 @@ public enum SuccessCode {
     APP_EVENT_ACK_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_002", "앱 이벤트 확인 처리에 성공했습니다."),
     APP_EVENT_POPUP_DISMISS_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_003", "팝업 오늘 다시 안 보기 처리에 성공했습니다."),
     APP_EVENT_POPUP_NEVER_SHOW_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_004", "팝업 다시 보지 않기 처리에 성공했습니다."),
+    APP_EVENT_PAGE_LOAD_SUCCESS(HttpStatus.OK, "APP_EVENT_SUCCESS_005", "앱 이벤트 상세 조회에 성공했습니다."),
     ATTENDANCE_EVENT_LOAD_SUCCESS(HttpStatus.OK, "ATTENDANCE_EVENT_SUCCESS_001", "출석 이벤트 현황 조회에 성공했습니다."),
     ATTENDANCE_EVENT_CHECK_IN_SUCCESS(HttpStatus.OK, "ATTENDANCE_EVENT_SUCCESS_002", "출석 체크에 성공했습니다."),
     ATTENDANCE_EVENT_WINNERS_LOAD_SUCCESS(HttpStatus.OK, "ATTENDANCE_EVENT_SUCCESS_004", "출석 이벤트 당첨자 조회에 성공했습니다."),
