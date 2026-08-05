@@ -8,6 +8,7 @@ import com.storix.domain.domains.event.dto.AppEventWinnerDrawResponse;
 import com.storix.domain.domains.event.dto.EventWinner;
 import com.storix.domain.domains.event.exception.AppEventInvalidWinnerCountException;
 import com.storix.domain.domains.event.exception.AppEventNoWinnerException;
+import com.storix.domain.domains.event.exception.AppEventNotEndedException;
 import com.storix.domain.domains.event.exception.EventWinnerFinalizerNotImplementedException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -38,8 +39,9 @@ import static org.mockito.Mockito.verify;
 class AppEventFinalizeServiceTest {
 
     private static final Long EVENT_ID = 100L;
-    private static final LocalDate START = LocalDate.of(2026, 7, 20);
-    private static final LocalDate END = LocalDate.of(2026, 8, 2);
+    // 종료 여부 판정이 실행 시점 기준이라 기간도 현재 기준으로 잡는다
+    private static final LocalDateTime STARTED_AT = LocalDateTime.now().minusDays(14);
+    private static final LocalDateTime ENDED_AT = LocalDateTime.now().minusDays(1);
 
     @Mock
     private EventWinnerFinalizer finalizer;
@@ -61,11 +63,11 @@ class AppEventFinalizeServiceTest {
                 List.of(finalizer), appEventWinnerService, appEventAdaptor, userAdaptor);
     }
 
-    private AppEvent event(boolean hasWinner) {
+    private AppEvent event(boolean hasWinner, LocalDateTime endAt) {
         AppEvent e = AppEvent.builder()
                 .name("14일 출석 이벤트").description("설명")
                 .eventType(AppEventType.ATTENDANCE)
-                .startAt(START.atStartOfDay()).endAt(END.plusDays(1).atStartOfDay())
+                .startAt(STARTED_AT).endAt(endAt)
                 .hasWinner(hasWinner)
                 .build();
         ReflectionTestUtils.setField(e, "id", EVENT_ID);
@@ -73,7 +75,12 @@ class AppEventFinalizeServiceTest {
     }
 
     private void givenEvent(boolean hasWinner) {
-        given(appEventAdaptor.findByIdForUpdate(EVENT_ID)).willReturn(event(hasWinner));
+        given(appEventAdaptor.findByIdForUpdate(EVENT_ID)).willReturn(event(hasWinner, ENDED_AT));
+    }
+
+    private void givenOngoingEvent() {
+        given(appEventAdaptor.findByIdForUpdate(EVENT_ID))
+                .willReturn(event(true, LocalDateTime.now().plusDays(3)));
     }
 
     @Test
@@ -150,6 +157,34 @@ class AppEventFinalizeServiceTest {
                 .isInstanceOf(AppEventNoWinnerException.class);
 
         verify(appEventWinnerService, never()).saveWinners(anyLong(), anyList());
+    }
+
+    // 추첨은 되돌릴 수 없어 진행 중 확정은 남은 기간 참여자를 영구 제외시킨다
+    @Test
+    @DisplayName("아직 종료되지 않은 이벤트면 400을 던지고 추첨하지 않는다")
+    void rejects_not_ended_event() {
+        givenOngoingEvent();
+        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of());
+
+        assertThatThrownBy(() -> appEventFinalizeService.finalizeWinners(EVENT_ID, 3))
+                .isInstanceOf(AppEventNotEndedException.class);
+
+        verify(finalizer, never()).resolveWinners(any(AppEvent.class), anyInt());
+        verify(appEventWinnerService, never()).saveWinners(anyLong(), anyList());
+    }
+
+    // 확정 이력 조회까지 막으면 당첨자 알림 발송이 끊긴다
+    @Test
+    @DisplayName("종료 전이라도 이미 확정된 이벤트면 저장된 당첨자를 그대로 반환한다")
+    void returns_confirmed_winners_even_before_end() {
+        givenOngoingEvent();
+        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of(new EventWinner(7L, 1)));
+        given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of(7L, "닉네임7"));
+
+        AppEventWinnerDrawResponse response = appEventFinalizeService.finalizeWinners(EVENT_ID, 3);
+
+        assertThat(response.alreadyFinalized()).isTrue();
+        assertThat(response.winners()).extracting(AppEventDrawWinner::userId).containsExactly(7L);
     }
 
     @Test

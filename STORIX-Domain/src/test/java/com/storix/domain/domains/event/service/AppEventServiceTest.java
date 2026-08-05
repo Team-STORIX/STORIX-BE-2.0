@@ -1,11 +1,13 @@
 package com.storix.domain.domains.event.service;
 
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
+import com.storix.domain.domains.event.adaptor.AppEventWinnerAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventStatus;
 import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import com.storix.domain.domains.event.dto.AppEventResponse;
+import com.storix.domain.domains.event.exception.AppEventFinalizedNotModifiableException;
 import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodBoundaryException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
@@ -44,6 +46,9 @@ class AppEventServiceTest {
 
     @Mock
     private AppEventAdaptor appEventAdaptor;
+
+    @Mock
+    private AppEventWinnerAdaptor appEventWinnerAdaptor;
 
     @Mock
     private PopupService popupService;
@@ -375,6 +380,95 @@ class AppEventServiceTest {
                     .isEqualTo(AppEventStatus.ENDED);
             assertThat(AppEventStatus.resolve(NOW.minusDays(5), NOW.minusDays(1), NOW))
                     .isEqualTo(AppEventStatus.ENDED);
+        }
+    }
+
+    // 확정된 당첨자를 어떤 기준으로 뽑았는지 사후에 재현할 수 있어야 한다
+    @Nested
+    @DisplayName("당첨자 확정 이후 수정 제한")
+    class FinalizedImmutability {
+
+        private final LocalDateTime START = LocalDate.of(2026, 8, 1).atStartOfDay();
+        private final LocalDateTime END = LocalDate.of(2026, 8, 11).atStartOfDay();
+
+        private AppEventCommand commandOf(String name, LocalDateTime startAt, LocalDateTime endAt,
+                                          boolean hasWinner, Map<Integer, Integer> rewards) {
+            return new AppEventCommand(name, "설명", AppEventType.ATTENDANCE, startAt, endAt, hasWinner, Set.of(), rewards);
+        }
+
+        private void givenFinalizedEvent(boolean hasWinner, Map<Integer, Integer> rewards) {
+            AppEvent e = AppEvent.builder()
+                    .name("출석 이벤트").description("설명")
+                    .eventType(AppEventType.ATTENDANCE)
+                    .startAt(START).endAt(END)
+                    .hasWinner(hasWinner)
+                    .attendanceRewards(rewards)
+                    .build();
+            ReflectionTestUtils.setField(e, "id", ID);
+            given(appEventAdaptor.findById(ID)).willReturn(e);
+            given(appEventWinnerAdaptor.existsWinner(ID)).willReturn(true);
+        }
+
+        @Test
+        @DisplayName("기간을 바꾸면 409")
+        void rejects_period_change() {
+            givenFinalizedEvent(true, Map.of(1, 1));
+
+            assertThatThrownBy(() -> appEventService.update(
+                    ID, commandOf("출석 이벤트", START, END.plusDays(7), true, Map.of(1, 1))))
+                    .isInstanceOf(AppEventFinalizedNotModifiableException.class);
+        }
+
+        @Test
+        @DisplayName("응모권 지급표를 바꾸면 409")
+        void rejects_rewards_change() {
+            givenFinalizedEvent(true, Map.of(1, 1));
+
+            assertThatThrownBy(() -> appEventService.update(
+                    ID, commandOf("출석 이벤트", START, END, true, Map.of(1, 5))))
+                    .isInstanceOf(AppEventFinalizedNotModifiableException.class);
+        }
+
+        // hasWinner를 내려도 당첨자 행은 남아 당첨 알림이 계속 나갈 수 있다
+        @Test
+        @DisplayName("hasWinner를 내리면 409")
+        void rejects_has_winner_change() {
+            givenFinalizedEvent(true, Map.of(1, 1));
+
+            assertThatThrownBy(() -> appEventService.update(
+                    ID, commandOf("출석 이벤트", START, END, false, Map.of(1, 1))))
+                    .isInstanceOf(AppEventFinalizedNotModifiableException.class);
+        }
+
+        @Test
+        @DisplayName("이름·설명만 바꾸는 수정은 확정 이후에도 허용한다")
+        void allows_name_change() {
+            givenFinalizedEvent(true, Map.of(1, 1));
+
+            AppEventResponse updated = appEventService.update(
+                    ID, commandOf("출석 이벤트 (수정)", START, END, true, Map.of(1, 1)));
+
+            assertThat(updated.name()).isEqualTo("출석 이벤트 (수정)");
+        }
+
+        @Test
+        @DisplayName("확정 전이면 추첨 근거 값도 자유롭게 바꾼다")
+        void allows_everything_before_finalize() {
+            AppEvent e = AppEvent.builder()
+                    .name("출석 이벤트").description("설명")
+                    .eventType(AppEventType.ATTENDANCE)
+                    .startAt(START).endAt(END)
+                    .hasWinner(true)
+                    .attendanceRewards(Map.of(1, 1))
+                    .build();
+            ReflectionTestUtils.setField(e, "id", ID);
+            given(appEventAdaptor.findById(ID)).willReturn(e);
+            given(appEventWinnerAdaptor.existsWinner(ID)).willReturn(false);
+
+            AppEventResponse updated = appEventService.update(
+                    ID, commandOf("출석 이벤트", START, END.plusDays(7), true, Map.of(1, 5)));
+
+            assertThat(updated.attendanceRewards()).containsEntry(1, 5);
         }
     }
 }

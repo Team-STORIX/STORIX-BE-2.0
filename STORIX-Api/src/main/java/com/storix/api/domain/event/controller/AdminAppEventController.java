@@ -55,7 +55,13 @@ public class AdminAppEventController {
     }
 
     @PutMapping("/{appEventId}")
-    @Operation(summary = "앱 이벤트 수정")
+    @Operation(
+            summary = "앱 이벤트 수정",
+            description = """
+                    당첨자가 확정된 이벤트는 추첨 근거가 되는 값(eventType, startAt, endAt, hasWinner, attendanceRewards)을 수정할 수 없습니다. (409)
+                    이름·설명·프로모션 노출 위치는 확정 이후에도 수정할 수 있습니다.
+                    """
+    )
     public CustomResponse<AppEventResponse> updateAppEvent(
             @PathVariable Long appEventId,
             @Valid @RequestBody AppEventRequest req
@@ -81,10 +87,11 @@ public class AdminAppEventController {
                     이미 확정된 이벤트에 다시 호출하면 재추첨 없이 확정된 당첨자를 반환하며, 이때 alreadyFinalized=true 입니다.
                     확정된 당첨자는 관리자 알림(대상 EVENT_WINNERS) 발송 대상이 됩니다.
 
-                    이벤트 진행 중에도 호출할 수 있으나 (조기 종료 시), 확정 이후의 참여는 반영되지 않습니다.
+                    종료된 이벤트만 확정할 수 있습니다. 아직 끝나지 않은 이벤트를 확정하면 남은 기간의 참여가 영구히 제외되기 때문입니다.
+                    조기에 확정하려면 PATCH /api/v1/admin/app-events/{appEventId}/cancel 로 먼저 강제 종료해주세요.
                     출석 이벤트의 응모권 통계까지 함께 보려면 GET /api/v1/admin/attendance-events/{appEventId}/winners 를 호출해주세요!
 
-                    존재하지 않는 이벤트면 404, 당첨자를 뽑지 않는 이벤트(hasWinner=false)면 400,
+                    존재하지 않는 이벤트면 404, 당첨자를 뽑지 않는 이벤트(hasWinner=false)거나 아직 종료되지 않은 이벤트면 400,
                     당첨자 확정 로직이 구현되지 않은 이벤트 종류면 500.
                     """
     )
