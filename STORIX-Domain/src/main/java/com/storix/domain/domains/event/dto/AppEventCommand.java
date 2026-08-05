@@ -10,6 +10,7 @@ import java.util.Set;
 public record AppEventCommand(
         String name,
         String description,
+        String pageKey,
         AppEventType eventType,
         LocalDateTime startAt,
         LocalDateTime endAt,

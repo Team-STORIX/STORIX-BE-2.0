@@ -1,8 +1,11 @@
 package com.storix.domain.domains.notification.service;
 
+import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.notification.adaptor.AdminNotificationAdaptor;
 import com.storix.domain.domains.notification.domain.AdminNotification;
+import com.storix.domain.domains.notification.domain.AdminNotificationTargetAudience;
 import com.storix.domain.domains.notification.dto.AdminNotificationCommand;
+import com.storix.domain.domains.notification.exception.AdminNotificationEventNoWinnerException;
 import com.storix.domain.domains.notification.exception.AdminNotificationNotCancelableException;
 import com.storix.domain.domains.notification.exception.AdminNotificationNotUpdatableException;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +22,11 @@ public class AdminNotificationService {
     private static final int NOTIFICATION_PAGE_SIZE = 10;
 
     private final AdminNotificationAdaptor adminNotificationAdaptor;
+    private final AppEventAdaptor appEventAdaptor;
 
     @Transactional
     public Long create(AdminNotificationCommand cmd, Long assigneeAdminId) {
+        validateEventWinnersTarget(cmd);
         return adminNotificationAdaptor.save(AdminNotification.builder()
                 .title(cmd.title())
                 .content(cmd.content())
@@ -42,6 +47,7 @@ public class AdminNotificationService {
         if (!adminNotification.isScheduled()) {
             throw AdminNotificationNotUpdatableException.EXCEPTION;
         }
+        validateEventWinnersTarget(cmd);
 
         adminNotification.update(
                 cmd.title(),
@@ -55,6 +61,17 @@ public class AdminNotificationService {
                 cmd.targetLink()
         );
         return adminNotification;
+    }
+
+    // 당첨자 발송은 대상 이벤트가 당첨자를 뽑는 이벤트일 때만 허용한다.
+    // hasWinner=false 인데 과거에 확정된 당첨자 행이 남아 있으면 그대로 발송돼버린다
+    private void validateEventWinnersTarget(AdminNotificationCommand cmd) {
+        if (cmd.targetAudience() != AdminNotificationTargetAudience.EVENT_WINNERS || cmd.eventTargetId() == null) {
+            return;
+        }
+        if (!appEventAdaptor.findById(cmd.eventTargetId()).isHasWinner()) {
+            throw AdminNotificationEventNoWinnerException.EXCEPTION;
+        }
     }
 
     @Transactional(readOnly = true)

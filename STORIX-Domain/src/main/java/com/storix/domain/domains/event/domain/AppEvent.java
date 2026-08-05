@@ -37,6 +37,11 @@ public class AppEvent extends BaseTimeEntity {
     @Column(name = "description", length = 500)
     private String description;
 
+    // 상세 웹페이지가 그릴 화면을 고르는 키. 같은 종류라도 회차마다 구성이 다를 수 있어 회차별로 지정한다.
+    // URL에 쓰지 않으므로 나중에 바꿔도 이미 나간 링크는 살아 있다
+    @Column(name = "page_key", length = 50)
+    private String pageKey;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 20)
     private AppEventType eventType;
@@ -77,6 +82,7 @@ public class AppEvent extends BaseTimeEntity {
     @Builder
     public AppEvent(String name,
                     String description,
+                    String pageKey,
                     AppEventType eventType,
                     LocalDateTime startAt,
                     LocalDateTime endAt,
@@ -86,6 +92,7 @@ public class AppEvent extends BaseTimeEntity {
                     Long assigneeAdminId) {
         this.name = name;
         this.description = description;
+        this.pageKey = pageKey;
         this.eventType = eventType == null ? AppEventType.GENERAL : eventType;
         this.startAt = startAt;
         this.endAt = endAt;
@@ -101,6 +108,7 @@ public class AppEvent extends BaseTimeEntity {
 
     public void update(String name,
                        String description,
+                       String pageKey,
                        AppEventType eventType,
                        LocalDateTime startAt,
                        LocalDateTime endAt,
@@ -109,6 +117,7 @@ public class AppEvent extends BaseTimeEntity {
                        Map<Integer, Integer> attendanceRewards) {
         this.name = name;
         this.description = description;
+        this.pageKey = pageKey;
         if (eventType != null) {
             this.eventType = eventType;
         }
@@ -133,6 +142,11 @@ public class AppEvent extends BaseTimeEntity {
 
     public boolean isActiveAt(LocalDateTime now) {
         return !now.isBefore(startAt) && now.isBefore(endAt);
+    }
+
+    // end_at은 exclusive 경계라 그 시점부터 종료로 본다
+    public boolean isEndedAt(LocalDateTime now) {
+        return !now.isBefore(endAt);
     }
 
     // 이벤트 종류별 기준 시각(출석 자정 / 스토리 카드 06:00)으로 계산한 서비스 날짜

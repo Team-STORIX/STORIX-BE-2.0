@@ -26,6 +26,9 @@ public interface AppEventWinnerRepository extends JpaRepository<AppEventWinner, 
             Pageable pageable
     );
 
+    // 확정 여부 판정용
+    boolean existsByAppEventId(Long appEventId);
+
     // 확정된 당첨자를 뽑힌 순서대로
     @Query("""
         SELECT new com.storix.domain.domains.event.dto.EventWinner(w.userId, w.drawOrder)

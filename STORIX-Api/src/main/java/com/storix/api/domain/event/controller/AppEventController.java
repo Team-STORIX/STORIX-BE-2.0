@@ -2,6 +2,7 @@ package com.storix.api.domain.event.controller;
 
 import com.storix.api.domain.event.usecase.AppEventUseCase;
 import com.storix.common.payload.CustomResponse;
+import com.storix.domain.domains.event.dto.AppEventPageResponse;
 import com.storix.domain.domains.event.dto.BannerResponse;
 import com.storix.domain.domains.event.dto.OneTimeAppEventResponse;
 import com.storix.domain.domains.event.dto.PopupResponse;
@@ -25,6 +26,24 @@ import java.util.List;
 public class AppEventController {
 
     private final AppEventUseCase appEventUseCase;
+
+    @GetMapping("/{appEventId}")
+    @Operation(
+            summary = "앱 이벤트 상세 조회 (인증 불필요)",
+            description = """
+                    이벤트 상세 웹페이지(storix.kr/event/{appEventId})를 그리는 데 필요한 정보를 반환합니다.
+                    로그인하지 않아도 호출할 수 있으며, eventType 으로 어떤 화면을 그릴지 정하시면 됩니다.
+
+                    운영 설정값(홍보 수단, 응모권 지급 기준 등)은 내려가지 않습니다.
+                    존재하지 않는 이벤트, 그리고 아직 시작하지 않은 이벤트는 404입니다. (오픈 전 내용이 미리 노출되지 않도록)
+                    종료된 이벤트는 조회되며 status=ENDED 로 내려갑니다.
+                    """
+    )
+    public CustomResponse<AppEventPageResponse> getAppEvent(
+            @PathVariable Long appEventId
+    ) {
+        return appEventUseCase.getAppEventPage(appEventId);
+    }
 
     @GetMapping("/popup")
     @Operation(summary = "노출 중인 팝업 조회", description = "현재 노출 가능한 팝업을 반환합니다. 유저가 오늘 '다시 안 보기' 했거나 노출 팝업이 없으면 null.")
