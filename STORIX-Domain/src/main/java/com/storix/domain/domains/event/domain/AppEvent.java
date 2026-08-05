@@ -135,6 +135,11 @@ public class AppEvent extends BaseTimeEntity {
         return !now.isBefore(startAt) && now.isBefore(endAt);
     }
 
+    // end_at은 exclusive 경계라 그 시점부터 종료로 본다
+    public boolean isEndedAt(LocalDateTime now) {
+        return !now.isBefore(endAt);
+    }
+
     // 이벤트 종류별 기준 시각(출석 자정 / 스토리 카드 06:00)으로 계산한 서비스 날짜
     public LocalDate serviceDateOf(LocalDateTime now) {
         return eventType.serviceDateOf(now);

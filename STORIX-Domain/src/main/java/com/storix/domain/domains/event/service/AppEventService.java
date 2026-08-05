@@ -1,12 +1,14 @@
 package com.storix.domain.domains.event.service;
 
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
+import com.storix.domain.domains.event.adaptor.AppEventWinnerAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import com.storix.domain.domains.event.dto.AppEventResponse;
 import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodBoundaryException;
+import com.storix.domain.domains.event.exception.AppEventFinalizedNotModifiableException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
 import com.storix.domain.domains.event.exception.AppEventNameRequiredException;
 import com.storix.domain.domains.event.exception.AppEventOverlappingTypeException;
@@ -29,6 +31,7 @@ public class AppEventService {
     private static final int APP_EVENT_PAGE_SIZE = 10;
 
     private final AppEventAdaptor appEventAdaptor;
+    private final AppEventWinnerAdaptor appEventWinnerAdaptor;
     private final PopupService popupService;
     private final BannerService bannerService;
 
@@ -65,6 +68,7 @@ public class AppEventService {
         if (periodChanged || eventType != appEvent.getEventType()) {
             validatePeriodBoundary(eventType, cmd.startAt(), cmd.endAt());
         }
+        validateDrawBasisImmutable(appEvent, cmd, eventType);
         validateNoOverlap(eventType, cmd.startAt(), cmd.endAt(), appEventId);
         appEvent.update(
                 cmd.name(),
@@ -135,6 +139,22 @@ public class AppEventService {
         }
         if (appEventAdaptor.lockAndCheckOverlappingByType(eventType, startAt, endAt, excludeAppEventId)) {
             throw AppEventOverlappingTypeException.EXCEPTION;
+        }
+    }
+
+    // 확정된 당첨자가 있으면 추첨 근거가 되는 값은 잠근다.
+    private void validateDrawBasisImmutable(AppEvent appEvent, AppEventCommand cmd, AppEventType eventType) {
+        if (!appEventWinnerAdaptor.existsWinner(appEvent.getId())) {
+            return;
+        }
+        Map<Integer, Integer> rewards = cmd.attendanceRewards() == null ? Map.of() : cmd.attendanceRewards();
+        boolean drawBasisChanged = eventType != appEvent.getEventType()
+                || !appEvent.getStartAt().equals(cmd.startAt())
+                || !appEvent.getEndAt().equals(cmd.endAt())
+                || appEvent.isHasWinner() != cmd.hasWinner()
+                || !appEvent.getAttendanceRewards().equals(rewards);
+        if (drawBasisChanged) {
+            throw AppEventFinalizedNotModifiableException.EXCEPTION;
         }
     }
 
