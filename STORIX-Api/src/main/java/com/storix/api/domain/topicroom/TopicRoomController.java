@@ -7,6 +7,10 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
+import com.storix.api.domain.topicroom.dto.TopicRoomNotificationRequest;
+import com.storix.api.domain.topicroom.dto.TopicRoomNotificationResponse;
+import com.storix.api.domain.topicroom.dto.TopicRoomUnreadResponse;
+import com.storix.domain.domains.topicroom.service.TopicRoomUnreadService;
 import com.storix.domain.domains.topicroom.service.TopicRoomUserService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.common.payload.CustomResponse;
@@ -33,6 +37,7 @@ public class TopicRoomController {
 
     private final TopicRoomUseCase topicRoomUseCase;
     private final TopicRoomUserService topicRoomUserService;
+    private final TopicRoomUnreadService topicRoomUnreadService;
 
     // 1. 참여 목록
     @GetMapping("/me")
@@ -138,5 +143,53 @@ public class TopicRoomController {
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
                 topicRoomUserService.getRoomMembers(roomId));
+    }
+
+    // 10. 읽음 처리
+    @PostMapping("/{roomId}/read")
+    @Operation(summary = "토픽룸 읽음 처리", description = "토픽룸 진입 시 호출합니다. 해당 방의 읽지 않은 메시지를 모두 읽음 처리해 뱃지를 제거합니다.")
+    public CustomResponse<String> markRead(
+            @AuthenticationPrincipal AuthUserDetails authUser,
+            @PathVariable Long roomId) {
+
+        topicRoomUnreadService.markRoomRead(authUser.getUserId(), roomId);
+
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS);
+    }
+
+    // 11. 미읽음 존재 여부
+    @GetMapping("/unread")
+    @Operation(summary = "토픽룸 미읽음 여부 조회", description = "참여 중인 토픽룸 전체에 읽지 않은 메시지가 있는지 반환합니다. 소통 탭 상단 Red Dot 표시용입니다.")
+    public CustomResponse<TopicRoomUnreadResponse> hasUnread(
+            @AuthenticationPrincipal AuthUserDetails authUser) {
+
+        return CustomResponse.onSuccess(
+                SuccessCode.SUCCESS,
+                new TopicRoomUnreadResponse(topicRoomUnreadService.hasAnyUnread(authUser.getUserId())));
+    }
+
+    // 12. 토픽룸별 알림 설정
+    @PatchMapping("/{roomId}/notification")
+    @Operation(summary = "토픽룸 채팅 알림 설정", description = "토픽룸별 채팅 푸시 알림을 켜거나 끕니다. 기본값은 ON이며, 방을 나가면 설정도 함께 사라집니다.")
+    public CustomResponse<String> changeNotification(
+            @AuthenticationPrincipal AuthUserDetails authUser,
+            @PathVariable Long roomId,
+            @Valid @RequestBody TopicRoomNotificationRequest request) {
+
+        topicRoomUserService.changeNotification(authUser.getUserId(), roomId, request.enabled());
+
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS);
+    }
+
+    @GetMapping("/{roomId}/notification")
+    @Operation(summary = "토픽룸 채팅 알림 설정 조회", description = "해당 토픽룸의 채팅 푸시 알림 설정 상태를 반환합니다.")
+    public CustomResponse<TopicRoomNotificationResponse> getNotification(
+            @AuthenticationPrincipal AuthUserDetails authUser,
+            @PathVariable Long roomId) {
+
+        return CustomResponse.onSuccess(
+                SuccessCode.SUCCESS,
+                new TopicRoomNotificationResponse(
+                        topicRoomUserService.isNotificationEnabled(authUser.getUserId(), roomId)));
     }
 }

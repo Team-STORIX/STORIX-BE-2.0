@@ -2,6 +2,7 @@ package com.storix.api.domain.notification.usecase;
 
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.SuccessCode;
+import com.storix.api.domain.notification.controller.dto.BadgeCountResponse;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.notification.dto.NotificationResponseDto;
 import com.storix.domain.domains.notification.service.NotificationService;
@@ -25,6 +26,11 @@ public class NotificationUseCase {
     public CustomResponse<Long> getUnreadCount(Long userId) {
         long count = notificationService.getUnreadCount(userId);
         return CustomResponse.onSuccess(SuccessCode.NOTIFICATION_COUNT_SUCCESS, count);
+    }
+
+    public CustomResponse<BadgeCountResponse> getBadgeCount(Long userId) {
+        long count = (userId == null) ? 0L : notificationService.getBadgeCount(userId);
+        return CustomResponse.onSuccess(SuccessCode.NOTIFICATION_BADGE_COUNT_SUCCESS, new BadgeCountResponse(count));
     }
 
     // 단건 알림 읽음 처리
