@@ -1,5 +1,6 @@
 package com.storix.domain.domains.notification.service;
 
+import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
 import com.storix.domain.domains.notification.domain.Notification;
@@ -25,6 +26,7 @@ public class NotificationDispatchService {
 
     private final UserAdaptor userAdaptor;
     private final UserBlockAdaptor userBlockAdaptor;
+    private final ChatAdaptor chatAdaptor;
     private final NotificationAdaptor notificationAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
 
@@ -81,8 +83,9 @@ public class NotificationDispatchService {
             return DispatchResult.inAppOnly(saved.getId());
         }
 
-        // 뱃지 표시용 미읽음 총합 — 방금 저장한 알림 포함
-        int unreadCount = notificationAdaptor.countUnreadByUserId(event.recipientUserId());
+        // 뱃지 표시용 미읽음 총합 — 방금 저장한 알림 포함, 토픽룸 채팅 미읽음까지 합산
+        int unreadCount = notificationAdaptor.countUnreadByUserId(event.recipientUserId())
+                + (int) chatAdaptor.countTotalUnread(event.recipientUserId());
         return DispatchResult.pushTo(saved.getId(), tokens, unreadCount);
     }
 }

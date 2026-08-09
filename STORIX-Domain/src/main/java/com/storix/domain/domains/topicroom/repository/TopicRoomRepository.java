@@ -56,7 +56,8 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
             t.lastMessageType = :messageType,
             t.lastMessageSenderId = :senderId,
             t.lastMessageId = :messageId,
-            t.lastChatTime = :lastChatTime
+            t.lastChatTime = :lastChatTime,
+            t.updatedAt = CURRENT_TIMESTAMP
         WHERE t.id = :roomId
           AND (t.lastMessageId IS NULL OR t.lastMessageId < :messageId)
     """)
@@ -81,4 +82,10 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
 
     @Query("SELECT tr FROM TopicRoom tr WHERE tr.activeUserNumber > 1")
     List<TopicRoom> findAllActiveRooms();
+
+    @Query("SELECT t.topicRoomName FROM TopicRoom t WHERE t.id = :roomId")
+    String findTopicRoomNameById(@Param("roomId") Long roomId);
+
+    @Query("SELECT t.id FROM TopicRoom t WHERE t.lastChatTime > :since")
+    List<Long> findRoomIdsByLastChatTimeAfter(@Param("since") LocalDateTime since);
 }

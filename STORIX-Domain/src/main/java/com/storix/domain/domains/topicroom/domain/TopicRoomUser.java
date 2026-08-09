@@ -37,10 +37,22 @@ public class TopicRoomUser extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private TopicRoomRole role;
 
+    @Column(name = "last_read_message_id")
+    private Long lastReadMessageId;
+
+    @Column(name = "notification_enabled", nullable = false, columnDefinition = "tinyint(1) not null default 1")
+    private boolean notificationEnabled;
+
     @Builder
     public TopicRoomUser(TopicRoom topicRoom, Long userId, TopicRoomRole role) {
         this.topicRoom = topicRoom;
         this.userId = userId;
         this.role = role;
+        this.notificationEnabled = true;
+    }
+
+    /** 비즈니스 메서드 */
+    public void changeNotification(boolean enabled) {
+        this.notificationEnabled = enabled;
     }
 }

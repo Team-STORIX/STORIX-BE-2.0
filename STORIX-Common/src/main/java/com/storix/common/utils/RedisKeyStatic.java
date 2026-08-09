@@ -86,6 +86,18 @@ public final class RedisKeyStatic {
         }
     }
 
+    // 토픽룸 채팅 알림 — 대기열만 단일 키, 나머지는 {prefix}{roomId}
+    public static final class TopicRoom {
+        public static final String ONLINE_PREFIX = "topic-room:online:";
+        public static final String PUSH_GATE_PREFIX = "topic-room:push:gate:";
+        public static final String PUSH_PENDING_PREFIX = "topic-room:push:pending:";
+        public static final String PUSH_QUEUE = "topic-room:push:queue";
+        public static final String PUSH_ANCHOR_PREFIX = "topic-room:push:anchor:";
+
+        private TopicRoom() {
+        }
+    }
+
     // pub/sub 채널
     public static final class Channel {
         public static final String CHAT_ROOM_PREFIX = "room:";

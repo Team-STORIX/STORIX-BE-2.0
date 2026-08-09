@@ -134,6 +134,10 @@ public class SecurityConfig {
                                 // [App Event] 이벤트 상세 페이지
                                 .requestMatchers(HttpMethod.GET, "/api/v1/app-events/{appEventId:[0-9]+}").permitAll()
 
+                                // [Notification] 배지 개수 — 비로그인은 0 을 받도록 인가만 열어둔다
+                                // JWT 필터는 그대로 타야 토큰이 있을 때 userId 가 채워진다
+                                .requestMatchers(HttpMethod.GET, "/api/v1/notifications/badge-count").permitAll()
+
                                 // [TopicRoom]
                                 .requestMatchers("/ws-stomp/**").permitAll()
 
