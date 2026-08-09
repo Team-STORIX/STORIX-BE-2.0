@@ -262,7 +262,8 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
                   SELECT 1 FROM UserBlock b
                   WHERE b.blockerId = tu.userId AND b.blockedUserId = m.senderId
               )
-              AND (tu.lastReadMessageId IS NULL OR m.id > tu.lastReadMessageId)
+              AND ((tu.lastReadMessageId IS NOT NULL AND m.id > tu.lastReadMessageId)
+                OR (tu.lastReadMessageId IS NULL AND m.createdAt > tu.createdAt))
             GROUP BY tu.userId
             """)
     List<UserUnreadCount> countMessagesAfterForUsers(
