@@ -30,6 +30,7 @@ public class ChatService {
     private final UserAdaptor userAdaptor;
     private final ChatAdaptor chatAdaptor;
 
+    @Transactional(readOnly = true)
     public String validateRoomMemberAndGetNickname(Long userId, Long roomId) {
 
         // 토픽룸 존재 여부 검증
@@ -51,6 +52,12 @@ public class ChatService {
         if (!topicRoomAdaptor.existsById(roomId)) {
             throw UnknownTopicRoomException.EXCEPTION;
         }
+    }
+
+    // 발행 전에 저장해야 실시간 메시지에도 실제 id 와 저장 시각이 실린다
+    @Transactional
+    public ChatMessage save(ChatMessage chatMessage) {
+        return chatAdaptor.saveMessage(chatMessage);
     }
 
     public void publishRedis(ChatMessage chatMessage, String nickname) {

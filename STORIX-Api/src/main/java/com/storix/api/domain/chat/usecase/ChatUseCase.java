@@ -28,7 +28,7 @@ public class ChatUseCase {
     private final UserBlockAdaptor userBlockAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
 
-    @Transactional
+    // 트랜잭션은 save 안쪽으로 좁힌다. Redis 발행 동안 DB 커넥션을 붙잡지 않기 위함
     public void sendMessage(Long userId, ChatMessageRequestDto request) {
 
         log.info(">>>> [ChatService] 메시지 전송 시도 - UserID: {}, RoomID: {}", userId, request.roomId());
@@ -39,11 +39,14 @@ public class ChatUseCase {
         // 채팅 메시지 엔티티 변환
         ChatMessage chatMessage = request.toEntity(userId);
 
+        // 저장 먼저 — 실시간 메시지에 실제 id 와 저장 시각을 실어야 한다
+        ChatMessage saved = chatService.save(chatMessage);
+
         // Redis 발행
-        chatService.publishRedis(chatMessage, nickname);
+        chatService.publishRedis(saved, nickname);
 
         // 메시지 전송 후 비동기 처리
-        chatAsyncService.processAfterMessageSent(chatMessage);
+        chatAsyncService.processAfterMessageSent(saved);
 
         log.info(">>>> [ChatService] 처리 완료 - Sender: {}, Content: {}", nickname, chatMessage.getMessage());
     }
