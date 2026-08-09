@@ -48,17 +48,21 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
     @Query("UPDATE TopicRoom t SET t.lastChatTime = :lastChatTime WHERE t.id = :roomId")
     void updateLastChatTime(@Param("roomId") Long roomId, @Param("lastChatTime") LocalDateTime lastChatTime);
 
+    // 마지막 채팅 정보 갱신
     @Modifying(clearAutomatically = true)
     @Query("""
         UPDATE TopicRoom t
         SET t.lastMessage = :message,
             t.lastMessageType = :messageType,
             t.lastMessageSenderId = :senderId,
+            t.lastMessageId = :messageId,
             t.lastChatTime = :lastChatTime
         WHERE t.id = :roomId
+          AND (t.lastMessageId IS NULL OR t.lastMessageId < :messageId)
     """)
     void updateLastMessage(
             @Param("roomId") Long roomId,
+            @Param("messageId") Long messageId,
             @Param("message") String message,
             @Param("messageType") MessageType messageType,
             @Param("senderId") Long senderId,

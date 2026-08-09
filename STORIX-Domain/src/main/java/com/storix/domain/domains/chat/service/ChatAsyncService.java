@@ -25,6 +25,7 @@ public class ChatAsyncService {
         try {
             topicRoomAdaptor.updateLastMessage(
                     savedMessage.getRoomId(),
+                    savedMessage.getId(),
                     savedMessage.getMessage(),
                     savedMessage.getMessageType(),
                     savedMessage.getSenderId(),
