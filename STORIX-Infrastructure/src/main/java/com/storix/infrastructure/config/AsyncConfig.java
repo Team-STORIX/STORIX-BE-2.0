@@ -79,6 +79,16 @@ public class AsyncConfig {
         executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("ChatAsync-");
         executor.setTaskDecorator(mdcTaskDecorator());
+
+        // 버리면 토픽룸 최신 메시지가 안 바뀌고 푸시 이벤트도 안 나간다
+        executor.setRejectedExecutionHandler((r, exec) -> {
+            recordRejected("chatAsync");
+            log.warn(">>> [Chat] queue overflow - running on caller thread (pool={}, queue={}/{})",
+                    exec.getPoolSize(), exec.getQueue().size(), exec.getQueue().remainingCapacity());
+            if (!exec.isShutdown()) {
+                r.run();
+            }
+        });
         executor.initialize();
         return executor;
     }
@@ -127,6 +137,28 @@ public class AsyncConfig {
         executor.setRejectedExecutionHandler((r, exec) -> {
             recordRejected("notificationConsumer");
             log.warn(">>> [Notification] queue overflow - running on caller thread (pool={}, queue={}/{})",
+                    exec.getPoolSize(), exec.getQueue().size(), exec.getQueue().remainingCapacity());
+            if (!exec.isShutdown()) {
+                r.run();
+            }
+        });
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean(name = "topicRoomPushExecutor")
+    public Executor topicRoomPushExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(16);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("TopicRoomPush-");
+        executor.setTaskDecorator(mdcTaskDecorator()); // MDC 전파
+
+        // 버려도 앵커가 안 옮겨져 sweep 이 줍긴 하지만 그만큼 발송이 밀린다
+        executor.setRejectedExecutionHandler((r, exec) -> {
+            recordRejected("topicRoomPush");
+            log.warn(">>> [TopicRoomPush] queue overflow - running on caller thread (pool={}, queue={}/{})",
                     exec.getPoolSize(), exec.getQueue().size(), exec.getQueue().remainingCapacity());
             if (!exec.isShutdown()) {
                 r.run();
