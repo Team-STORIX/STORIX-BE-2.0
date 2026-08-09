@@ -30,4 +30,14 @@ public class ChatController {
         AuthUserDetails user = (AuthUserDetails) auth.getPrincipal();
         chatUseCase.sendMessage(user.getUserId(), request);
     }
+
+    // STOMP 는 GlobalExceptionHandler 를 타지 않아 여기서 남기지 않으면 흔적 없이 버려진다
+    @MessageExceptionHandler
+    public void handleMessageException(Exception e, SimpMessageHeaderAccessor accessor) {
+        log.error(">>>> [채팅] 메시지 처리 실패 sessionId={}, destination={}, exceptionType={}, message={}",
+                accessor.getSessionId(),
+                accessor.getDestination(),
+                e.getClass().getSimpleName(),
+                e.getMessage());
+    }
 }

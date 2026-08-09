@@ -60,6 +60,9 @@ public class TopicRoom extends BaseTimeEntity {
     @Column(name = "last_message_sender_id")
     private Long lastMessageSenderId;
 
+    @Column(name = "last_message_id")
+    private Long lastMessageId;
+
     @Column(name = "popularity_score", nullable = false)
     private Double popularityScore;
 

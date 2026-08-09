@@ -1,5 +1,7 @@
 package com.storix.infrastructure.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.storix.infrastructure.external.chat.StompHandler;
 import com.storix.infrastructure.external.chat.StompMdcInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -8,14 +10,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.messaging.converter.DefaultContentTypeResolver;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.*;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+import java.util.List;
 import java.util.Map;
 
 @Configuration
@@ -26,6 +33,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final StompHandler stompHandler;
     private final StompMdcInterceptor stompMdcInterceptor;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -33,6 +41,20 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setHeartbeatValue(new long[]{10000, 10000})
                 .setTaskScheduler(webSocketHeartbeatScheduler());
         registry.setApplicationDestinationPrefixes("/pub");
+    }
+
+    @Override
+    public boolean configureMessageConverters(List<MessageConverter> messageConverters) {
+        DefaultContentTypeResolver contentTypeResolver = new DefaultContentTypeResolver();
+        contentTypeResolver.setDefaultMimeType(MimeTypeUtils.APPLICATION_JSON);
+
+        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+        converter.setObjectMapper(
+                objectMapper.copy().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
+        converter.setContentTypeResolver(contentTypeResolver);
+
+        messageConverters.add(0, converter);
+        return true;
     }
 
     @Bean
