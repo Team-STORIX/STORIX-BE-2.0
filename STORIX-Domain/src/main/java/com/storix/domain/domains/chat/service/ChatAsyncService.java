@@ -1,6 +1,5 @@
 package com.storix.domain.domains.chat.service;
 
-import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import lombok.RequiredArgsConstructor;
@@ -15,15 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ChatAsyncService {
 
-    private final ChatAdaptor chatAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
 
     @Async("chatAsyncExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void processAfterMessageSent(ChatMessage chatMessage) {
-
-        // 메시지 저장
-        ChatMessage savedMessage = chatAdaptor.saveMessage(chatMessage);
+    // 저장과 발행은 이미 끝난 상태로 들어온다
+    public void processAfterMessageSent(ChatMessage savedMessage) {
 
         // 토픽룸의 마지막 채팅 정보 갱신
         try {
