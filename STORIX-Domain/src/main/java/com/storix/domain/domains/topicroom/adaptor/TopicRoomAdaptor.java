@@ -22,8 +22,8 @@ public class TopicRoomAdaptor {
     private final TopicRoomRepository topicRoomRepository;
     private final TopicRoomUserRepository topicRoomUserRepository;
 
-    public void updateLastMessage(Long roomId, String message, MessageType messageType, Long senderId, LocalDateTime lastChatTime) {
-        topicRoomRepository.updateLastMessage(roomId, message, messageType, senderId, lastChatTime);
+    public void updateLastMessage(Long roomId, Long messageId, String message, MessageType messageType, Long senderId, LocalDateTime lastChatTime) {
+        topicRoomRepository.updateLastMessage(roomId, messageId, message, messageType, senderId, lastChatTime);
     }
 
     public boolean existsById(Long roomId) {

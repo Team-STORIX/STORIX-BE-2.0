@@ -106,7 +106,7 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
 
     @Query("SELECT rb " +
             "FROM ReaderBoard rb " +
-            "WHERE rb.worksId = :worksId AND rb.userId NOT IN :blockedIds")
+            "WHERE rb.worksId = :worksId AND rb.userId NOT IN :blockedIds AND rb.deleted = false")
     Slice<ReaderBoard> findAllReaderBoardByWorksIdExcludingBlocked(
             @Param("worksId") Long worksId,
             @Param("blockedIds") List<Long> blockedIds,
@@ -115,7 +115,7 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
     @Query("SELECT rb FROM ReaderBoard rb WHERE rb.deleted = false ORDER BY rb.createdAt DESC")
     Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    @Query("SELECT rb FROM ReaderBoard rb WHERE rb.userId NOT IN :blockedIds ORDER BY rb.createdAt DESC")
+    @Query("SELECT rb FROM ReaderBoard rb WHERE rb.userId NOT IN :blockedIds AND rb.deleted = false ORDER BY rb.createdAt DESC")
     Slice<ReaderBoard> findAllExcludingBlockedOrderByCreatedAtDesc(
             @Param("blockedIds") List<Long> blockedIds,
             Pageable pageable);
