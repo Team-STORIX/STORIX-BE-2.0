@@ -152,7 +152,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "FROM ChatMessage m " +
             "LEFT JOIN User u ON m.senderId = u.id " +
             "WHERE m.roomId = :roomId " +
-            "AND m.senderId NOT IN :blockedIds " +
+            "AND m.senderId NOT IN :blockedIds AND m.deleted = false " +
             "ORDER BY m.createdAt DESC, m.id DESC")
     Slice<ChatMessageResponseDto> findAllByRoomIdExcludingBlockedOrderByCreatedAtDesc(
             @Param("roomId") Long roomId,
