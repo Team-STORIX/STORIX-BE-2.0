@@ -49,6 +49,10 @@ public class TopicRoomAdaptor {
         return topicRoomUserRepository.findJoinedRoomIdsByUserIdAndRoomIds(userId, roomIds);
     }
 
+    public int advanceReadCursor(Long userId, Long roomId, Long messageId) {
+        return topicRoomUserRepository.advanceReadCursor(userId, roomId, messageId);
+    }
+
     public TopicRoomUser findByUserIdAndRoomId(Long userId, Long roomId) {
         return topicRoomUserRepository.findByUserIdAndTopicRoomId(userId, roomId)
                 .orElseThrow(() -> UnknownTopicRoomUserException.EXCEPTION);
@@ -60,6 +64,18 @@ public class TopicRoomAdaptor {
 
     public List<Long> findAllJoinedRoomIdsByUserId(Long userId) {
         return topicRoomUserRepository.findAllJoinedRoomIdsByUserId(userId);
+    }
+
+    public List<Long> findChatPushTargetUserIds(Long roomId, Long senderId) {
+        return topicRoomUserRepository.findChatPushTargetUserIds(roomId, senderId);
+    }
+
+    public String findTopicRoomNameById(Long roomId) {
+        return topicRoomRepository.findTopicRoomNameById(roomId);
+    }
+
+    public List<Long> findRoomIdsByLastChatTimeAfter(LocalDateTime since) {
+        return topicRoomRepository.findRoomIdsByLastChatTimeAfter(since);
     }
 
     public Integer findActiveUserNumberById(Long roomId) {

@@ -20,6 +20,7 @@ public enum SuccessCode {
     NOTIFICATION_PREFERENCE_UPDATE_SUCCESS(HttpStatus.OK, "NOTI2007", "알림 설정이 변경되었습니다."),
     NOTIFICATION_TEST_PUSH_SUCCESS(HttpStatus.OK, "NOTI2008", "테스트 푸시 알림 전송에 성공했습니다."),
     NOTIFICATION_MARKETING_CONSENT_UPDATE_SUCCESS(HttpStatus.OK, "NOTI2009", "마케팅 알림 동의 상태가 변경되었습니다."),
+    NOTIFICATION_BADGE_COUNT_SUCCESS(HttpStatus.OK, "NOTI2010", "앱 아이콘 배지 개수를 성공적으로 조회했습니다."),
 
     // Event success
     ADMIN_NOTIFICATION_CREATE_SUCCESS(HttpStatus.CREATED, "ADMIN_NOTIFICATION_SUCCESS_001", "운영자 알림 생성에 성공했습니다."),

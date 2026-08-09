@@ -1,5 +1,6 @@
 package com.storix.domain.domains.topicroom.service;
 
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
@@ -22,6 +23,7 @@ public class TopicRoomUserService {
     private final LoadTopicRoomUserPort loadTopicRoomUserPort;
     private final LoadTopicRoomPort loadTopicRoomPort;
     private final UserAdaptor userAdaptor;
+    private final TopicRoomAdaptor topicRoomAdaptor;
 
     // 특정 토픽룸에 참여 중인 멤버들의 프로필 목록 조회
     @Transactional(readOnly = true)
@@ -49,5 +51,16 @@ public class TopicRoomUserService {
                         info.profileImageUrl() // S3 BaseUrl이 적용된 URL
                 ))
                 .toList();
+    }
+
+    // 토픽룸별 채팅 알림 ON/OFF (기본값 ON)
+    @Transactional
+    public void changeNotification(Long userId, Long roomId, boolean enabled) {
+        topicRoomAdaptor.findByUserIdAndRoomId(userId, roomId).changeNotification(enabled);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isNotificationEnabled(Long userId, Long roomId) {
+        return topicRoomAdaptor.findByUserIdAndRoomId(userId, roomId).isNotificationEnabled();
     }
 }

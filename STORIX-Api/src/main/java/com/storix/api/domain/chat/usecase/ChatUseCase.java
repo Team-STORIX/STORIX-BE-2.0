@@ -46,7 +46,7 @@ public class ChatUseCase {
         chatService.publishRedis(saved, nickname);
 
         // 메시지 전송 후 비동기 처리
-        chatAsyncService.processAfterMessageSent(saved);
+        chatAsyncService.processAfterMessageSent(saved, nickname);
 
         log.info(">>>> [ChatService] 처리 완료 - Sender: {}, Content: {}", nickname, chatMessage.getMessage());
     }

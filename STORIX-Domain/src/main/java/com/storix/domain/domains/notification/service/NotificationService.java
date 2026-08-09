@@ -1,5 +1,6 @@
 package com.storix.domain.domains.notification.service;
 
+import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
 import com.storix.domain.domains.notification.domain.Notification;
 import com.storix.domain.domains.notification.dto.NotificationResponseDto;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationAdaptor notificationAdaptor;
+    private final ChatAdaptor chatAdaptor;
 
     // 1. 전체 알림 목록 조회 (커서 기반)
     @Transactional(readOnly = true)
@@ -30,6 +32,13 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public int getUnreadCount(Long userId) {
         return notificationAdaptor.countUnreadByUserId(userId);
+    }
+
+    // 2-1. 앱 아이콘 배지 — 알림함 미읽음 + 토픽룸 미읽음, 푸시에 싣는 값과 동일
+    @Transactional(readOnly = true)
+    public long getBadgeCount(Long userId) {
+        return notificationAdaptor.countUnreadByUserId(userId)
+                + chatAdaptor.countTotalUnread(userId);
     }
 
     // 3. 단건 알림 읽음 처리

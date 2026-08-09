@@ -135,9 +135,10 @@ public class STORIXStatic {
         // 본문 템플릿 — 마케팅/광고 (운영자 입력 + 고정 suffix '(수신거부 : 설정)')
         public static final String TPL_MARKETING = "%s (수신거부 : 설정)";
 
-        // 댓글 본문 미리보기 — 10자 노출 후 ...
+        // 댓글·채팅 본문 미리보기 — 10자 노출 후 ...
         public static final int CONTENT_PREVIEW_MAX = 10;
         public static final String CONTENT_PREVIEW_SUFFIX = "...";
+
     }
 
     // 사용자 이력 — 마케팅 동의/거부 모달 표시 문구
