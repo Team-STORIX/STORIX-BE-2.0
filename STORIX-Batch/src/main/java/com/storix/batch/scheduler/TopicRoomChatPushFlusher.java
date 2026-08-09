@@ -50,6 +50,7 @@ public class TopicRoomChatPushFlusher {
             topicRoomChatPushSender.send(roomId, anchor, upTo, senderId, senderNickname, lastMessage);
             topicRoomPushBatchPort.markPushed(roomId, upTo);
         } catch (Exception e) {
+            topicRoomPushBatchPort.enqueue(roomId);
             log.error(">>>> [TopicRoomPush] flush 실패 roomId={}, cause={}", roomId, e.getMessage(), e);
         }
     }

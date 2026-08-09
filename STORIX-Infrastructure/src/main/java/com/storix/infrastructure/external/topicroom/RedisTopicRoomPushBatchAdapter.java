@@ -6,9 +6,12 @@ import com.storix.domain.domains.topicroom.dto.PendingChatPush;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +29,13 @@ public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
     private static final String FIELD_SENDER_ID = "senderId";
     private static final String FIELD_NICKNAME = "nickname";
     private static final String FIELD_MESSAGE = "message";
+
+    private static final RedisScript<List> DRAIN_SCRIPT = new DefaultRedisScript<>("""
+            local pending = redis.call('HGETALL', KEYS[1])
+            redis.call('DEL', KEYS[1])
+            redis.call('ZREM', KEYS[2], ARGV[1])
+            return pending
+            """, List.class);
 
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -98,19 +108,24 @@ public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
     @Override
     public PendingChatPush drain(Long roomId) {
         try {
-            String pendingKey = pendingKey(roomId);
-            Map<Object, Object> pending = redisTemplate.opsForHash().entries(pendingKey);
-            redisTemplate.delete(pendingKey);
-            redisTemplate.opsForZSet().remove(RedisKeyStatic.TopicRoom.PUSH_QUEUE, String.valueOf(roomId));
+            List<?> flat = redisTemplate.execute(
+                    DRAIN_SCRIPT,
+                    List.of(pendingKey(roomId), RedisKeyStatic.TopicRoom.PUSH_QUEUE),
+                    String.valueOf(roomId));
 
-            if (pending.isEmpty()) {
+            if (flat == null || flat.isEmpty()) {
                 return null;
             }
+
+            Map<String, String> pending = new HashMap<>();
+            for (int i = 0; i + 1 < flat.size(); i += 2) {
+                pending.put(String.valueOf(flat.get(i)), String.valueOf(flat.get(i + 1)));
+            }
             return new PendingChatPush(
-                    Long.valueOf(String.valueOf(pending.get(FIELD_MESSAGE_ID))),
-                    Long.valueOf(String.valueOf(pending.get(FIELD_SENDER_ID))),
-                    String.valueOf(pending.get(FIELD_NICKNAME)),
-                    String.valueOf(pending.get(FIELD_MESSAGE)));
+                    Long.valueOf(pending.get(FIELD_MESSAGE_ID)),
+                    Long.valueOf(pending.get(FIELD_SENDER_ID)),
+                    pending.get(FIELD_NICKNAME),
+                    pending.get(FIELD_MESSAGE));
         } catch (Exception e) {
             log.warn(">>>> [TopicRoomPush] 누적분 조회 실패 roomId={}, cause={}", roomId, e.getMessage());
             return null;

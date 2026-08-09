@@ -18,7 +18,7 @@ public class TopicRoomReadMarker {
         try {
             topicRoomUnreadService.markRoomRead(userId, roomId);
         } catch (Exception e) {
-            log.debug(">>>> [TopicRoomRead] 읽음 처리 건너뜀 userId={}, roomId={}, cause={}",
+            log.warn(">>>> [TopicRoomRead] 읽음 처리 실패 userId={}, roomId={}, cause={}",
                     userId, roomId, e.getMessage());
         }
     }
