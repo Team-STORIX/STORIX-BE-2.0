@@ -72,6 +72,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 "https://storix.kr",
                 "https://www.storix.kr",
                 "https://api.storix.kr",
+                "https://dev.storix.kr",
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "https://localhost"
