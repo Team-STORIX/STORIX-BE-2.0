@@ -1,6 +1,5 @@
 package com.storix.domain.domains.topicroom.service;
 
-import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
@@ -105,8 +104,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                     }
                     TopicRoomResponseDto dto = TopicRoomResponseDto.from(room, worksInfo, true);
                     dto.applyJoinedRoomState(
-                            Math.min(unreadMap.getOrDefault(room.getId(), 0),
-                                    STORIXStatic.Notification.TOPIC_ROOM_BADGE_MAX),
+                            unreadMap.getOrDefault(room.getId(), 0),
                             participation.isNotificationEnabled());
                     return dto;
                 })

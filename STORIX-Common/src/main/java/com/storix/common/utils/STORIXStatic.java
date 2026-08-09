@@ -139,8 +139,6 @@ public class STORIXStatic {
         public static final int CONTENT_PREVIEW_MAX = 10;
         public static final String CONTENT_PREVIEW_SUFFIX = "...";
 
-        // 토픽룸 목록 뱃지 — 초과분은 99+ 로 표시
-        public static final int TOPIC_ROOM_BADGE_MAX = 99;
     }
 
     // 사용자 이력 — 마케팅 동의/거부 모달 표시 문구
