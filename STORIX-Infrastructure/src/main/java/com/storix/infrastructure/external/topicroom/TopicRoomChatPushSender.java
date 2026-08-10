@@ -56,7 +56,7 @@ public class TopicRoomChatPushSender {
         for (TopicRoomChatPushTarget target : targets) {
             Map<String, String> data =
                     buildData(roomId, roomName, senderNickname, senderProfileImageUrl, lastMessage, target);
-            target.tokens().forEach(token -> messages.add(new PushMessage(token, data)));
+            target.tokens().forEach(token -> messages.add(new PushMessage(token, data, true)));
         }
 
         // collapse 하지 않는다 — 최초 개별 알림과 묶음 알림이 각각 남아야 함
@@ -92,10 +92,10 @@ public class TopicRoomChatPushSender {
         return data;
     }
 
-    // 본문 미리보기 — 10자 초과 시 잘라서 '…' 부가
+    // 본문 미리보기 — 30자 초과 시 잘라서 '…' 부가
     private String preview(String text) {
         if (text == null) return "";
-        int max = STORIXStatic.Notification.CONTENT_PREVIEW_MAX;
+        int max = STORIXStatic.Notification.CHAT_PREVIEW_MAX;
         if (text.codePointCount(0, text.length()) <= max) return text;
 
         // 이모지 검증

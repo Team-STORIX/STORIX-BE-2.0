@@ -104,13 +104,6 @@ public class ChatAdaptor {
                 .orElse(null);
     }
 
-    public List<UserUnreadCount> countUnreadByRoomForUsers(Long roomId, List<Long> userIds) {
-        if (userIds.isEmpty()) {
-            return List.of();
-        }
-        return chatRepository.countUnreadByRoomForUsers(roomId, userIds, MessageType.TALK);
-    }
-
     public List<UserUnreadCount> countMessagesAfterForUsers(
             Long roomId, List<Long> userIds, Long afterMessageId, Long upToMessageId) {
         if (userIds.isEmpty()) {
