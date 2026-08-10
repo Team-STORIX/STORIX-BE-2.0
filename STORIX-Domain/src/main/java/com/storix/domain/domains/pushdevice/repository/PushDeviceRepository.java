@@ -23,16 +23,6 @@ public interface PushDeviceRepository extends JpaRepository<PushDevice, Long> {
     @Query("""
         SELECT DISTINCT new com.storix.domain.domains.pushdevice.dto.ActivePushToken(d.userId, d.fcmToken)
         FROM PushDevice d
-        JOIN NotificationSetting s ON s.userId = d.userId
-        WHERE d.userId IN :userIds
-          AND d.isActive = true
-          AND s.marketingEnabled = true
-    """)
-    List<ActivePushToken> findMarketingEnabledActiveTokensByUserIds(@Param("userIds") List<Long> userIds);
-
-    @Query("""
-        SELECT DISTINCT new com.storix.domain.domains.pushdevice.dto.ActivePushToken(d.userId, d.fcmToken)
-        FROM PushDevice d
         WHERE d.userId IN :userIds
           AND d.isActive = true
     """)

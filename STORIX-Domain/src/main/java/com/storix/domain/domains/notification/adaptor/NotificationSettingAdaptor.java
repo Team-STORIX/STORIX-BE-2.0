@@ -6,6 +6,8 @@ import com.storix.domain.domains.notification.repository.NotificationSettingRepo
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class NotificationSettingAdaptor {
@@ -17,6 +19,12 @@ public class NotificationSettingAdaptor {
     public NotificationSetting getByUserId(Long userId) {
         return notificationSettingRepository.findById(userId)
                 .orElseThrow(() -> UnknownNotificationSettingException.EXCEPTION);
+    }
+
+    // 여러 유저 알림 설정 일괄 조회
+    public List<NotificationSetting> findAllByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) return List.of();
+        return notificationSettingRepository.findAllById(userIds);
     }
 
 
