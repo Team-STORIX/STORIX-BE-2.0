@@ -43,9 +43,8 @@ public class TopicRoomChatPushService {
         List<Long> offline = candidates.stream().filter(id -> !online.contains(id)).toList();
         if (offline.isEmpty()) return List.of();
 
-        Map<Long, Long> batchCount = toCountMap(afterMessageId == null
-                ? chatAdaptor.countUnreadByRoomForUsers(roomId, offline)
-                : chatAdaptor.countMessagesAfterForUsers(roomId, offline, afterMessageId, upToMessageId));
+        Map<Long, Long> batchCount = toCountMap(chatAdaptor.countMessagesAfterForUsers(
+                roomId, offline, afterMessageId != null ? afterMessageId : upToMessageId - 1, upToMessageId));
         List<Long> receiverIds = offline.stream()
                 .filter(id -> batchCount.getOrDefault(id, 0L) > 0)
                 .toList();

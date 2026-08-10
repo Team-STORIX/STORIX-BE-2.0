@@ -230,29 +230,6 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             JOIN TopicRoomUser tu ON tu.topicRoom.id = m.roomId
             WHERE m.roomId = :roomId
               AND tu.userId IN :userIds
-              AND m.deleted = false
-              AND m.messageType = :messageType
-              AND m.senderId <> tu.userId
-              AND NOT EXISTS (
-                  SELECT 1 FROM UserBlock b
-                  WHERE b.blockerId = tu.userId AND b.blockedUserId = m.senderId
-              )
-              AND ((tu.lastReadMessageId IS NOT NULL AND m.id > tu.lastReadMessageId)
-                OR (tu.lastReadMessageId IS NULL AND m.createdAt > tu.createdAt))
-            GROUP BY tu.userId
-            """)
-    List<UserUnreadCount> countUnreadByRoomForUsers(
-            @Param("roomId") Long roomId,
-            @Param("userIds") List<Long> userIds,
-            @Param("messageType") MessageType messageType
-    );
-
-    @Query("""
-            SELECT new com.storix.domain.domains.topicroom.dto.UserUnreadCount(tu.userId, COUNT(m.id))
-            FROM ChatMessage m
-            JOIN TopicRoomUser tu ON tu.topicRoom.id = m.roomId
-            WHERE m.roomId = :roomId
-              AND tu.userId IN :userIds
               AND m.id > :afterMessageId
               AND m.id <= :upToMessageId
               AND m.deleted = false
