@@ -9,6 +9,8 @@ import com.storix.domain.domains.notification.service.AdminNotificationDeliveryR
 import com.storix.common.utils.NightWindow;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
+import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
+import com.storix.domain.domains.notification.domain.NotificationSetting;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import com.storix.infrastructure.external.notification.dto.MulticastResult;
@@ -37,6 +39,7 @@ public class AdminNotificationDispatcher {
     private final FcmPushExecutor fcmPushExecutor;
     private final AdminNotificationDeliveryResultService deliveryResultService;
     private final NotificationAdaptor notificationAdaptor;
+    private final NotificationSettingAdaptor notificationSettingAdaptor;
 
     // 대상 유저에게 발송하고 결과를 로그에 반영
     public AdminNotificationDispatchCounts dispatch(AdminNotificationChunkEvent event, LocalDateTime now) {
@@ -63,13 +66,14 @@ public class AdminNotificationDispatcher {
                 event.title(), event.content());
         if (notificationIdByUser.isEmpty()) return AdminNotificationDispatchCounts.empty();
 
-        // 2. 발송 대상 활성 토큰 조회
+        // 2. 발송 대상 활성 토큰 조회 — 타입별 수신 동의한 유저만 (인앱 저장은 동의와 무관)
         List<Long> targets = List.copyOf(notificationIdByUser.keySet());
         Map<Long, Integer> unreadByUser = notificationAdaptor.countUnreadByUserIds(targets); // 뱃지용 미읽음 총합
-        List<ActivePushToken> activeTokens = event.isMarketing()
-                ? pushDeviceAdaptor.findMarketingEnabledActiveTokensByUserIds(targets)
-                : pushDeviceAdaptor.findActiveTokensByUserIds(targets);
-        Map<Long, List<String>> tokensByUserId = activeTokens.stream()
+        List<Long> consented = notificationSettingAdaptor.findAllByUserIds(targets).stream()
+                .filter(setting -> setting.acceptsType(notificationType))
+                .map(NotificationSetting::getUserId)
+                .toList();
+        Map<Long, List<String>> tokensByUserId = pushDeviceAdaptor.findActiveTokensByUserIds(consented).stream()
                 .collect(Collectors.groupingBy(
                         ActivePushToken::userId,
                         LinkedHashMap::new,
