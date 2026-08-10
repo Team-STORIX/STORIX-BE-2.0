@@ -56,7 +56,7 @@ public class TopicRoomChatPushSender {
         for (TopicRoomChatPushTarget target : targets) {
             Map<String, String> data =
                     buildData(roomId, roomName, senderNickname, senderProfileImageUrl, lastMessage, target);
-            target.tokens().forEach(token -> messages.add(new PushMessage(token, data)));
+            target.tokens().forEach(token -> messages.add(new PushMessage(token, data, true)));
         }
 
         // collapse 하지 않는다 — 최초 개별 알림과 묶음 알림이 각각 남아야 함

@@ -46,7 +46,7 @@ public class FcmSender {
     public SingleSendResult sendToToken(String token, Map<String, String> data) {
         try {
             // 1. 전송 성공
-            String messageId = firebaseMessaging.send(buildMessage(token, data, null));
+            String messageId = firebaseMessaging.send(buildMessage(token, data, null, false));
             log.debug(">>>> [FCM] send 성공. messageId={}, token={}", messageId, fcmErrorClassifier.maskToken(token));
             return SingleSendResult.success(messageId);
         } catch (FirebaseMessagingException e) {
@@ -86,7 +86,7 @@ public class FcmSender {
         MulticastMessage.Builder builder = MulticastMessage.builder()
                 .addAllTokens(tokens)
                 .setNotification(displayNotification(data))
-                .setAndroidConfig(highPriorityAndroid(collapseKey, data))
+                .setAndroidConfig(highPriorityAndroid(collapseKey, data, false))
                 .setApnsConfig(apnsConfig(data, collapseKey));
         putData(builder::putData, data);
 
@@ -129,7 +129,7 @@ public class FcmSender {
         // 1. 응답이 입력 순서와 1:1 이라 토큰 목록을 같은 순서로 들고 간다
         List<String> tokens = messages.stream().map(PushMessage::token).toList();
         List<Message> payloads = messages.stream()
-                .map(m -> buildMessage(m.token(), m.data(), collapseKey))
+                .map(m -> buildMessage(m.token(), m.data(), collapseKey, m.androidDataOnly()))
                 .toList();
 
         try {
@@ -162,12 +162,14 @@ public class FcmSender {
         }
     }
 
-    private Message buildMessage(String token, Map<String, String> data, String collapseKey) {
+    private Message buildMessage(String token, Map<String, String> data, String collapseKey, boolean androidDataOnly) {
         Message.Builder builder = Message.builder()
                 .setToken(token)
-                .setNotification(displayNotification(data))
-                .setAndroidConfig(highPriorityAndroid(collapseKey, data))
+                .setAndroidConfig(highPriorityAndroid(collapseKey, data, androidDataOnly))
                 .setApnsConfig(apnsConfig(data, collapseKey));
+        if (!androidDataOnly) {
+            builder.setNotification(displayNotification(data));
+        }
         putData(builder::putData, data);
         return builder.build();
     }
@@ -193,7 +195,16 @@ public class FcmSender {
     }
 
     // Android HIGH 전송 우선순위 + 알림 표시 우선순위 MAX(헤드업 유도) + 기본 사운드
-    private AndroidConfig highPriorityAndroid(String collapseKey, Map<String, String> data) {
+    private AndroidConfig highPriorityAndroid(String collapseKey, Map<String, String> data, boolean dataOnly) {
+        AndroidConfig.Builder builder = AndroidConfig.builder()
+                .setPriority(AndroidConfig.Priority.HIGH);
+        if (collapseKey != null) {
+            builder.setCollapseKey(collapseKey);
+        }
+        if (dataOnly) {
+            return builder.build();
+        }
+
         AndroidNotification.Builder notification = AndroidNotification.builder()
                 .setChannelId(STORIXStatic.Notification.ANDROID_CHANNEL_ID)
                 .setDefaultSound(true)
@@ -205,13 +216,7 @@ public class FcmSender {
             notification.setNotificationCount(badge);
         }
 
-        AndroidConfig.Builder builder = AndroidConfig.builder()
-                .setPriority(AndroidConfig.Priority.HIGH)
-                .setNotification(notification.build());
-        if (collapseKey != null) {
-            builder.setCollapseKey(collapseKey);
-        }
-        return builder.build();
+        return builder.setNotification(notification.build()).build();
     }
 
     // iOS APNs 고우선순위 즉시 표시(alert) + 기본 사운드 + 뱃지(미읽음 총합)
@@ -226,13 +231,15 @@ public class FcmSender {
             aps.setBadge(badge);
         }
         // subtitle 이 있으면 제목 2줄 + 본문. Android 는 subtitle 자리가 없어 2줄까지만 된다
-        String subtitle = data != null ? data.get("subtitle") : null;
-        if (subtitle != null) {
-            aps.setAlert(ApsAlert.builder()
+        if (data != null) {
+            ApsAlert.Builder alert = ApsAlert.builder()
                     .setTitle(data.get("title"))
-                    .setSubtitle(subtitle)
-                    .setBody(data.get("body"))
-                    .build());
+                    .setBody(data.get("body"));
+            String subtitle = data.get("subtitle");
+            if (subtitle != null) {
+                alert.setSubtitle(subtitle);
+            }
+            aps.setAlert(alert.build());
         }
         // 앱의 Notification Service Extension 이 알림을 가로채 꾸미려면 필요
         if (data != null && Boolean.parseBoolean(data.get("mutableContent"))) {
