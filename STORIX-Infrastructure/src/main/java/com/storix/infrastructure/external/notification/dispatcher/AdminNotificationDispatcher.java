@@ -8,11 +8,13 @@ import com.storix.domain.domains.notification.event.AdminNotificationChunkEvent;
 import com.storix.domain.domains.notification.service.AdminNotificationDeliveryResultService;
 import com.storix.common.utils.NightWindow;
 import com.storix.common.utils.STORIXStatic;
+import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
 import com.storix.domain.domains.notification.domain.NotificationSetting;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
+import com.storix.domain.domains.topicroom.dto.UserUnreadCount;
 import com.storix.infrastructure.external.notification.dto.MulticastResult;
 import com.storix.infrastructure.external.notification.exception.FcmTransientException;
 import com.storix.infrastructure.external.notification.fcm.FcmPushExecutor;
@@ -40,6 +42,7 @@ public class AdminNotificationDispatcher {
     private final AdminNotificationDeliveryResultService deliveryResultService;
     private final NotificationAdaptor notificationAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
+    private final ChatAdaptor chatAdaptor;
 
     // 대상 유저에게 발송하고 결과를 로그에 반영
     public AdminNotificationDispatchCounts dispatch(AdminNotificationChunkEvent event, LocalDateTime now) {
@@ -68,7 +71,10 @@ public class AdminNotificationDispatcher {
 
         // 2. 발송 대상 활성 토큰 조회 — 타입별 수신 동의한 유저만 (인앱 저장은 동의와 무관)
         List<Long> targets = List.copyOf(notificationIdByUser.keySet());
-        Map<Long, Integer> unreadByUser = notificationAdaptor.countUnreadByUserIds(targets); // 뱃지용 미읽음 총합
+        // 뱃지는 알림함 + 토픽룸 채팅 미읽음 총합 — 다른 발송 경로와 같은 기준
+        Map<Long, Integer> inboxUnread = notificationAdaptor.countUnreadByUserIds(targets);
+        Map<Long, Long> chatUnread = chatAdaptor.countTotalUnreadByUserIds(targets).stream()
+                .collect(Collectors.toMap(UserUnreadCount::userId, UserUnreadCount::unreadCount));
         List<Long> consented = notificationSettingAdaptor.findAllByUserIds(targets).stream()
                 .filter(setting -> setting.acceptsType(notificationType))
                 .map(NotificationSetting::getUserId)
@@ -94,7 +100,8 @@ public class AdminNotificationDispatcher {
                     MulticastResult result = fcmPushExecutor.sendAndApply(
                             tokens, buildData(notificationType, targetType, eventTargetId, targetLink,
                                     event.title(), event.content(), notificationIdByUser.get(userId),
-                                    unreadByUser.getOrDefault(userId, 0)));
+                                    inboxUnread.getOrDefault(userId, 0)
+                                            + chatUnread.getOrDefault(userId, 0L).intValue()));
                     if (!result.successTokens().isEmpty()) {
                         outcomes.put(userId, AdminNotificationDeliveryOutcome.SENT);
                     } else if (result.hasTransientFailure()) {
