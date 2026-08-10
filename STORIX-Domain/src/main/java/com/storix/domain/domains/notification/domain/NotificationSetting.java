@@ -42,7 +42,7 @@ public class NotificationSetting extends BaseTimeEntity {
     private boolean hotTopicRoomEnabled;
 
     // 알림함에 적재되지 않아 NotificationType 없이 단독 판정
-    @Column(name = "topic_room_chat_enabled", nullable = false, columnDefinition = "tinyint(1) not null default 1")
+    @Column(name = "topic_room_chat_enabled", nullable = false)
     private boolean topicRoomChatEnabled;
 
     // 마케팅/광고 수신 여부
