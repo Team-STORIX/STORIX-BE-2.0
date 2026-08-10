@@ -32,11 +32,6 @@ public class PushDeviceAdaptor {
         return pushDeviceRepository.findActiveFcmTokensByUserId(userId);
     }
 
-    public List<ActivePushToken> findMarketingEnabledActiveTokensByUserIds(List<Long> userIds) {
-        if (userIds == null || userIds.isEmpty()) return List.of();
-        return pushDeviceRepository.findMarketingEnabledActiveTokensByUserIds(userIds);
-    }
-
     public List<ActivePushToken> findActiveTokensByUserIds(List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) return List.of();
         return pushDeviceRepository.findActiveTokensByUserIds(userIds);
