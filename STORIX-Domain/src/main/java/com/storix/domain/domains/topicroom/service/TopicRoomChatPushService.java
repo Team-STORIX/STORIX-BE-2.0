@@ -7,8 +7,10 @@ import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.application.port.TopicRoomPresencePort;
+import com.storix.domain.domains.chat.dto.ChatMessageText;
 import com.storix.domain.domains.topicroom.dto.RecentSender;
 import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
+import com.storix.domain.domains.topicroom.dto.TopicRoomPushContent;
 import com.storix.domain.domains.topicroom.dto.RoomLastMessageId;
 import com.storix.domain.domains.topicroom.dto.TopicRoomChatPushTarget;
 import com.storix.domain.domains.topicroom.dto.UserUnreadCount;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -111,7 +114,7 @@ public class TopicRoomChatPushService {
     }
 
     @Transactional(readOnly = true)
-    public Map<Long, List<RecentSender>> findRecentSendersByReceiver(
+    public Map<Long, TopicRoomPushContent> findPushContentByReceiver(
             Long roomId, List<Long> receiverIds, Long afterMessageId, Long upToMessageId, int limit) {
 
         List<RecentSenderRow> rows =
@@ -123,18 +126,39 @@ public class TopicRoomChatPushService {
         List<Long> senderIds = rows.stream().map(RecentSenderRow::senderId).distinct().toList();
         Map<Long, StandardProfileInfo> profiles = userAdaptor.findStandardProfileInfoByUserIds(senderIds);
 
-        return rows.stream()
-                .collect(Collectors.groupingBy(
-                        RecentSenderRow::receiverId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                grouped -> toRecentSenders(grouped, profiles, limit))));
+        Map<Long, List<RecentSenderRow>> byReceiver = rows.stream()
+                .collect(Collectors.groupingBy(RecentSenderRow::receiverId));
+
+        Map<Long, String> messages = findLastMessages(byReceiver);
+
+        Map<Long, TopicRoomPushContent> content = new HashMap<>();
+        byReceiver.forEach((receiverId, receiverRows) -> {
+            List<RecentSenderRow> sorted = receiverRows.stream()
+                    .sorted(Comparator.comparing(RecentSenderRow::lastMessageId).reversed())
+                    .toList();
+            content.put(receiverId, new TopicRoomPushContent(
+                    toRecentSenders(sorted, profiles, limit),
+                    messages.get(sorted.get(0).lastMessageId())));
+        });
+        return content;
+    }
+
+    private Map<Long, String> findLastMessages(Map<Long, List<RecentSenderRow>> byReceiver) {
+        List<Long> messageIds = byReceiver.values().stream()
+                .map(rows -> rows.stream()
+                        .map(RecentSenderRow::lastMessageId)
+                        .max(Comparator.naturalOrder())
+                        .orElseThrow())
+                .distinct()
+                .toList();
+
+        return chatAdaptor.findMessageTextsByIds(messageIds).stream()
+                .collect(Collectors.toMap(ChatMessageText::messageId, ChatMessageText::message));
     }
 
     private List<RecentSender> toRecentSenders(
-            List<RecentSenderRow> rows, Map<Long, StandardProfileInfo> profiles, int limit) {
-        return rows.stream()
-                .sorted(Comparator.comparing(RecentSenderRow::lastMessageId).reversed())
+            List<RecentSenderRow> sorted, Map<Long, StandardProfileInfo> profiles, int limit) {
+        return sorted.stream()
                 .map(row -> profiles.get(row.senderId()))
                 .filter(Objects::nonNull)
                 .limit(limit)
