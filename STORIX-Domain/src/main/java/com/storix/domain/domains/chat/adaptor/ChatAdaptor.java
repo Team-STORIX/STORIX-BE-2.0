@@ -3,6 +3,7 @@ package com.storix.domain.domains.chat.adaptor;
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
+import com.storix.domain.domains.chat.dto.ChatMessageText;
 import com.storix.domain.domains.chat.repository.ChatRepository;
 import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
 import com.storix.domain.domains.topicroom.dto.RoomLastMessageId;
@@ -121,6 +122,13 @@ public class ChatAdaptor {
         }
         return chatRepository.findRecentSenderRows(
                 roomId, userIds, afterMessageId, upToMessageId, MessageType.TALK);
+    }
+
+    public List<ChatMessageText> findMessageTextsByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return chatRepository.findMessageTextsByIds(ids);
     }
 
     public List<UserUnreadCount> countTotalUnreadByUserIds(List<Long> userIds) {

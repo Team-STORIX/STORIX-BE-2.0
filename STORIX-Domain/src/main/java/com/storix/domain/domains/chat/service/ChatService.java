@@ -7,7 +7,7 @@ import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomUserException;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class ChatService {
     private final ChatAdaptor chatAdaptor;
 
     @Transactional(readOnly = true)
-    public String validateRoomMemberAndGetNickname(Long userId, Long roomId) {
+    public StandardProfileInfo validateRoomMemberAndGetProfile(Long userId, Long roomId) {
 
         // 토픽룸 존재 여부 검증
         if (!topicRoomAdaptor.existsById(roomId)){
@@ -43,9 +43,7 @@ public class ChatService {
             throw UnknownTopicRoomUserException.EXCEPTION;
         }
 
-        User user = userAdaptor.findUserById(userId);
-
-        return user.getDisplayNickName();
+        return userAdaptor.findStandardProfileInfoByUserId(userId);
     }
 
     public void validateRoomExistence(Long roomId) {
@@ -60,8 +58,9 @@ public class ChatService {
         return chatAdaptor.saveMessage(chatMessage);
     }
 
-    public void publishRedis(ChatMessage chatMessage, String nickname) {
-        publishChatPort.publish(ChatMessageResponseDto.of(chatMessage, nickname));
+    public void publishRedis(ChatMessage chatMessage, StandardProfileInfo sender) {
+        publishChatPort.publish(
+                ChatMessageResponseDto.of(chatMessage, sender.nickName(), sender.profileImageUrl()));
     }
 
     @Transactional(readOnly = true)
