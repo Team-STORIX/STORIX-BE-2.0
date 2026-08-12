@@ -1,5 +1,8 @@
 package com.storix.infrastructure.external.topicroom;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.storix.domain.domains.topicroom.dto.RecentSender;
 import com.storix.domain.domains.topicroom.dto.TopicRoomChatPushTarget;
 import com.storix.domain.domains.topicroom.service.TopicRoomChatPushService;
 import com.storix.common.utils.STORIXStatic;
@@ -23,9 +26,11 @@ public class TopicRoomChatPushSender {
 
     private static final String PUSH_TYPE = "TOPIC_ROOM_CHAT";
     private static final String THREAD_ID_PREFIX = "topic-room-";
+    private static final int MAX_RECENT_SENDERS = 3;
 
     private final TopicRoomChatPushService topicRoomChatPushService;
     private final FcmPushExecutor fcmPushExecutor;
+    private final ObjectMapper objectMapper;
 
     public void send(Long roomId, Long afterMessageId, Long upToMessageId,
                      Long senderId, String senderNickname, String lastMessage) {
@@ -51,11 +56,22 @@ public class TopicRoomChatPushSender {
         log.info(">>>> [TopicRoomPush] 발송 시작 roomId={}, targets={}, maxBatchCount={}",
                 roomId, targets.size(), maxBatchCount);
 
+        int participantCount = topicRoomChatPushService.findParticipantCount(roomId);
+
+        Map<Long, List<RecentSender>> recentSendersByReceiver =
+                topicRoomChatPushService.findRecentSendersByReceiver(
+                        roomId,
+                        targets.stream().map(TopicRoomChatPushTarget::userId).toList(),
+                        afterMessageId != null ? afterMessageId : upToMessageId - 1,
+                        upToMessageId,
+                        MAX_RECENT_SENDERS);
+
         // 뱃지와 묶음 개수가 유저마다 달라 payload 는 유저 단위로 만들되, 발송은 한 배치로 묶는다
         List<PushMessage> messages = new ArrayList<>();
         for (TopicRoomChatPushTarget target : targets) {
-            Map<String, String> data =
-                    buildData(roomId, roomName, senderNickname, senderProfileImageUrl, lastMessage, target);
+            Map<String, String> data = buildData(
+                    roomId, roomName, senderNickname, senderProfileImageUrl, lastMessage, target,
+                    participantCount, recentSendersByReceiver.get(target.userId()));
             target.tokens().forEach(token -> messages.add(new PushMessage(token, data, true)));
         }
 
@@ -68,7 +84,9 @@ public class TopicRoomChatPushSender {
                                           String senderNickname,
                                           String senderProfileImageUrl,
                                           String lastMessage,
-                                          TopicRoomChatPushTarget target) {
+                                          TopicRoomChatPushTarget target,
+                                          int participantCount,
+                                          List<RecentSender> recentSenders) {
         int messageCount = target.batchMessageCount();
         boolean single = messageCount <= 1;
 
@@ -85,11 +103,29 @@ public class TopicRoomChatPushSender {
         data.put("title", single ? senderNickname : "새 메시지 " + messageCount + "건");
         data.put("subtitle", roomName);
         data.put("body", preview(lastMessage));
+        data.put("participantCount", String.valueOf(participantCount));
+
+        String serialized = serializeRecentSenders(roomId, recentSenders);
+        if (serialized != null) {
+            data.put("recentSenders", serialized);
+        }
 
         // 앱이 알림을 직접 꾸미도록 열어두고, 알림센터에서는 방 단위로 쌓이게
         data.put("mutableContent", "true");
         data.put("threadId", THREAD_ID_PREFIX + roomId);
         return data;
+    }
+
+    private String serializeRecentSenders(Long roomId, List<RecentSender> recentSenders) {
+        if (recentSenders == null || recentSenders.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(recentSenders);
+        } catch (JsonProcessingException e) {
+            log.warn(">>>> [TopicRoomPush] recentSenders 직렬화 실패 roomId={}, cause={}", roomId, e.getMessage());
+            return null;
+        }
     }
 
     // 본문 미리보기 — 30자 초과 시 잘라서 '…' 부가
