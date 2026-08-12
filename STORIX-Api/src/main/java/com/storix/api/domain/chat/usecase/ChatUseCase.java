@@ -9,6 +9,7 @@ import com.storix.domain.domains.chat.service.ChatAsyncService;
 import com.storix.domain.domains.chat.service.ChatService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
+import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -34,7 +35,8 @@ public class ChatUseCase {
         log.info(">>>> [ChatService] 메시지 전송 시도 - UserID: {}, RoomID: {}", userId, request.roomId());
 
         // 토픽룸 유저 권한 관련 검증
-        String nickname = chatService.validateRoomMemberAndGetNickname(userId, request.roomId());
+        StandardProfileInfo sender = chatService.validateRoomMemberAndGetProfile(userId, request.roomId());
+        String nickname = sender.nickName();
 
         // 채팅 메시지 엔티티 변환
         ChatMessage chatMessage = request.toEntity(userId);
@@ -43,7 +45,7 @@ public class ChatUseCase {
         ChatMessage saved = chatService.save(chatMessage);
 
         // Redis 발행
-        chatService.publishRedis(saved, nickname);
+        chatService.publishRedis(saved, sender);
 
         // 메시지 전송 후 비동기 처리
         chatAsyncService.processAfterMessageSent(saved, nickname);
