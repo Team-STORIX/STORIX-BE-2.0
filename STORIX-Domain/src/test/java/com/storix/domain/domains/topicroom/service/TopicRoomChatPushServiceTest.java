@@ -1,8 +1,10 @@
 package com.storix.domain.domains.topicroom.service;
 
 import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
+import com.storix.domain.domains.chat.dto.ChatMessageText;
 import com.storix.domain.domains.topicroom.dto.RecentSender;
 import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
+import com.storix.domain.domains.topicroom.dto.TopicRoomPushContent;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import org.junit.jupiter.api.DisplayName;
@@ -102,10 +104,12 @@ class TopicRoomChatPushServiceTest {
                     new RecentSenderRow(2L, 202L, 120L));
             givenProfiles(201L, 202L);
 
-            Map<Long, List<RecentSender>> result = selectAll(List.of(1L, 2L));
+            Map<Long, TopicRoomPushContent> result = selectAll(List.of(1L, 2L));
 
-            assertThat(result.get(1L)).extracting(RecentSender::userId).containsExactly(201L, 202L);
-            assertThat(result.get(2L)).extracting(RecentSender::userId).containsExactly(202L);
+            assertThat(result.get(1L).recentSenders())
+                    .extracting(RecentSender::userId).containsExactly(201L, 202L);
+            assertThat(result.get(2L).recentSenders())
+                    .extracting(RecentSender::userId).containsExactly(202L);
         }
 
         @Test
@@ -113,7 +117,7 @@ class TopicRoomChatPushServiceTest {
         void no_rows_skips_profile_lookup() {
             givenRows();
 
-            Map<Long, List<RecentSender>> result = selectAll(List.of(1L));
+            Map<Long, TopicRoomPushContent> result = selectAll(List.of(1L));
 
             assertThat(result).isEmpty();
             verify(userAdaptor, never()).findStandardProfileInfoByUserIds(any());
@@ -145,12 +149,49 @@ class TopicRoomChatPushServiceTest {
                 .containsExactly(new RecentSender(201L, "닉201", null));
     }
 
-    private List<RecentSender> select(Long receiverId) {
-        return selectAll(List.of(receiverId)).get(receiverId);
+    @Nested
+    @DisplayName("수신자별 마지막 가시 메시지")
+    class LastMessage {
+
+        @Test
+        @DisplayName("가장 최근 가시 메시지의 본문을 담는다")
+        void takes_newest_visible_message() {
+            givenRows(
+                    new RecentSenderRow(1L, 201L, 130L),
+                    new RecentSenderRow(1L, 202L, 148L));
+            givenProfiles(201L, 202L);
+            given(chatAdaptor.findMessageTextsByIds(any()))
+                    .willReturn(List.of(new ChatMessageText(148L, "가장 최근")));
+
+            assertThat(selectAll(List.of(1L)).get(1L).lastMessage()).isEqualTo("가장 최근");
+        }
+
+        @Test
+        @DisplayName("차단 등으로 보이는 범위가 다르면 수신자마다 다른 본문을 담는다")
+        void per_receiver_last_message() {
+            givenRows(
+                    new RecentSenderRow(1L, 201L, 148L),
+                    new RecentSenderRow(2L, 202L, 120L));
+            givenProfiles(201L, 202L);
+            given(chatAdaptor.findMessageTextsByIds(any()))
+                    .willReturn(List.of(
+                            new ChatMessageText(148L, "차단 안 한 수신자가 볼 본문"),
+                            new ChatMessageText(120L, "차단한 수신자가 볼 본문")));
+
+            Map<Long, TopicRoomPushContent> result = selectAll(List.of(1L, 2L));
+
+            assertThat(result.get(1L).lastMessage()).isEqualTo("차단 안 한 수신자가 볼 본문");
+            assertThat(result.get(2L).lastMessage()).isEqualTo("차단한 수신자가 볼 본문");
+        }
     }
 
-    private Map<Long, List<RecentSender>> selectAll(List<Long> receiverIds) {
-        return topicRoomChatPushService.findRecentSendersByReceiver(
+    private List<RecentSender> select(Long receiverId) {
+        TopicRoomPushContent content = selectAll(List.of(receiverId)).get(receiverId);
+        return content == null ? null : content.recentSenders();
+    }
+
+    private Map<Long, TopicRoomPushContent> selectAll(List<Long> receiverIds) {
+        return topicRoomChatPushService.findPushContentByReceiver(
                 ROOM_ID, receiverIds, AFTER, UP_TO, LIMIT);
     }
 

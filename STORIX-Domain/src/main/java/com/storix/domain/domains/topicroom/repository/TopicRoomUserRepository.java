@@ -68,10 +68,6 @@ public interface TopicRoomUserRepository extends JpaRepository<TopicRoomUser, Lo
               AND tu.notificationEnabled = true
               AND ns.topicRoomChatEnabled = true
               AND u.accountState = com.storix.domain.domains.user.domain.AccountState.NORMAL
-              AND NOT EXISTS (
-                  SELECT 1 FROM UserBlock b
-                  WHERE b.blockerId = tu.userId AND b.blockedUserId = :senderId
-              )
             """)
     List<Long> findChatPushTargetUserIds(
             @Param("roomId") Long roomId,

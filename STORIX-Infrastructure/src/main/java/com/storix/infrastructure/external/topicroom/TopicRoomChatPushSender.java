@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.storix.domain.domains.topicroom.dto.RecentSender;
 import com.storix.domain.domains.topicroom.dto.TopicRoomChatPushTarget;
+import com.storix.domain.domains.topicroom.dto.TopicRoomPushContent;
 import com.storix.domain.domains.topicroom.service.TopicRoomChatPushService;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.notification.domain.NotificationCategory;
@@ -58,8 +59,8 @@ public class TopicRoomChatPushSender {
 
         int participantCount = topicRoomChatPushService.findParticipantCount(roomId);
 
-        Map<Long, List<RecentSender>> recentSendersByReceiver =
-                topicRoomChatPushService.findRecentSendersByReceiver(
+        Map<Long, TopicRoomPushContent> contentByReceiver =
+                topicRoomChatPushService.findPushContentByReceiver(
                         roomId,
                         targets.stream().map(TopicRoomChatPushTarget::userId).toList(),
                         afterMessageId != null ? afterMessageId : upToMessageId - 1,
@@ -71,7 +72,7 @@ public class TopicRoomChatPushSender {
         for (TopicRoomChatPushTarget target : targets) {
             Map<String, String> data = buildData(
                     roomId, roomName, senderNickname, senderProfileImageUrl, lastMessage, target,
-                    participantCount, recentSendersByReceiver.get(target.userId()));
+                    participantCount, contentByReceiver.get(target.userId()));
             target.tokens().forEach(token -> messages.add(new PushMessage(token, data, true)));
         }
 
@@ -86,9 +87,15 @@ public class TopicRoomChatPushSender {
                                           String lastMessage,
                                           TopicRoomChatPushTarget target,
                                           int participantCount,
-                                          List<RecentSender> recentSenders) {
+                                          TopicRoomPushContent content) {
         int messageCount = target.batchMessageCount();
         boolean single = messageCount <= 1;
+
+        // 차단한 상대의 메시지가 미리보기로 새지 않도록 수신자가 실제로 볼 수 있는 메시지를 쓴다
+        RecentSender lastSender = content != null ? content.lastSender() : null;
+        String nickname = lastSender != null ? lastSender.nickname() : senderNickname;
+        String profileImageUrl = lastSender != null ? lastSender.profileImageUrl() : senderProfileImageUrl;
+        String body = content != null && content.lastMessage() != null ? content.lastMessage() : lastMessage;
 
         Map<String, String> data = new HashMap<>();
         data.put("type", PUSH_TYPE);
@@ -96,16 +103,16 @@ public class TopicRoomChatPushSender {
         data.put("targetType", TargetType.TOPIC_ROOM.name());
         data.put("targetId", String.valueOf(roomId));
         data.put("roomName", roomName);
-        data.put("senderNickname", senderNickname);
-        data.put("senderProfileImageUrl", senderProfileImageUrl);
+        data.put("senderNickname", nickname);
+        data.put("senderProfileImageUrl", profileImageUrl);
         data.put("messageCount", String.valueOf(messageCount));
         data.put("unreadCount", String.valueOf(target.badgeCount()));
-        data.put("title", single ? senderNickname : "새 메시지 " + messageCount + "건");
+        data.put("title", single ? nickname : "새 메시지 " + messageCount + "건");
         data.put("subtitle", roomName);
-        data.put("body", preview(lastMessage));
+        data.put("body", preview(body));
         data.put("participantCount", String.valueOf(participantCount));
 
-        String serialized = serializeRecentSenders(roomId, recentSenders);
+        String serialized = serializeRecentSenders(roomId, content == null ? null : content.recentSenders());
         if (serialized != null) {
             data.put("recentSenders", serialized);
         }
