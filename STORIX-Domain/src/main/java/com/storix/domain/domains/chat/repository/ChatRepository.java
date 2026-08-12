@@ -3,6 +3,7 @@ package com.storix.domain.domains.chat.repository;
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
+import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
 import com.storix.domain.domains.topicroom.dto.RoomLastMessageId;
 import com.storix.domain.domains.topicroom.dto.RoomUnreadCount;
 import com.storix.domain.domains.topicroom.dto.UserUnreadCount;
@@ -244,6 +245,33 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             GROUP BY tu.userId
             """)
     List<UserUnreadCount> countMessagesAfterForUsers(
+            @Param("roomId") Long roomId,
+            @Param("userIds") List<Long> userIds,
+            @Param("afterMessageId") Long afterMessageId,
+            @Param("upToMessageId") Long upToMessageId,
+            @Param("messageType") MessageType messageType
+    );
+
+    @Query("""
+            SELECT new com.storix.domain.domains.topicroom.dto.RecentSenderRow(tu.userId, m.senderId, MAX(m.id))
+            FROM ChatMessage m
+            JOIN TopicRoomUser tu ON tu.topicRoom.id = m.roomId
+            WHERE m.roomId = :roomId
+              AND tu.userId IN :userIds
+              AND m.id > :afterMessageId
+              AND m.id <= :upToMessageId
+              AND m.deleted = false
+              AND m.messageType = :messageType
+              AND m.senderId <> tu.userId
+              AND NOT EXISTS (
+                  SELECT 1 FROM UserBlock b
+                  WHERE b.blockerId = tu.userId AND b.blockedUserId = m.senderId
+              )
+              AND ((tu.lastReadMessageId IS NOT NULL AND m.id > tu.lastReadMessageId)
+                OR (tu.lastReadMessageId IS NULL AND m.createdAt > tu.createdAt))
+            GROUP BY tu.userId, m.senderId
+            """)
+    List<RecentSenderRow> findRecentSenderRows(
             @Param("roomId") Long roomId,
             @Param("userIds") List<Long> userIds,
             @Param("afterMessageId") Long afterMessageId,

@@ -7,6 +7,8 @@ import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.application.port.TopicRoomPresencePort;
+import com.storix.domain.domains.topicroom.dto.RecentSender;
+import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
 import com.storix.domain.domains.topicroom.dto.RoomLastMessageId;
 import com.storix.domain.domains.topicroom.dto.TopicRoomChatPushTarget;
 import com.storix.domain.domains.topicroom.dto.UserUnreadCount;
@@ -17,8 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -99,6 +103,43 @@ public class TopicRoomChatPushService {
     public String findSenderProfileImageUrl(Long senderId) {
         StandardProfileInfo info = userAdaptor.findStandardProfileInfoByUserIds(List.of(senderId)).get(senderId);
         return info == null ? null : info.profileImageUrl();
+    }
+
+    @Transactional(readOnly = true)
+    public int findParticipantCount(Long roomId) {
+        return topicRoomAdaptor.findActiveUserNumberById(roomId);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, List<RecentSender>> findRecentSendersByReceiver(
+            Long roomId, List<Long> receiverIds, Long afterMessageId, Long upToMessageId, int limit) {
+
+        List<RecentSenderRow> rows =
+                chatAdaptor.findRecentSenderRows(roomId, receiverIds, afterMessageId, upToMessageId);
+        if (rows.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> senderIds = rows.stream().map(RecentSenderRow::senderId).distinct().toList();
+        Map<Long, StandardProfileInfo> profiles = userAdaptor.findStandardProfileInfoByUserIds(senderIds);
+
+        return rows.stream()
+                .collect(Collectors.groupingBy(
+                        RecentSenderRow::receiverId,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                grouped -> toRecentSenders(grouped, profiles, limit))));
+    }
+
+    private List<RecentSender> toRecentSenders(
+            List<RecentSenderRow> rows, Map<Long, StandardProfileInfo> profiles, int limit) {
+        return rows.stream()
+                .sorted(Comparator.comparing(RecentSenderRow::lastMessageId).reversed())
+                .map(row -> profiles.get(row.senderId()))
+                .filter(Objects::nonNull)
+                .limit(limit)
+                .map(info -> new RecentSender(info.userId(), info.nickName(), info.profileImageUrl()))
+                .toList();
     }
 
     private Map<Long, Long> toCountMap(List<UserUnreadCount> counts) {
