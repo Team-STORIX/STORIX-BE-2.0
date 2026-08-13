@@ -29,13 +29,17 @@ public class AppVersionService {
                 : appVersionProperties.getAndroid();
 
         Semver client = parse(clientVersion);
-        VersionStatus status = isBlocked(platform, client)
+        VersionStatus status = matchesBlocked(platform, client)
                 ? VersionStatus.UPDATE_REQUIRED
                 : resolveStatus(client, cfg);
         return new AppVersionCheck(status, cfg.getLatest(), cfg.getMinSupported());
     }
 
-    private boolean isBlocked(OSPlatform platform, Semver client) {
+    public boolean isBlocked(OSPlatform platform, String clientVersion) {
+        return matchesBlocked(platform, parse(clientVersion));
+    }
+
+    private boolean matchesBlocked(OSPlatform platform, Semver client) {
         return BLOCKED_VERSIONS.getOrDefault(platform, Set.of()).stream()
                 .anyMatch(blocked -> client.isEqualTo(parse(blocked)));
     }
