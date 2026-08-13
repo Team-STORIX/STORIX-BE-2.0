@@ -45,7 +45,6 @@ public class PushDeviceService {
     public void refreshFcmToken(Long userId, String installationId, String fcmToken) {
         PushDevice device = pushDeviceAdaptor.getByUserIdAndInstallationId(userId, installationId);
 
-        // refreshFcmToken 이 isActive 를 되살리므로 차단 버전은 여기서 끊는다
         if (appVersionService.isBlocked(device.getOsPlatform(), device.getAppVersion())) {
             log.warn(">>> [PushDevice] 차단 버전 토큰 갱신 거부 installationId={}, platform={}, appVersion={}",
                     installationId, device.getOsPlatform(), device.getAppVersion());
