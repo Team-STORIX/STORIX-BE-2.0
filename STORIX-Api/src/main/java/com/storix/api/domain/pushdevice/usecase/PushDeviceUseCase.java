@@ -3,6 +3,8 @@ package com.storix.api.domain.pushdevice.usecase;
 import com.storix.api.domain.pushdevice.controller.dto.DeviceSyncRequest;
 import com.storix.api.domain.pushdevice.controller.dto.RefreshFcmTokenRequest;
 import com.storix.common.annotation.UseCase;
+import com.storix.domain.domains.appversion.exception.BlockedAppVersionException;
+import com.storix.domain.domains.appversion.service.AppVersionService;
 import com.storix.domain.domains.pushdevice.service.PushDeviceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +15,16 @@ import lombok.extern.slf4j.Slf4j;
 public class PushDeviceUseCase {
 
     private final PushDeviceService pushDeviceService;
+    private final AppVersionService appVersionService;
 
     // 1. 단일 디바이스 푸시 알림 상태 동기화
     public void sync(Long userId, DeviceSyncRequest request) {
+        if (appVersionService.isBlocked(request.osPlatform(), request.appVersion())) {
+            log.warn(">>> [PushDevice] 차단 버전 동기화 거부 installationId={}, platform={}, appVersion={}",
+                    request.installationId(), request.osPlatform(), request.appVersion());
+            throw BlockedAppVersionException.EXCEPTION;
+        }
+
         boolean isNew = pushDeviceService.sync(userId, request.toCommand());
 
         log.info(">>> [PushDevice] 동기화 installationId={} isNew={}", request.installationId(), isNew);
