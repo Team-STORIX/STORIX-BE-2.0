@@ -1,5 +1,7 @@
 package com.storix.domain.domains.pushdevice.service;
 
+import com.storix.domain.domains.appversion.exception.BlockedAppVersionException;
+import com.storix.domain.domains.appversion.service.AppVersionService;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.domain.PushDevice;
 import com.storix.domain.domains.pushdevice.dto.SyncDeviceCommand;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PushDeviceService {
 
     private final PushDeviceAdaptor pushDeviceAdaptor;
+    private final AppVersionService appVersionService;
 
     // 단일 디바이스 푸시 알림 상태 동기화
     public boolean sync(Long userId, SyncDeviceCommand cmd) {
@@ -41,6 +44,14 @@ public class PushDeviceService {
     @Transactional
     public void refreshFcmToken(Long userId, String installationId, String fcmToken) {
         PushDevice device = pushDeviceAdaptor.getByUserIdAndInstallationId(userId, installationId);
+
+        // refreshFcmToken 이 isActive 를 되살리므로 차단 버전은 여기서 끊는다
+        if (appVersionService.isBlocked(device.getOsPlatform(), device.getAppVersion())) {
+            log.warn(">>> [PushDevice] 차단 버전 토큰 갱신 거부 installationId={}, platform={}, appVersion={}",
+                    installationId, device.getOsPlatform(), device.getAppVersion());
+            throw BlockedAppVersionException.EXCEPTION;
+        }
+
         device.refreshFcmToken(fcmToken);
 
         // 같은 FCM 토큰을 들고 있는 다른 활성 디바이스 행 비활성화
