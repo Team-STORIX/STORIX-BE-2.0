@@ -9,9 +9,17 @@ import lombok.RequiredArgsConstructor;
 import org.semver4j.Semver;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 public class AppVersionService {
+
+    // 잘못 배포된 빌드. 정식 최신보다 높아 버전 비교로는 안 걸리므로 따로 막는다.
+    // 정식 버전이 이 번호에 도달하기 전에 지워야 정상 사용자가 막히지 않는다
+    private static final Map<OSPlatform, Set<String>> BLOCKED_VERSIONS = Map.of(
+            OSPlatform.ANDROID, Set.of("1.1.0"));
 
     private final AppVersionProperties appVersionProperties;
 
@@ -20,8 +28,16 @@ public class AppVersionService {
                 ? appVersionProperties.getIos()
                 : appVersionProperties.getAndroid();
 
-        VersionStatus status = resolveStatus(parse(clientVersion), cfg);
+        Semver client = parse(clientVersion);
+        VersionStatus status = isBlocked(platform, client)
+                ? VersionStatus.UPDATE_REQUIRED
+                : resolveStatus(client, cfg);
         return new AppVersionCheck(status, cfg.getLatest(), cfg.getMinSupported());
+    }
+
+    private boolean isBlocked(OSPlatform platform, Semver client) {
+        return BLOCKED_VERSIONS.getOrDefault(platform, Set.of()).stream()
+                .anyMatch(blocked -> client.isEqualTo(parse(blocked)));
     }
 
     private VersionStatus resolveStatus(Semver client, AppVersionProperties.Platform cfg) {
