@@ -22,6 +22,8 @@ public class TopicRoomResponseDto {
     private Integer activeUserNumber;
     private String lastChatTime;
     private Boolean isJoined;
+    private Integer unreadCount;
+    private Boolean notificationEnabled;
 
     public TopicRoomResponseDto(Long topicRoomId, String topicRoomName, WorksType worksType, String worksName,
                                 String thumbnailUrl, Integer activeUserNumber, LocalDateTime lastChatTime, boolean isJoined) {
@@ -33,6 +35,7 @@ public class TopicRoomResponseDto {
         this.activeUserNumber = activeUserNumber;
         this.lastChatTime = formatTimeAgo(lastChatTime); // 시간 포맷팅 로직 적용
         this.isJoined = isJoined;
+        this.unreadCount = 0;
     }
 
     public static TopicRoomResponseDto from(TopicRoom room, TopicRoomWorksInfo worksInfo, boolean isJoined) {
@@ -45,11 +48,17 @@ public class TopicRoomResponseDto {
                 .activeUserNumber(room.getActiveUserNumber())
                 .lastChatTime(formatTimeAgo(room.getLastChatTime()))
                 .isJoined(isJoined)
+                .unreadCount(0)
                 .build();
     }
 
     public void markAsJoined(boolean status) {
         this.isJoined = status;
+    }
+
+    public void applyJoinedRoomState(int unreadCount, boolean notificationEnabled) {
+        this.unreadCount = unreadCount;
+        this.notificationEnabled = notificationEnabled;
     }
 
     private static String formatTimeAgo(LocalDateTime time) {

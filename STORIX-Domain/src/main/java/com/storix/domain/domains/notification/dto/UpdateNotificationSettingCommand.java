@@ -8,6 +8,7 @@ public record UpdateNotificationSettingCommand(
         Boolean replyOnCommentEnabled,
         Boolean todayFeedEnabled,
         Boolean hotTopicRoomEnabled,
+        Boolean topicRoomChatEnabled,
         Boolean operationPolicyEnabled
 ) {
 }

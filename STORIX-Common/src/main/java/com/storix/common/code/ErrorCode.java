@@ -252,7 +252,8 @@ public enum ErrorCode {
     BANNED_WORD_CSV_PARSE_ERROR(HttpStatus.BAD_REQUEST, "BANNED_WORD_ERROR_003", "금칙어 CSV 파일을 읽을 수 없습니다."),
 
     // App version error
-    INVALID_APP_VERSION_FORMAT(HttpStatus.BAD_REQUEST, "APP_VERSION_ERROR_002", "앱 버전 형식이 올바르지 않습니다.");
+    INVALID_APP_VERSION_FORMAT(HttpStatus.BAD_REQUEST, "APP_VERSION_ERROR_002", "앱 버전 형식이 올바르지 않습니다."),
+    BLOCKED_APP_VERSION(HttpStatus.FORBIDDEN, "APP_VERSION_ERROR_003", "지원이 중단된 앱 버전입니다. 업데이트 후 이용해 주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

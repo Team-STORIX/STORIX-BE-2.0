@@ -49,4 +49,28 @@ public interface TopicRoomUserRepository extends JpaRepository<TopicRoomUser, Lo
     List<RoomMember> findMembersByRoomIds(@Param("roomIds") List<Long> roomIds);
 
     Optional<TopicRoomUser> findByUserIdAndTopicRoomId(Long userId, Long topicRoomId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE TopicRoomUser tu SET tu.lastReadMessageId = :messageId, tu.updatedAt = CURRENT_TIMESTAMP "
+            + "WHERE tu.userId = :userId AND tu.topicRoom.id = :roomId "
+            + "AND (tu.lastReadMessageId IS NULL OR tu.lastReadMessageId < :messageId)")
+    int advanceReadCursor(@Param("userId") Long userId,
+                          @Param("roomId") Long roomId,
+                          @Param("messageId") Long messageId);
+
+    @Query("""
+            SELECT tu.userId
+            FROM TopicRoomUser tu
+            JOIN NotificationSetting ns ON ns.userId = tu.userId
+            JOIN User u ON u.id = tu.userId
+            WHERE tu.topicRoom.id = :roomId
+              AND tu.userId <> :senderId
+              AND tu.notificationEnabled = true
+              AND ns.topicRoomChatEnabled = true
+              AND u.accountState = com.storix.domain.domains.user.domain.AccountState.NORMAL
+            """)
+    List<Long> findChatPushTargetUserIds(
+            @Param("roomId") Long roomId,
+            @Param("senderId") Long senderId
+    );
 }

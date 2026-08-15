@@ -15,7 +15,6 @@ import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
 import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.port.RecordTopicRoomPort;
 import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
@@ -74,6 +73,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final WorksAdaptor worksAdaptor;
     private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
     private final NotificationPublisher notificationPublisher;
+    private final TopicRoomUnreadService topicRoomUnreadService;
 
     @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
@@ -89,6 +89,11 @@ public class TopicRoomService implements TopicRoomUseCase {
         // works 정보를 한 번에 조회하여 Map으로 변환
         Map<Long, TopicRoomWorksInfo> worksMap = worksAdaptor.loadWorksMapByIds(worksIds);
 
+        List<Long> roomIds = participations.stream()
+                .map(p -> p.getTopicRoom().getId())
+                .toList();
+        Map<Long, Integer> unreadMap = topicRoomUnreadService.getUnreadCounts(userId, roomIds);
+
         List<TopicRoomResponseDto> content = participations.getContent().stream()
                 .map(participation -> {
                     TopicRoom room = participation.getTopicRoom();
@@ -97,7 +102,11 @@ public class TopicRoomService implements TopicRoomUseCase {
                         logMissingWorksInfo(room);
                         return null;
                     }
-                    return TopicRoomResponseDto.from(room, worksInfo, true);
+                    TopicRoomResponseDto dto = TopicRoomResponseDto.from(room, worksInfo, true);
+                    dto.applyJoinedRoomState(
+                            unreadMap.getOrDefault(room.getId(), 0),
+                            participation.isNotificationEnabled());
+                    return dto;
                 })
                 .filter(Objects::nonNull)
                 .toList();

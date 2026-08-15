@@ -3,10 +3,16 @@ package com.storix.domain.domains.chat.adaptor;
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
+import com.storix.domain.domains.chat.dto.ChatMessageText;
 import com.storix.domain.domains.chat.repository.ChatRepository;
+import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
+import com.storix.domain.domains.topicroom.dto.RoomLastMessageId;
+import com.storix.domain.domains.topicroom.dto.RoomUnreadCount;
+import com.storix.domain.domains.topicroom.dto.UserUnreadCount;
 import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
@@ -65,5 +71,70 @@ public class ChatAdaptor {
             return chatRepository.findAllByRoomIdOrderByCreatedAtDesc(roomId, pageable);
         }
         return chatRepository.findAllByRoomIdExcludingBlockedOrderByCreatedAtDesc(roomId, blockedIds, pageable);
+    }
+
+    public List<RoomUnreadCount> countUnreadByRoomIds(Long userId, List<Long> roomIds) {
+        if (roomIds.isEmpty()) {
+            return List.of();
+        }
+        return chatRepository.countUnreadByRoomIds(userId, roomIds, MessageType.TALK);
+    }
+
+    public long countTotalUnread(Long userId) {
+        return chatRepository.countTotalUnreadByUserId(userId, MessageType.TALK);
+    }
+
+    public boolean existsUnread(Long userId) {
+        return chatRepository.existsUnreadByUserId(userId, MessageType.TALK);
+    }
+
+    public Long findLastMessageId(Long roomId) {
+        return chatRepository.findLastMessageIdByRoomId(roomId);
+    }
+
+    public List<RoomLastMessageId> findLastMessageIdsByRoomIds(List<Long> roomIds) {
+        if (roomIds.isEmpty()) {
+            return List.of();
+        }
+        return chatRepository.findLastMessageIdsByRoomIds(roomIds, MessageType.TALK);
+    }
+
+    public ChatMessageResponseDto findLatestMessage(Long roomId) {
+        return chatRepository.findLatestByRoomId(roomId, MessageType.TALK, PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    public List<UserUnreadCount> countMessagesAfterForUsers(
+            Long roomId, List<Long> userIds, Long afterMessageId, Long upToMessageId) {
+        if (userIds.isEmpty()) {
+            return List.of();
+        }
+        return chatRepository.countMessagesAfterForUsers(
+                roomId, userIds, afterMessageId, upToMessageId, MessageType.TALK);
+    }
+
+    public List<RecentSenderRow> findRecentSenderRows(
+            Long roomId, List<Long> userIds, Long afterMessageId, Long upToMessageId) {
+        if (userIds.isEmpty()) {
+            return List.of();
+        }
+        return chatRepository.findRecentSenderRows(
+                roomId, userIds, afterMessageId, upToMessageId, MessageType.TALK);
+    }
+
+    public List<ChatMessageText> findMessageTextsByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return chatRepository.findMessageTextsByIds(ids);
+    }
+
+    public List<UserUnreadCount> countTotalUnreadByUserIds(List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return List.of();
+        }
+        return chatRepository.countTotalUnreadByUserIds(userIds, MessageType.TALK);
     }
 }

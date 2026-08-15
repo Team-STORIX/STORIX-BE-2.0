@@ -1,9 +1,11 @@
 package com.storix.infrastructure.external.chat;
 import com.storix.common.utils.RedisKeyStatic;
 
+import com.storix.domain.domains.topicroom.application.port.TopicRoomPresencePort;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.infrastructure.external.topicroom.RedisTopicRoomActiveUserNumberAdapter;
+import com.storix.infrastructure.external.topicroom.TopicRoomReadMarker;
 import com.storix.infrastructure.external.topicroom.TopicRoomActiveUserNumberRedisSubscriber;
 import com.storix.infrastructure.global.TokenProvider;
 import com.storix.infrastructure.global.dto.AccessTokenInfo;
@@ -12,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.messaging.*;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.stomp.*;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
@@ -31,6 +34,8 @@ public class StompHandler implements ChannelInterceptor {
     private final RedisMessageListenerContainer container;
     private final RedisSubscriber subscriber;
     private final TopicRoomActiveUserNumberRedisSubscriber activeUserNumberSubscriber;
+    private final TopicRoomPresencePort topicRoomPresencePort;
+    private final TopicRoomReadMarker topicRoomReadMarker;
 
     private final Map<String, ChannelTopic> chatTopics = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> chatRoomSubscriberCounts = new ConcurrentHashMap<>();
@@ -42,12 +47,16 @@ public class StompHandler implements ChannelInterceptor {
             TokenProvider tp,
             RedisMessageListenerContainer c,
             @Lazy RedisSubscriber s,
-            @Lazy TopicRoomActiveUserNumberRedisSubscriber activeUserNumberSubscriber
+            @Lazy TopicRoomActiveUserNumberRedisSubscriber activeUserNumberSubscriber,
+            TopicRoomPresencePort topicRoomPresencePort,
+            TopicRoomReadMarker topicRoomReadMarker
     ) {
         this.tokenProvider = tp;
         this.container = c;
         this.subscriber = s;
         this.activeUserNumberSubscriber = activeUserNumberSubscriber;
+        this.topicRoomPresencePort = topicRoomPresencePort;
+        this.topicRoomReadMarker = topicRoomReadMarker;
     }
 
     @Override
@@ -75,6 +84,8 @@ public class StompHandler implements ChannelInterceptor {
             handleUnsubscribe(accessor);
         } else if (StompCommand.DISCONNECT.equals(command)) {
             handleDisconnect(accessor);
+        } else if (command == null && SimpMessageType.HEARTBEAT.equals(accessor.getMessageType())) {
+            refreshPresence(accessor.getSessionId());
         }
 
         return message;
@@ -114,13 +125,20 @@ public class StompHandler implements ChannelInterceptor {
 
             if (subId == null) return;
 
+            Long userId = extractUserId(accessor);
+
             // 세션 구독 정보 저장
             sessionSubscriptionMap
                     .computeIfAbsent(sessionId, k -> new ConcurrentHashMap<>())
-                    .put(subId, SubscriptionTarget.chat(roomId));
+                    .put(subId, SubscriptionTarget.chat(roomId, userId));
 
             // 카운트 증가 및 리스너 등록
             increaseChatCounter(roomId);
+
+            // 방을 보고 있는 동안은 채팅 푸시 대상에서 제외
+            markPresence(true, roomId, userId, sessionId);
+
+            markRead(roomId, userId);
         } else if (destination != null
                 && destination.startsWith("/sub/topic-rooms/")
                 && destination.endsWith("/active-users")) {
@@ -146,7 +164,7 @@ public class StompHandler implements ChannelInterceptor {
         if (subscriptions != null && subId != null) {
             SubscriptionTarget target = subscriptions.remove(subId);
             if (target != null) {
-                decreaseCounter(target);
+                decreaseCounter(target, sessionId);
                 log.info(">>>> [STOMP] 구독 해제 완료: Session={}, Type={}, Room={}",
                         sessionId, target.type(), target.roomId());
             }
@@ -160,7 +178,7 @@ public class StompHandler implements ChannelInterceptor {
         if (subscriptions != null) {
             log.info(">>>> [STOMP] 연결 종료 - 전체 구독 정리 시작: Session={}", sessionId);
             for (SubscriptionTarget target : subscriptions.values()) {
-                decreaseCounter(target);
+                decreaseCounter(target, sessionId);
             }
         }
     }
@@ -227,13 +245,57 @@ public class StompHandler implements ChannelInterceptor {
         }
     }
 
-    private void decreaseCounter(SubscriptionTarget target) {
+    private void decreaseCounter(SubscriptionTarget target, String sessionId) {
         if (SubscriptionType.CHAT.equals(target.type())) {
             decreaseChatCounter(target.roomId());
+            markPresence(false, target.roomId(), target.userId(), sessionId);
+
+            markRead(target.roomId(), target.userId());
             return;
         }
 
         decreaseActiveUserNumberCounter(target.roomId());
+    }
+
+    // heartbeat 가 끊기면 접속자에서 자동으로 빠지므로 살아있는 동안 계속 갱신해준다
+    private void refreshPresence(String sessionId) {
+        Map<String, SubscriptionTarget> subscriptions = sessionSubscriptionMap.get(sessionId);
+        if (subscriptions == null) return;
+
+        for (SubscriptionTarget target : subscriptions.values()) {
+            if (SubscriptionType.CHAT.equals(target.type())) {
+                markPresence(true, target.roomId(), target.userId(), sessionId);
+            }
+        }
+    }
+
+    private void markPresence(boolean entered, String roomId, Long userId, String sessionId) {
+        if (userId == null || sessionId == null) return;
+        try {
+            Long parsedRoomId = Long.parseLong(roomId);
+            if (entered) {
+                topicRoomPresencePort.enter(parsedRoomId, userId, sessionId);
+            } else {
+                topicRoomPresencePort.leave(parsedRoomId, userId, sessionId);
+            }
+        } catch (NumberFormatException e) {
+            log.warn(">>>> [STOMP] 잘못된 roomId 형식 roomId={}", roomId);
+        }
+    }
+
+    private void markRead(String roomId, Long userId) {
+        if (userId == null) return;
+        try {
+            topicRoomReadMarker.markRead(userId, Long.parseLong(roomId));
+        } catch (NumberFormatException e) {
+            log.warn(">>>> [STOMP] 잘못된 roomId 형식 roomId={}", roomId);
+        }
+    }
+
+    private Long extractUserId(StompHeaderAccessor accessor) {
+        if (!(accessor.getUser() instanceof Authentication auth)) return null;
+        if (!(auth.getPrincipal() instanceof AuthUserDetails user)) return null;
+        return user.getUserId();
     }
 
     private String extractActiveUserNumberRoomId(String destination) {
@@ -261,13 +323,13 @@ public class StompHandler implements ChannelInterceptor {
         ACTIVE_USERS
     }
 
-    private record SubscriptionTarget(SubscriptionType type, String roomId) {
-        private static SubscriptionTarget chat(String roomId) {
-            return new SubscriptionTarget(SubscriptionType.CHAT, roomId);
+    private record SubscriptionTarget(SubscriptionType type, String roomId, Long userId) {
+        private static SubscriptionTarget chat(String roomId, Long userId) {
+            return new SubscriptionTarget(SubscriptionType.CHAT, roomId, userId);
         }
 
         private static SubscriptionTarget activeUsers(String roomId) {
-            return new SubscriptionTarget(SubscriptionType.ACTIVE_USERS, roomId);
+            return new SubscriptionTarget(SubscriptionType.ACTIVE_USERS, roomId, null);
         }
     }
 }

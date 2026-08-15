@@ -189,8 +189,10 @@ public record NotificationEvent(
     private static String preview(String text) {
         if (text == null) return "";
         int max = STORIXStatic.Notification.CONTENT_PREVIEW_MAX;
-        return text.length() > max
-                ? text.substring(0, max) + STORIXStatic.Notification.CONTENT_PREVIEW_SUFFIX
-                : text;
+        if (text.codePointCount(0, text.length()) <= max) return text;
+
+        // 이모지가 잘려 깨지지 않게 코드포인트로 센다
+        return text.substring(0, text.offsetByCodePoints(0, max))
+                + STORIXStatic.Notification.CONTENT_PREVIEW_SUFFIX;
     }
 }

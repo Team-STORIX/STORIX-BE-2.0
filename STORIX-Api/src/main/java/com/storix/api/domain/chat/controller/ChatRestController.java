@@ -27,7 +27,13 @@ public class ChatRestController {
     private final ChatUseCase chatUseCase;
 
     @GetMapping("/rooms/{roomId}/messages")
-    @Operation(summary = "채팅방 메시지 조회", description = "과거 메시지를 불러옵니다. 페이지네이션 디폴트 값을 참고해 주세요.")
+    @Operation(summary = "채팅방 메시지 조회", description = """
+            과거 메시지를 불러옵니다. 페이지네이션 디폴트 값을 참고해 주세요.
+
+            messages 는 차단한 사용자의 메시지를 제외하고 내려갑니다.
+            실시간 수신은 방 단위 브로드캐스트라 서버가 걸러줄 수 없으니,
+            blockedUserIds 를 들고 있다가 STOMP 로 받은 senderId 가 포함되면 버려 주세요.
+            """)
     public CustomResponse<ChatHistoryResponseDto> getChatHistory(
             @AuthenticationPrincipal AuthUserDetails authUser,
             @PathVariable Long roomId,

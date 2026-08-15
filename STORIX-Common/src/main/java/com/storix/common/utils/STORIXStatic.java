@@ -137,7 +137,10 @@ public class STORIXStatic {
 
         // 댓글 본문 미리보기 — 10자 노출 후 ...
         public static final int CONTENT_PREVIEW_MAX = 10;
+        // 채팅 본문 미리보기 — 공백 포함 30자 노출 후 ...
+        public static final int CHAT_PREVIEW_MAX = 30;
         public static final String CONTENT_PREVIEW_SUFFIX = "...";
+
     }
 
     // 사용자 이력 — 마케팅 동의/거부 모달 표시 문구

@@ -41,6 +41,10 @@ public class NotificationSetting extends BaseTimeEntity {
     @Column(name = "hot_topic_room_enabled", nullable = false)
     private boolean hotTopicRoomEnabled;
 
+    // 알림함에 적재되지 않아 NotificationType 없이 단독 판정
+    @Column(name = "topic_room_chat_enabled", nullable = false)
+    private boolean topicRoomChatEnabled;
+
     // 마케팅/광고 수신 여부
     @Column(name = "marketing_enabled", nullable = false)
     private boolean marketingEnabled;
@@ -62,6 +66,7 @@ public class NotificationSetting extends BaseTimeEntity {
         p.replyOnCommentEnabled = true;
         p.todayFeedEnabled = true;
         p.hotTopicRoomEnabled = true;
+        p.topicRoomChatEnabled = true;
         p.marketingEnabled = false;
         p.operationPolicyEnabled = true;
         return p;
@@ -77,6 +82,7 @@ public class NotificationSetting extends BaseTimeEntity {
                        Boolean replyOnCommentEnabled,
                        Boolean todayFeedEnabled,
                        Boolean hotTopicRoomEnabled,
+                       Boolean topicRoomChatEnabled,
                        Boolean operationPolicyEnabled) {
         if (likeFeedEnabled != null) this.likeFeedEnabled = likeFeedEnabled;
         if (likeReviewEnabled != null) this.likeReviewEnabled = likeReviewEnabled;
@@ -85,6 +91,7 @@ public class NotificationSetting extends BaseTimeEntity {
         if (replyOnCommentEnabled != null) this.replyOnCommentEnabled = replyOnCommentEnabled;
         if (todayFeedEnabled != null) this.todayFeedEnabled = todayFeedEnabled;
         if (hotTopicRoomEnabled != null) this.hotTopicRoomEnabled = hotTopicRoomEnabled;
+        if (topicRoomChatEnabled != null) this.topicRoomChatEnabled = topicRoomChatEnabled;
         if (operationPolicyEnabled != null) this.operationPolicyEnabled = operationPolicyEnabled;
     }
 

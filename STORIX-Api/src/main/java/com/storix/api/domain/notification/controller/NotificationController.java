@@ -1,5 +1,6 @@
 package com.storix.api.domain.notification.controller;
 
+import com.storix.api.domain.notification.controller.dto.BadgeCountResponse;
 import com.storix.api.domain.notification.controller.dto.FcmSendRequest;
 import com.storix.api.domain.notification.controller.dto.MarketingConsentRequest;
 import com.storix.api.domain.notification.controller.dto.NotificationDispatchTestRequest;
@@ -54,6 +55,18 @@ public class NotificationController {
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {
         return notificationUseCase.getUnreadCount(authUser.getUserId());
+    }
+
+    // 2-1. 앱 아이콘 배지 개수 조회
+    @GetMapping("/badge-count")
+    @Operation(summary = "앱 아이콘 배지 개수 조회",
+            description = "알림함 미읽음 + 토픽룸 미읽음 합산값을 반환합니다. 상한은 없습니다.  \n" +
+                    "푸시에 실리는 값과 동일하며, 읽음 처리 후나 앱 포그라운드 복귀 시 배지를 다시 맞추는 데 사용합니다.  \n" +
+                    "비로그인 상태로 호출하면 0을 반환합니다.")
+    public CustomResponse<BadgeCountResponse> getBadgeCount(
+            @AuthenticationPrincipal AuthUserDetails authUser
+    ) {
+        return notificationUseCase.getBadgeCount(authUser != null ? authUser.getUserId() : null);
     }
 
     // 3. 단건 알림 읽음 처리
