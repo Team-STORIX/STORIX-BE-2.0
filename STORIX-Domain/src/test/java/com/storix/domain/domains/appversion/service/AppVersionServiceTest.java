@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.StandardEnvironment;
 
+import java.time.LocalDate;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("[앱 버전] 게이팅 판정")
@@ -15,14 +17,15 @@ class AppVersionServiceTest {
 
     private static final String MIN_SUPPORTED = "1.0.5";
     private static final String LATEST = "1.0.7";
+    private static final LocalDate RELEASE_DATE = LocalDate.of(2026, 8, 16);
 
     private AppVersionService serviceOn(String profile) {
         StandardEnvironment environment = new StandardEnvironment();
         environment.setActiveProfiles(profile);
         return new AppVersionService(
                 new AppVersionProperties(
-                        new AppVersionProperties.Platform(MIN_SUPPORTED, LATEST),
-                        new AppVersionProperties.Platform(MIN_SUPPORTED, LATEST)),
+                        new AppVersionProperties.Platform(MIN_SUPPORTED, LATEST, RELEASE_DATE),
+                        new AppVersionProperties.Platform(MIN_SUPPORTED, LATEST, RELEASE_DATE)),
                 environment);
     }
 
@@ -109,6 +112,13 @@ class AppVersionServiceTest {
         void latest() {
             assertThat(check(service, OSPlatform.ANDROID, LATEST))
                     .isEqualTo(VersionStatus.LATEST);
+        }
+
+        @Test
+        @DisplayName("설정된 배포일을 그대로 내려준다")
+        void exposes_release_date() {
+            assertThat(service.check(OSPlatform.ANDROID, "1.0.6").releaseDate())
+                    .isEqualTo(RELEASE_DATE);
         }
     }
 }
