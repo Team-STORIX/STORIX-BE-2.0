@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Arrays;
@@ -112,6 +113,30 @@ public class GlobalExceptionHandler {
                 .field(e.getParameterName())
                 .rejectedValue(null)
                 .reason("필수 파라미터가 누락되었습니다.")
+                .build();
+
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
+        ErrorResponse response = new ErrorResponse(errorCode, List.of(fer));
+
+        warnFailure(errorCode, List.of(fer));
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatchException (MethodArgumentTypeMismatchException e) {
+
+        Class<?> requiredType = e.getRequiredType();
+        String reason = requiredType != null && requiredType.isEnum()
+                ? "허용되지 않는 값입니다. 가능한 값: " + Arrays.toString(requiredType.getEnumConstants())
+                : "값의 형식이 올바르지 않습니다.";
+
+        FieldErrorResponse fer = FieldErrorResponse.builder()
+                .field(e.getName())
+                .rejectedValue(null)
+                .reason(reason)
                 .build();
 
         ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
