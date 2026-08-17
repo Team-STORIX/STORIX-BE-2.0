@@ -35,7 +35,7 @@ public class AppVersionService {
         VersionStatus status = matchesBlocked(platform, client)
                 ? VersionStatus.UPDATE_REQUIRED
                 : resolveStatus(client, cfg);
-        return new AppVersionCheck(status, cfg.getLatest(), cfg.getMinSupported());
+        return new AppVersionCheck(status, cfg.getLatest(), cfg.getMinSupported(), cfg.getReleaseDate());
     }
 
     public boolean isBlocked(OSPlatform platform, String clientVersion) {
