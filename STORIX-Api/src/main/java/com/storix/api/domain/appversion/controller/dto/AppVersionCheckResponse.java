@@ -1,8 +1,11 @@
 package com.storix.api.domain.appversion.controller.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.storix.domain.domains.appversion.domain.VersionStatus;
 import com.storix.domain.domains.appversion.dto.AppVersionCheck;
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.time.LocalDate;
 
 public record AppVersionCheckResponse(
 
@@ -13,13 +16,18 @@ public record AppVersionCheckResponse(
         String latestVersion,
 
         @Schema(description = "최소 지원 버전 (미만이면 강제 업데이트)", example = "1.0.0")
-        String minSupportedVersion
+        String minSupportedVersion,
+
+        @JsonFormat(pattern = "yy.MM.dd")
+        @Schema(description = "최신 버전 배포일", example = "26.08.16")
+        LocalDate releaseDate
 ) {
     public static AppVersionCheckResponse from(AppVersionCheck check) {
         return new AppVersionCheckResponse(
                 check.status(),
                 check.latestVersion(),
-                check.minSupportedVersion()
+                check.minSupportedVersion(),
+                check.releaseDate()
         );
     }
 }
