@@ -10,7 +10,8 @@ public enum WorksType {
 
     WEBTOON("웹툰"),
     WEBNOVEL("웹소설"),
-    COMIC("만화");
+    COMIC("만화"),
+    BOOK("단행본");
 
     private final String dbValue;
 }

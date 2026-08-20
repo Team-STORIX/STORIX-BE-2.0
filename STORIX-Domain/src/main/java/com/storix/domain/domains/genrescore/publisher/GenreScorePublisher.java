@@ -2,7 +2,7 @@ package com.storix.domain.domains.genrescore.publisher;
 
 import com.storix.domain.domains.genrescore.event.GenreScoreEvent;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
+import com.storix.domain.domains.genrescore.service.GenreScoreWorksReader;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +18,12 @@ import java.util.Collection;
 public class GenreScorePublisher {
 
     private final ApplicationEventPublisher eventPublisher;
-    private final LoadWorksPort loadWorksPort;
+    private final GenreScoreWorksReader worksReader;
 
     // 작품 id값만 알고 있는 발행 지점 publish
     public void publish(Long userId, Long worksId, GenreScoreEventType type) {
         try {
-            Genre genre = loadWorksPort.findById(worksId).getGenre();
+            Genre genre = worksReader.findById(worksId).getGenre();
             if (genre == null) {
                 log.warn(">>> [GenreScore] genre missing for worksId={}, type={}", worksId, type);
                 return;
@@ -53,7 +53,7 @@ public class GenreScorePublisher {
     public void publishBatch(Long userId, Collection<Long> worksIds, GenreScoreEventType type) {
         if (worksIds == null || worksIds.isEmpty()) return;
         try {
-            for (Works works : loadWorksPort.findWorksByIds(worksIds.stream().toList())) {
+            for (Works works : worksReader.findWorksByIds(worksIds.stream().toList())) {
                 if (works.getGenre() == null) continue;
                 eventPublisher.publishEvent(
                         GenreScoreEvent.of(userId, works.getId(), works.getGenre(), type));
