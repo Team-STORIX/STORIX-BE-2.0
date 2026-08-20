@@ -34,6 +34,7 @@ import com.storix.domain.domains.user.domain.UserHistoryType;
 import com.storix.domain.domains.user.domain.WithdrawReason;
 import com.storix.domain.domains.user.publisher.UserAccessRevokedPublisher;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -41,6 +42,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -120,6 +122,16 @@ public class AuthService {
                 .profileDescription(cmd.profileDescription())
                 .build();
         AuthUserDetails authUserDetails = userAdaptor.saveReaderUser(m);
+
+        // 가입 실패 추적용. 닉네임·소개는 개인정보라 뺀다
+        log.atInfo()
+                .addKeyValue("userId", authUserDetails.getUserId())
+                .addKeyValue("favoriteGenres", cmd.favoriteGenreList())
+                .addKeyValue("favoriteWorksIds", cmd.favoriteWorksIdList())
+                .addKeyValue("serviceTermsAgree", cmd.serviceTermsAgree())
+                .addKeyValue("privacyPolicyAgree", cmd.privacyPolicyAgree())
+                .addKeyValue("ageOver14", cmd.ageOver14())
+                .log(">>> [Signup] 독자 회원가입 온보딩 선택값");
 
         tokenAdaptor.deleteOnboardingTokenByJti(jti);
 
