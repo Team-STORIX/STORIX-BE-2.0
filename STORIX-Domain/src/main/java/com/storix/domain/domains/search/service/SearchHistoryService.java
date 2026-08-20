@@ -41,7 +41,7 @@ public class SearchHistoryService {
     private static final long TRENDING_KEY_TTL_DAYS = 3;
 
     // 최소 검색 횟수 지정
-    private static final double MIN_TRENDING_SCORE = 5.0;
+    private static final double MIN_TRENDING_SCORE = 2.0;
 
     // 최근 검색어 저장을 위한 Lua Script
     // 1. LREM: 기존 키워드 삭제 (중복 방지)
@@ -56,19 +56,13 @@ public class SearchHistoryService {
                     "return 1;";
 
     // 홈
-    /** 1. 검색어 저장 (인기 + 최근 검색어) */
+    /** 1-1. 검색어 저장 (인기 + 최근 검색어) */
     @Async("logThreadPool")
     public void addSearchLog(Long userId, String keyword) {
         try {
             if (keyword == null || keyword.isBlank()) return;
 
-            String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-            String todayKey = TRENDING_KEY_PREFIX + today;
-
-            // 인기 검색어 점수 추가
-            redisTemplate.opsForZSet().incrementScore(todayKey, keyword, 1.0);
-
-            redisTemplate.expire(todayKey, TRENDING_KEY_TTL_DAYS, TimeUnit.DAYS);
+            addTrendingScore(keyword);
 
             // 로그인한 유저: 최근 검색어 저장
             if (userId != null) {
@@ -89,6 +83,23 @@ public class SearchHistoryService {
             }
         } catch (Exception e) {
             log.warn("검색어 로그 저장 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /** 1-2. 검색어 저장 (인기 검색어) */
+    @Async("logThreadPool")
+    public void addTrendingScore(String keyword) {
+        try {
+            if (keyword == null || keyword.isBlank()) return;
+
+            String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+            String todayKey = TRENDING_KEY_PREFIX + today;
+
+            redisTemplate.opsForZSet().incrementScore(todayKey, keyword, 1.0);
+            redisTemplate.expire(todayKey, TRENDING_KEY_TTL_DAYS, TimeUnit.DAYS);
+
+        } catch (Exception e) {
+            log.warn("인기 검색어 점수 추가 실패: {}", e.getMessage(), e);
         }
     }
 
