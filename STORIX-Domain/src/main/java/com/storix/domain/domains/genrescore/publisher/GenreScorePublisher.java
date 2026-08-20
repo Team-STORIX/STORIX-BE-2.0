@@ -8,6 +8,7 @@ import com.storix.domain.domains.works.domain.Works;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -30,8 +31,12 @@ public class GenreScorePublisher {
             }
             eventPublisher.publishEvent(GenreScoreEvent.of(userId, worksId, genre, type));
         } catch (Exception e) {
-            log.warn(">>> [GenreScore] publish failed userId={}, worksId={}, type={}, cause={}",
-                    userId, worksId, type, e.getMessage());
+            log.atError()
+                    .addKeyValue("userId", userId)
+                    .addKeyValue("worksId", worksId)
+                    .addKeyValue("type", type)
+                    .addKeyValue("cause", rootCause(e))
+                    .log(">>> [GenreScore] publish failed");
         }
     }
 
@@ -44,8 +49,12 @@ public class GenreScorePublisher {
         try {
             eventPublisher.publishEvent(GenreScoreEvent.of(userId, worksId, genre, type));
         } catch (Exception e) {
-            log.warn(">>> [GenreScore] publish failed userId={}, worksId={}, type={}, cause={}",
-                    userId, worksId, type, e.getMessage());
+            log.atError()
+                    .addKeyValue("userId", userId)
+                    .addKeyValue("worksId", worksId)
+                    .addKeyValue("type", type)
+                    .addKeyValue("cause", rootCause(e))
+                    .log(">>> [GenreScore] publish failed");
         }
     }
 
@@ -59,8 +68,17 @@ public class GenreScorePublisher {
                         GenreScoreEvent.of(userId, works.getId(), works.getGenre(), type));
             }
         } catch (Exception e) {
-            log.warn(">>> [GenreScore] batch publish failed userId={}, type={}, cause={}",
-                    userId, type, e.getMessage());
+            log.atError()
+                    .addKeyValue("userId", userId)
+                    .addKeyValue("worksIds", worksIds)
+                    .addKeyValue("type", type)
+                    .addKeyValue("cause", rootCause(e))
+                    .log(">>> [GenreScore] batch publish failed");
         }
+    }
+
+    // 프레임워크 래퍼 메시지만 남으면 원인을 못 찾는다
+    private String rootCause(Exception e) {
+        return NestedExceptionUtils.getMostSpecificCause(e).getMessage();
     }
 }
