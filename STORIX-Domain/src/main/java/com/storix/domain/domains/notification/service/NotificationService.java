@@ -6,11 +6,13 @@ import com.storix.domain.domains.notification.domain.Notification;
 import com.storix.domain.domains.notification.dto.NotificationResponseDto;
 import com.storix.domain.domains.notification.exception.UnauthorizedNotificationException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -37,8 +39,15 @@ public class NotificationService {
     // 2-1. 앱 아이콘 배지 — 알림함 미읽음 + 토픽룸 미읽음, 푸시에 싣는 값과 동일
     @Transactional(readOnly = true)
     public long getBadgeCount(Long userId) {
-        return notificationAdaptor.countUnreadByUserId(userId)
-                + chatAdaptor.countTotalUnread(userId);
+        int inbox = notificationAdaptor.countUnreadByUserId(userId);
+        long chat = chatAdaptor.countTotalUnread(userId);
+
+        log.atInfo()
+                .addKeyValue("badgeInbox", inbox)
+                .addKeyValue("badgeChat", chat)
+                .log(">>> [Badge] 배지 개수 조회");
+
+        return inbox + chat;
     }
 
     // 3. 단건 알림 읽음 처리
