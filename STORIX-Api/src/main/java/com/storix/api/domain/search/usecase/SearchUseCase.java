@@ -8,6 +8,8 @@ import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
 import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.search.service.SearchService;
+import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
+import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.WorksType;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class SearchUseCase {
 
     private final SearchService searchService;
     private final SearchHistoryService searchHistoryService;
+    private final TopicRoomUseCase topicRoomUseCase;
 
     // 작품 탭 검색
     public CustomResponse<SearchResponseWrapperDto<WorksSearchResponseDto>> searchWorks(Long userId, String keyword, Pageable pageable) {
@@ -41,9 +44,26 @@ public class SearchUseCase {
 
     // [+] 탭 검색
     public CustomResponse<PlusSearchResponseWrapperDto<WorksSearchResponseDto>> searchWorksForWriting(String keyword, Pageable pageable) {
+        if (pageable.getPageNumber() == 0) {
+            searchHistoryService.addTrendingScore(keyword);
+        }
+
         PlusSearchResponseWrapperDto<WorksSearchResponseDto> result = searchService.searchWorksForWriting(keyword, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.PLUS_WORKS_LOAD_SUCCESS, result);
+    }
+
+    // 토픽룸 탭 검색
+    public CustomResponse<PlusSearchResponseWrapperDto<TopicRoomResponseDto>> searchTopicRooms(
+            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        if (pageable.getPageNumber() == 0) {
+            searchHistoryService.addTrendingScore(keyword);
+        }
+
+        PlusSearchResponseWrapperDto<TopicRoomResponseDto> result =
+                topicRoomUseCase.searchRoomsWithFilters(userId, keyword, worksTypes, genres, pageable);
+
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, result);
     }
 
 
