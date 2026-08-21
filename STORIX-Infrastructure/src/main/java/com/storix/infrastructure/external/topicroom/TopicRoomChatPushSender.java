@@ -98,6 +98,7 @@ public class TopicRoomChatPushSender {
         String body = content != null && content.lastMessage() != null ? content.lastMessage() : lastMessage;
 
         Map<String, String> data = new HashMap<>();
+        data.put("recipientUserId", String.valueOf(target.userId()));
         data.put("type", PUSH_TYPE);
         data.put("category", NotificationCategory.TOPIC_ROOM.name());
         data.put("targetType", TargetType.TOPIC_ROOM.name());
