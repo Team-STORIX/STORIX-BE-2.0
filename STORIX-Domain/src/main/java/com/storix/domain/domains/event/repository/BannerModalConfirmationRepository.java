@@ -13,8 +13,9 @@ public interface BannerModalConfirmationRepository extends JpaRepository<BannerM
     // (userId, bannerId) 유니크 기반 원자적 upsert
     @Modifying
     @Query(value = """
-            INSERT IGNORE INTO event_banner_modal_confirmations (user_id, banner_id, created_at, updated_at)
+            INSERT INTO event_banner_modal_confirmations (user_id, banner_id, created_at, updated_at)
             VALUES (:userId, :bannerId, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE updated_at = updated_at
             """, nativeQuery = true)
     void insertIfAbsent(@Param("userId") Long userId, @Param("bannerId") Long bannerId);
 }
