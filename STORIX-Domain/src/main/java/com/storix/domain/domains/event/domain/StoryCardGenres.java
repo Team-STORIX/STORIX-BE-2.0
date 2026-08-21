@@ -65,7 +65,8 @@ public final class StoryCardGenres {
 
     // 이미 뽑힌 카드의 장르가 나중에 목록에서 빠지면 예외
     public static String imageObjectKeyOf(Genre genre, StoryCardImageType type) {
-        String objectKey = IMAGE_OBJECT_KEYS.get(type).get(genre);
+        Map<Genre, String> byGenre = IMAGE_OBJECT_KEYS.get(type);
+        String objectKey = byGenre == null ? null : byGenre.get(genre);
         if (objectKey == null) {
             throw StoryCardContentNotFoundException.EXCEPTION;
         }
