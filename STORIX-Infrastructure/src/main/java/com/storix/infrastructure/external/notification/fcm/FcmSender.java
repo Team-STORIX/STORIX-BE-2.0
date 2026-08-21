@@ -36,6 +36,7 @@ public class FcmSender {
 
     private static final String METRIC_FAILURE = "fcm.send.failure";
     private static final String TAG_CODE = "code";
+    private static final String UNREAD_COUNT = "unreadCount";
 
     private final FirebaseMessaging firebaseMessaging;
     private final FcmErrorClassifier fcmErrorClassifier;
@@ -180,10 +181,12 @@ public class FcmSender {
     }
 
     // data payload put (null value entry 는 skip)
+    // unreadCount 는 싣지 않는다. 앱이 이 값으로 알림에 badgeCount 를 붙이는데
+    // 삼성 런처가 그걸 합산해 배지가 부풀려진다. iOS 배지는 aps.badge 로 나가 영향 없다
     private void putData(BiConsumer<String, String> putter, Map<String, String> data) {
         if (data == null) return;
         data.forEach((k, v) -> {
-            if (v != null) putter.accept(k, v);
+            if (v != null && !UNREAD_COUNT.equals(k)) putter.accept(k, v);
         });
     }
 
@@ -205,16 +208,12 @@ public class FcmSender {
             return builder.build();
         }
 
+        // setNotificationCount 를 붙이지 않는다. 삼성 런처가 알림별 number 를 합산해
+        // 알림 9건이면 배지가 9배로 뜬다. 앱이 android.badgeCount 를 떼면 되돌릴 것
         AndroidNotification.Builder notification = AndroidNotification.builder()
                 .setChannelId(STORIXStatic.Notification.ANDROID_CHANNEL_ID)
                 .setDefaultSound(true)
                 .setPriority(AndroidNotification.Priority.MAX);
-
-        // 런처 배지 숫자 — 지원하는 런처에서만 표시된다
-        Integer badge = parseBadge(data);
-        if (badge != null) {
-            notification.setNotificationCount(badge);
-        }
 
         return builder.setNotification(notification.build()).build();
     }
@@ -254,6 +253,12 @@ public class FcmSender {
                 .putHeader("apns-priority", "10")
                 .putHeader("apns-push-type", "alert")
                 .setAps(aps.build());
+        // unreadCount 는 APNs 페이로드에만 싣는다. iOS 앱은 remoteMessage.data 로 받고
+        // Android 는 top-level data 에서 빠져 알림에 badgeCount 를 붙이지 못한다
+        String unreadCount = data != null ? data.get(UNREAD_COUNT) : null;
+        if (unreadCount != null) {
+            builder.putCustomData(UNREAD_COUNT, unreadCount);
+        }
         if (collapseKey != null) {
             builder.putHeader("apns-collapse-id", collapseKey);
         }
@@ -263,7 +268,7 @@ public class FcmSender {
     // data.unreadCount -> iOS 뱃지 숫자 (없거나 파싱 실패 시 뱃지 미설정)
     private Integer parseBadge(Map<String, String> data) {
         if (data == null) return null;
-        String value = data.get("unreadCount");
+        String value = data.get(UNREAD_COUNT);
         if (value == null) return null;
         try {
             return Integer.parseInt(value.trim());

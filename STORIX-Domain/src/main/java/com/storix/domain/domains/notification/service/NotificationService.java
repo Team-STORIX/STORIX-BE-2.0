@@ -43,6 +43,8 @@ public class NotificationService {
         long chat = chatAdaptor.countTotalUnread(userId);
 
         log.atInfo()
+                .addKeyValue("badgeSource", "api")
+                .addKeyValue("badgeUserId", userId)
                 .addKeyValue("badgeInbox", inbox)
                 .addKeyValue("badgeChat", chat)
                 .log(">>> [Badge] 배지 개수 조회");

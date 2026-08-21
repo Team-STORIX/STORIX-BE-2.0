@@ -84,8 +84,16 @@ public class NotificationDispatchService {
         }
 
         // 뱃지 표시용 미읽음 총합 — 방금 저장한 알림 포함, 토픽룸 채팅 미읽음까지 합산
-        int unreadCount = notificationAdaptor.countUnreadByUserId(event.recipientUserId())
-                + (int) chatAdaptor.countTotalUnread(event.recipientUserId());
-        return DispatchResult.pushTo(saved.getId(), tokens, unreadCount);
+        int inbox = notificationAdaptor.countUnreadByUserId(event.recipientUserId());
+        int chat = (int) chatAdaptor.countTotalUnread(event.recipientUserId());
+
+        log.atInfo()
+                .addKeyValue("badgeSource", "push-notification")
+                .addKeyValue("badgeUserId", event.recipientUserId())
+                .addKeyValue("badgeInbox", inbox)
+                .addKeyValue("badgeChat", chat)
+                .log(">>> [Badge] 배지 개수 산출");
+
+        return DispatchResult.pushTo(saved.getId(), tokens, inbox + chat);
     }
 }
