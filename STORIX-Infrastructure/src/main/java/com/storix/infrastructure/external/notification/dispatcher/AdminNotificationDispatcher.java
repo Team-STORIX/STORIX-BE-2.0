@@ -98,7 +98,7 @@ public class AdminNotificationDispatcher {
                 }
                 try {
                     MulticastResult result = fcmPushExecutor.sendAndApply(
-                            tokens, buildData(notificationType, targetType, eventTargetId, targetLink,
+                            tokens, buildData(userId, notificationType, targetType, eventTargetId, targetLink,
                                     event.title(), event.content(), notificationIdByUser.get(userId),
                                     inboxUnread.getOrDefault(userId, 0)
                                             + chatUnread.getOrDefault(userId, 0L).intValue()));
@@ -127,11 +127,12 @@ public class AdminNotificationDispatcher {
         return deliveryResultService.applyDispatchOutcomes(adminNotificationId, outcomes, MAX_ATTEMPTS, now);
     }
 
-    private Map<String, String> buildData(NotificationType notificationType,
+    private Map<String, String> buildData(Long recipientUserId, NotificationType notificationType,
                                           AdminNotificationTargetType targetType, Long eventTargetId, String targetLink,
                                           String title, String content, Long notificationId, int unreadCount
     ) {
         Map<String, String> data = new HashMap<>();
+        data.put("recipientUserId", String.valueOf(recipientUserId));
         data.put("notificationId", String.valueOf(notificationId));
         data.put("type", notificationType.name());
         data.put("category", notificationType.category().name());

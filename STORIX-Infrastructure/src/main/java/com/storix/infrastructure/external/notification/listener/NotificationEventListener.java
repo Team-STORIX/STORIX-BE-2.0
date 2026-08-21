@@ -46,6 +46,7 @@ public class NotificationEventListener {
     // FCM data payload 빌드
     private Map<String, String> buildData(NotificationEvent event, Long notificationId, int unreadCount) {
         Map<String, String> data = new HashMap<>();
+        data.put("recipientUserId", String.valueOf(event.recipientUserId()));
         data.put("notificationId", String.valueOf(notificationId));
         data.put("type", event.notificationType().name());
         data.put("category", event.notificationType().category().name());
