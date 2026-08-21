@@ -17,6 +17,7 @@ import com.storix.domain.domains.topicroom.dto.UserUnreadCount;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TopicRoomChatPushService {
@@ -68,12 +70,24 @@ public class TopicRoomChatPushService {
         Map<Long, Long> topicRoomUnread = toCountMap(chatAdaptor.countTotalUnreadByUserIds(reachable));
 
         return tokensByUser.entrySet().stream()
-                .map(entry -> new TopicRoomChatPushTarget(
-                        entry.getKey(),
-                        entry.getValue(),
-                        batchCount.getOrDefault(entry.getKey(), 0L).intValue(),
-                        inboxUnread.getOrDefault(entry.getKey(), 0)
-                                + topicRoomUnread.getOrDefault(entry.getKey(), 0L).intValue()))
+                .map(entry -> {
+                    Long userId = entry.getKey();
+                    int inbox = inboxUnread.getOrDefault(userId, 0);
+                    int chat = topicRoomUnread.getOrDefault(userId, 0L).intValue();
+
+                    log.atInfo()
+                            .addKeyValue("badgeSource", "push-chat")
+                            .addKeyValue("badgeUserId", userId)
+                            .addKeyValue("badgeInbox", inbox)
+                            .addKeyValue("badgeChat", chat)
+                            .log(">>> [Badge] 배지 개수 산출");
+
+                    return new TopicRoomChatPushTarget(
+                            userId,
+                            entry.getValue(),
+                            batchCount.getOrDefault(userId, 0L).intValue(),
+                            inbox + chat);
+                })
                 .toList();
     }
 
