@@ -3,6 +3,7 @@ package com.storix.api.domain.event.controller;
 import com.storix.api.domain.event.usecase.AppEventUseCase;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.event.dto.AppEventPageResponse;
+import com.storix.domain.domains.event.dto.BannerModalResponse;
 import com.storix.domain.domains.event.dto.BannerResponse;
 import com.storix.domain.domains.event.dto.OneTimeAppEventResponse;
 import com.storix.domain.domains.event.dto.PopupResponse;
@@ -92,5 +93,23 @@ public class AppEventController {
             @PathVariable Long eventId
     ) {
         return appEventUseCase.ackAcquiredTitleEvent(authUser.getUserId(), eventId);
+    }
+
+    @GetMapping("/banner/{bannerId}/modal-required")
+    @Operation(summary = "배너 최초 안내 모달 필요 여부 조회", description = "해당 배너를 한 번도 확인하지 않은 유저인지 반환합니다. true면 최초 안내 모달을 띄우세요. 배너 종류 무관 범용 API입니다. 존재하지 않는 배너는 404.")
+    public CustomResponse<BannerModalResponse> getBannerModalStatus(
+            @AuthenticationPrincipal AuthUserDetails authUser,
+            @PathVariable Long bannerId
+    ) {
+        return appEventUseCase.getBannerModalStatus(authUser.getUserId(), bannerId);
+    }
+
+    @PatchMapping("/banner/{bannerId}/confirm")
+    @Operation(summary = "배너 확인 처리", description = "프론트가 배너 안내 모달을 실제 표시한 뒤 호출하면 해당 유저에게 다시 필요하다고 내려주지 않습니다. 배너 종류 무관 범용 API입니다. 존재하지 않는 배너는 404.")
+    public CustomResponse<Void> confirmBannerModal(
+            @AuthenticationPrincipal AuthUserDetails authUser,
+            @PathVariable Long bannerId
+    ) {
+        return appEventUseCase.confirmBannerModal(authUser.getUserId(), bannerId);
     }
 }
