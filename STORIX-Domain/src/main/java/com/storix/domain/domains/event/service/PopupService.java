@@ -97,6 +97,11 @@ public class PopupService {
         return eventPopupAdaptor.findActivePopup(now).map(PopupResponse::from);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Long> findActivePopupIdByAppEvent(Long appEventId, LocalDateTime now) {
+        return eventPopupAdaptor.findActivePopupIdByAppEvent(appEventId, now);
+    }
+
     @Transactional
     public Popup cancel(Long popupId) {
         Popup popup = getById(popupId);
