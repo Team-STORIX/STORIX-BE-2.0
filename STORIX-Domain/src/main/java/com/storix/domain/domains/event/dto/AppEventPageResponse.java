@@ -58,9 +58,6 @@ public record AppEventPageResponse(
         )
         Long bannerId
 ) {
-    private static final Set<PromotionType> WEB_VISIBLE_PROMOTION_TYPES =
-            Set.of(PromotionType.POPUP, PromotionType.BANNER);
-
     public static AppEventPageResponse from(AppEvent appEvent, Long popupId, Long bannerId) {
         return AppEventPageResponse.builder()
                 .id(appEvent.getId())
@@ -72,7 +69,7 @@ public record AppEventPageResponse(
                 .endAt(appEvent.getEndAt())
                 .status(AppEventStatus.resolve(appEvent.getStartAt(), appEvent.getEndAt(), LocalDateTime.now()))
                 .promotionTypes(appEvent.getPromotionTypes().stream()
-                        .filter(WEB_VISIBLE_PROMOTION_TYPES::contains)
+                        .filter(PromotionType.WEB_VISIBLE_TYPES::contains)
                         .collect(Collectors.toUnmodifiableSet()))
                 .popupId(popupId)
                 .bannerId(bannerId)
