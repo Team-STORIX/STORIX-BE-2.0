@@ -4,10 +4,12 @@ import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.utils.RedisKeyStatic;
 import com.storix.domain.domains.event.dto.AppEventPageResponse;
+import com.storix.domain.domains.event.dto.BannerModalResponse;
 import com.storix.domain.domains.event.dto.BannerResponse;
 import com.storix.domain.domains.event.dto.OneTimeAppEventResponse;
 import com.storix.domain.domains.event.dto.PopupResponse;
 import com.storix.domain.domains.event.service.AppEventService;
+import com.storix.domain.domains.event.service.BannerModalService;
 import com.storix.domain.domains.event.service.BannerService;
 import com.storix.domain.domains.event.service.EventContentCacheHelper;
 import com.storix.domain.domains.event.service.PopupDismissService;
@@ -33,6 +35,7 @@ public class AppEventUseCase {
     private final EventContentCacheHelper eventContentCacheHelper;
     private final UserAppEventService userAppEventService;
     private final UserAppEventCacheHelper userAppEventCacheHelper;
+    private final BannerModalService bannerModalService;
 
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
@@ -105,5 +108,30 @@ public class AppEventUseCase {
             userAppEventCacheHelper.evict(userId);
         }
         return CustomResponse.onSuccess(SuccessCode.APP_EVENT_ACK_SUCCESS);
+    }
+
+    // 배너 최초 안내 모달 필요 여부 조회
+    public CustomResponse<BannerModalResponse> getBannerModalStatus(Long userId, Long bannerId) {
+
+        // 1. 배너 존재 검증
+        eventBannerService.getById(bannerId);
+
+        return CustomResponse.onSuccess(
+                SuccessCode.APP_EVENT_BANNER_MODAL_STATUS_SUCCESS,
+                BannerModalResponse.builder()
+                        .modalRequired(bannerModalService.isModalRequired(userId, bannerId))
+                        .build()
+        );
+    }
+
+    // 배너 확인 처리
+    public CustomResponse<Void> confirmBannerModal(Long userId, Long bannerId) {
+
+        // 1. 배너 존재 검증
+        eventBannerService.getById(bannerId);
+
+        // 2. 확인 처리
+        bannerModalService.confirm(userId, bannerId);
+        return CustomResponse.onSuccess(SuccessCode.APP_EVENT_BANNER_MODAL_CONFIRM_SUCCESS);
     }
 }

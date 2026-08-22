@@ -2,6 +2,7 @@ package com.storix.domain.domains.event.dto;
 
 import com.storix.domain.domains.event.domain.StoryCardDraw;
 import com.storix.domain.domains.event.domain.StoryCardGenres;
+import com.storix.domain.domains.event.domain.StoryCardGenres.StoryCardImageType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -20,8 +21,14 @@ public record StoryCardResponse(
         @Schema(description = "오늘의 장르", example = "판타지")
         String genre,
 
-        @Schema(description = "장르별 카드 이미지. objectKey로 담겼다가 응답 직전 전체 URL로 치환된다")
-        String imageUrl,
+        @Schema(description = "장르별 AI 이미지. objectKey로 담겼다가 응답 직전 전체 URL로 치환된다")
+        String aiImageUrl,
+
+        @Schema(description = "장르별 배경 이미지. objectKey로 담겼다가 응답 직전 전체 URL로 치환된다")
+        String backgroundImageUrl,
+
+        @Schema(description = "장르 아이콘. objectKey로 담겼다가 응답 직전 전체 URL로 치환된다")
+        String iconImageUrl,
 
         @Schema(description = "오늘의 한마디 (줄바꿈을 공백으로 편 한 줄. 공유/저장 텍스트용)")
         String message,
@@ -40,7 +47,9 @@ public record StoryCardResponse(
                 .drawnOn(draw.getDrawnOn())
                 .alreadyDrawn(alreadyDrawn)
                 .genre(draw.getGenre().getDbValue())
-                .imageUrl(StoryCardGenres.imageObjectKeyOf(draw.getGenre()))
+                .aiImageUrl(StoryCardGenres.imageObjectKeyOf(draw.getGenre(), StoryCardImageType.AI))
+                .backgroundImageUrl(StoryCardGenres.imageObjectKeyOf(draw.getGenre(), StoryCardImageType.BACKGROUND))
+                .iconImageUrl(StoryCardGenres.imageObjectKeyOf(draw.getGenre(), StoryCardImageType.ICON))
                 .message(draw.messageSingleLine())
                 .messageLines(draw.messageLines())
                 .immersion(draw.getImmersion())
@@ -50,11 +59,17 @@ public record StoryCardResponse(
 
     // objectKey → 전체 URL로 변환
     public StoryCardResponse withBaseUrl(String baseUrl) {
-        if (imageUrl == null || imageUrl.isBlank()) {
-            return this;
-        }
         return this.toBuilder()
-                .imageUrl(baseUrl + "/" + imageUrl)
+                .aiImageUrl(prefixed(aiImageUrl, baseUrl))
+                .backgroundImageUrl(prefixed(backgroundImageUrl, baseUrl))
+                .iconImageUrl(prefixed(iconImageUrl, baseUrl))
                 .build();
+    }
+
+    private static String prefixed(String objectKey, String baseUrl) {
+        if (objectKey == null || objectKey.isBlank()) {
+            return objectKey;
+        }
+        return baseUrl + "/" + objectKey;
     }
 }

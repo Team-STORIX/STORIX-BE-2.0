@@ -4,12 +4,14 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventStatus;
 import com.storix.domain.domains.event.domain.AppEventType;
+import com.storix.domain.domains.event.domain.PromotionType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-// 상세 웹페이지 렌더용. 비로그인도 조회하므로 홍보 수단이나 응모권 지급표 같은 운영값은 담지 않는다
 @Builder
 public record AppEventPageResponse(
         Long id,
@@ -37,9 +39,26 @@ public record AppEventPageResponse(
         LocalDateTime endAt,
 
         @Schema(description = "기간으로 파생 계산되는 상태 (SCHEDULED / ACTIVE / ENDED)")
-        AppEventStatus status
+        AppEventStatus status,
+
+        @Schema(
+                description = "이 이벤트에 설정된 홍보 수단 중 웹페이지가 알아야 하는 것 (POPUP / BANNER). "
+                        + "실제로 띄울 대상이 있는지는 popupId / bannerId 로 판단해주세요.",
+                example = "[\"BANNER\"]"
+        )
+        Set<PromotionType> promotionTypes,
+
+        @Schema(description = "이 이벤트에 걸린 노출 중인 팝업 id. 없으면 null", example = "12")
+        Long popupId,
+
+        @Schema(
+                description = "이 이벤트에 걸린 노출 중인 배너 id. 없으면 null. "
+                        + "이 값으로 GET /api/v1/app-events/banner/{bannerId}/modal-required 를 호출해 안내 모달 노출 여부를 판단하세요.",
+                example = "34"
+        )
+        Long bannerId
 ) {
-    public static AppEventPageResponse from(AppEvent appEvent) {
+    public static AppEventPageResponse from(AppEvent appEvent, Long popupId, Long bannerId) {
         return AppEventPageResponse.builder()
                 .id(appEvent.getId())
                 .name(appEvent.getName())
@@ -49,6 +68,11 @@ public record AppEventPageResponse(
                 .startAt(appEvent.getStartAt())
                 .endAt(appEvent.getEndAt())
                 .status(AppEventStatus.resolve(appEvent.getStartAt(), appEvent.getEndAt(), LocalDateTime.now()))
+                .promotionTypes(appEvent.getPromotionTypes().stream()
+                        .filter(PromotionType.WEB_VISIBLE_TYPES::contains)
+                        .collect(Collectors.toUnmodifiableSet()))
+                .popupId(popupId)
+                .bannerId(bannerId)
                 .build();
     }
 }

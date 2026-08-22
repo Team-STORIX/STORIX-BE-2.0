@@ -47,6 +47,22 @@ public interface BannerRepository extends JpaRepository<Banner, Long> {
             Pageable pageable
     );
 
+    @Query("""
+        SELECT b.id
+        FROM Banner b
+        WHERE b.appEvent.id = :appEventId
+          AND b.status = :status
+          AND b.displayStartAt <= :now
+          AND b.displayEndAt >= :now
+        ORDER BY b.displayStartAt DESC, b.id DESC
+    """)
+    List<Long> findActiveBannerIdsByAppEvent(
+            @Param("appEventId") Long appEventId,
+            @Param("status") BannerStatus status,
+            @Param("now") LocalDateTime now,
+            Pageable pageable
+    );
+
     // 새 배너 기간과 겹치는 종료전 배너들의 노출기간 조회
     @Query("""
         SELECT new com.storix.domain.domains.event.dto.DisplayPeriod(b.displayStartAt, b.displayEndAt)
