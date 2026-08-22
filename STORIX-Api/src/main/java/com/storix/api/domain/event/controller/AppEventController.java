@@ -36,10 +36,9 @@ public class AppEventController {
                     로그인하지 않아도 호출할 수 있으며, eventType 으로 어떤 화면을 그릴지 정하시면 됩니다.
 
                     웹뷰 사용 시에 appEventId만 들고 진입하므로, 이 이벤트에 걸린 노출 중인 팝업/배너 id(popupId, bannerId)를 함께 내려줍니다.
-                    bannerId 가 있으면 그 값으로 `GET /api/v1/app-events/banner/{bannerId}/modal-required` 를 호출해
-                    최초 안내 모달을 띄울지 말지 판단하시면 됩니다.
+                    bannerId 가 있다면 그 값으로 `GET /api/v1/app-events/banner/{bannerId}/modal-required` 를 호출해 최초 안내 모달을 띄울지 말지 판단하시면 됩니다.
 
-                    운영 설정값(응모권 지급 기준 등)은 내려가지 않습니다. promotionTypes 도 웹페이지가 그리는 POPUP / BANNER 만 내려갑니다.
+                    운영 설정값(응모권 지급 기준 등)은 내려가지 않습니다. promotionTypes 는 웹페이지가 그리는 POPUP / BANNER 를 반환합니다.
                     존재하지 않는 이벤트, 그리고 아직 시작하지 않은 이벤트는 404입니다. (오픈 전 내용이 미리 노출되지 않도록)
                     종료된 이벤트는 조회되며 status=ENDED 로 내려갑니다.
                     """
