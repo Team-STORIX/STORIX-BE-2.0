@@ -6,6 +6,7 @@ import com.storix.domain.domains.event.exception.PopupNotFoundException;
 import com.storix.domain.domains.event.repository.PopupRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
@@ -50,6 +51,13 @@ public class PopupAdaptor {
 
     public boolean existsOverlapping(LocalDateTime displayStartAt, LocalDateTime displayEndAt, Long excludeId) {
         return eventPopupRepository.existsOverlappingActivePopup(displayStartAt, displayEndAt, excludeId);
+    }
+
+    public Optional<Long> findActivePopupIdByAppEvent(Long appEventId, LocalDateTime now) {
+        return eventPopupRepository
+                .findActivePopupIdsByAppEvent(appEventId, PopupStatus.ACTIVE, now, PageRequest.of(0, 1))
+                .stream()
+                .findFirst();
     }
 
     // AppEvent 강제 종료 시 cascade 대상

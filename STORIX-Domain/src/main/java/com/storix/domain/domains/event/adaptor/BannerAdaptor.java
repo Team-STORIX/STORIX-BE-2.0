@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -51,6 +52,13 @@ public class BannerAdaptor {
 
     public List<DisplayPeriod> findOverlappingPeriods(LocalDateTime displayStartAt, LocalDateTime displayEndAt, Long excludeId) {
         return eventBannerRepository.findOverlappingPeriods(displayStartAt, displayEndAt, excludeId);
+    }
+
+    public Optional<Long> findActiveBannerIdByAppEvent(Long appEventId, LocalDateTime now) {
+        return eventBannerRepository
+                .findActiveBannerIdsByAppEvent(appEventId, BannerStatus.ACTIVE, now, PageRequest.of(0, 1))
+                .stream()
+                .findFirst();
     }
 
     // AppEvent 강제 종료 시 cascade 대상

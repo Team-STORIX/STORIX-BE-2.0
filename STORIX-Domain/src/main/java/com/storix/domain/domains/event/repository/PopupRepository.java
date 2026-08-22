@@ -46,6 +46,22 @@ public interface PopupRepository extends JpaRepository<Popup, Long> {
             @Param("now") LocalDateTime now
     );
 
+    @Query("""
+        SELECT p.id
+        FROM Popup p
+        WHERE p.appEvent.id = :appEventId
+          AND p.status = :status
+          AND p.displayStartAt <= :now
+          AND p.displayEndAt >= :now
+        ORDER BY p.displayStartAt DESC, p.id DESC
+    """)
+    List<Long> findActivePopupIdsByAppEvent(
+            @Param("appEventId") Long appEventId,
+            @Param("status") PopupStatus status,
+            @Param("now") LocalDateTime now,
+            Pageable pageable
+    );
+
     // 등록/수정 시 기간 중복 팝업 검증
     @Query("""
         SELECT (COUNT(p) > 0)
