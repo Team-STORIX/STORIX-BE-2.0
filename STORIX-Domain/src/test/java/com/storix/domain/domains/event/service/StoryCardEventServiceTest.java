@@ -294,7 +294,9 @@ class StoryCardEventServiceTest {
             assertThat(card.alreadyDrawn()).isFalse();
             assertThat(card.immersion()).isEqualTo(IMMERSION);
             assertThat(card.messageLines()).containsExactly("오늘은 대현자처럼", "아무 말 없이 고개를 끄덕여보세요!");
-            assertThat(card.imageUrl()).startsWith("public/event/story-card/");
+            assertThat(card.aiImageUrl()).startsWith("public/event/story-card/ai/");
+            assertThat(card.backgroundImageUrl()).startsWith("public/event/story-card/background/");
+            assertThat(card.iconImageUrl()).startsWith("public/event/story-card/icon/");
         }
 
         @Test

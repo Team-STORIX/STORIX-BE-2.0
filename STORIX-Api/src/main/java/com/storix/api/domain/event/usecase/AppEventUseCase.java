@@ -3,10 +3,12 @@ package com.storix.api.domain.event.usecase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.utils.RedisKeyStatic;
+import com.storix.domain.domains.event.dto.AppEventPageModalResponse;
 import com.storix.domain.domains.event.dto.AppEventPageResponse;
 import com.storix.domain.domains.event.dto.BannerResponse;
 import com.storix.domain.domains.event.dto.OneTimeAppEventResponse;
 import com.storix.domain.domains.event.dto.PopupResponse;
+import com.storix.domain.domains.event.service.AppEventPageModalService;
 import com.storix.domain.domains.event.service.AppEventService;
 import com.storix.domain.domains.event.service.BannerService;
 import com.storix.domain.domains.event.service.EventContentCacheHelper;
@@ -33,6 +35,7 @@ public class AppEventUseCase {
     private final EventContentCacheHelper eventContentCacheHelper;
     private final UserAppEventService userAppEventService;
     private final UserAppEventCacheHelper userAppEventCacheHelper;
+    private final AppEventPageModalService appEventPageModalService;
 
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
@@ -105,5 +108,30 @@ public class AppEventUseCase {
             userAppEventCacheHelper.evict(userId);
         }
         return CustomResponse.onSuccess(SuccessCode.APP_EVENT_ACK_SUCCESS);
+    }
+
+    // 이벤트 페이지 최초 안내 모달 필요 여부 조회
+    public CustomResponse<AppEventPageModalResponse> getPageModalStatus(Long userId, Long appEventId) {
+
+        // 1. 이벤트 존재 검증
+        appEventService.getAppEvent(appEventId);
+
+        return CustomResponse.onSuccess(
+                SuccessCode.APP_EVENT_PAGE_MODAL_STATUS_SUCCESS,
+                AppEventPageModalResponse.builder()
+                        .modalRequired(appEventPageModalService.isModalRequired(userId, appEventId))
+                        .build()
+        );
+    }
+
+    // 이벤트 페이지 확인 처리
+    public CustomResponse<Void> confirmPageModal(Long userId, Long appEventId) {
+
+        // 1. 이벤트 존재 검증
+        appEventService.getAppEvent(appEventId);
+
+        // 2. 확인 처리
+        appEventPageModalService.confirm(userId, appEventId);
+        return CustomResponse.onSuccess(SuccessCode.APP_EVENT_PAGE_MODAL_CONFIRM_SUCCESS);
     }
 }
