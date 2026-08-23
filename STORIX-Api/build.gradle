@@ -16,3 +16,42 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.7.0'
     testImplementation 'org.springframework.security:spring-security-test'
 }
+
+// 에러 스펙은 소스에서 뽑아 리소스로 굽는다. 컨트롤러에 어노테이션을 달지 않기 위한 선택이라
+// 생성물은 커밋하지 않고 빌드마다 새로 만든다. node 가 없으면 건너뛰고, 그때는 스웨거에 에러가 안 붙는다.
+def errorSpecDir = layout.buildDirectory.dir("generated/swagger")
+def errorSpecFile = errorSpecDir.map { it.file("swagger/error-map.json") }
+def errorSpecScript = file("${rootDir}/.github/scripts/swagger-error-spec/genmap.mjs")
+
+// Gradle 데몬 PATH 에는 node 가 없을 수 있다. 로그인 셸로 절대경로를 찾아 쓴다.
+def nodePath = providers.exec {
+    commandLine 'bash', '-lc', 'command -v node || true'
+}.standardOutput.asText.get().trim()
+
+tasks.register('generateErrorMap', Exec) {
+    group = 'documentation'
+    description = '컨트롤러 호출 그래프에서 에러 코드를 뽑아 error-map.json 생성'
+
+    executable = nodePath ?: 'node'
+    args errorSpecScript.absolutePath, errorSpecFile.get().asFile.absolutePath
+    environment 'STORIX_ROOT', rootDir.absolutePath
+
+    ['STORIX-Api', 'STORIX-Domain', 'STORIX-Common', 'STORIX-Infrastructure'].each {
+        inputs.dir("${rootDir}/${it}/src/main/java").withPathSensitivity(PathSensitivity.RELATIVE)
+    }
+    inputs.dir(errorSpecScript.parentFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.file(errorSpecFile)
+
+    doFirst { errorSpecFile.get().asFile.parentFile.mkdirs() }
+    onlyIf {
+        if (!errorSpecScript.exists()) return false
+        if (!nodePath) {
+            logger.warn("node 를 찾지 못해 에러 스펙 생성을 건너뜁니다")
+            return false
+        }
+        return true
+    }
+}
+
+sourceSets.main.resources.srcDir(errorSpecDir)
+tasks.named('processResources') { dependsOn 'generateErrorMap' }

@@ -5,7 +5,6 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,9 +29,9 @@ public class SwaggerConfig {
                         .scheme("Bearer")
                         .bearerFormat("JWT"));
 
+        // servers 를 비우면 springdoc 이 요청 기준으로 잡는다. 운영 URL 을 스펙에 박지 않기 위함
         return new OpenAPI()
                 .info(info)
-                .addServersItem(new Server().url("/"))
                 .addSecurityItem(securityRequirement)
                 .components(components);
 
