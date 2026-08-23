@@ -7,5 +7,5 @@ public class UnknownUserException extends STORIXCodeException {
 
     public static final STORIXCodeException EXCEPTION = new UnknownUserException();
 
-    private UnknownUserException() { super(ErrorCode.NOT_FOUND); }
+    private UnknownUserException() { super(ErrorCode.USER_NOT_FOUND); }
 }

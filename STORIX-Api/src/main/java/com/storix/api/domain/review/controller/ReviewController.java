@@ -2,7 +2,7 @@ package com.storix.api.domain.review.controller;
 
 import com.storix.domain.domains.plus.dto.SliceReviewInfo;
 import com.storix.api.domain.review.usecase.WorksDetailReactionUseCase;
-import com.storix.domain.domains.review.dto.ModifyReviewRequest;
+import com.storix.api.domain.review.controller.dto.ModifyReviewApiRequest;
 import com.storix.api.domain.review.controller.dto.ReviewReportRequest;
 import com.storix.domain.domains.review.domain.ReviewSortType;
 import com.storix.domain.domains.review.dto.DetailedReviewInfoWithProfile;
@@ -83,10 +83,10 @@ public class ReviewController {
     public ResponseEntity<CustomResponse<Long>> modifyMyReview(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @PathVariable @NotNull Long reviewId,
-            @Valid @RequestBody ModifyReviewRequest req
+            @Valid @RequestBody ModifyReviewApiRequest req
     ) {
         return ResponseEntity.ok()
-                .body(worksDetailKebabUseCase.modifyMyReview(authUserDetails.getUserId(), reviewId, req));
+                .body(worksDetailKebabUseCase.modifyMyReview(authUserDetails.getUserId(), reviewId, req.toDto()));
     }
 
     @Operation(summary = "내 리뷰 삭제", description = "리뷰 id로 리뷰를 삭제하는 api 입니다.")

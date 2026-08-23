@@ -9,7 +9,6 @@ import com.storix.domain.domains.event.dto.EventWinner;
 import com.storix.domain.domains.event.exception.AppEventInvalidWinnerCountException;
 import com.storix.domain.domains.event.exception.AppEventNoWinnerException;
 import com.storix.domain.domains.event.exception.AppEventNotEndedException;
-import com.storix.domain.domains.event.exception.EventWinnerFinalizerNotImplementedException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -195,6 +194,6 @@ class AppEventFinalizeServiceTest {
         given(finalizer.supports(any(AppEvent.class))).willReturn(false);
 
         assertThatThrownBy(() -> appEventFinalizeService.finalizeWinners(EVENT_ID, 3))
-                .isInstanceOf(EventWinnerFinalizerNotImplementedException.class);
+                .isInstanceOf(IllegalStateException.class);   // 미구현은 백엔드 문제라 폴백 500 으로 나간다
     }
 }

@@ -9,7 +9,7 @@ import com.storix.domain.domains.event.domain.ContentTargetType;
 import com.storix.domain.domains.event.dto.BannerCommand;
 import com.storix.domain.domains.event.dto.BannerResponse;
 import com.storix.domain.domains.event.dto.DisplayPeriod;
-import com.storix.domain.domains.event.exception.BannerAppEventRequiredException;
+import com.storix.domain.domains.event.exception.BannerAppEventImmutableException;
 import com.storix.domain.domains.event.exception.BannerInvalidDisplayPeriodException;
 import com.storix.domain.domains.event.exception.BannerOutOfEventPeriodException;
 import com.storix.domain.domains.event.exception.BannerOverlappingException;
@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.List;
 
 @Service
@@ -37,7 +38,6 @@ public class BannerService {
     @Transactional
     public Banner create(BannerCommand cmd, Long adminUserId) {
         validatePeriod(cmd.displayStartAt(), cmd.displayEndAt());
-        validateAppEventRequired(cmd.contentTargetType(), cmd.appEventId() != null);
         // appEventId 없으면 독립 배너, 있으면 이벤트 기간으로 clamp
         AppEvent appEvent = cmd.appEventId() == null ? null : appEventAdaptor.findById(cmd.appEventId());
         DisplayPeriod period = clampToAppEvent(appEvent, cmd.displayStartAt(), cmd.displayEndAt());
@@ -57,8 +57,8 @@ public class BannerService {
     public Banner update(Long bannerId, BannerCommand cmd) {
         validatePeriod(cmd.displayStartAt(), cmd.displayEndAt());
         Banner banner = getById(bannerId);
-        // appEvent 는 불변 - 기존 배너가 소속된 이벤트 기준으로 검증/clamp
-        validateAppEventRequired(cmd.contentTargetType(), banner.getAppEvent() != null);
+        // appEvent 는 불변. 요청이 다른 이벤트를 가리키면 조용히 무시하지 않고 거부한다
+        validateAppEventNotChanged(cmd.appEventId(), banner.getAppEvent());
         DisplayPeriod period = clampToAppEvent(banner.getAppEvent(), cmd.displayStartAt(), cmd.displayEndAt());
         // 종료된 배너는 다시 노출되지 않으므로 동시 노출 상한 검증 대상에서 제외
         if (banner.getStatus() != BannerStatus.ENDED) {
@@ -131,8 +131,11 @@ public class BannerService {
         eventDisplayPeriodHelper.validate(displayStartAt, displayEndAt, () -> BannerInvalidDisplayPeriodException.EXCEPTION);
     }
 
-    private void validateAppEventRequired(ContentTargetType contentTargetType, boolean hasAppEvent) {
-        eventDisplayPeriodHelper.requireAppEventForType(contentTargetType, hasAppEvent, () -> BannerAppEventRequiredException.EXCEPTION);
+    private void validateAppEventNotChanged(Long requestedAppEventId, AppEvent current) {
+        Long currentId = current == null ? null : current.getId();
+        if (!Objects.equals(requestedAppEventId, currentId)) {
+            throw BannerAppEventImmutableException.EXCEPTION;
+        }
     }
 
     private DisplayPeriod clampToAppEvent(AppEvent appEvent, LocalDateTime displayStartAt, LocalDateTime displayEndAt) {

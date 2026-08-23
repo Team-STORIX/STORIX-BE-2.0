@@ -1,5 +1,6 @@
 package com.storix.infrastructure.global.security;
 
+import com.storix.domain.domains.user.exception.token.InvalidTokenException;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.UserBlacklistAdaptor;
 import com.storix.domain.domains.user.domain.Role;
@@ -78,7 +79,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         });
 
         AuthUserDetails userDetails = new AuthUserDetails(
-                accessTokenInfo.userId(), Role.fromValue(accessTokenInfo.role()));
+                accessTokenInfo.userId(),
+                Role.find(accessTokenInfo.role()).orElseThrow(() -> InvalidTokenException.EXCEPTION));
         return new UsernamePasswordAuthenticationToken(
                 userDetails, "user", userDetails.getAuthorities());
     }

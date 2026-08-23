@@ -11,11 +11,8 @@ import com.storix.domain.domains.event.dto.AppEventResponse;
 import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodBoundaryException;
 import com.storix.domain.domains.event.exception.AppEventFinalizedNotModifiableException;
-import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
-import com.storix.domain.domains.event.exception.AppEventNameRequiredException;
 import com.storix.domain.domains.event.exception.AppEventNotFoundException;
 import com.storix.domain.domains.event.exception.AppEventOverlappingTypeException;
-import com.storix.domain.domains.event.exception.AppEventPeriodRequiredException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
@@ -126,16 +123,8 @@ public class AppEventService {
         return AppEventResponse.from(appEvent);
     }
 
+    // 이름·기간 필수와 기간 역전은 요청 DTO 검증에서 걸린다. 여기서는 도메인 규칙만 본다
     private void validateCommand(AppEventCommand cmd) {
-        if (cmd.name() == null || cmd.name().isBlank()) {
-            throw AppEventNameRequiredException.EXCEPTION;
-        }
-        if (cmd.startAt() == null || cmd.endAt() == null) {
-            throw AppEventPeriodRequiredException.EXCEPTION;
-        }
-        if (!cmd.startAt().isBefore(cmd.endAt())) {
-            throw AppEventInvalidPeriodException.EXCEPTION;
-        }
         validateAttendanceRewards(cmd.attendanceRewards());
     }
 
