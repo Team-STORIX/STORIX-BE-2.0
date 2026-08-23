@@ -73,6 +73,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
             "   u.id, u.profileObjectKey, " +
             "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +
+            "   , u.role " +
             ") " +
             "FROM User u " +
             "WHERE u.id = :userId ")
@@ -82,6 +83,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
             "   u.id, u.profileObjectKey, " +
             "   " + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN +
+            "   , u.role " +
             ") " +
             "FROM User u " +
             "WHERE u.id IN :userIds ")
