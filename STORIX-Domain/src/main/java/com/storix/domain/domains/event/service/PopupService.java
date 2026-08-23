@@ -9,7 +9,7 @@ import com.storix.domain.domains.event.domain.PopupStatus;
 import com.storix.domain.domains.event.dto.DisplayPeriod;
 import com.storix.domain.domains.event.dto.PopupCommand;
 import com.storix.domain.domains.event.dto.PopupResponse;
-import com.storix.domain.domains.event.exception.PopupAppEventRequiredException;
+import com.storix.domain.domains.event.exception.PopupAppEventImmutableException;
 import com.storix.domain.domains.event.exception.PopupInvalidDisplayPeriodException;
 import com.storix.domain.domains.event.exception.PopupOutOfEventPeriodException;
 import com.storix.domain.domains.event.exception.PopupOverlappingException;
@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +38,6 @@ public class PopupService {
     @Transactional
     public Popup create(PopupCommand cmd, Long adminUserId) {
         validatePeriod(cmd.displayStartAt(), cmd.displayEndAt());
-        validateAppEventRequired(cmd.contentTargetType(), cmd.appEventId() != null);
         // appEventId 없으면 독립 팝업, 있으면 이벤트 기간으로 clamp
         AppEvent appEvent = cmd.appEventId() == null ? null : appEventAdaptor.findById(cmd.appEventId());
         DisplayPeriod period = clampToAppEvent(appEvent, cmd.displayStartAt(), cmd.displayEndAt());
@@ -60,8 +60,8 @@ public class PopupService {
     public Popup update(Long popupId, PopupCommand cmd) {
         validatePeriod(cmd.displayStartAt(), cmd.displayEndAt());
         Popup popup = getById(popupId);
-        // appEvent 는 불변 - 기존 팝업이 소속된 이벤트 기준으로 검증/clamp
-        validateAppEventRequired(cmd.contentTargetType(), popup.getAppEvent() != null);
+        // appEvent 는 불변. 요청이 다른 이벤트를 가리키면 조용히 무시하지 않고 거부한다
+        validateAppEventNotChanged(cmd.appEventId(), popup.getAppEvent());
         DisplayPeriod period = clampToAppEvent(popup.getAppEvent(), cmd.displayStartAt(), cmd.displayEndAt());
         // 종료된 팝업은 다시 노출되지 않으므로 기간 중복 검증 대상에서 제외
         if (popup.getStatus() != PopupStatus.ENDED) {
@@ -135,8 +135,11 @@ public class PopupService {
         eventDisplayPeriodHelper.validate(displayStartAt, displayEndAt, () -> PopupInvalidDisplayPeriodException.EXCEPTION);
     }
 
-    private void validateAppEventRequired(ContentTargetType contentTargetType, boolean hasAppEvent) {
-        eventDisplayPeriodHelper.requireAppEventForType(contentTargetType, hasAppEvent, () -> PopupAppEventRequiredException.EXCEPTION);
+    private void validateAppEventNotChanged(Long requestedAppEventId, AppEvent current) {
+        Long currentId = current == null ? null : current.getId();
+        if (!Objects.equals(requestedAppEventId, currentId)) {
+            throw PopupAppEventImmutableException.EXCEPTION;
+        }
     }
 
     private DisplayPeriod clampToAppEvent(AppEvent appEvent, LocalDateTime displayStartAt, LocalDateTime displayEndAt) {

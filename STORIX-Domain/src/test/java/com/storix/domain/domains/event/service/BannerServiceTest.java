@@ -8,7 +8,7 @@ import com.storix.domain.domains.event.domain.BannerStatus;
 import com.storix.domain.domains.event.domain.ContentTargetType;
 import com.storix.domain.domains.event.dto.BannerCommand;
 import com.storix.domain.domains.event.dto.DisplayPeriod;
-import com.storix.domain.domains.event.exception.BannerAppEventRequiredException;
+import com.storix.domain.domains.event.exception.BannerAppEventImmutableException;
 import com.storix.domain.domains.event.exception.BannerOutOfEventPeriodException;
 import com.storix.domain.domains.event.exception.BannerOverlappingException;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,17 +98,6 @@ class BannerServiceTest {
             verify(eventBannerAdaptor).save(any(Banner.class));        }
 
         @Test
-        @DisplayName("APP_EVENT 유형인데 appEventId 가 null 이면 예외 (소속 이벤트 필수)")
-        void reject_app_event_type_without_event() {
-            assertThatThrownBy(() -> bannerService.create(
-                    command(null, EVENT_START.plusDays(3), EVENT_START.plusDays(5)), ADMIN_ID))
-                    .isInstanceOf(BannerAppEventRequiredException.class);
-
-            verify(appEventAdaptor, never()).findById(any());
-            verify(eventBannerAdaptor, never()).save(any());
-        }
-
-        @Test
         @DisplayName("배너 종료가 이벤트 종료를 넘으면 이벤트 종료로 clamp 되어 저장된다")
         void clamp_end_to_event_end() {
             given(appEventAdaptor.findById(APP_EVENT_ID)).willReturn(appEvent());
@@ -174,18 +163,29 @@ class BannerServiceTest {
     class Update {
 
         @Test
-        @DisplayName("수정은 커맨드의 appEventId 를 무시하고 기존 배너의 이벤트 기간으로 clamp 한다")
-        void update_uses_existing_app_event_ignoring_command() {
+        @DisplayName("수정 요청이 다른 이벤트를 가리키면 예외 (소속 이벤트는 불변)")
+        void update_rejects_changed_app_event() {
+            given(eventBannerAdaptor.findById(BANNER_ID)).willReturn(existingBanner());
+
+            assertThatThrownBy(() -> bannerService.update(BANNER_ID,
+                    command(999L, EVENT_START.plusDays(4), EVENT_END.plusDays(2))))
+                    .isInstanceOf(BannerAppEventImmutableException.class);
+
+            verify(appEventAdaptor, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("같은 이벤트로 수정하면 기존 이벤트 기간으로 clamp 된다")
+        void update_clamps_to_existing_app_event() {
             given(eventBannerAdaptor.findById(BANNER_ID)).willReturn(existingBanner());
             given(eventBannerAdaptor.findOverlappingPeriods(any(), any(), eq(BANNER_ID))).willReturn(List.of());
 
-            // 커맨드 appEventId(999)는 무시되고, 기존 배너의 이벤트(종료 EVENT_END)로 clamp 된다
             Banner updated = bannerService.update(BANNER_ID,
-                    command(999L, EVENT_START.plusDays(4), EVENT_END.plusDays(2)));
+                    command(APP_EVENT_ID, EVENT_START.plusDays(4), EVENT_END.plusDays(2)));
 
-            assertThat(updated.getAppEvent().getId()).isEqualTo(APP_EVENT_ID); // 이벤트 불변
-            assertThat(updated.getDisplayEndAt()).isEqualTo(EVENT_END);        // 기존 이벤트 종료로 clamp
-            verify(appEventAdaptor, never()).findById(any());                  // 커맨드 이벤트 로드 안 함
+            assertThat(updated.getAppEvent().getId()).isEqualTo(APP_EVENT_ID);
+            assertThat(updated.getDisplayEndAt()).isEqualTo(EVENT_END);
+            verify(appEventAdaptor, never()).findById(any());
         }
 
         @Test

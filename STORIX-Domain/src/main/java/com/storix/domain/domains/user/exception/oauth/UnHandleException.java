@@ -7,5 +7,5 @@ public class UnHandleException extends STORIXCodeException {
 
     public static final STORIXCodeException EXCEPTION = new UnHandleException();
 
-    private UnHandleException() { super(ErrorCode.BAD_REQUEST); }
+    private UnHandleException() { super(ErrorCode.OAUTH_ERROR_RESPONSE_UNREADABLE); }
 }

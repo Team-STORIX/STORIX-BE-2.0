@@ -1,5 +1,6 @@
 package com.storix.api.domain.plus.controller;
 
+import jakarta.validation.Valid;
 import com.storix.api.domain.plus.usecase.BoardUseCase;
 import com.storix.api.domain.plus.usecase.ReviewUseCase;
 import com.storix.api.domain.plus.controller.dto.ReaderBoardUploadRequest;
@@ -34,7 +35,7 @@ public class PlusController {
     @PostMapping("/reader/board")
     public ResponseEntity<CustomResponse<Void>> uploadReaderBoard(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @RequestBody ReaderBoardUploadRequest req
+            @Valid @RequestBody ReaderBoardUploadRequest req
     ) {
         return ResponseEntity.ok()
                 .body(boardUseCase.createReaderBoard(authUserDetails.getUserId(), req));
@@ -44,7 +45,7 @@ public class PlusController {
     @PostMapping("/reader/review")
     public ResponseEntity<CustomResponse<ReaderReviewRedirectResponse>> uploadReaderReview(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @RequestBody ReaderReviewUploadRequest req
+            @Valid @RequestBody ReaderReviewUploadRequest req
     ) {
         return ResponseEntity.ok()
                 .body(reviewUseCase.createReaderReview(authUserDetails.getUserId(), req));
