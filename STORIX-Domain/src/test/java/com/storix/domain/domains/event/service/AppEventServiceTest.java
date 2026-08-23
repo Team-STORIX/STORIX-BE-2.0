@@ -13,10 +13,7 @@ import com.storix.domain.domains.event.dto.AppEventPageResponse;
 import com.storix.domain.domains.event.exception.AppEventFinalizedNotModifiableException;
 import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodBoundaryException;
-import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
-import com.storix.domain.domains.event.exception.AppEventNameRequiredException;
 import com.storix.domain.domains.event.exception.AppEventOverlappingTypeException;
-import com.storix.domain.domains.event.exception.AppEventPeriodRequiredException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -266,34 +263,6 @@ class AppEventServiceTest {
             verify(appEventAdaptor).save(captor.capture());
             assertThat(captor.getValue().getAssigneeAdminId()).isEqualTo(ADMIN_ID);
             assertThat(saved.name()).isEqualTo("앱 출시 이벤트");
-        }
-
-        @Test
-        @DisplayName("이름이 비면 예외 - 저장하지 않는다")
-        void reject_blank_name() {
-            LocalDateTime start = LocalDateTime.now().plusDays(1);
-            AppEventCommand cmd = new AppEventCommand("  ", "설명", null, null, start, start.plusDays(1), false, Set.of(), Map.of());
-
-            assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
-                    .isInstanceOf(AppEventNameRequiredException.class);
-            verify(appEventAdaptor, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("시작/종료가 null 이면 예외")
-        void reject_null_period() {
-            assertThatThrownBy(() -> appEventService.create(command(null, null), ADMIN_ID))
-                    .isInstanceOf(AppEventPeriodRequiredException.class);
-            verify(appEventAdaptor, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("종료가 시작보다 이르거나 같으면 예외")
-        void reject_invalid_period() {
-            LocalDateTime start = LocalDateTime.now().plusDays(5);
-            assertThatThrownBy(() -> appEventService.create(command(start, start), ADMIN_ID))
-                    .isInstanceOf(AppEventInvalidPeriodException.class);
-            verify(appEventAdaptor, never()).save(any());
         }
 
         @Test

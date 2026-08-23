@@ -117,22 +117,22 @@ class FeedReplyE2ETest {
         }
 
         @Test
-        @DisplayName("실패: 빈 댓글로 답댓글 작성 시 400 에러")
+        @DisplayName("실패: 빈 댓글로 답댓글 작성 시 422 에러")
         void writeChildReply_emptyComment_fail() throws Exception {
             mockMvc.perform(post("/api/v1/feed/reader/board/{boardId}/reply/{replyId}/reply", BOARD_ID, REPLY_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(new ReaderBoardReplyRequest(""))))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnprocessableEntity());
         }
 
         @Test
-        @DisplayName("실패: 300자 초과 댓글로 답댓글 작성 시 400 에러")
+        @DisplayName("실패: 300자 초과 댓글로 답댓글 작성 시 422 에러")
         void writeChildReply_tooLongComment_fail() throws Exception {
             String longComment = "가".repeat(301);
             mockMvc.perform(post("/api/v1/feed/reader/board/{boardId}/reply/{replyId}/reply", BOARD_ID, REPLY_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(new ReaderBoardReplyRequest(longComment))))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnprocessableEntity());
         }
     }
 
@@ -246,6 +246,20 @@ class FeedReplyE2ETest {
      */
     @org.springframework.web.bind.annotation.RestControllerAdvice
     static class TestExceptionHandler {
+
+        @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+        public org.springframework.http.ResponseEntity<ErrorResponse> handleMethodValidation(
+                org.springframework.web.method.annotation.HandlerMethodValidationException ex) {
+            ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
+            return org.springframework.http.ResponseEntity.status(errorCode.getHttpStatus()).body(new ErrorResponse(errorCode));
+        }
+
+        @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+        public org.springframework.http.ResponseEntity<ErrorResponse> handleValidation(
+                org.springframework.web.bind.MethodArgumentNotValidException ex) {
+            ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
+            return org.springframework.http.ResponseEntity.status(errorCode.getHttpStatus()).body(new ErrorResponse(errorCode));
+        }
 
         @org.springframework.web.bind.annotation.ExceptionHandler(STORIXCodeException.class)
         public org.springframework.http.ResponseEntity<ErrorResponse> handleSTORIXCodeException(STORIXCodeException ex) {

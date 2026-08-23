@@ -1,4 +1,5 @@
 package com.storix.infrastructure.external.chat;
+import com.storix.domain.domains.user.exception.token.InvalidTokenException;
 import com.storix.common.utils.RedisKeyStatic;
 
 import com.storix.domain.domains.topicroom.application.port.TopicRoomPresencePort;
@@ -97,7 +98,8 @@ public class StompHandler implements ChannelInterceptor {
         if (token != null && token.startsWith("Bearer ")) {
             try {
                 AccessTokenInfo info = tokenProvider.parseAccessToken(token.substring(7));
-                AuthUserDetails user = new AuthUserDetails(info.userId(), Role.fromValue(info.role().replace("ROLE_", "")));
+                AuthUserDetails user = new AuthUserDetails(info.userId(),
+                        Role.find(info.role().replace("ROLE_", "")).orElseThrow(() -> InvalidTokenException.EXCEPTION));
                 Authentication auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 
                 accessor.setUser(auth);

@@ -9,27 +9,22 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     // Common Error
-    BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON_ERROR_001", "잘못된 요청입니다"),
-    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON_ERROR_002", "인증이 필요합니다"),
-    FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON_ERROR_003", "접근이 금지되었습니다"),
-    NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON_ERROR_004", "요청한 자원을 찾을 수 없습니다"),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_ERROR_005", "서버 내부 오류가 발생했습니다"),
-    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "COMMON_ERROR_006", "요청값이 올바르지 않습니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON_ERROR_003", "접근이 금지되었습니다."),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_ERROR_005", "(내부) 서버 내부 오류가 발생했습니다."),
+    INVALID_REQUEST(HttpStatus.UNPROCESSABLE_ENTITY, "COMMON_ERROR_006", "요청값이 올바르지 않습니다."),
     DATA_INTEGRITY_VIOLATION_REQUEST(HttpStatus.CONFLICT, "COMMON_ERROR_007", "DB 데이터 무결성 조건 위반입니다. 백엔드에게 연락주세요."),
     INVALID_JSON_REQUEST(HttpStatus.BAD_REQUEST, "COMMON_ERROR_008", "요청 JSON 형식이 잘못되었습니다. 백엔드에게 문의주세요."),
-    UNHANDLED_ERROR(HttpStatus.BAD_REQUEST, "COMMON_ERROR_009", "핸들링하지 않은 에러입니다. 백엔드에게 연락주세요."),
+    UNHANDLED_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_ERROR_009", "(내부) 핸들링하지 않은 에러입니다. 백엔드에게 연락주세요."),
 
     // Token error
-    TOKEN_NOT_EXIST(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_001", "인가가 필요한 경로로 토큰이 전달되지 않았습니다"),
-    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_002", "잘못된 토큰입니다"),
-    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_003", "토큰이 만료되었습니다. 토큰을 재 발급 해주세요"),
-    REFRESH_TOKEN_EXPIRED(HttpStatus.FORBIDDEN, "TOKEN_ERROR_004", "토큰이 만료되었습니다. 재로그인 해주세요"),
-    ONBOARDING_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_005", "온보딩 토큰이 만료되었습니다. 소셜 로그인 재시도 해주세요"),
+    TOKEN_NOT_EXIST(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_001", "인가가 필요한 경로로 토큰이 전달되지 않았습니다."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_002", "잘못된 토큰입니다."),
+    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_003", "토큰이 만료되었습니다. 토큰을 재 발급 해주세요."),
+    REFRESH_TOKEN_EXPIRED(HttpStatus.FORBIDDEN, "TOKEN_ERROR_004", "토큰이 만료되었습니다. 재로그인 해주세요."),
+    ONBOARDING_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_005", "온보딩 토큰이 만료되었습니다. 소셜 로그인 재시도 해주세요."),
     REFRESH_TOKEN_NOT_EXIST(HttpStatus.UNAUTHORIZED, "COOKIE_ERROR_001", "쿠키가 만료되었거나 저장되지 않았습니다. 로그인 해주세요."),
-    REFRESH_TOKEN_NOT_VALID(HttpStatus.UNAUTHORIZED, "COOKIE_ERROR_002", "쿠키에 저장된 리프레쉬 토큰이 만료되었거나 쿠키가 비어있습니다. 재로그인 해주세요."),
 
     // Auth error
-    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "LOGIN_ERROR_001", "아이디 또는 비밀번호가 일치하지 않습니다"),
     DUPLICATE_USER_SIGN(HttpStatus.BAD_REQUEST, "SIGNUP_ERROR_001", "중복 가입 요청입니다."),
     ONBOARDING_INVALID_WORKS(HttpStatus.BAD_REQUEST, "SIGNUP_ERROR_002", "서버 DB에 적재된 온보딩 작품 리스트와 관심 작품 리스트 정보가 다릅니다."),
     INVALID_USER_LOGOUT(HttpStatus.BAD_REQUEST, "LOGOUT_ERROR_001", "이미 로그아웃 처리가 되었거나, 다른 소셜 계정에 대한 로그아웃 요청입니다."),
@@ -41,30 +36,30 @@ public enum ErrorCode {
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "USER_ERROR_001", "로그인이 필요합니다."),
     FORBIDDEN_APPROACH(HttpStatus.FORBIDDEN, "USER_ERROR_002", "해당 요청을 수행할 권한이 없습니다."),
 
-    INVALID_ROLE_ERROR(HttpStatus.UNAUTHORIZED, "ROLE_ERROR_001", "잘못된 role값 입니다."),
 
     // Profile error
     PROFILE_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "PROFILE_ERROR_001", "업로드한 프로필 사진의 objectKey값을 보내주세요."),
 
     // Image error
     IMAGE_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "IMAGE_ERROR_001", "지원하지 않는 Content Type입니다."),
-    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_ERROR_002", "이미지 업로드에 실패했습니다."),
+    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_ERROR_002", "(내부) 이미지 업로드에 실패했습니다."),
     IMAGE_FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "IMAGE_ERROR_003", "업로드 가능한 파일 크기를 초과했습니다."),
 
     // Other Server error
-    OTHER_SERVER_BAD_REQUEST(HttpStatus.BAD_REQUEST, "FEIGN_ERROR_1", "Other server bad request"),
-    OTHER_SERVER_UNAUTHORIZED(HttpStatus.BAD_REQUEST, "FEIGN_ERROR_2", "Other server unauthorized"),
-    OTHER_SERVER_FORBIDDEN(HttpStatus.BAD_REQUEST, "FEIGN_ERROR_3", "Other server forbidden"),
-    OTHER_SERVER_EXPIRED_TOKEN(HttpStatus.BAD_REQUEST, "FEIGN_ERROR_4", "Other server expired token"),
-    OTHER_SERVER_NOT_FOUND(HttpStatus.BAD_REQUEST, "FEIGN_ERROR_5", "Other server not found error"),
-    OTHER_SERVER_INTERNAL_SERVER_ERROR(HttpStatus.BAD_REQUEST, "FEIGN_ERROR_6", "Other server internal server error"),
+    OTHER_SERVER_BAD_REQUEST(HttpStatus.BAD_GATEWAY, "FEIGN_ERROR_1", "(내부) 소셜 로그인 서버가 요청을 거부했습니다."),
+    OTHER_SERVER_UNAUTHORIZED(HttpStatus.BAD_GATEWAY, "FEIGN_ERROR_2", "(내부) 소셜 로그인 서버 인증에 실패했습니다."),
+    OTHER_SERVER_FORBIDDEN(HttpStatus.BAD_GATEWAY, "FEIGN_ERROR_3", "(내부) 소셜 로그인 서버가 접근을 거부했습니다."),
+    OTHER_SERVER_EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "FEIGN_ERROR_4", "소셜 로그인 토큰이 만료되었습니다. 다시 로그인해주세요."),
+    OTHER_SERVER_INTERNAL_SERVER_ERROR(HttpStatus.BAD_GATEWAY, "FEIGN_ERROR_6", "(내부) 소셜 로그인 서버에 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
+    OAUTH_ERROR_RESPONSE_UNREADABLE(HttpStatus.BAD_GATEWAY, "FEIGN_ERROR_7", "(내부) 소셜 로그인 서버의 오류 응답을 해석하지 못했습니다."),
 
     // Kakao OAuth error
-    KOE009(HttpStatus.BAD_REQUEST, "KAKAO_KOE009", "등록되지 않은 플랫폼에서 액세스 토큰을 요청 하는 경우"),
-    KOE010(HttpStatus.BAD_REQUEST, "KAKAO_KOE101", "클라이언트 시크릿(Client secret) 기능을 사용하는 앱에서 토큰 요청 시 client_secret 값을 전달하지 않거나 정확하지 않은 값을 전달하는 경우"),
-    KOE303(HttpStatus.BAD_REQUEST, "KAKAO_KOE303", "인가 코드 요청 시 사용한 redirect_uri와 액세스 토큰 요청 시 사용한 redirect_uri가 다릅니다"),
+    KOE009(HttpStatus.BAD_REQUEST, "KAKAO_KOE009", "등록되지 않은 플랫폼에서 액세스 토큰을 요청 하는 경우."),
+    KOE010(HttpStatus.BAD_REQUEST, "KAKAO_KOE101", "클라이언트 시크릿(Client secret) 기능을 사용하는 앱에서 토큰 요청 시 client_secret 값을 전달하지 않거나 정확하지 않은 값을 전달하는 경우."),
+    KOE303(HttpStatus.BAD_REQUEST, "KAKAO_KOE303", "인가 코드 요청 시 사용한 redirect_uri와 액세스 토큰 요청 시 사용한 redirect_uri가 다릅니다."),
     KOE320(HttpStatus.BAD_REQUEST, "KAKAO_KOE320", "동일한 인가 코드를 두 번 이상 사용하거나, 이미 만료된 인가 코드를 사용한 경우, 혹은 인가 코드를 찾을 수 없는 경우입니다."),
-    KOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "KAKAO_KOE_INVALID_REQUEST","잘못된 요청인 경우"),
+    OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.UNAUTHORIZED, "OIDC_ERROR_001", "만료된 공개키입니다. 재요청 해주세요."),
+    KOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "KAKAO_KOE_INVALID_REQUEST","잘못된 요청인 경우."),
 
     // Naver OAuth error
     NOE024(HttpStatus.UNAUTHORIZED, "NAVER_NOE024", "OAuth 인증에 실패했습니다."),
@@ -81,7 +76,7 @@ public enum ErrorCode {
     AOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_REQUEST", "Apple 요청이 잘못되었습니다."),
     AOE_INVALID_CLIENT(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_CLIENT", "Apple 클라이언트 인증에 실패했습니다."),
     AOE_INVALID_GRANT(HttpStatus.BAD_REQUEST, "APPLE_AOE_INVALID_GRANT", "Apple 인가 코드가 유효하지 않거나 만료되었습니다."),
-    AOE_PRIVATE_KEY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "APPLE_AOE_PRIVATE_KEY_ERROR", "Apple private key 파싱에 실패했습니다."),
+    AOE_PRIVATE_KEY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "APPLE_AOE_PRIVATE_KEY_ERROR", "(내부) Apple private key 파싱에 실패했습니다."),
 
     // X OAuth error
     XOE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "X_XOE_INVALID_REQUEST", "X 요청이 잘못되었습니다."),
@@ -89,7 +84,6 @@ public enum ErrorCode {
     XOE_INVALID_GRANT(HttpStatus.BAD_REQUEST, "X_XOE_INVALID_GRANT", "X 인가 코드가 유효하지 않거나 만료되었습니다."),
 
     // Slack OAuth error
-    SLACK_SEND_MESSAGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SLACK_ERROR_001", "Slack 메시지 전송에 실패했습니다."),
     SLACK_INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "SLACK_ERROR_002", "Slack 서명 검증에 실패했습니다."),
 
     // Tester Auth error
@@ -115,33 +109,27 @@ public enum ErrorCode {
     EVENT_POPUP_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_POPUP_ERROR_001", "존재하지 않는 이벤트 팝업입니다."),
     EVENT_POPUP_INVALID_DISPLAY_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_005", "팝업 노출 종료 일시는 시작 일시 이후여야 합니다."),
     EVENT_POPUP_OVERLAPPING(HttpStatus.CONFLICT, "EVENT_POPUP_ERROR_006", "동시에 여러 팝업을 노출할 수 없습니다."),
-    EVENT_POPUP_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_007", "발급되지 않았거나 만료된 팝업 이미지 키입니다."),
     EVENT_POPUP_OUT_OF_EVENT_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_009", "팝업 노출 기간은 소속 앱 이벤트 기간 안에 있어야 합니다."),
-    EVENT_POPUP_APP_EVENT_REQUIRED(HttpStatus.BAD_REQUEST, "EVENT_POPUP_ERROR_010", "APP_EVENT 유형 팝업은 소속 앱 이벤트가 필수입니다."),
+    EVENT_POPUP_APP_EVENT_IMMUTABLE(HttpStatus.CONFLICT, "EVENT_POPUP_ERROR_010", "팝업의 소속 앱 이벤트는 변경할 수 없습니다."),
 
     // Event Banner error
     EVENT_BANNER_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_BANNER_ERROR_001", "존재하지 않는 이벤트 배너입니다."),
     EVENT_BANNER_INVALID_DISPLAY_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_002", "배너 노출 종료 일시는 시작 일시 이후여야 합니다."),
     EVENT_BANNER_OVERLAPPING(HttpStatus.CONFLICT, "EVENT_BANNER_ERROR_003", "동시에 노출 가능한 배너는 최대 3개입니다."),
-    EVENT_BANNER_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_004", "발급되지 않았거나 만료된 배너 이미지 키입니다."),
     EVENT_BANNER_OUT_OF_EVENT_PERIOD(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_005", "배너 노출 기간은 소속 앱 이벤트 기간 안에 있어야 합니다."),
-    EVENT_BANNER_APP_EVENT_REQUIRED(HttpStatus.BAD_REQUEST, "EVENT_BANNER_ERROR_006", "APP_EVENT 유형 배너는 소속 앱 이벤트가 필수입니다."),
+    EVENT_BANNER_APP_EVENT_IMMUTABLE(HttpStatus.CONFLICT, "EVENT_BANNER_ERROR_006", "배너의 소속 앱 이벤트는 변경할 수 없습니다."),
 
     // Admin App Event error
     ADMIN_APP_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN_APP_EVENT_ERROR_001", "존재하지 않는 앱 이벤트입니다."),
-    ADMIN_APP_EVENT_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_002", "앱 이벤트명은 필수입니다."),
-    ADMIN_APP_EVENT_PERIOD_REQUIRED(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_003", "앱 이벤트 시작/종료 일시는 필수입니다."),
-    ADMIN_APP_EVENT_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_004", "앱 이벤트 종료 일시는 시작 일시 이후여야 합니다."),
     ADMIN_APP_EVENT_INVALID_ATTENDANCE_REWARDS(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_005", "출석 응모권 지급 기준은 출석일 1 이상, 응모권 0 이상이며 출석일이 늘수록 누적 응모권이 줄어들 수 없습니다."),
     ADMIN_APP_EVENT_OVERLAPPING_TYPE(HttpStatus.CONFLICT, "ADMIN_APP_EVENT_ERROR_006", "같은 종류의 이벤트를 같은 기간에 두 개 이상 진행할 수 없습니다."),
-    ADMIN_APP_EVENT_INVALID_PERIOD_BOUNDARY(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_007", "이벤트 종류별 기준 시각에 시작/종료 일시를 맞춰야 합니다. (출석 체크 00:00, 오늘의 스토리 카드 06:00)"),
+    ADMIN_APP_EVENT_INVALID_PERIOD_BOUNDARY(HttpStatus.BAD_REQUEST, "ADMIN_APP_EVENT_ERROR_007", "이벤트 종류별 기준 시각에 시작/종료 일시를 맞춰야 합니다. (출석 체크 00:00, 오늘의 스토리 카드 06:00)."),
     ADMIN_APP_EVENT_FINALIZED_NOT_MODIFIABLE(HttpStatus.CONFLICT, "ADMIN_APP_EVENT_ERROR_008", "당첨자가 확정된 이벤트는 이벤트 종류, 기간, 당첨자 추첨 여부, 출석 응모권 지급 기준을 수정할 수 없습니다."),
 
     // App Event error
     APP_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "APP_EVENT_ERROR_001", "존재하지 않는 앱 이벤트입니다."),
     APP_EVENT_FORBIDDEN(HttpStatus.FORBIDDEN, "APP_EVENT_ERROR_002", "앱 이벤트를 확인할 권한이 없습니다."),
-    APP_EVENT_PAYLOAD_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_003", "앱 이벤트 payload 직렬화에 실패했습니다."),
-    APP_EVENT_WINNER_FINALIZER_NOT_IMPLEMENTED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_004", "당첨자 이벤트(hasWinner=true)는 종료 시 당첨자 확정(EventWinnerFinalizer) 구현이 필수입니다."),
+    APP_EVENT_PAYLOAD_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "APP_EVENT_ERROR_003", "(내부) 앱 이벤트 payload 직렬화에 실패했습니다."),
     APP_EVENT_NO_WINNER(HttpStatus.BAD_REQUEST, "APP_EVENT_ERROR_005", "당첨자를 뽑지 않는 이벤트입니다."),
     APP_EVENT_INVALID_WINNER_COUNT(HttpStatus.BAD_REQUEST, "APP_EVENT_ERROR_006", "추첨 인원은 1명 이상이어야 합니다."),
     APP_EVENT_NOT_ENDED(HttpStatus.BAD_REQUEST, "APP_EVENT_ERROR_007", "종료된 이벤트만 당첨자를 확정할 수 있습니다. 조기 확정이 필요하면 이벤트를 먼저 강제 종료해주세요."),
@@ -154,17 +142,16 @@ public enum ErrorCode {
     // Story Card Event error
     STORY_CARD_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STORY_CARD_ERROR_001", "진행 중인 오늘의 스토리 카드 이벤트가 없습니다."),
     STORY_CARD_EVENT_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "STORY_CARD_ERROR_002", "오늘의 스토리 카드 이벤트 기간이 아닙니다."),
-    STORY_CARD_CONTENT_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "STORY_CARD_ERROR_003", "오늘의 스토리 카드 콘텐츠가 등록되어 있지 않습니다."),
-    STORY_CARD_DRAW_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORY_CARD_ERROR_004", "오늘의 스토리 카드 저장에 실패했습니다."),
+    STORY_CARD_CONTENT_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "STORY_CARD_ERROR_003", "(내부) 오늘의 스토리 카드 콘텐츠가 등록되어 있지 않습니다."),
+    STORY_CARD_DRAW_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORY_CARD_ERROR_004", "(내부) 오늘의 스토리 카드 저장에 실패했습니다."),
 
     // OIDC error
-    OIDC_OLD_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, "OIDC_ERORR_1", "OIDC 공개키 갱신이 필요합니다."),
 
     // Notification error
-    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_ERROR_001", "알림을 찾을 수 없습니다"),
-    NOTIFICATION_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "NOTIFICATION_ERROR_002", "인가되지 않은 접근입니다."),
-    FCM_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NOTIFICATION_ERROR_003", "FCM 푸시 전송에 실패했습니다."),
-    FCM_TRANSIENT_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "NOTIFICATION_ERROR_005", "FCM 일시 오류로 재시도 대상입니다."),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_ERROR_001", "알림을 찾을 수 없습니다."),
+    NOTIFICATION_UNAUTHORIZED(HttpStatus.FORBIDDEN, "NOTIFICATION_ERROR_002", "다른 사용자의 알림입니다."),
+    FCM_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NOTIFICATION_ERROR_003", "(내부) FCM 푸시 전송에 실패했습니다."),
+    FCM_TRANSIENT_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "NOTIFICATION_ERROR_005", "(내부) FCM 일시 오류로 재시도 대상입니다."),
     NOTIFICATION_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_ERROR_004", "유저의 알림 설정이 존재하지 않습니다."),
 
     // PushDevice error
@@ -187,8 +174,8 @@ public enum ErrorCode {
     SEARCH_NO_TOPIC_ROOM_FOUND(HttpStatus.NOT_FOUND, "SEARCH_ERROR_001", "검색한 키워드로 조회되는 토픽룸이 없습니다."),
 
     // Chat error
-    CHAT_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT_ERROR_001", "채팅 메시지 발행 중 서버 관리자에게 문의 바랍니다."),
-    CHAT_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT_ERROR_002", "Redis 연결 실패로 메시지 전송이 불가합니다. 서버 관리자에게 문의 바랍니다."),
+    CHAT_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT_ERROR_001", "(내부) 채팅 메시지 발행 중 서버 관리자에게 문의 바랍니다."),
+    CHAT_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT_ERROR_002", "(내부) Redis 연결 실패로 메시지 전송이 불가합니다. 서버 관리자에게 문의 바랍니다."),
 
 
     // Works error
@@ -205,7 +192,6 @@ public enum ErrorCode {
   
     // Plus error
     PLUS_INVALID_RATING(HttpStatus.BAD_REQUEST, "PLUS_ERROR_001", "Enum 필드와 매핑할 수 없는 잘못된 평점값입니다."),
-    PLUS_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "PLUS_ERROR_002", "지원하지 않는 Content Type입니다."),
     PLUS_DUPLICATE_BOARD_UPLOAD(HttpStatus.BAD_REQUEST, "PLUS_ERROR_003", "중복 게시글 업로드 요청입니다."),
     PLUS_DUPLICATE_REVIEW_UPLOAD(HttpStatus.BAD_REQUEST, "PLUS_ERROR_004", "해당 작품에 대한 리뷰가 이미 존재합니다."),
     PLUS_WORKS_NOT_EXIST(HttpStatus.BAD_REQUEST, "PLUS_ERROR_005", "존재하지 않는 작품입니다."),
@@ -220,7 +206,6 @@ public enum ErrorCode {
     TODAY_FEED_NOT_FOUND(HttpStatus.NOT_FOUND, "FEED_ERROR_003", "오늘의 피드 게시물이 없습니다."),
     BOARD_REPLY_NOT_FOUND(HttpStatus.NOT_FOUND, "REPLY_ERROR_001", "해당 게시글에 대한 댓글 정보를 찾을 수 없습니다."),
     REPLY_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "REPLY_ERROR_002", "답댓글에는 답댓글을 작성할 수 없습니다."),
-    SPOILER_SCRIPT_REQUIRED(HttpStatus.BAD_REQUEST, "SPOILER_ERROR_001", "스포일러 설정 시 스포일러 문구를 입력해주세요."),
 
     // Preference error
     PREFERENCE_ALREADY_DONE_TODAY(HttpStatus.BAD_REQUEST, "PREFERENCE_ERROR_001", "취향 탐색 기능은 하루에 한 번만 가능합니다."),
@@ -241,6 +226,7 @@ public enum ErrorCode {
     INVALID_ADMIN_USER_SANCTION_REQUEST(HttpStatus.BAD_REQUEST, "USER_ERROR_004", "관리자 유저 제재 요청이 올바르지 않습니다."),
     USER_NOT_SUSPENDED(HttpStatus.BAD_REQUEST, "USER_ERROR_005", "정지 상태가 아닌 유저입니다."),
     USER_ALREADY_SUSPENDED(HttpStatus.CONFLICT, "USER_ERROR_006", "이미 정지 처리된 유저입니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_ERROR_007", "계정이 유효하지 않습니다."),
 
     // Terms error
     DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다."),
