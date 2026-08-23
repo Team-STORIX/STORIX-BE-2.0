@@ -22,7 +22,6 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -92,11 +91,6 @@ public class BannerService {
         return eventBannerAdaptor.findActiveBanners(now, MAX_ACTIVE_BANNERS).stream()
                 .map(BannerResponse::from)
                 .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Long> findActiveBannerIdByAppEvent(Long appEventId, LocalDateTime now) {
-        return eventBannerAdaptor.findActiveBannerIdByAppEvent(appEventId, now);
     }
 
     @Transactional

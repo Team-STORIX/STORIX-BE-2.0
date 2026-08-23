@@ -42,23 +42,12 @@ public record AppEventPageResponse(
         AppEventStatus status,
 
         @Schema(
-                description = "이 이벤트에 설정된 홍보 수단 중 웹페이지가 알아야 하는 것 (POPUP / BANNER). "
-                        + "실제로 띄울 대상이 있는지는 popupId / bannerId 로 판단해주세요.",
+                description = "이 이벤트에 설정된 홍보 수단 중 웹페이지가 알아야 하는 것 (POPUP / BANNER).",
                 example = "[\"BANNER\"]"
         )
-        Set<PromotionType> promotionTypes,
-
-        @Schema(description = "이 이벤트에 걸린 노출 중인 팝업 id. 없으면 null", example = "12")
-        Long popupId,
-
-        @Schema(
-                description = "이 이벤트에 걸린 노출 중인 배너 id. 없으면 null. "
-                        + "이 값으로 GET /api/v1/app-events/banner/{bannerId}/modal-required 를 호출해 안내 모달 노출 여부를 판단하세요.",
-                example = "34"
-        )
-        Long bannerId
+        Set<PromotionType> promotionTypes
 ) {
-    public static AppEventPageResponse from(AppEvent appEvent, Long popupId, Long bannerId) {
+    public static AppEventPageResponse from(AppEvent appEvent) {
         return AppEventPageResponse.builder()
                 .id(appEvent.getId())
                 .name(appEvent.getName())
@@ -71,8 +60,6 @@ public record AppEventPageResponse(
                 .promotionTypes(appEvent.getPromotionTypes().stream()
                         .filter(PromotionType.WEB_VISIBLE_TYPES::contains)
                         .collect(Collectors.toUnmodifiableSet()))
-                .popupId(popupId)
-                .bannerId(bannerId)
                 .build();
     }
 }
