@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class SwaggerErrorSpecConfigTest {
 
@@ -40,8 +41,12 @@ class SwaggerErrorSpecConfigTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        ClassPathResource resource = new ClassPathResource("swagger/error-map.json");
+        // node 가 없으면 generateErrorMap 이 건너뛰므로 생성물도 없다. 그때는 검증할 대상이 없다
+        assumeTrue(resource.exists(), "에러 스펙 생성물이 없어 건너뜁니다 (generateErrorMap 미실행)");
+
         config = new SwaggerErrorSpecConfig(objectMapper);
-        try (InputStream in = new ClassPathResource("swagger/error-map.json").getInputStream()) {
+        try (InputStream in = resource.getInputStream()) {
             expected = objectMapper.readTree(in).path("endpoints").path(KEY);
         }
     }

@@ -16,8 +16,8 @@ public class ReviewUseCase {
     private final ReviewService reviewService;
 
     public CustomResponse<ReaderReviewRedirectResponse> createReaderReview(Long userId, ReaderReviewUploadRequest req) {
-        String spoilerScript = req.isSpoiler() ? req.spoilerScript() : null;
-        CreateReviewCommand cmd = new CreateReviewCommand(userId, req.worksId(), req.isSpoiler(), spoilerScript, req.rating(), req.content());
+        String spoilerScript = Boolean.TRUE.equals(req.isSpoiler()) ? req.spoilerScript() : null;
+        CreateReviewCommand cmd = new CreateReviewCommand(userId, req.worksId(), Boolean.TRUE.equals(req.isSpoiler()), spoilerScript, req.rating(), req.content());
         ReaderReviewRedirectResponse result = reviewService.createReview(cmd);
         return CustomResponse.onSuccess(SuccessCode.PLUS_REVIEW_UPLOAD_SUCCESS, result);
     }

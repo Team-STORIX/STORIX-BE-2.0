@@ -18,7 +18,7 @@ public record ModifyReviewApiRequest(
 
         @Schema(description = "스포일러 여부")
         @NotNull(message = "스포일러 여부를 선택해주세요.")
-        boolean isSpoiler,
+        Boolean isSpoiler,
 
         @Schema(description = "스포일러 가림막 문구. isSpoiler 가 true 면 필수")
         String spoilerScript,
@@ -31,6 +31,6 @@ public record ModifyReviewApiRequest(
 ) {
 
     public ModifyReviewRequest toDto() {
-        return new ModifyReviewRequest(rating, isSpoiler, spoilerScript, content);
+        return new ModifyReviewRequest(rating, Boolean.TRUE.equals(isSpoiler), spoilerScript, content);
     }
 }

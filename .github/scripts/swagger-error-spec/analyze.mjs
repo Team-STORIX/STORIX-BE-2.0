@@ -68,11 +68,13 @@ for (const f of files) {
     const type = m[1].trim().replace(/<.*/, "").replace(/.*\./, "");
     fields.set(m[2], type);
   }
+  // 오버로드는 이름이 같다. 본문을 덮어쓰지 않고 모두 들고 있는다.
   const methods = new Map();
   const signatures = new Map();
   for (const m of text.matchAll(/(?:public|private|protected)\s+(?:static\s+)?(?:final\s+)?[\w<>,.\[\]\s?]+?\s+(\w+)\s*\([^;{]*?\)\s*(?:throws [\w,\s]+)?\{/g)) {
     const open = text.indexOf("{", m.index + m[0].length - 1);
-    methods.set(m[1], matchBody(text, open));
+    if (!methods.has(m[1])) methods.set(m[1], []);
+    methods.get(m[1]).push(matchBody(text, open));
     signatures.set(m[1], m[0]);
   }
   // 생성자는 반환타입이 없어서 위 정규식에 안 걸린다. 엔티티 검증이 여기 있는 경우가 많다.
@@ -81,7 +83,7 @@ for (const f of files) {
   for (const m of text.matchAll(ctorRe)) {
     ctorBodies.push(matchBody(text, text.indexOf("{", m.index + m[0].length - 1)));
   }
-  if (ctorBodies.length) methods.set("<init>", ctorBodies.join("\n"));
+  if (ctorBodies.length) methods.set("<init>", ctorBodies);
 
   const impl = text.match(/class\s+\w+[^{]*implements\s+([\w,\s<>]+?)\s*\{/);
   const ifaces = impl ? impl[1].split(",").map((x) => x.trim().replace(/<.*/, "")) : [];
@@ -121,8 +123,16 @@ function collect(clsName, methodName, depth, seen, found, trail) {
   const targets = new Set([clsName, ...(implsOf.get(clsName) ?? [])]);
   for (const t of targets) {
     const cls = classes.get(t);
-    const body = cls?.methods.get(methodName);
-    if (!body) continue;
+    // 호출부에서는 어느 오버로드인지 알 수 없어 전부 본다
+    for (const body of cls?.methods.get(methodName) ?? []) {
+      walkBody(t, methodName, body, depth, seen, found, trail);
+    }
+  }
+}
+
+function walkBody(t, methodName, body, depth, seen, found, trail) {
+  {
+    const cls = classes.get(t);
 
     // throw 뿐 아니라 orElseThrow(() -> X.EXCEPTION) 처럼 값으로 넘기는 자리도 잡아야 한다.
     for (const re of [/throw\s+new\s+(\w+Exception)/g, /(\w+Exception)\.EXCEPTION/g]) {
@@ -195,12 +205,16 @@ export function endpoints() {
 
       const sub = anno[2]?.match(/"([^"]*)"/)?.[1] ?? "";
       const open = info.text.indexOf("(", decl.index + decl[0].length - 1);
+      const signature = params(info.text, open);
+      // 오버로드가 있어도 이 핸들러의 본문에서 출발하도록 여기서 떠 둔다
+      const bodyStart = info.text.indexOf("{", open + signature.length);
       out.push({
         method: MAPPINGS[`${anno[1]}Mapping`],
         path: (base + sub) || "/",
         controller: cls,
         handler: decl[1],
-        signature: params(info.text, open),
+        signature,
+        body: bodyStart < 0 ? "" : matchBody(info.text, bodyStart),
       });
     });
   }
@@ -221,7 +235,8 @@ export function controllerText(name) {
 
 export function errorsOf(ep) {
   const found = new Map();
-  collect(ep.controller, ep.handler, 0, new Set(), found, []);
+  // 오버로드가 있어도 이 엔드포인트의 본문에서 출발한다
+  walkBody(ep.controller, ep.handler, ep.body, 0, new Set([`${ep.controller}#${ep.handler}`]), found, []);
   return [...found.entries()]
     .map(([name, trail]) => ({ name, ...errorCodes.get(name), trail }))
     .sort((a, b) => (a.status + a.code).localeCompare(b.status + b.code));

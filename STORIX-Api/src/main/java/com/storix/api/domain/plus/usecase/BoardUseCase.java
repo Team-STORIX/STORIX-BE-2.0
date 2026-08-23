@@ -23,12 +23,12 @@ public class BoardUseCase {
                 throw PlusImageNotExistException.EXCEPTION;
             }
         }
-        String spoilerScript = req.isSpoiler() ? req.spoilerScript() : null;
+        String spoilerScript = Boolean.TRUE.equals(req.isSpoiler()) ? req.spoilerScript() : null;
         CreateReaderBoardCommand cmd = new CreateReaderBoardCommand(
                 userId,
                 req.isWorksSelected(),
                 req.worksId(),
-                req.isSpoiler(),
+                Boolean.TRUE.equals(req.isSpoiler()),
                 spoilerScript,
                 req.content(),
                 req.theme(),
