@@ -46,6 +46,11 @@ public class AppEvent extends BaseTimeEntity {
     @Column(name = "event_type", nullable = false, length = 20)
     private AppEventType eventType;
 
+    // 관리자가 강제 종료한 이벤트. 켜져 있으면 같은 종류 기간 중복 검사에서 빠진다
+    // 빌더가 생성자에 붙어 있어 이 필드는 빌더 인자가 아니다. 기본값은 필드 초기화로 들어간다
+    @Column(nullable = false)
+    private boolean forceEnded = false;
+
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
 
@@ -136,8 +141,10 @@ public class AppEvent extends BaseTimeEntity {
         }
     }
 
+    // endAt 은 실제로 언제까지 돌았는지 그대로 남기고, 슬롯을 비웠다는 사실은 따로 표시한다
     public void endNow(LocalDateTime now) {
         this.endAt = now;
+        this.forceEnded = true;
     }
 
     public boolean isActiveAt(LocalDateTime now) {
