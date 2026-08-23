@@ -60,7 +60,7 @@ public class ChatService {
 
     public void publishRedis(ChatMessage chatMessage, StandardProfileInfo sender) {
         publishChatPort.publish(
-                ChatMessageResponseDto.of(chatMessage, sender.nickName(), sender.profileImageUrl()));
+                ChatMessageResponseDto.of(chatMessage, sender.nickName(), sender.profileImageUrl(), sender.role()));
     }
 
     @Transactional(readOnly = true)

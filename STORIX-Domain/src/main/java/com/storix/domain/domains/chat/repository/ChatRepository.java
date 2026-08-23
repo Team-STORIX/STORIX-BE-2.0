@@ -29,7 +29,8 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "   COALESCE(" + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN + ", '알 수 없음'), " +
             "   m.message, " +
             "   m.messageType, " +
-            "   m.createdAt " +
+            "   m.createdAt, " +
+            "   u.role " +
             ") " +
             "FROM ChatMessage m " +
             "LEFT JOIN User u ON m.senderId = u.id " +
@@ -48,7 +49,8 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "   COALESCE(" + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN + ", '알 수 없음'), " +
             "   m.message, " +
             "   m.messageType, " +
-            "   m.createdAt " +
+            "   m.createdAt, " +
+            "   u.role " +
             ") " +
             "FROM ChatMessage m " +
             "LEFT JOIN User u ON m.senderId = u.id " +
@@ -67,7 +69,8 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "   COALESCE(u.nickName, '알 수 없음'), " +
             "   m.message, " +
             "   m.messageType, " +
-            "   m.createdAt " +
+            "   m.createdAt, " +
+            "   u.role " +
             ") " +
             "FROM ChatMessage m " +
             "LEFT JOIN User u ON m.senderId = u.id " +
@@ -152,7 +155,8 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             "   COALESCE(" + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN + ", '알 수 없음'), " +
             "   m.message, " +
             "   m.messageType, " +
-            "   m.createdAt " +
+            "   m.createdAt, " +
+            "   u.role " +
             ") " +
             "FROM ChatMessage m " +
             "LEFT JOIN User u ON m.senderId = u.id " +
@@ -324,7 +328,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
     @Query("SELECT new com.storix.domain.domains.chat.dto.ChatMessageResponseDto(" +
             "   m.id, m.roomId, m.senderId, " +
             "   COALESCE(" + com.storix.common.utils.STORIXStatic.NICK_NAME_DISPLAY_CASE_WHEN + ", '알 수 없음'), " +
-            "   m.message, m.messageType, m.createdAt) " +
+            "   m.message, m.messageType, m.createdAt, u.role) " +
             "FROM ChatMessage m " +
             "LEFT JOIN User u ON m.senderId = u.id " +
             "WHERE m.roomId = :roomId AND m.deleted = false AND m.messageType = :messageType " +
