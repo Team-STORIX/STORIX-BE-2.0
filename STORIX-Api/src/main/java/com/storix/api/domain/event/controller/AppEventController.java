@@ -2,8 +2,8 @@ package com.storix.api.domain.event.controller;
 
 import com.storix.api.domain.event.usecase.AppEventUseCase;
 import com.storix.common.payload.CustomResponse;
+import com.storix.domain.domains.event.dto.AppEventPageModalResponse;
 import com.storix.domain.domains.event.dto.AppEventPageResponse;
-import com.storix.domain.domains.event.dto.BannerModalResponse;
 import com.storix.domain.domains.event.dto.BannerResponse;
 import com.storix.domain.domains.event.dto.OneTimeAppEventResponse;
 import com.storix.domain.domains.event.dto.PopupResponse;
@@ -35,8 +35,8 @@ public class AppEventController {
                     이벤트 상세 웹페이지(storix.kr/event/{appEventId})를 그리는 데 필요한 정보를 반환합니다.
                     로그인하지 않아도 호출할 수 있으며, eventType 으로 어떤 화면을 그릴지 정하시면 됩니다.
 
-                    웹뷰 사용 시에 appEventId만 들고 진입하므로, 이 이벤트에 걸린 노출 중인 팝업/배너 id(popupId, bannerId)를 함께 내려줍니다.
-                    bannerId 가 있다면 그 값으로 `GET /api/v1/app-events/banner/{bannerId}/modal-required` 를 호출해 최초 안내 모달을 띄울지 말지 판단하시면 됩니다.
+                    이 페이지의 최초 안내 모달을 띄울지는 `GET /api/v1/app-events/{appEventId}/modal-required` 를 호출해 판단하시면 됩니다.
+                    프로모션 수단(팝업/배너) 종류와 무관하게 appEventId 하나로 동작합니다.
 
                     운영 설정값(응모권 지급 기준 등)은 내려가지 않습니다. promotionTypes 는 웹페이지가 그리는 POPUP / BANNER 를 반환합니다.
                     존재하지 않는 이벤트, 그리고 아직 시작하지 않은 이벤트는 404입니다. (오픈 전 내용이 미리 노출되지 않도록)
@@ -98,21 +98,21 @@ public class AppEventController {
         return appEventUseCase.ackAcquiredTitleEvent(authUser.getUserId(), eventId);
     }
 
-    @GetMapping("/banner/{bannerId}/modal-required")
-    @Operation(summary = "배너 최초 안내 모달 필요 여부 조회", description = "해당 배너를 한 번도 확인하지 않은 유저인지 반환합니다. true면 최초 안내 모달을 띄우세요. 배너 종류 무관 범용 API입니다. 존재하지 않는 배너는 404.")
-    public CustomResponse<BannerModalResponse> getBannerModalStatus(
+    @GetMapping("/{appEventId}/modal-required")
+    @Operation(summary = "이벤트 페이지 최초 안내 모달 필요 여부 조회", description = "해당 이벤트 상세 페이지를 한 번도 확인하지 않은 유저인지 반환합니다. true면 최초 안내 모달을 띄우세요. 프로모션 수단(팝업/배너) 무관 범용 API입니다. 존재하지 않는 이벤트는 404.")
+    public CustomResponse<AppEventPageModalResponse> getPageModalStatus(
             @AuthenticationPrincipal AuthUserDetails authUser,
-            @PathVariable Long bannerId
+            @PathVariable Long appEventId
     ) {
-        return appEventUseCase.getBannerModalStatus(authUser.getUserId(), bannerId);
+        return appEventUseCase.getPageModalStatus(authUser.getUserId(), appEventId);
     }
 
-    @PatchMapping("/banner/{bannerId}/confirm")
-    @Operation(summary = "배너 확인 처리", description = "프론트가 배너 안내 모달을 실제 표시한 뒤 호출하면 해당 유저에게 다시 필요하다고 내려주지 않습니다. 배너 종류 무관 범용 API입니다. 존재하지 않는 배너는 404.")
-    public CustomResponse<Void> confirmBannerModal(
+    @PatchMapping("/{appEventId}/confirm")
+    @Operation(summary = "이벤트 페이지 확인 처리", description = "프론트가 최초 안내 모달을 실제 표시한 뒤 호출하면 해당 유저에게 다시 필요하다고 내려주지 않습니다. 프로모션 수단(팝업/배너) 무관 범용 API입니다. 존재하지 않는 이벤트는 404.")
+    public CustomResponse<Void> confirmPageModal(
             @AuthenticationPrincipal AuthUserDetails authUser,
-            @PathVariable Long bannerId
+            @PathVariable Long appEventId
     ) {
-        return appEventUseCase.confirmBannerModal(authUser.getUserId(), bannerId);
+        return appEventUseCase.confirmPageModal(authUser.getUserId(), appEventId);
     }
 }

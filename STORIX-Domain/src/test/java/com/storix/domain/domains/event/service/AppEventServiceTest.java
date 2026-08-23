@@ -375,34 +375,6 @@ class AppEventServiceTest {
             assertThat(appEventService.getAppEventPage(ID).status()).isEqualTo(AppEventStatus.ENDED);
         }
 
-        // 웹뷰는 appEventId만 들고 진입하므로 안내 모달 대상 id를 여기서 받아가야 한다
-        @Test
-        @DisplayName("노출 중인 팝업/배너가 있으면 popupId, bannerId 를 함께 반환한다")
-        void exposes_active_promotion_ids() {
-            LocalDateTime now = LocalDateTime.now();
-            given(appEventAdaptor.findById(ID)).willReturn(appEventOf(now.minusDays(1), now.plusDays(10)));
-            given(popupService.findActivePopupIdByAppEvent(eq(ID), any())).willReturn(Optional.of(11L));
-            given(bannerService.findActiveBannerIdByAppEvent(eq(ID), any())).willReturn(Optional.of(22L));
-
-            AppEventPageResponse page = appEventService.getAppEventPage(ID);
-
-            assertThat(page.popupId()).isEqualTo(11L);
-            assertThat(page.bannerId()).isEqualTo(22L);
-        }
-
-        // 배너를 강제 종료하면 모달 대상도 사라져야 한다
-        @Test
-        @DisplayName("노출 중인 팝업/배너가 없으면 popupId, bannerId 는 null")
-        void null_when_no_active_promotion() {
-            LocalDateTime now = LocalDateTime.now();
-            given(appEventAdaptor.findById(ID)).willReturn(appEventOf(now.minusDays(1), now.plusDays(10)));
-
-            AppEventPageResponse page = appEventService.getAppEventPage(ID);
-
-            assertThat(page.popupId()).isNull();
-            assertThat(page.bannerId()).isNull();
-        }
-
         // 비로그인 조회라 운영값인 PUSH 는 내려가면 안 된다
         @Test
         @DisplayName("홍보 수단은 웹페이지가 그리는 POPUP / BANNER 만 내려간다")

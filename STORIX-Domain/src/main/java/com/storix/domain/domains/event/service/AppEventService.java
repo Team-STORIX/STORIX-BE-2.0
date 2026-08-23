@@ -106,12 +106,7 @@ public class AppEventService {
         if (AppEventStatus.resolve(appEvent.getStartAt(), appEvent.getEndAt(), now) == AppEventStatus.SCHEDULED) {
             throw AppEventNotFoundException.EXCEPTION;
         }
-        // 웹뷰는 appEventId만 들고 진입하므로 안내 모달 대상이 되는 팝업/배너 id를 여기서 함께 내려준다
-        return AppEventPageResponse.from(
-                appEvent,
-                popupService.findActivePopupIdByAppEvent(appEventId, now).orElse(null),
-                bannerService.findActiveBannerIdByAppEvent(appEventId, now).orElse(null)
-        );
+        return AppEventPageResponse.from(appEvent);
     }
 
     @Transactional(readOnly = true)
