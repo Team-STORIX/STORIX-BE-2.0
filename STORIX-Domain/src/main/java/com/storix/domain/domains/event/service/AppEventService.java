@@ -98,12 +98,12 @@ public class AppEventService {
         return AppEventResponse.from(appEventAdaptor.findById(appEventId));
     }
 
-    // 시작 전 이벤트는 없는 것으로 취급한다. id를 훑어 오픈 전 내용을 미리 보면 안 된다
+    // 시작 전 이벤트는 없는 것으로 취급한다
     @Transactional(readOnly = true)
     public AppEventPageResponse getAppEventPage(Long appEventId) {
         AppEvent appEvent = appEventAdaptor.findById(appEventId);
-        if (AppEventStatus.resolve(appEvent.getStartAt(), appEvent.getEndAt(), LocalDateTime.now())
-                == AppEventStatus.SCHEDULED) {
+        LocalDateTime now = LocalDateTime.now();
+        if (AppEventStatus.resolve(appEvent.getStartAt(), appEvent.getEndAt(), now) == AppEventStatus.SCHEDULED) {
             throw AppEventNotFoundException.EXCEPTION;
         }
         return AppEventPageResponse.from(appEvent);

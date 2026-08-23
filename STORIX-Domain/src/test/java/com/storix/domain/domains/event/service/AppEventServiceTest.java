@@ -5,6 +5,7 @@ import com.storix.domain.domains.event.adaptor.AppEventWinnerAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventStatus;
 import com.storix.domain.domains.event.domain.AppEventType;
+import com.storix.domain.domains.event.domain.PromotionType;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import com.storix.domain.domains.event.dto.AppEventResponse;
 import com.storix.domain.domains.event.exception.AppEventNotFoundException;
@@ -29,6 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -334,11 +336,16 @@ class AppEventServiceTest {
     class GetAppEventPage {
 
         private AppEvent appEventOf(LocalDateTime startAt, LocalDateTime endAt) {
+            return appEventOf(startAt, endAt, Set.of());
+        }
+
+        private AppEvent appEventOf(LocalDateTime startAt, LocalDateTime endAt, Set<PromotionType> promotionTypes) {
             AppEvent e = AppEvent.builder()
                     .name("출석 이벤트").description("설명")
                     .pageKey("attendance-2026-08-10")
                     .eventType(AppEventType.ATTENDANCE)
                     .startAt(startAt).endAt(endAt)
+                    .promotionTypes(promotionTypes)
                     .build();
             ReflectionTestUtils.setField(e, "id", ID);
             return e;
@@ -366,6 +373,21 @@ class AppEventServiceTest {
             given(appEventAdaptor.findById(ID)).willReturn(appEventOf(now.minusDays(20), now.minusDays(1)));
 
             assertThat(appEventService.getAppEventPage(ID).status()).isEqualTo(AppEventStatus.ENDED);
+        }
+
+        // 비로그인 조회라 운영값인 PUSH 는 내려가면 안 된다
+        @Test
+        @DisplayName("홍보 수단은 웹페이지가 그리는 POPUP / BANNER 만 내려간다")
+        void exposes_only_web_visible_promotion_types() {
+            LocalDateTime now = LocalDateTime.now();
+            given(appEventAdaptor.findById(ID)).willReturn(appEventOf(
+                    now.minusDays(1), now.plusDays(10),
+                    Set.of(PromotionType.PUSH, PromotionType.POPUP, PromotionType.BANNER)));
+
+            AppEventPageResponse page = appEventService.getAppEventPage(ID);
+
+            assertThat(page.promotionTypes())
+                    .containsExactlyInAnyOrder(PromotionType.POPUP, PromotionType.BANNER);
         }
 
         // id를 훑어 오픈 전 이벤트 내용을 미리 볼 수 있으면 안 된다

@@ -4,12 +4,14 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventStatus;
 import com.storix.domain.domains.event.domain.AppEventType;
+import com.storix.domain.domains.event.domain.PromotionType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-// 상세 웹페이지 렌더용. 비로그인도 조회하므로 홍보 수단이나 응모권 지급표 같은 운영값은 담지 않는다
 @Builder
 public record AppEventPageResponse(
         Long id,
@@ -37,7 +39,13 @@ public record AppEventPageResponse(
         LocalDateTime endAt,
 
         @Schema(description = "기간으로 파생 계산되는 상태 (SCHEDULED / ACTIVE / ENDED)")
-        AppEventStatus status
+        AppEventStatus status,
+
+        @Schema(
+                description = "이 이벤트에 설정된 홍보 수단 중 웹페이지가 알아야 하는 것 (POPUP / BANNER).",
+                example = "[\"BANNER\"]"
+        )
+        Set<PromotionType> promotionTypes
 ) {
     public static AppEventPageResponse from(AppEvent appEvent) {
         return AppEventPageResponse.builder()
@@ -49,6 +57,9 @@ public record AppEventPageResponse(
                 .startAt(appEvent.getStartAt())
                 .endAt(appEvent.getEndAt())
                 .status(AppEventStatus.resolve(appEvent.getStartAt(), appEvent.getEndAt(), LocalDateTime.now()))
+                .promotionTypes(appEvent.getPromotionTypes().stream()
+                        .filter(PromotionType.WEB_VISIBLE_TYPES::contains)
+                        .collect(Collectors.toUnmodifiableSet()))
                 .build();
     }
 }

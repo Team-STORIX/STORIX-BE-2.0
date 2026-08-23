@@ -6,6 +6,7 @@ import com.storix.domain.domains.topicroom.dto.RecentSender;
 import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
 import com.storix.domain.domains.topicroom.dto.TopicRoomPushContent;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.domain.Role;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -143,7 +144,7 @@ class TopicRoomChatPushServiceTest {
     void null_profile_image_is_kept() {
         givenRows(new RecentSenderRow(1L, 201L, 148L));
         given(userAdaptor.findStandardProfileInfoByUserIds(any()))
-                .willReturn(Map.of(201L, new StandardProfileInfo(201L, null, "닉201")));
+                .willReturn(Map.of(201L, new StandardProfileInfo(201L, null, "닉201", Role.READER)));
 
         assertThat(select(1L))
                 .containsExactly(new RecentSender(201L, "닉201", null));
@@ -207,6 +208,6 @@ class TopicRoomChatPushServiceTest {
     }
 
     private StandardProfileInfo profile(Long userId) {
-        return new StandardProfileInfo(userId, "https://cdn.storix.kr/" + userId + ".jpg", "닉" + userId);
+        return new StandardProfileInfo(userId, "https://cdn.storix.kr/" + userId + ".jpg", "닉" + userId, Role.READER);
     }
 }
