@@ -41,6 +41,17 @@ class RequiredIfTest {
     }
 
     @Test
+    @DisplayName("조건 필드를 아예 안 보내면 필수 여부로 잡는다")
+    void 조건_필드가_없으면_잡힌다() {
+        BindingResult result = validate(
+                new ReaderReviewUploadRequest(1L, Rating.THREE, null, null, "리뷰 내용"));
+
+        assertThat(result.getFieldErrors())
+                .extracting(FieldError::getField)
+                .contains("isSpoiler");
+    }
+
+    @Test
     @DisplayName("조건이 안 맞으면 통과한다")
     void 조건이_안맞으면_통과한다() {
         BindingResult result = validate(

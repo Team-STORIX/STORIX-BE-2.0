@@ -258,7 +258,6 @@ public class SwaggerErrorSpecConfig {
         return code.replaceAll("_\\d+$", "");
     }
 
-    /** 에러 응답을 반환하는 핸들러가 없어서 ErrorResponse 스키마가 자동 등록되지 않는다. 직접 넣어준다. */
     /** 어느 API에서나 같은 모양으로 나가는 에러는 문서 상단에 한 번만 싣는다. */
     private String commonErrorTables() {
         String auth = table(
@@ -324,6 +323,7 @@ public class SwaggerErrorSpecConfig {
         return sb.toString();
     }
 
+    /** 에러 응답을 반환하는 핸들러가 없어서 ErrorResponse 스키마가 자동 등록되지 않는다. 직접 넣어준다. */
     @Bean
     public GlobalOpenApiCustomizer errorSchemaRegistrar() {
         return openApi -> {

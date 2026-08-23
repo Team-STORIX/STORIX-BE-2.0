@@ -14,7 +14,8 @@ public record ReaderReviewUploadRequest(
         @NotNull(message = "별점을 선택해주세요.")
         Rating rating,
 
-        boolean isSpoiler,
+        @NotNull(message = "스포일러 여부를 선택해주세요.")
+        Boolean isSpoiler,
 
         String spoilerScript,
 

@@ -16,7 +16,7 @@ public record ReaderBoardUploadRequest(
         Long worksId,
 
         @NotNull(message = "스포일러 여부를 선택해주세요.")
-        boolean isSpoiler,
+        Boolean isSpoiler,
 
         String spoilerScript,
 
