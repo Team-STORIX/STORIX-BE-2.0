@@ -48,10 +48,12 @@ public interface AppEventRepository extends JpaRepository<AppEvent, Long> {
     Optional<AppEvent> findByIdForUpdate(@Param("appEventId") Long appEventId);
 
     // 같은 타입 이벤트끼리 기간이 겹치는 행을 조회하면서 쓰기 락
+    // 강제 종료된 이벤트는 관리자가 슬롯을 비운 것이므로 겹쳐도 막지 않는다
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT e FROM AppEvent e
             WHERE e.eventType = :eventType
+              AND e.forceEnded = false
               AND e.startAt < :endAt
               AND e.endAt > :startAt
             """)
