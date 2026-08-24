@@ -32,8 +32,14 @@ public class AdultVerificationUseCase {
     // 본인인증 확정
     public CustomResponse<AdultVerificationStatusResponse> confirm(Long userId, String identityVerificationId) {
 
-        // 1. 우리가 발급했고 아직 확정되지 않은 건인지
-        adultVerificationService.assertConfirmable(userId, identityVerificationId);
+        // 1. 확정된 건이면 포트원에 묻지 않고 그대로 돌려준다. 연타·재시도에도 같은 응답
+        AdultVerificationStatusInfo confirmed =
+                adultVerificationService.findConfirmed(userId, identityVerificationId);
+        if (confirmed != null) {
+            return CustomResponse.onSuccess(
+                    SuccessCode.ADULT_VERIFICATION_CONFIRM_SUCCESS,
+                    AdultVerificationStatusResponse.of(userId, confirmed));
+        }
 
         // 2. 앱이 보낸 성공 여부를 믿지 않고 포트원에 다시 묻는다. 트랜잭션 밖에서 처리.
         IdentityVerificationResult result =

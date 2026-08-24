@@ -10,7 +10,7 @@ import com.storix.domain.domains.adultverification.dto.AdultVerificationTicket;
 import com.storix.domain.domains.adultverification.dto.IdentityVerificationResult;
 import com.storix.domain.domains.adultverification.exception.AdultVerificationOwnerMismatchException;
 import com.storix.domain.domains.adultverification.exception.AlreadyAdultVerifiedException;
-import com.storix.domain.domains.adultverification.exception.AlreadyProcessedAdultVerificationException;
+import com.storix.domain.domains.adultverification.exception.ExpiredOrRevokedAdultVerificationException;
 import com.storix.domain.domains.adultverification.exception.IdentityVerificationProviderException;
 import com.storix.domain.domains.adultverification.exception.IncompleteIdentityVerificationException;
 import com.storix.domain.domains.adultverification.exception.MinorNotAllowedException;
@@ -72,19 +72,25 @@ public class AdultVerificationService {
         return identityVerificationId;
     }
 
-    // 외부 조회 전에 걸러낸다. 아무 문자열로 포트원을 두드리거나 끝난 건을 다시 묻지 않게 한다
+    // 포트원에 묻기 전에 거른다. 확정된 건이면 그 결과를, 아직이면 null 을 돌려준다
     @Transactional(readOnly = true)
-    public void assertConfirmable(Long userId, String identityVerificationId) {
+    public AdultVerificationStatusInfo findConfirmed(Long userId, String identityVerificationId) {
         AdultVerification adultVerification = adultVerificationAdaptor.getByIdentityVerificationId(identityVerificationId);
         if (!adultVerification.isOwnedBy(userId)) {
             throw AdultVerificationOwnerMismatchException.EXCEPTION;
         }
-        if (!adultVerification.isConfirmable()) {
-            throw AlreadyProcessedAdultVerificationException.EXCEPTION;
+        if (adultVerification.isConfirmable()) {
+            return null;
         }
+        // 만료·해제된 건은 되살리지 않는다
+        if (!adultVerification.isActiveAt(LocalDate.now())) {
+            throw ExpiredOrRevokedAdultVerificationException.EXCEPTION;
+        }
+        return AdultVerificationStatusInfo.verified(
+                adultVerification.getVerifiedAt(), adultVerification.getExpiresAt());
     }
 
-    // assertConfirmable 을 통과하고, result 는 서버가 포트원에 직접 물어 받은 것이어야 한다
+    // findConfirmed 를 통과하고, result 는 서버가 포트원에 직접 물어 받은 것이어야 한다
     @Transactional
     public AdultVerificationStatusInfo confirm(Long userId,
                                                String identityVerificationId,
@@ -116,8 +122,13 @@ public class AdultVerificationService {
         userAdaptor.findUserByIdForUpdate(userId);
 
         // 앞선 검사는 포트원 호출을 아끼는 용도고, 경합까지 막는 건 여기다
-        if (!adultVerificationAdaptor.getByIdentityVerificationId(identityVerificationId).isConfirmable()) {
-            throw AlreadyProcessedAdultVerificationException.EXCEPTION;
+        AdultVerification adultVerification = adultVerificationAdaptor.getByIdentityVerificationId(identityVerificationId);
+        if (!adultVerification.isConfirmable()) {
+            if (!adultVerification.isActiveAt(LocalDate.now())) {
+                throw ExpiredOrRevokedAdultVerificationException.EXCEPTION;
+            }
+            return AdultVerificationStatusInfo.verified(
+                    adultVerification.getVerifiedAt(), adultVerification.getExpiresAt());
         }
 
         if (AdultVerificationPolicy.isValidOn(
@@ -130,8 +141,10 @@ public class AdultVerificationService {
 
         int updated = adultVerificationAdaptor.markVerifiedIfRetryable(
                 identityVerificationId, verifiedAt, expiresAt, result.providerTransactionId());
+        // 유저 행을 잡고 있어 운영에서는 오지 않는다. 락을 타지 않는 테스터 이력 삭제만 여기로 올 수 있다
         if (updated == 0) {
-            throw AlreadyProcessedAdultVerificationException.EXCEPTION;
+            log.error("성인인증 확정 경합 identityVerificationId={} userId={}", identityVerificationId, userId);
+            throw ExpiredOrRevokedAdultVerificationException.EXCEPTION;
         }
 
         return AdultVerificationStatusInfo.verified(verifiedAt, expiresAt);
