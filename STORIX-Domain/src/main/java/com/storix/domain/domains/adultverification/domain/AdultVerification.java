@@ -1,7 +1,6 @@
 package com.storix.domain.domains.adultverification.domain;
 
 import com.storix.common.model.BaseTimeEntity;
-import com.storix.domain.domains.adultverification.exception.AlreadyProcessedAdultVerificationException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -77,9 +76,6 @@ public class AdultVerification extends BaseTimeEntity {
     /** 비즈니스 메서드 */
     // 확정은 조건부 UPDATE 로 한다. 이 메서드는 테스트 픽스처용
     public void verify(LocalDateTime verifiedAt, LocalDate expiresAt, String providerTransactionId) {
-        if (!isConfirmable()) {
-            throw AlreadyProcessedAdultVerificationException.EXCEPTION;
-        }
         this.status = AdultVerificationStatus.VERIFIED;
         this.verifiedAt = verifiedAt;
         this.expiresAt = expiresAt;
