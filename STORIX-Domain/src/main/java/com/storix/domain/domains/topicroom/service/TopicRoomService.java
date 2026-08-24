@@ -29,11 +29,12 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
 import com.storix.domain.domains.topicroom.publisher.TopicRoomActiveUserNumberPublisher;
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.application.port.LoadWorksPort;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -61,15 +62,15 @@ public class TopicRoomService implements TopicRoomUseCase {
 
     private final LoadTopicRoomPort loadTopicRoomPort;
     private final RecordTopicRoomPort recordTopicRoomPort;
-    private final LoadUserPort loadUserPort;
     private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
     private final BannedWordAdaptor bannedWordAdaptor;
     private final GenreScorePublisher genreScorePublisher;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
-    private final UserAdaptor userAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
+    private final UserAdaptor userAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final WorksAdaptor worksAdaptor;
     private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
     private final NotificationPublisher notificationPublisher;
@@ -229,7 +230,7 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw InvalidTitleException.EXCEPTION;
         }
 
-        User user = loadUserPort.findById(userId);
+        User user = userAdaptor.findUserById(userId);
         Works works = loadWorksPort.findById(request.getWorksId());
 
         // 이미 해당 작품의 토픽룸이 존재하는지 확인
@@ -242,8 +243,7 @@ public class TopicRoomService implements TopicRoomUseCase {
             throw MaxLimitException.EXCEPTION;
         }
 
-        if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
-            throw UnverifiedException.EXCEPTION;
+        AdultContentPolicy.check(works.getAgeClassification(), () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(user.getId()));
 
         TopicRoom room = TopicRoom.builder()
                 .topicRoomName(request.getTopicRoomName())
@@ -269,12 +269,11 @@ public class TopicRoomService implements TopicRoomUseCase {
     @Override
     @Transactional
     public void joinRoom(Long userId, Long roomId) {
-        User user = loadUserPort.findById(userId);
+        User user = userAdaptor.findUserById(userId);
         TopicRoom room = loadTopicRoomPort.findById(roomId);
         Works works = loadWorksPort.findById(room.getWorksId());
 
-        if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
-            throw UnverifiedException.EXCEPTION;
+        AdultContentPolicy.check(works.getAgeClassification(), () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(user.getId()));
         if (loadTopicRoomPort.countJoinedRooms(userId) >= 9)
             throw MaxLimitException.EXCEPTION;
 
