@@ -242,7 +242,7 @@ public enum ErrorCode {
 
     // Adult verification error
     ADULT_VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "ADULT_VERIFICATION_ERROR_001", "서버가 발급하지 않은 본인인증 건입니다."),
-    ADULT_VERIFICATION_ALREADY_PROCESSED(HttpStatus.CONFLICT, "ADULT_VERIFICATION_ERROR_002", "이미 처리된 본인인증 건입니다."),
+    ADULT_VERIFICATION_EXPIRED_OR_REVOKED(HttpStatus.CONFLICT, "ADULT_VERIFICATION_ERROR_002", "만료되었거나 해제된 본인인증 건입니다. 인증을 처음부터 다시 진행해주세요."),
     ADULT_VERIFICATION_OWNER_MISMATCH(HttpStatus.FORBIDDEN, "ADULT_VERIFICATION_ERROR_003", "본인인증 요청자와 확정 요청자가 다릅니다."),
     ADULT_VERIFICATION_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "ADULT_VERIFICATION_ERROR_004", "완료되지 않은 본인인증 건입니다. 인증창을 다시 띄워 인증을 마친 뒤 확정해주세요."),
     ADULT_VERIFICATION_MINOR(HttpStatus.FORBIDDEN, "ADULT_VERIFICATION_ERROR_005", "만 19세 미만은 이용할 수 없습니다."),
