@@ -41,7 +41,9 @@ public class AdultVerificationController {
     @PostMapping("/confirm")
     @Operation(summary = "[2] 본인인증 확정", description = "인증창이 성공으로 닫힌 뒤 호출해주세요.   \n" +
             "서버가 포트원에 다시 조회해 성인 여부를 판정합니다. 앱이 보낸 성공 여부는 신뢰하지 않습니다.   \n" +
-            "같은 identityVerificationId 로는 한 번만 확정할 수 있습니다.   \n" +
+            "**같은 identityVerificationId 로 다시 호출해도 같은 응답을 돌려줍니다.**   \n" +
+            "버튼이 연타되거나 응답이 유실돼 재시도해도 인증이 두 번 처리되지 않으니 그대로 다시 호출하시면 됩니다.   \n" +
+            "단, 유효기간이 지났거나 해제된 건은 409 로 거부합니다. 발급부터 다시 진행해주세요.   \n" +
             "인증창이 실패나 취소로 닫힌 경우에는 호출하지 않아도 됩니다. 발급을 다시 호출하면 같은 티켓으로 재시도됩니다.")
     public CustomResponse<AdultVerificationStatusResponse> confirm(
             @AuthenticationPrincipal AuthUserDetails authUser,
