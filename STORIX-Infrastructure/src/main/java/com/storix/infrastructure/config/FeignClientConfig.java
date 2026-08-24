@@ -7,6 +7,7 @@ import com.storix.infrastructure.external.oauth.client.NaverInfoClient;
 import com.storix.infrastructure.external.oauth.client.NaverOAuthClient;
 import com.storix.infrastructure.external.oauth.client.XInfoClient;
 import com.storix.infrastructure.external.oauth.client.XOAuthClient;
+import com.storix.infrastructure.external.portone.client.PortOneIdentityVerificationClient;
 import feign.Request;
 import feign.codec.Encoder;
 import feign.form.FormEncoder;
@@ -24,7 +25,8 @@ import java.util.concurrent.TimeUnit;
         NaverOAuthClient.class,
         AppleOAuthClient.class,
         XOAuthClient.class,
-        XInfoClient.class
+        XInfoClient.class,
+        PortOneIdentityVerificationClient.class
 })
 public class FeignClientConfig {
 
