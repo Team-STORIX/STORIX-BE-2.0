@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -313,6 +315,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException e) {
 
         ErrorCode errorCode = ErrorCode.IMAGE_FILE_TOO_LARGE;
+        ErrorResponse response = new ErrorResponse(errorCode);
+
+        warnFailure(errorCode);
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(response);
+    }
+
+    /** 매핑되지 않은 경로 */
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNotFound(Exception e) {
+
+        ErrorCode errorCode = ErrorCode.ENDPOINT_NOT_FOUND;
         ErrorResponse response = new ErrorResponse(errorCode);
 
         warnFailure(errorCode);
