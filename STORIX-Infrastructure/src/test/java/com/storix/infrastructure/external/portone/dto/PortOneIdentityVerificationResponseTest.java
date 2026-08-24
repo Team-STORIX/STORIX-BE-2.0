@@ -54,6 +54,15 @@ class PortOneIdentityVerificationResponseTest {
     }
 
     @Test
+    @DisplayName("나노초는 마이크로초까지만 남긴다")
+    void truncatesToMicros() {
+        IdentityVerificationResult result = response(OffsetDateTime.parse("2026-08-24T08:16:09.461558524Z")).toResult();
+
+        assertThat(result.verifiedAt())
+                .isEqualTo(LocalDateTime.of(2026, 8, 24, 17, 16, 9, 461_558_000));
+    }
+
+    @Test
     @DisplayName("자정을 넘기는 오프셋도 날짜까지 맞춘다")
     void convertsAcrossDateBoundary() {
         IdentityVerificationResult result = response(OffsetDateTime.parse("2026-08-23T16:30:00Z")).toResult();
