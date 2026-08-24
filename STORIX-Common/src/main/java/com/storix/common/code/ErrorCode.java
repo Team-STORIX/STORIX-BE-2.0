@@ -159,7 +159,6 @@ public enum ErrorCode {
     PUSH_DEVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "DEVICE_ERROR_001", "해당 기기 식별자로 등록된 디바이스가 없습니다."),
 
     // Topic Room error
-    ADULT_VERIFICATION_REQUIRED(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_001", "성인인증이 되지 않은 사용자입니다."),
     TOPIC_ROOM_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_002", "토픽룸 최대 개수는 9개입니다."),
     TOPIC_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_003", "해당 토픽룸을 찾을 수 없습니다."),
     INVALID_TOPIC_ROOM_TITLE(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_004", "토픽룸에 금칙어가 포함되어 있습니다."), // 제목에 금칙어 포함
@@ -240,7 +239,18 @@ public enum ErrorCode {
 
     // App version error
     INVALID_APP_VERSION_FORMAT(HttpStatus.BAD_REQUEST, "APP_VERSION_ERROR_002", "앱 버전 형식이 올바르지 않습니다."),
-    BLOCKED_APP_VERSION(HttpStatus.FORBIDDEN, "APP_VERSION_ERROR_003", "지원이 중단된 앱 버전입니다. 업데이트 후 이용해 주세요.");
+    BLOCKED_APP_VERSION(HttpStatus.FORBIDDEN, "APP_VERSION_ERROR_003", "지원이 중단된 앱 버전입니다. 업데이트 후 이용해 주세요."),
+
+    // Adult verification error
+    ADULT_VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "ADULT_VERIFICATION_ERROR_001", "서버가 발급하지 않은 본인인증 건입니다."),
+    ADULT_VERIFICATION_ALREADY_PROCESSED(HttpStatus.CONFLICT, "ADULT_VERIFICATION_ERROR_002", "이미 처리된 본인인증 건입니다."),
+    ADULT_VERIFICATION_OWNER_MISMATCH(HttpStatus.FORBIDDEN, "ADULT_VERIFICATION_ERROR_003", "본인인증 요청자와 확정 요청자가 다릅니다."),
+    ADULT_VERIFICATION_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "ADULT_VERIFICATION_ERROR_004", "완료되지 않은 본인인증 건입니다. 인증창을 다시 띄워 인증을 마친 뒤 확정해주세요."),
+    ADULT_VERIFICATION_MINOR(HttpStatus.FORBIDDEN, "ADULT_VERIFICATION_ERROR_005", "만 19세 미만은 이용할 수 없습니다."),
+    ADULT_VERIFICATION_BIRTH_DATE_MISSING(HttpStatus.BAD_GATEWAY, "ADULT_VERIFICATION_ERROR_006", "본인인증 응답에 생년월일이 없습니다."),
+    ADULT_VERIFICATION_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, "ADULT_VERIFICATION_ERROR_007", "본인인증 기관 연동 중 오류가 발생했습니다."),
+    ADULT_VERIFICATION_REQUIRED(HttpStatus.FORBIDDEN, "ADULT_VERIFICATION_ERROR_008", "성인인증이 되지 않은 사용자입니다. 프로필 > 설정에서 성인인증을 완료해주세요."),
+    ADULT_VERIFICATION_ALREADY_VERIFIED(HttpStatus.CONFLICT, "ADULT_VERIFICATION_ERROR_009", "이미 성인인증이 유효한 사용자입니다. 인증창을 띄우지 말고 상태를 다시 조회해주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;
