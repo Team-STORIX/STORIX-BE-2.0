@@ -66,9 +66,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 관리자 이메일 검증
     Optional<User> findByOauthInfoEmail(String email);
 
-    @Query("SELECT u.isAdultVerified FROM User u WHERE u.id = :userId")
-    Boolean findIsAdultVerifiedById(@Param("userId") Long userId);
-
     // 단건 프로필 정보 조회
     @Query("SELECT new com.storix.domain.domains.user.dto.StandardProfileInfo(" +
             "   u.id, u.profileObjectKey, " +
