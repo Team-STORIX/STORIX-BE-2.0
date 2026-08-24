@@ -8,15 +8,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class PortOneProperties {
 
     // 공개값
-    private final String baseUrl;
     private final String storeId;
     private final String channelKey;
 
     // 비공개값
     private final String apiSecret;
 
-    public PortOneProperties(String baseUrl, String storeId, String channelKey, String apiSecret) {
-        this.baseUrl = baseUrl;
+    public PortOneProperties(String storeId, String channelKey, String apiSecret) {
         this.storeId = storeId;
         this.channelKey = channelKey;
         this.apiSecret = apiSecret;

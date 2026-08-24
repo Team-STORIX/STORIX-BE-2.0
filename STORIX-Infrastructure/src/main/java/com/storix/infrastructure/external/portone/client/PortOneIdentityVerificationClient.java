@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(
         name = "PortOneIdentityVerificationClient",
-        url = "${portone.base-url}",
+        url = "https://api.portone.io",
         configuration = PortOneClientConfig.class
 )
 public interface PortOneIdentityVerificationClient {
