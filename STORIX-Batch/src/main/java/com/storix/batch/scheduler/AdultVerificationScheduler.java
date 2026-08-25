@@ -31,11 +31,11 @@ public class AdultVerificationScheduler {
 
     @Scheduled(cron = "0 0 */2 * * *", zone = "Asia/Seoul")
     @Transactional
-    public void failAbandoned() {
+    public void markAbandoned() {
         LocalDateTime threshold = LocalDateTime.now().minusHours(ABANDONED_HOURS);
-        int failed = adultVerificationAdaptor.failAbandoned(threshold);
-        if (failed > 0) {
-            log.info(">>>> [AdultVerificationScheduler] 방치된 인증 요청 정리 count={} threshold={}", failed, threshold);
+        int abandoned = adultVerificationAdaptor.markAbandonedBefore(threshold);
+        if (abandoned > 0) {
+            log.info(">>>> [AdultVerificationScheduler] 방치된 인증 요청 정리 count={} threshold={}", abandoned, threshold);
         }
     }
 }

@@ -77,15 +77,15 @@ public interface AdultVerificationRepository extends JpaRepository<AdultVerifica
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE AdultVerification av
-        SET av.status = :failed,
+        SET av.status = :abandoned,
             av.updatedAt = :now
         WHERE av.status = :pending
           AND av.updatedAt < :threshold
     """)
-    int failAbandoned(@Param("failed") AdultVerificationStatus failed,
-                      @Param("pending") AdultVerificationStatus pending,
-                      @Param("threshold") LocalDateTime threshold,
-                      @Param("now") LocalDateTime now);
+    int markAbandonedBefore(@Param("abandoned") AdultVerificationStatus abandoned,
+                            @Param("pending") AdultVerificationStatus pending,
+                            @Param("threshold") LocalDateTime threshold,
+                            @Param("now") LocalDateTime now);
 
     // 유저 탈퇴 시 인증 이력 삭제
     @Modifying(clearAutomatically = true, flushAutomatically = true)
