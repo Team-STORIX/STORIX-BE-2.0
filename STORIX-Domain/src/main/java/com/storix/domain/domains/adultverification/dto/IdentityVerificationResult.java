@@ -20,8 +20,4 @@ public record IdentityVerificationResult(
     public boolean isVerified() {
         return status == IdentityVerificationStatus.VERIFIED;
     }
-
-    public boolean isFailed() {
-        return status == IdentityVerificationStatus.FAILED;
-    }
 }

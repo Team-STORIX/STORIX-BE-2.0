@@ -70,9 +70,9 @@ public class AdultVerificationAdaptor {
                 AdultVerificationStatus.EXPIRED, AdultVerificationStatus.VERIFIED, today, LocalDateTime.now());
     }
 
-    public int failAbandoned(LocalDateTime threshold) {
-        return adultVerificationRepository.failAbandoned(
-                AdultVerificationStatus.FAILED, AdultVerificationStatus.PENDING, threshold, LocalDateTime.now());
+    public int markAbandonedBefore(LocalDateTime threshold) {
+        return adultVerificationRepository.markAbandonedBefore(
+                AdultVerificationStatus.ABANDONED, AdultVerificationStatus.PENDING, threshold, LocalDateTime.now());
     }
 
     public int deleteAllByUserId(Long userId) {
