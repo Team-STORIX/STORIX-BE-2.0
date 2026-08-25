@@ -56,6 +56,9 @@ public class StoryCardDraw extends BaseTimeEntity {
     @Column(name = "immersion", nullable = false, length = 100)
     private String immersion;
 
+    @Column(name = "lucky_work_id", nullable = false)
+    private Long luckyWorkId;
+
     @Column(name = "lucky_work_title", nullable = false, length = 100)
     private String luckyWorkTitle;
 
@@ -79,6 +82,7 @@ public class StoryCardDraw extends BaseTimeEntity {
                          Genre genre,
                          String message,
                          String immersion,
+                         Long luckyWorkId,
                          String luckyWorkTitle,
                          WorksType luckyWorkType,
                          Platform luckyWorkPlatform,
@@ -90,6 +94,7 @@ public class StoryCardDraw extends BaseTimeEntity {
         this.genre = genre;
         this.message = message;
         this.immersion = immersion;
+        this.luckyWorkId = luckyWorkId;
         this.luckyWorkTitle = luckyWorkTitle;
         this.luckyWorkType = luckyWorkType;
         this.luckyWorkPlatform = luckyWorkPlatform;
@@ -114,6 +119,7 @@ public class StoryCardDraw extends BaseTimeEntity {
                 .genre(genre)
                 .message(message.getContent())
                 .immersion(immersion.getContent())
+                .luckyWorkId(luckyWork.worksId())
                 .luckyWorkTitle(luckyWork.title())
                 .luckyWorkType(luckyWork.worksType())
                 .luckyWorkPlatform(luckyWork.platform())
