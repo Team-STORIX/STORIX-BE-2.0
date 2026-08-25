@@ -146,12 +146,6 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
     List<SlicedWorksInfo> findAllSlicedWorksInfoByWorksIds(@Param("worksIds") List<Long> worksIds);
 
 
-    @Query("SELECT w.id FROM Works w WHERE w.id NOT IN :ids")
-    List<Long> findCandidateIdsExcluding(@Param("ids") List<Long> ids);
-
-    @Query("SELECT w.id FROM Works w")
-    List<Long> findAllCandidateIds();
-
     @Query("SELECT DISTINCT w FROM Works w " +
             "LEFT JOIN FETCH w.hashtags " +
             "WHERE w.id IN :targetIds")
