@@ -29,4 +29,6 @@ public interface WorksRepositoryCustom {
             List<WorksType> worksTypes,
             List<Genre> genres
     );
+
+    List<Long> findCandidateIds(List<Long> excludedIds, boolean excludeAdult);
 }

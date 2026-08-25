@@ -110,6 +110,25 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
     }
 
 
+    @Override
+    public List<Long> findCandidateIds(List<Long> excludedIds, boolean excludeAdult) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if (excludedIds != null && !excludedIds.isEmpty()) {
+            builder.and(works.id.notIn(excludedIds));
+        }
+
+        if (excludeAdult) {
+            builder.and(works.ageClassification.ne(AgeClassification.AGE_18));
+        }
+
+        return queryFactory
+                .select(works.id)
+                .from(works)
+                .where(builder)
+                .fetch();
+    }
+
     // 작품 다중 필터링 공통 로직
     private BooleanBuilder buildFilterCondition(List<WorksType> worksTypes, List<Genre> genres) {
         BooleanBuilder builder = new BooleanBuilder();

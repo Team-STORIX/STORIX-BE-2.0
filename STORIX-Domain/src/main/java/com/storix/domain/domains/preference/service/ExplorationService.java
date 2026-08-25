@@ -4,6 +4,8 @@ import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.ErrorCode;
 import com.storix.common.exception.STORIXCodeException;
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
+import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.preference.dto.*;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
@@ -14,6 +16,7 @@ import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,6 +32,7 @@ public class ExplorationService {
     private final ExplorationCacheHelper cacheHelper;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final ReviewAdaptor reviewAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
 
     @Transactional(readOnly = true)
     public List<ExplorationWorksResponseDto> getExplorationWorks(Long userId) {
@@ -54,7 +58,10 @@ public class ExplorationService {
         int needed = DAILY_EXPLORATION_LIMIT - sessionCount;
         if (needed <= 0) return Collections.emptyList();
 
-        return worksAdaptor.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed)
+        boolean excludeAdult = !AdultVerificationPolicy.isValidOn(
+                adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId), LocalDate.now());
+
+        return worksAdaptor.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed, excludeAdult)
                 .stream()
                 .map(ExplorationWorksResponseDto::from)
                 .toList();
