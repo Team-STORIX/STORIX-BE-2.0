@@ -20,10 +20,10 @@ public interface StoryCardDrawRepository extends JpaRepository<StoryCardDraw, Lo
     @Query(value = """
             INSERT INTO event_story_card_draws
                 (app_event_id, user_id, drawn_on, genre, message, immersion,
-                 lucky_work_title, lucky_work_type, lucky_work_platform, lucky_work_landing_url,
+                 lucky_work_id, lucky_work_title, lucky_work_type, lucky_work_platform, lucky_work_landing_url,
                  drawn_at, created_at, updated_at)
             VALUES (:appEventId, :userId, :drawnOn, :genre, :message, :immersion,
-                    :luckyWorkTitle, :luckyWorkType, :luckyWorkPlatform, :luckyWorkLandingUrl,
+                    :luckyWorkId, :luckyWorkTitle, :luckyWorkType, :luckyWorkPlatform, :luckyWorkLandingUrl,
                     :drawnAt, NOW(), NOW())
             ON DUPLICATE KEY UPDATE story_card_draw_id = story_card_draw_id
             """, nativeQuery = true)
@@ -33,6 +33,7 @@ public interface StoryCardDrawRepository extends JpaRepository<StoryCardDraw, Lo
                        @Param("genre") String genreDbValue,
                        @Param("message") String message,
                        @Param("immersion") String immersion,
+                       @Param("luckyWorkId") Long luckyWorkId,
                        @Param("luckyWorkTitle") String luckyWorkTitle,
                        @Param("luckyWorkType") String luckyWorkType,
                        @Param("luckyWorkPlatform") String luckyWorkPlatform,

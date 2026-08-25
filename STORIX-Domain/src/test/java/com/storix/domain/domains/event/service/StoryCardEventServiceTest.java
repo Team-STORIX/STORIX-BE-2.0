@@ -188,7 +188,7 @@ class StoryCardEventServiceTest {
             assertThat(status.card().message()).doesNotContain("\n");
             assertThat(status.card().immersion()).isEqualTo(IMMERSION);
             assertThat(status.card().luckyWork().displayLabel()).isEqualTo("웹툰 ㅣ 화산귀환");
-            assertThat(status.card().luckyWork().landingUrl()).isEqualTo(LUCKY_WORK_URL);
+            assertThat(status.card().luckyWork().luckyWorkId()).isEqualTo(WORKS_ID);
             verify(storyCardContentAdaptor, never()).pickMessage(any(Genre.class));
         }
 
@@ -274,6 +274,7 @@ class StoryCardEventServiceTest {
             StoryCardDraw row = saved.getValue();
             assertThat(row.getMessage()).isEqualTo(MESSAGE);
             assertThat(row.getImmersion()).isEqualTo(IMMERSION);
+            assertThat(row.getLuckyWorkId()).isEqualTo(WORKS_ID);
             assertThat(row.getLuckyWorkTitle()).isEqualTo("화산귀환");
             assertThat(row.getLuckyWorkType()).isEqualTo(WorksType.WEBTOON);
             assertThat(row.getLuckyWorkPlatform()).isEqualTo(Platform.NAVER_WEBTOON);
