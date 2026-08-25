@@ -25,7 +25,7 @@ public class AdultVerificationTestController {
     private final AdultVerificationTestUseCase adultVerificationTestUseCase;
 
     @PostMapping("/reset")
-    @Operation(summary = "[테스터] 성인인증 이력 삭제", description = "지정한 userId 의 성인인증 이력을 전부 삭제하고 유저의 인증 시점도 비웁니다.   \n" +
+    @Operation(summary = "[테스터] 성인인증 이력 삭제", description = "지정한 userId 의 성인인증 이력을 전부 삭제합니다.   \n" +
             "삭제된 건수를 반환합니다. prod 에는 등록되지 않습니다.")
     public CustomResponse<Integer> reset(
             @AuthenticationPrincipal AuthUserDetails authUser,

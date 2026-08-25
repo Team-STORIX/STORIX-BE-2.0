@@ -108,10 +108,13 @@ public class AdultVerificationService {
             throw IncompleteIdentityVerificationException.EXCEPTION;
         }
         // 스펙상 VERIFIED 면 반드시 있는 값들이다. 없으면 공급사 이상이라 재시도 여지를 남긴다
-        if (result.birthDate() == null || result.verifiedAt() == null) {
-            log.error("포트원 본인인증 응답 필드 누락 identityVerificationId={} birthDate={} verifiedAt={}",
-                    identityVerificationId, result.birthDate() != null, result.verifiedAt() != null);
+        if (result.birthDate() == null) {
+            log.error("포트원 본인인증 응답 필드 누락 identityVerificationId={} field=birthDate", identityVerificationId);
             throw MissingBirthDateException.EXCEPTION;
+        }
+        if (result.verifiedAt() == null) {
+            log.error("포트원 본인인증 응답 필드 누락 identityVerificationId={} field=verifiedAt", identityVerificationId);
+            throw IdentityVerificationProviderException.EXCEPTION;
         }
         if (!AdultAgePolicy.isAdult(result.birthDate(), LocalDate.now())) {
             log.warn("성인인증 미성년 차단 userId={} identityVerificationId={}", userId, identityVerificationId);
