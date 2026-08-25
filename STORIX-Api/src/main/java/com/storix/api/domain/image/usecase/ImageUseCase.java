@@ -11,12 +11,10 @@ import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.utils.STORIXStatic;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @UseCase
-@Transactional
 @RequiredArgsConstructor
 public class ImageUseCase {
 

@@ -1,5 +1,6 @@
 package com.storix.domain.domains.report.service;
 
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
@@ -32,7 +33,6 @@ import com.storix.domain.domains.user.domain.UserSanctionType;
 import com.storix.domain.domains.user.domain.WithdrawReason;
 import com.storix.domain.domains.user.publisher.UserAccessRevokedPublisher;
 import com.storix.domain.domains.user.service.AuthService;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +50,7 @@ public class AdminReportCommandService {
     private static final int SUSPENSION_DAYS = 7;
     private static final String ACCOUNT_DELETION_DETAIL = "관리자 신고 처리로 인한 계정 삭제";
 
+    private final WorksAdaptor worksAdaptor;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final FeedReportAdaptor feedReportAdaptor;
     private final ReviewReportAdaptor reviewReportAdaptor;
@@ -61,7 +62,6 @@ public class AdminReportCommandService {
     private final ReviewAdaptor reviewAdaptor;
     private final ReviewLikeAdaptor reviewLikeAdaptor;
     private final LibraryAdaptor libraryAdaptor;
-    private final LoadWorksPort loadWorksPort;
     private final UserAdaptor userAdaptor;
     private final AuthService authService;
     private final UserAccessRevokedPublisher userAccessRevokedPublisher;
@@ -149,7 +149,7 @@ public class AdminReportCommandService {
         Long reviewerId = reviewAdaptor.findReviewerIdById(reviewId);
         ReviewedWorksIdAndRatingInfo info = reviewAdaptor.getReviewedWorksIdAndRatingInfo(reviewId);
         reviewLikeAdaptor.deleteAllRelatedReviewLike(reviewId);
-        loadWorksPort.updateDecrementingReviewInfoToWorks(info.worksId(), info.rating().getRatingValue());
+        worksAdaptor.updateDecrementingReviewInfo(info.worksId(), info.rating().getRatingValue());
         libraryAdaptor.decrementReviewCount(reviewerId);
     }
 

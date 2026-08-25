@@ -8,7 +8,7 @@ import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
 import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.search.service.SearchService;
-import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
+import com.storix.domain.domains.topicroom.service.TopicRoomService;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -24,10 +24,14 @@ public class SearchUseCase {
 
     private final SearchService searchService;
     private final SearchHistoryService searchHistoryService;
-    private final TopicRoomUseCase topicRoomUseCase;
+    private final TopicRoomService topicRoomService;
 
     // 작품 탭 검색
     public CustomResponse<SearchResponseWrapperDto<WorksSearchResponseDto>> searchWorks(Long userId, String keyword, Pageable pageable) {
+        if (keyword != null && pageable.getPageNumber() == 0) {
+            searchHistoryService.addSearchLog(userId, keyword);
+        }
+
         Slice<WorksSearchResponseDto> result = searchService.searchWorks(userId, keyword, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, wrapWithFallback(result));
@@ -36,6 +40,10 @@ public class SearchUseCase {
     // 작품 탭 필터 검색
     public CustomResponse<SearchResponseWrapperDto<WorksSearchResponseDto>> searchWorksWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        if (keyword != null && pageable.getPageNumber() == 0) {
+            searchHistoryService.addSearchLog(userId, keyword);
+        }
+
         Slice<WorksSearchResponseDto> result =
                 searchService.searchWorksWithFilters(userId, keyword, worksTypes, genres, pageable);
 
@@ -61,7 +69,7 @@ public class SearchUseCase {
         }
 
         PlusSearchResponseWrapperDto<TopicRoomResponseDto> result =
-                topicRoomUseCase.searchRoomsWithFilters(userId, keyword, worksTypes, genres, pageable);
+                topicRoomService.searchRoomsWithFilters(userId, keyword, worksTypes, genres, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, result);
     }

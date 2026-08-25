@@ -1,7 +1,7 @@
 package com.storix.api.domain.works;
 
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
-import com.storix.domain.domains.works.application.usecase.WorksUseCase;
+import com.storix.api.domain.works.usecase.WorksUseCase;
 import com.storix.domain.domains.works.dto.WorksDetailResponseDto;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;

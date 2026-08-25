@@ -5,6 +5,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,8 +30,10 @@ public class SwaggerConfig {
                         .scheme("Bearer")
                         .bearerFormat("JWT"));
 
-        // servers 를 비우면 springdoc 이 요청 기준으로 잡는다. 운영 URL 을 스펙에 박지 않기 위함
+        // 상대 경로라 스웨거를 연 주소를 그대로 따라간다. 비워두면 springdoc 이 절대 URL 을 만드는데,
+        // 프록시 뒤에서는 http 로 잡혀 https 페이지에서 요청이 막힌다
         return new OpenAPI()
+                .addServersItem(new Server().url("/"))
                 .info(info)
                 .addSecurityItem(securityRequirement)
                 .components(components);
