@@ -36,10 +36,11 @@ public class AdultVerificationService {
     private final UserAdaptor userAdaptor;
     private final PortOneProperties portOneProperties;
 
-    // 확정 대기 중인 티켓. 발급 전에 포트원 상태를 물어보려면 부르는 쪽이 먼저 알아야 한다
+    // 아직 확정되지 않은 최신 건. 발급 전에 포트원 상태를 물어보려면 부르는 쪽이 먼저 알아야 한다
+    // 방치로 정리된 건까지 보는 이유는, 확정이 유실된 뒤 배치가 지나가도 복구할 수 있어야 해서다
     @Transactional(readOnly = true)
-    public String findPendingIdentityVerificationId(Long userId) {
-        return adultVerificationAdaptor.findLatestPending(userId)
+    public String findConfirmableIdentityVerificationId(Long userId) {
+        return adultVerificationAdaptor.findLatestConfirmable(userId)
                 .map(AdultVerification::getIdentityVerificationId)
                 .orElse(null);
     }
