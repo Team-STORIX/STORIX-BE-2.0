@@ -24,6 +24,10 @@ public interface AdultVerificationRepository extends JpaRepository<AdultVerifica
     // 아직 확정을 기다리는 티켓. 새로 만들지 않고 이걸 다시 내준다
     Optional<AdultVerification> findFirstByUserIdAndStatusOrderByIdDesc(Long userId, AdultVerificationStatus status);
 
+    // 아직 확정되지 않은 최신 건. 방치로 정리된 것도 포함해 포트원 상태를 확인한다
+    Optional<AdultVerification> findFirstByUserIdAndStatusInOrderByIdDesc(
+            Long userId, List<AdultVerificationStatus> statuses);
+
     // 만료된 건도 같이 본다. 그래야 한 번도 안 한 것과 만료된 것을 구분한다
     Optional<AdultVerification> findFirstByUserIdAndStatusInOrderByVerifiedAtDesc(
             Long userId, List<AdultVerificationStatus> statuses);

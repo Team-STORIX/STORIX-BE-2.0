@@ -37,6 +37,12 @@ public class AdultVerificationAdaptor {
                 userId, AdultVerificationStatus.PENDING);
     }
 
+    // 방치로 정리된 건도 본다. 확정이 유실된 뒤 배치가 지나갔어도 복구할 수 있어야 한다
+    public Optional<AdultVerification> findLatestConfirmable(Long userId) {
+        return adultVerificationRepository.findFirstByUserIdAndStatusInOrderByIdDesc(
+                userId, AdultVerificationStatus.CONFIRMABLE);
+    }
+
     public Optional<AdultVerification> findLatestSettled(Long userId) {
         return adultVerificationRepository.findFirstByUserIdAndStatusInOrderByVerifiedAtDesc(userId, SETTLED);
     }

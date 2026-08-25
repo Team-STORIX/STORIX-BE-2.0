@@ -23,8 +23,8 @@ public class AdultVerificationUseCase {
     // 본인인증 요청 발급
     public CustomResponse<AdultVerificationTicketResponse> issue(Long userId) {
 
-        // 1. 확정을 기다리는 티켓이 있으면 포트원 상태부터 본다. 외부 호출이라 트랜잭션 밖에서 끝낸다
-        String pendingId = adultVerificationService.findPendingIdentityVerificationId(userId);
+        // 1. 아직 확정되지 않은 티켓이 있으면 포트원 상태부터 본다. 외부 호출이라 트랜잭션 밖에서 끝낸다
+        String pendingId = adultVerificationService.findConfirmableIdentityVerificationId(userId);
         // 아직 인증창을 안 띄운 티켓이면 포트원이 모르므로 pending 은 비어 있다
         IdentityVerificationResult pending =
                 pendingId == null ? null : identityVerificationHelper.findVerification(pendingId);
