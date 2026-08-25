@@ -2,6 +2,7 @@ package com.storix.domain.domains.adultverification.repository;
 
 import com.storix.domain.domains.adultverification.domain.AdultVerification;
 import com.storix.domain.domains.adultverification.domain.AdultVerificationStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -77,19 +78,23 @@ public interface AdultVerificationRepository extends JpaRepository<AdultVerifica
                      @Param("pending") AdultVerificationStatus pending,
                      @Param("now") LocalDateTime now);
 
-    // 마지막으로 쓴 뒤 확정 요청이 오지 않은 건 정리. 인증창을 띄웠는지와 무관하다
+    // 정리 후보. 포트원에 하나씩 물어봐야 해서 목록으로 가져온다
+    List<AdultVerification> findByStatusAndUpdatedAtBefore(
+            AdultVerificationStatus status, LocalDateTime threshold, Pageable pageable);
+
+    // 포트원에서도 끝나지 않은 건으로 확인된 티켓을 닫는다
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE AdultVerification av
         SET av.status = :abandoned,
             av.updatedAt = :now
-        WHERE av.status = :pending
-          AND av.updatedAt < :threshold
+        WHERE av.identityVerificationId = :identityVerificationId
+          AND av.status = :pending
     """)
-    int markAbandonedBefore(@Param("abandoned") AdultVerificationStatus abandoned,
-                            @Param("pending") AdultVerificationStatus pending,
-                            @Param("threshold") LocalDateTime threshold,
-                            @Param("now") LocalDateTime now);
+    int markAbandoned(@Param("identityVerificationId") String identityVerificationId,
+                      @Param("abandoned") AdultVerificationStatus abandoned,
+                      @Param("pending") AdultVerificationStatus pending,
+                      @Param("now") LocalDateTime now);
 
     // 유저 탈퇴 시 인증 이력 삭제
     @Modifying(clearAutomatically = true, flushAutomatically = true)

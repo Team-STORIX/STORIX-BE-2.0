@@ -2,7 +2,7 @@ package com.storix.api.domain.adultverification.usecase;
 
 import com.storix.api.domain.adultverification.controller.dto.AdultVerificationStatusResponse;
 import com.storix.api.domain.adultverification.controller.dto.AdultVerificationTicketResponse;
-import com.storix.api.domain.adultverification.helper.IdentityVerificationHelper;
+import com.storix.infrastructure.external.portone.IdentityVerificationHelper;
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
@@ -19,6 +19,25 @@ public class AdultVerificationUseCase {
 
     private final AdultVerificationService adultVerificationService;
     private final IdentityVerificationHelper identityVerificationHelper;
+
+    // 성인인증 상태 동기화
+    public CustomResponse<AdultVerificationStatusResponse> sync(Long userId) {
+
+        // 1. 확정을 기다리는 티켓이 있으면 포트원 상태를 본다. 외부 호출이라 트랜잭션 밖에서 끝낸다
+        String pendingId = adultVerificationService.findPendingIdentityVerificationId(userId);
+        IdentityVerificationResult pending =
+                pendingId == null ? null : identityVerificationHelper.findVerification(pendingId);
+
+        // 2. 인증은 끝났는데 확정이 유실된 건이면 여기서 확정해 상태를 맞춘다
+        if (pending != null && pending.isVerified()) {
+            log.warn(">>> [AdultVerification] 확정 유실 복구 userId={} identityVerificationId={}", userId, pendingId);
+            adultVerificationService.confirm(userId, pendingId, pending);
+        }
+
+        return CustomResponse.onSuccess(
+                SuccessCode.ADULT_VERIFICATION_STATUS_LOAD_SUCCESS,
+                AdultVerificationStatusResponse.of(userId, adultVerificationService.getStatus(userId)));
+    }
 
     // 본인인증 요청 발급
     public CustomResponse<AdultVerificationTicketResponse> issue(Long userId) {
