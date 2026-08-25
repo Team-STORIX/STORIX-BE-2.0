@@ -20,8 +20,8 @@ public record StoryCardLuckyWorkResponse(
         @Schema(description = "연재 플랫폼")
         Platform platform,
 
-        @Schema(description = "작품 페이지 외부 링크. 아직 확보되지 않은 작품은 null이며 이 경우 탭 동작 없이 제목만 노출한다")
-        String landingUrl
+        @Schema(description = "작품 상세 페이지로 이동할 때 쓰는 앱 내부 작품 ID")
+        Long luckyWorkId
 ) {
     public static StoryCardLuckyWorkResponse from(StoryCardDraw draw) {
         return StoryCardLuckyWorkResponse.builder()
@@ -29,7 +29,7 @@ public record StoryCardLuckyWorkResponse(
                 .worksType(draw.getLuckyWorkType())
                 .title(draw.getLuckyWorkTitle())
                 .platform(draw.getLuckyWorkPlatform())
-                .landingUrl(draw.getLuckyWorkLandingUrl())
+                .luckyWorkId(draw.getLuckyWorkId())
                 .build();
     }
 }
