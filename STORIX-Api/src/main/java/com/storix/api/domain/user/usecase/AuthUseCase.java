@@ -1,6 +1,7 @@
 package com.storix.api.domain.user.usecase;
 
 import com.storix.common.annotation.UseCase;
+import com.storix.domain.domains.user.dto.OnboardingPrincipal;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.api.domain.user.controller.dto.AuthorizationResponse;
 import com.storix.api.domain.user.controller.dto.LoginWithTokenResponse;
@@ -70,7 +71,15 @@ public class AuthUseCase {
 
     // 독자 유저 정보 등록
     public ResponseEntity<CustomResponse<AuthorizationResponse>> readerSignup(ReaderSignUpData data, String jti) {
-        AuthUserDetails userDetails = authService.signUpReaderUser(data, jti);
+        // Redis 조회·검증은 트랜잭션 밖에서 끝낸다
+        OnboardingPrincipal principal = authService.findOnboardingPrincipal(jti);
+        authService.checkOnboardingWorks(data.favoriteWorksIdList());
+
+        AuthUserDetails userDetails = authService.signUpReaderUser(data, principal);
+
+        // 가입이 커밋된 뒤에 온보딩 토큰을 지운다. 중간에 실패하면 같은 토큰으로 다시 시도할 수 있어야 한다
+        authService.deleteOnboardingToken(jti);
+
         LoginWithTokenResponse tokenResponse = tokenGenerateHelper.generateLoginWithToken(userDetails);
         AuthorizationResponse result = AuthorizationResponse.nativeRefresh(
                 tokenResponse.accessToken(), tokenResponse.refreshToken());

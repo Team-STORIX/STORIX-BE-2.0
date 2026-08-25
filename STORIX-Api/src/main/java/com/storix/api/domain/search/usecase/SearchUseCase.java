@@ -28,6 +28,10 @@ public class SearchUseCase {
 
     // 작품 탭 검색
     public CustomResponse<SearchResponseWrapperDto<WorksSearchResponseDto>> searchWorks(Long userId, String keyword, Pageable pageable) {
+        if (keyword != null && pageable.getPageNumber() == 0) {
+            searchHistoryService.addSearchLog(userId, keyword);
+        }
+
         Slice<WorksSearchResponseDto> result = searchService.searchWorks(userId, keyword, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, wrapWithFallback(result));
@@ -36,6 +40,10 @@ public class SearchUseCase {
     // 작품 탭 필터 검색
     public CustomResponse<SearchResponseWrapperDto<WorksSearchResponseDto>> searchWorksWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        if (keyword != null && pageable.getPageNumber() == 0) {
+            searchHistoryService.addSearchLog(userId, keyword);
+        }
+
         Slice<WorksSearchResponseDto> result =
                 searchService.searchWorksWithFilters(userId, keyword, worksTypes, genres, pageable);
 

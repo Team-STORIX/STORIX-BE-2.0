@@ -25,7 +25,6 @@ public class TokenGenerateHelper {
     private final TokenAdaptor tokenAdaptor;
     private final UserAdaptor userAdaptor;
 
-    @Transactional
     public LoginWithTokenResponse generateLoginWithToken(AuthUserDetails userDetails) {
 
         Long userId = userDetails.getUserId();
@@ -66,7 +65,6 @@ public class TokenGenerateHelper {
         return generateLoginWithToken(new AuthUserDetails(userId, user.getRole()));
     }
 
-    @Transactional
     public OAuthLoginWithTokenResponse generateOAuthLoginWithToken(OAuthInfo oAuthInfo, String oauthRefreshToken) {
 
         OAuthProvider provider = oAuthInfo.getProvider();

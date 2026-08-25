@@ -21,31 +21,16 @@ import java.util.List;
 public class SearchService {
 
     private final WorksAdaptor worksAdaptor;
-    private final SearchHistoryService searchHistoryService;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorks(Long userId, String keyword, Pageable pageable) {
-
-        // 1. 검색어 저장
-        if (keyword != null && pageable.getPageNumber() == 0) {
-            searchHistoryService.addSearchLog(userId, keyword);
-        }
-
-        // 2. 작품 조회
 
         return worksAdaptor.searchWorks(keyword, pageable).map(this::toWorkDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorksWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
-
-        // 1. 검색어 저장
-        if (keyword != null && pageable.getPageNumber() == 0) {
-            searchHistoryService.addSearchLog(userId, keyword);
-        }
-
-        // 2. 작품 조회
 
         Slice<Works> worksSlice;
         if (keyword != null && keyword.startsWith("#")) {
@@ -60,7 +45,7 @@ public class SearchService {
         return worksSlice.map(this::toWorkDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(String keyword, Pageable pageable) {
 
         // 작품 검색
