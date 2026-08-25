@@ -94,22 +94,27 @@ public class AuthService {
         return ValidAuthDTO.ofOid(isRegistered, xUserId, oauthRefreshToken);
     }
 
+    // 온보딩 토큰 정보 조회. Redis 라 트랜잭션 밖에서 먼저 읽는다
+    public OnboardingPrincipal findOnboardingPrincipal(String jti) {
+        return tokenAdaptor.findOnboardingPrincipalByJti(jti);
+    }
+
+    // 온보딩 때 내려준 목록에 있는 작품인지 확인. 이것도 Redis 라 트랜잭션 밖이다
+    public void checkOnboardingWorks(Set<Long> worksIds) {
+        if (worksIds == null || worksIds.isEmpty()) return;
+        onboardingWorksHelper.checkReaderSignUpWithOnboardingWorksList(worksIds);
+    }
+
     // 독자 회원 가입 (소셜 로그인)
     @Transactional
-    public AuthUserDetails signUpReaderUser(ReaderSignUpData cmd, String jti) {
+    public AuthUserDetails signUpReaderUser(ReaderSignUpData cmd, OnboardingPrincipal principal) {
 
-        // 1. 온보딩 토큰 정보 조회
-        OnboardingPrincipal principal = tokenAdaptor.findOnboardingPrincipalByJti(jti);
         OAuthProvider provider = principal.provider(); String oid = principal.oid();
         String oauthRefreshToken = principal.oauthRefreshToken();
 
-        // 2. 회원 가입 관련 검증
+        // 회원 가입 관련 검증
         boolean isUserPresent = userAdaptor.isUserPresentWithProviderAndOid(provider, oid);
         if (isUserPresent) throw DuplicateUserException.EXCEPTION;
-
-        if (cmd.favoriteWorksIdList() != null && !cmd.favoriteWorksIdList().isEmpty()) {
-            onboardingWorksHelper.checkReaderSignUpWithOnboardingWorksList(cmd.favoriteWorksIdList());
-        }
 
         validNickname(cmd.nickName());
 
@@ -134,8 +139,6 @@ public class AuthService {
                 .addKeyValue("privacyPolicyAgree", cmd.privacyPolicyAgree())
                 .addKeyValue("ageOver14", cmd.ageOver14())
                 .log(">>> [Signup] 독자 회원가입 온보딩 선택값");
-
-        tokenAdaptor.deleteOnboardingTokenByJti(jti);
 
         saveSignupTermsAgreements(authUserDetails.getUserId(), cmd);
 
@@ -183,17 +186,23 @@ public class AuthService {
         return userAdaptor.findUserById(userId).getOauthInfo();
     }
 
-    // 유저 로그아웃
-    @Transactional
-    public void logout(Long userId, String installationId, String refreshToken) {
-        // 1. refreshToken 삭제 (Redis)
+    // 가입이 커밋된 뒤에 지운다. Redis 는 함께 롤백되지 않아 트랜잭션 안에서 지우면 되돌릴 수 없다
+    public void deleteOnboardingToken(String jti) {
+        tokenAdaptor.deleteOnboardingTokenByJti(jti);
+    }
+
+    // 로그아웃 1. refreshToken 삭제. Redis 라 트랜잭션을 열지 않는다
+    public void deleteRefreshToken(Long userId, String refreshToken) {
         if (StringUtils.hasText(refreshToken)) {
             tokenAdaptor.deleteRefreshToken(userId, refreshToken);
         } else {
             tokenAdaptor.deleteRefreshTokenByUserId(userId);
         }
+    }
 
-        // 2. [Native] 해당 디바이스 FCM 토큰 비활성화
+    // 로그아웃 2. [Native] 해당 디바이스 FCM 토큰 비활성화
+    @Transactional
+    public void deactivatePushDevice(Long userId, String installationId) {
         if (StringUtils.hasText(installationId)) {
             pushDeviceAdaptor.deactivateByUserIdAndInstallationId(userId, installationId);
         }

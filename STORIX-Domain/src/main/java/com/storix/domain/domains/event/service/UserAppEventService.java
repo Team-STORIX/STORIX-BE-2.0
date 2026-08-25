@@ -26,7 +26,6 @@ public class UserAppEventService {
     private static final int PENDING_EVENT_LIMIT = 10;
 
     private final UserAppEventAdaptor userAppEventAdaptor;
-    private final UserAppEventCacheHelper userAppEventCacheHelper;
     private final ObjectMapper objectMapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -44,12 +43,9 @@ public class UserAppEventService {
                 .build());
     }
 
+    // 캐시는 부르는 쪽이 씌운다. 캐시 히트면 트랜잭션을 아예 열지 않기 위함
     @Transactional(readOnly = true)
     public List<OneTimeAppEventResponse> getPendingEvents(Long userId) {
-        return userAppEventCacheHelper.getPendingEvents(userId, () -> loadPendingEvents(userId));
-    }
-
-    private List<OneTimeAppEventResponse> loadPendingEvents(Long userId) {
         return userAppEventAdaptor.findPendingByUserId(userId, PageRequest.of(0, PENDING_EVENT_LIMIT))
                 .stream()
                 .map(this::toResponse)

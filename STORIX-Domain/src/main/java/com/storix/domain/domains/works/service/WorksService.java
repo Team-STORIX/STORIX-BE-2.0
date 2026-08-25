@@ -1,10 +1,9 @@
 package com.storix.domain.domains.works.service;
 
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
-import com.storix.domain.domains.works.application.usecase.WorksUseCase;
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.WorksDetailResponseDto;
@@ -16,19 +15,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class WorksService implements WorksUseCase {
+public class WorksService {
 
-    private final LoadWorksPort loadWorksPort;
+    private final TopicRoomAdaptor topicRoomAdaptor;
+    private final WorksAdaptor worksAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
-    private final LoadTopicRoomPort loadTopicRoomPort;
 
     private final ReviewAdaptor reviewAdaptor;
 
-    @Override
     @Transactional(readOnly = true)
     public WorksDetailResponseDto getWorksDetail(Long userId, Long worksId) {
 
-        Works works = loadWorksPort.findByIdWithHashtags(worksId);
+        Works works = worksAdaptor.findByIdWithHashtags(worksId);
 
         if (works.getWorksType() == null || works.getGenre() == null || works.getAgeClassification() == null) {
             log.atWarn()
@@ -46,7 +44,7 @@ public class WorksService implements WorksUseCase {
         );
 
         long reviewCount = reviewAdaptor.getReviewCount(worksId);
-        boolean hasTopicRoom = loadTopicRoomPort.existsByWorksId(worksId);
+        boolean hasTopicRoom = topicRoomAdaptor.existsByWorksId(worksId);
 
         return WorksDetailResponseDto.from(works, reviewCount, hasTopicRoom);
     }

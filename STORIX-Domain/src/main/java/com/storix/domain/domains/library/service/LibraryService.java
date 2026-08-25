@@ -1,10 +1,10 @@
 package com.storix.domain.domains.library.service;
 
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.library.dto.StandardLibraryWorksInfo;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
-import com.storix.domain.domains.works.adaptor.WorksPersistenceAdaptor;
 import com.storix.domain.domains.works.application.helper.ArtistNameParseHelper;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +26,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LibraryService {
 
+    private final WorksAdaptor worksAdaptor;
     private final LibraryAdaptor libraryAdaptor;
     private final ReviewAdaptor reviewAdaptor;
-    private final WorksPersistenceAdaptor worksPersistenceAdaptor;
 
     private final ArtistNameParseHelper artistNameParseHelper;
 
@@ -54,7 +54,7 @@ public class LibraryService {
             return new SliceImpl<>(List.of(), pageable, reviewInfo.hasNext());
         }
 
-        List<LibraryWorksInfo> worksList = worksPersistenceAdaptor.getLibraryWorksInfo(worksIds);
+        List<LibraryWorksInfo> worksList = worksAdaptor.getLibraryWorksInfo(worksIds);
 
         // 리뷰 정보 순서대로 세팅
         Map<Long, LibraryWorksInfo> worksMap = worksList.stream()
@@ -99,7 +99,7 @@ public class LibraryService {
             return new SliceImpl<>(List.of(), pageable, false);
         }
 
-        Slice<LibraryWorksInfo> worksSlice = worksPersistenceAdaptor.searchLibraryWorksInfoByIds(allWorksIds, keyword, pageable);
+        Slice<LibraryWorksInfo> worksSlice = worksAdaptor.searchLibraryWorksInfoByIds(allWorksIds, keyword, pageable);
 
         // 리뷰 정보 반영한 작품 검색 결과 세팅
         Map<Long, ReviewedWorksIdAndRatingInfo> reviewMap = reviewInfo.stream()

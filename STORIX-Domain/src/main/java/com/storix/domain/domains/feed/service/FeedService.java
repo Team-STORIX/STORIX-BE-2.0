@@ -1,5 +1,6 @@
 package com.storix.domain.domains.feed.service;
 
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
@@ -14,7 +15,6 @@ import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import com.storix.domain.domains.user.exception.block.BlockedUserContentException;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +35,7 @@ import java.util.Set;
 @Slf4j
 public class FeedService {
 
+    private final WorksAdaptor worksAdaptor;
     private final UserAdaptor userAdaptor;
     private final UserBlockAdaptor userBlockAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
@@ -42,7 +43,6 @@ public class FeedService {
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final ReaderBoardHelper readerBoardHelper;
 
-    private final LoadWorksPort loadWorksPort;
 
     @Transactional(readOnly = true)
     public Slice<ReaderBoardWithProfileInfo> getAllReaderBoard(Long userId, Pageable pageable) {
@@ -92,7 +92,7 @@ public class FeedService {
 
         // 1) 관심 작품 정보 조회
         Map<Long, SlicedWorksInfo> slicedWorksInfoMap =
-                loadWorksPort.findAllSlicedWorksInfoByWorksIds(worksIds);
+                worksAdaptor.findAllSlicedWorksInfoByWorksIds(worksIds);
 
         // 최종 매핑
         List<SlicedWorksInfo> result = worksIds.stream()

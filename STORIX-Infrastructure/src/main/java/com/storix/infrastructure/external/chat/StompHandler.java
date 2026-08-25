@@ -2,10 +2,10 @@ package com.storix.infrastructure.external.chat;
 import com.storix.domain.domains.user.exception.token.InvalidTokenException;
 import com.storix.common.utils.RedisKeyStatic;
 
-import com.storix.domain.domains.topicroom.application.port.TopicRoomPresencePort;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.infrastructure.external.topicroom.RedisTopicRoomActiveUserNumberAdapter;
+import com.storix.infrastructure.external.topicroom.RedisTopicRoomPresenceAdapter;
 import com.storix.infrastructure.external.topicroom.TopicRoomReadMarker;
 import com.storix.infrastructure.external.topicroom.TopicRoomActiveUserNumberRedisSubscriber;
 import com.storix.infrastructure.global.TokenProvider;
@@ -35,7 +35,7 @@ public class StompHandler implements ChannelInterceptor {
     private final RedisMessageListenerContainer container;
     private final RedisSubscriber subscriber;
     private final TopicRoomActiveUserNumberRedisSubscriber activeUserNumberSubscriber;
-    private final TopicRoomPresencePort topicRoomPresencePort;
+    private final RedisTopicRoomPresenceAdapter redisTopicRoomPresenceAdapter;
     private final TopicRoomReadMarker topicRoomReadMarker;
 
     private final Map<String, ChannelTopic> chatTopics = new ConcurrentHashMap<>();
@@ -49,14 +49,14 @@ public class StompHandler implements ChannelInterceptor {
             RedisMessageListenerContainer c,
             @Lazy RedisSubscriber s,
             @Lazy TopicRoomActiveUserNumberRedisSubscriber activeUserNumberSubscriber,
-            TopicRoomPresencePort topicRoomPresencePort,
+            RedisTopicRoomPresenceAdapter redisTopicRoomPresenceAdapter,
             TopicRoomReadMarker topicRoomReadMarker
     ) {
         this.tokenProvider = tp;
         this.container = c;
         this.subscriber = s;
         this.activeUserNumberSubscriber = activeUserNumberSubscriber;
-        this.topicRoomPresencePort = topicRoomPresencePort;
+        this.redisTopicRoomPresenceAdapter = redisTopicRoomPresenceAdapter;
         this.topicRoomReadMarker = topicRoomReadMarker;
     }
 
@@ -276,9 +276,9 @@ public class StompHandler implements ChannelInterceptor {
         try {
             Long parsedRoomId = Long.parseLong(roomId);
             if (entered) {
-                topicRoomPresencePort.enter(parsedRoomId, userId, sessionId);
+                redisTopicRoomPresenceAdapter.enter(parsedRoomId, userId, sessionId);
             } else {
-                topicRoomPresencePort.leave(parsedRoomId, userId, sessionId);
+                redisTopicRoomPresenceAdapter.leave(parsedRoomId, userId, sessionId);
             }
         } catch (NumberFormatException e) {
             log.warn(">>>> [STOMP] 잘못된 roomId 형식 roomId={}", roomId);

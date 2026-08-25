@@ -1,7 +1,6 @@
 package com.storix.infrastructure.external.chat;
 import com.storix.common.utils.RedisKeyStatic;
 
-import com.storix.domain.domains.chat.application.port.PublishChatPort;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.topicroom.exception.ChatConnectionFailureException;
 import com.storix.domain.domains.topicroom.exception.MessageDeliveryException;
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class RedisChatAdapter implements PublishChatPort {
+public class RedisChatAdapter {
 
     private final RedisTemplate<String, Object> jsonRedisTemplate;
 
@@ -23,7 +22,6 @@ public class RedisChatAdapter implements PublishChatPort {
         this.jsonRedisTemplate = jsonRedisTemplate;
     }
 
-    @Override
     public void publish(ChatMessageResponseDto response) {
 
         try {

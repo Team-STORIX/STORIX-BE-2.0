@@ -2,7 +2,6 @@ package com.storix.domain.domains.topicroom.service;
 
 import com.storix.domain.domains.notification.service.FeaturedNotificationService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,6 @@ import java.util.Map;
 public class HotTopicRoomFeatureService {
 
     private final TopicRoomAdaptor topicRoomAdaptor;
-    private final LoadTopicRoomUserPort loadTopicRoomUserPort;
     private final FeaturedNotificationService featuredNotificationService;
 
     public void selectAndNotify() {
@@ -27,7 +25,7 @@ public class HotTopicRoomFeatureService {
         }
 
         List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
-        Map<Long, List<Long>> membersByRoom = loadTopicRoomUserPort.loadMembersByRoomIds(roomIds);
+        Map<Long, List<Long>> membersByRoom = topicRoomAdaptor.loadMembersByRoomIds(roomIds);
 
         for (TopicRoom room : rooms) {
             try {

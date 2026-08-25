@@ -15,9 +15,6 @@ import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
 import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
-import com.storix.domain.domains.topicroom.application.port.RecordTopicRoomPort;
-import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
@@ -33,7 +30,6 @@ import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdap
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
@@ -58,11 +54,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Slf4j
-public class TopicRoomService implements TopicRoomUseCase {
+public class TopicRoomService {
 
-    private final LoadTopicRoomPort loadTopicRoomPort;
-    private final RecordTopicRoomPort recordTopicRoomPort;
-    private final LoadWorksPort loadWorksPort;
     private final SearchHistoryService searchHistoryService;
     private final BannedWordAdaptor bannedWordAdaptor;
     private final GenreScorePublisher genreScorePublisher;
@@ -76,11 +69,10 @@ public class TopicRoomService implements TopicRoomUseCase {
     private final NotificationPublisher notificationPublisher;
     private final TopicRoomUnreadService topicRoomUnreadService;
 
-    @Override
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
 
         // 참여 정보 조회
-        Slice<TopicRoomUser> participations = loadTopicRoomPort.findParticipationsByUserId(userId, pageable);
+        Slice<TopicRoomUser> participations = topicRoomAdaptor.findParticipationsByUserId(userId, pageable);
 
         // 조회된 토픽룸의 worksId
         List<Long> worksIds = participations.stream()
@@ -116,13 +108,12 @@ public class TopicRoomService implements TopicRoomUseCase {
     }
 
 
-    @Override
     public List<TopicRoomResponseDto> getTodayTrendingRooms(Long userId) {
 
         List<TopicRoomResponseDto> trendingRooms = new java.util.ArrayList<>();
 
         // 1) 충성 유저 탐색 필터 - 슬롯 1개
-        List<TopicRoomResponseDto> loyaltySlot = loadTopicRoomPort.findLoyaltySlot();
+        List<TopicRoomResponseDto> loyaltySlot = topicRoomAdaptor.findLoyaltySlot();
         trendingRooms.addAll(loyaltySlot);
 
         // 2) 신규 유저 락인 필터 - 슬롯 최대 2~3개
@@ -132,7 +123,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .map(TopicRoomResponseDto::getTopicRoomId)
                 .toList();
 
-        List<TopicRoomResponseDto> newUserSlots = loadTopicRoomPort.findNewUserSlots(excludeIds, newUserSlotCount);
+        List<TopicRoomResponseDto> newUserSlots = topicRoomAdaptor.findNewUserSlots(excludeIds, newUserSlotCount);
         trendingRooms.addAll(newUserSlots);
 
         // 참여 여부 마킹
@@ -140,7 +131,6 @@ public class TopicRoomService implements TopicRoomUseCase {
         return trendingRooms;
     }
 
-    @Override
     public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
         // 1. 상위 5개 토픽룸 가져오기
         List<TopicRoom> rooms = topicRoomAdaptor.loadHotTopicRooms();
@@ -178,12 +168,11 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .toList();
     }
 
-    @Override
     public SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable) {
 
-        List<Long> worksIds = loadWorksPort.findAllIdsByKeyword(keyword);
+        List<Long> worksIds = worksAdaptor.findAllIdsByKeyword(keyword);
 
-        Slice<TopicRoomResponseDto> rooms = loadTopicRoomPort.searchBySearchCondition(worksIds, keyword, pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(worksIds, keyword, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         String fallback = null;
@@ -203,14 +192,13 @@ public class TopicRoomService implements TopicRoomUseCase {
     }
 
     // 토픽룸 다중 필터 검색
-    @Override
     @Transactional
     public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable
     ) {
-        List<Long> worksIds = loadWorksPort.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
+        List<Long> worksIds = worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
 
-        Slice<TopicRoomResponseDto> rooms = loadTopicRoomPort.searchWithFilters(worksIds, pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         return PlusSearchResponseWrapperDto.<TopicRoomResponseDto>builder()
@@ -218,7 +206,6 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .build();
     }
 
-    @Override
     @Transactional
     public Long createRoom(Long userId, TopicRoomCreateRequestDto request) {
 
@@ -231,15 +218,15 @@ public class TopicRoomService implements TopicRoomUseCase {
         }
 
         User user = userAdaptor.findUserById(userId);
-        Works works = loadWorksPort.findById(request.getWorksId());
+        Works works = worksAdaptor.findById(request.getWorksId());
 
         // 이미 해당 작품의 토픽룸이 존재하는지 확인
-        if (loadTopicRoomPort.existsByWorksId(works.getId())) {
+        if (topicRoomAdaptor.existsByWorksId(works.getId())) {
             throw TopicRoomAlreadyExistsException.EXCEPTION;
         }
 
         // 토픽룸 참여 개수 제한
-        if (loadTopicRoomPort.countJoinedRooms(userId) >= 9) {
+        if (topicRoomAdaptor.countJoinedRooms(userId) >= 9) {
             throw MaxLimitException.EXCEPTION;
         }
 
@@ -251,9 +238,9 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .build();
 
         try {
-            TopicRoom savedRoom = recordTopicRoomPort.saveRoom(room);
-            recordTopicRoomPort.saveParticipation(user.getId(), savedRoom, TopicRoomRole.HOST);
-            recordTopicRoomPort.incrementActiveUserNumber(savedRoom.getId());
+            TopicRoom savedRoom = topicRoomAdaptor.saveRoom(room);
+            topicRoomAdaptor.saveParticipation(user.getId(), savedRoom, TopicRoomRole.HOST);
+            topicRoomAdaptor.incrementActiveUserNumber(savedRoom.getId());
 
             genreScorePublisher.publishWithGenre(
                     user.getId(), works.getId(), works.getGenre(), GenreScoreEventType.TOPIC_ROOM_JOIN);
@@ -266,20 +253,19 @@ public class TopicRoomService implements TopicRoomUseCase {
         }
     }
 
-    @Override
     @Transactional
     public void joinRoom(Long userId, Long roomId) {
         User user = userAdaptor.findUserById(userId);
-        TopicRoom room = loadTopicRoomPort.findById(roomId);
-        Works works = loadWorksPort.findById(room.getWorksId());
+        TopicRoom room = topicRoomAdaptor.findById(roomId);
+        Works works = worksAdaptor.findById(room.getWorksId());
 
         AdultContentPolicy.check(works.getAgeClassification(), () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(user.getId()));
-        if (loadTopicRoomPort.countJoinedRooms(userId) >= 9)
+        if (topicRoomAdaptor.countJoinedRooms(userId) >= 9)
             throw MaxLimitException.EXCEPTION;
 
         try {
-            recordTopicRoomPort.saveParticipation(userId, room, TopicRoomRole.MEMBER);
-            recordTopicRoomPort.incrementActiveUserNumber(roomId);
+            topicRoomAdaptor.saveParticipation(userId, room, TopicRoomRole.MEMBER);
+            topicRoomAdaptor.incrementActiveUserNumber(roomId);
             Integer activeUserNumber = topicRoomAdaptor.findActiveUserNumberById(roomId);
             publishActiveUserNumberChanged(roomId, activeUserNumber);
 
@@ -290,21 +276,20 @@ public class TopicRoomService implements TopicRoomUseCase {
         }
     }
 
-    @Override
     @Transactional
     public void leaveRoom(Long userId, Long roomId) {
 
-        int deleteCount = recordTopicRoomPort.deleteParticipation(userId, roomId);
+        int deleteCount = topicRoomAdaptor.deleteParticipation(userId, roomId);
 
         // 삭제된 행이 0개면 이미 나갔거나 참여 정보가 없는 상태
         if (deleteCount == 0) { return; }
 
-        recordTopicRoomPort.decrementActiveUserNumber(roomId);
+        topicRoomAdaptor.decrementActiveUserNumber(roomId);
 
         try {
-            TopicRoom room = loadTopicRoomPort.findById(roomId);
+            TopicRoom room = topicRoomAdaptor.findById(roomId);
             if (room.getActiveUserNumber() <= 0) {
-                recordTopicRoomPort.deleteRoom(roomId);
+                topicRoomAdaptor.deleteRoom(roomId);
             } else {
                 publishActiveUserNumberChanged(room.getId(), room.getActiveUserNumber());
             }
@@ -314,7 +299,6 @@ public class TopicRoomService implements TopicRoomUseCase {
     }
 
     // 탈퇴 유저가 참여 중인 방 전체 나가기 — 방별 try/catch로 한 방 실패가 나머지를 막지 않게
-    @Override
     @Transactional
     public void leaveAllRooms(Long userId) {
         List<Long> roomIds = topicRoomAdaptor.findAllJoinedRoomIdsByUserId(userId);
@@ -328,7 +312,6 @@ public class TopicRoomService implements TopicRoomUseCase {
         }
     }
 
-    @Override
     @Transactional
     public void reportUser(Long reporterId, Long roomId, TopicRoomReportRequestDto request) {
 
@@ -364,7 +347,7 @@ public class TopicRoomService implements TopicRoomUseCase {
                 .build();
 
         try {
-            recordTopicRoomPort.saveReport(report);
+            topicRoomAdaptor.saveReport(report);
         } catch (DataIntegrityViolationException e) {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
@@ -375,7 +358,7 @@ public class TopicRoomService implements TopicRoomUseCase {
     // 참여 여부 마킹 로직 공통화
     private void applyMembershipStatus(List<TopicRoomResponseDto> rooms, Long userId) {
         if (userId != null && !rooms.isEmpty()) {
-            List<Long> joinedRoomIds = loadTopicRoomPort.findAllJoinedRoomIdsByUserId(userId);
+            List<Long> joinedRoomIds = topicRoomAdaptor.findAllJoinedRoomIdsByUserId(userId);
             rooms.forEach(dto -> {
                 if (joinedRoomIds.contains(dto.getTopicRoomId())) {
                     dto.markAsJoined(true);

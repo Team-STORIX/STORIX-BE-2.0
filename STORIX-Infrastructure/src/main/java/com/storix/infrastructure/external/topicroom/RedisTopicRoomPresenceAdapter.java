@@ -1,7 +1,6 @@
 package com.storix.infrastructure.external.topicroom;
 
 import com.storix.common.utils.RedisKeyStatic;
-import com.storix.domain.domains.topicroom.application.port.TopicRoomPresencePort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,7 +14,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-public class RedisTopicRoomPresenceAdapter implements TopicRoomPresencePort {
+public class RedisTopicRoomPresenceAdapter {
 
     // STOMP heartbeat 가 10초라 여러 번 놓쳐도 견디도록 잡은 값
     private static final Duration STALE_AFTER = Duration.ofSeconds(60);
@@ -29,7 +28,6 @@ public class RedisTopicRoomPresenceAdapter implements TopicRoomPresencePort {
         this.redisTemplate = redisTemplate;
     }
 
-    @Override
     public void enter(Long roomId, Long userId, String sessionId) {
         try {
             String key = key(roomId);
@@ -40,7 +38,6 @@ public class RedisTopicRoomPresenceAdapter implements TopicRoomPresencePort {
         }
     }
 
-    @Override
     public void leave(Long roomId, Long userId, String sessionId) {
         try {
             redisTemplate.opsForZSet().remove(key(roomId), member(userId, sessionId));
@@ -50,7 +47,6 @@ public class RedisTopicRoomPresenceAdapter implements TopicRoomPresencePort {
     }
 
     // 인스턴스가 죽으면 DISCONNECT 를 못 받으므로 갱신이 끊긴 멤버는 접속자에서 제외
-    @Override
     public Set<Long> findOnlineUserIds(Long roomId) {
         try {
             String key = key(roomId);

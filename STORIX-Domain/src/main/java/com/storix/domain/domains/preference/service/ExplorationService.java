@@ -1,15 +1,14 @@
 package com.storix.domain.domains.preference.service;
 
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.ErrorCode;
 import com.storix.common.exception.STORIXCodeException;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
-import com.storix.domain.domains.preference.application.ExplorationUseCase;
 import com.storix.domain.domains.preference.dto.*;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.preference.exception.DuplicatedExplorationException;
 import com.storix.domain.domains.preference.repository.ExplorationRepository;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -21,17 +20,16 @@ import java.util.stream.Collectors;
 
 @UseCase
 @RequiredArgsConstructor
-public class ExplorationService implements ExplorationUseCase {
+public class ExplorationService {
 
     public static final int DAILY_EXPLORATION_LIMIT = 10;
 
+    private final WorksAdaptor worksAdaptor;
     private final ExplorationRepository explorationRepository;
-    private final LoadWorksPort loadWorksPort;
     private final ExplorationCacheHelper cacheHelper;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final ReviewAdaptor reviewAdaptor;
 
-    @Override
     @Transactional(readOnly = true)
     public List<ExplorationWorksResponseDto> getExplorationWorks(Long userId) {
         if (cacheHelper.isAlreadyParticipatedToday(userId)) {
@@ -56,17 +54,16 @@ public class ExplorationService implements ExplorationUseCase {
         int needed = DAILY_EXPLORATION_LIMIT - sessionCount;
         if (needed <= 0) return Collections.emptyList();
 
-        return loadWorksPort.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed)
+        return worksAdaptor.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed)
                 .stream()
                 .map(ExplorationWorksResponseDto::from)
                 .toList();
     }
 
-    @Override
     @Transactional
     public void submitExploration(Long userId, ExplorationSubmitRequestDto request) {
 
-        loadWorksPort.checkWorksExistById(request.worksId());
+        worksAdaptor.checkWorksExistById(request.worksId());
 
         if (cacheHelper.isAlreadyParticipatedToday(userId)) {
             throw DuplicatedExplorationException.EXCEPTION;
@@ -99,7 +96,6 @@ public class ExplorationService implements ExplorationUseCase {
         }
     }
 
-    @Override
     @Transactional(readOnly = true)
     public ExplorationResultResponseDto getExplorationResults(Long userId) {
 
@@ -122,8 +118,8 @@ public class ExplorationService implements ExplorationUseCase {
                 .map(PendingSwipeDto::worksId)
                 .collect(Collectors.toSet()));
 
-        List<Works> allLiked = loadWorksPort.findWorksByIds(new ArrayList<>(finalLikedIds));
-        List<Works> allDisliked = loadWorksPort.findWorksByIds(new ArrayList<>(finalDislikedIds));
+        List<Works> allLiked = worksAdaptor.findWorksByIds(new ArrayList<>(finalLikedIds));
+        List<Works> allDisliked = worksAdaptor.findWorksByIds(new ArrayList<>(finalDislikedIds));
 
         return ExplorationResultResponseDto.builder()
                 .likedWorks(toLibraryWorksInfoList(allLiked))

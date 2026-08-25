@@ -1,8 +1,8 @@
 package com.storix.domain.domains.search.service;
 
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -20,49 +20,36 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SearchService {
 
-    private final LoadWorksPort loadWorksPort;
-    private final SearchHistoryService searchHistoryService;
+    private final WorksAdaptor worksAdaptor;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorks(Long userId, String keyword, Pageable pageable) {
 
-        // 1. 검색어 저장
-        if (keyword != null && pageable.getPageNumber() == 0) {
-            searchHistoryService.addSearchLog(userId, keyword);
-        }
-
-        // 2. 작품 조회
-        return loadWorksPort.searchWorks(keyword, pageable).map(this::toWorkDto);
+        return worksAdaptor.searchWorks(keyword, pageable).map(this::toWorkDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorksWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
 
-        // 1. 검색어 저장
-        if (keyword != null && pageable.getPageNumber() == 0) {
-            searchHistoryService.addSearchLog(userId, keyword);
-        }
-
-        // 2. 작품 조회
         Slice<Works> worksSlice;
         if (keyword != null && keyword.startsWith("#")) {
             // 2-1. 해시태그 검색
             String hashtagKeyword = keyword.substring(1).strip(); // # 제거
-            worksSlice = loadWorksPort.searchWorksByHashtagWithFilters(hashtagKeyword, worksTypes, genres, pageable);
+            worksSlice = worksAdaptor.searchWorksByHashtagWithFilters(hashtagKeyword, worksTypes, genres, pageable);
         } else {
             // 2-2. 작품명 검색
-            worksSlice = loadWorksPort.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
+            worksSlice = worksAdaptor.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
         }
 
         return worksSlice.map(this::toWorkDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(String keyword, Pageable pageable) {
 
         // 작품 검색
-        Slice<Works> worksSlice = loadWorksPort.searchWorks(keyword, pageable);
+        Slice<Works> worksSlice = worksAdaptor.searchWorks(keyword, pageable);
 
         return PlusSearchResponseWrapperDto.<WorksSearchResponseDto>builder()
                 .result(worksSlice.map(this::toWorkDto))

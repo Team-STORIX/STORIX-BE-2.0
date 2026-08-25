@@ -1,12 +1,12 @@
 package com.storix.domain.domains.chat.service;
 
 import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
-import com.storix.domain.domains.chat.application.port.PublishChatPort;
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomException;
 import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomUserException;
@@ -25,10 +25,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatService {
 
-    private final PublishChatPort publishChatPort;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final UserAdaptor userAdaptor;
     private final ChatAdaptor chatAdaptor;
+    private final UserBlockAdaptor userBlockAdaptor;
 
     @Transactional(readOnly = true)
     public StandardProfileInfo validateRoomMemberAndGetProfile(Long userId, Long roomId) {
@@ -58,14 +58,18 @@ public class ChatService {
         return chatAdaptor.saveMessage(chatMessage);
     }
 
-    public void publishRedis(ChatMessage chatMessage, StandardProfileInfo sender) {
-        publishChatPort.publish(
-                ChatMessageResponseDto.of(chatMessage, sender.nickName(), sender.profileImageUrl(), sender.role()));
-    }
-
     @Transactional(readOnly = true)
     public Slice<ChatMessageResponseDto> getChatMessages(Long roomId, List<Long> blockedIds, Pageable pageable) {
         return chatAdaptor.loadMessages(roomId, blockedIds, pageable);
+    }
+
+    public Integer getActiveUserNumber(Long roomId) {
+        return topicRoomAdaptor.findActiveUserNumberById(roomId);
+    }
+
+    // 차단한 유저의 메시지는 목록에서 빼고, 실시간 수신 필터용으로 앱에도 내려준다
+    public List<Long> getBlockedUserIds(Long userId) {
+        return userBlockAdaptor.findBlockedUserIds(userId);
     }
 
     public LocalDateTime getRoomJoinedAt(Long userId, Long roomId) {
