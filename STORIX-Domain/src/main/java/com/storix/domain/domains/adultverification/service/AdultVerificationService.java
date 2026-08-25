@@ -36,7 +36,15 @@ public class AdultVerificationService {
     private final UserAdaptor userAdaptor;
     private final PortOneProperties portOneProperties;
 
-    // 통합인증은 건당 과금이라 창을 띄우기 전에 막는다
+    // 확정 대기 중인 티켓. 발급 전에 포트원 상태를 물어보려면 부르는 쪽이 먼저 알아야 한다
+    @Transactional(readOnly = true)
+    public String findPendingIdentityVerificationId(Long userId) {
+        return adultVerificationAdaptor.findLatestPending(userId)
+                .map(AdultVerification::getIdentityVerificationId)
+                .orElse(null);
+    }
+
+    // 통합인증은 인증 성공 건당 과금이라, 이미 유효한 유저는 창을 띄우기 전에 막는다
     @Transactional
     public AdultVerificationTicket issue(Long userId) {
         userAdaptor.findUserByIdForUpdate(userId);
