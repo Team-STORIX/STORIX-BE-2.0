@@ -26,10 +26,11 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
 import com.storix.domain.domains.topicroom.publisher.TopicRoomActiveUserNumberPublisher;
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.user.application.port.LoadUserPort;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -55,14 +56,14 @@ import java.util.Set;
 @Slf4j
 public class TopicRoomService {
 
-    private final LoadUserPort loadUserPort;
     private final SearchHistoryService searchHistoryService;
     private final BannedWordAdaptor bannedWordAdaptor;
     private final GenreScorePublisher genreScorePublisher;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
-    private final UserAdaptor userAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
+    private final UserAdaptor userAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final WorksAdaptor worksAdaptor;
     private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
     private final NotificationPublisher notificationPublisher;
@@ -216,7 +217,7 @@ public class TopicRoomService {
             throw InvalidTitleException.EXCEPTION;
         }
 
-        User user = loadUserPort.findById(userId);
+        User user = userAdaptor.findUserById(userId);
         Works works = worksAdaptor.findById(request.getWorksId());
 
         // 이미 해당 작품의 토픽룸이 존재하는지 확인
@@ -229,8 +230,7 @@ public class TopicRoomService {
             throw MaxLimitException.EXCEPTION;
         }
 
-        if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
-            throw UnverifiedException.EXCEPTION;
+        AdultContentPolicy.check(works.getAgeClassification(), () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(user.getId()));
 
         TopicRoom room = TopicRoom.builder()
                 .topicRoomName(request.getTopicRoomName())
@@ -255,12 +255,11 @@ public class TopicRoomService {
 
     @Transactional
     public void joinRoom(Long userId, Long roomId) {
-        User user = loadUserPort.findById(userId);
+        User user = userAdaptor.findUserById(userId);
         TopicRoom room = topicRoomAdaptor.findById(roomId);
         Works works = worksAdaptor.findById(room.getWorksId());
 
-        if (!user.getIsAdultVerified() && "18세 이용가".equals(works.getAgeClassification()))
-            throw UnverifiedException.EXCEPTION;
+        AdultContentPolicy.check(works.getAgeClassification(), () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(user.getId()));
         if (topicRoomAdaptor.countJoinedRooms(userId) >= 9)
             throw MaxLimitException.EXCEPTION;
 

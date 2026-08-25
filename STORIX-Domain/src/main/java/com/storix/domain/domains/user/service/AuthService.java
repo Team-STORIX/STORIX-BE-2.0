@@ -7,6 +7,7 @@ import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.image.publisher.S3CleanupPublisher;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
@@ -54,6 +55,7 @@ public class AuthService {
 
     private final PushDeviceAdaptor pushDeviceAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final UserHistoryAdaptor userHistoryAdaptor;
     private final TermsAdaptor termsAdaptor;
 
@@ -226,7 +228,10 @@ public class AuthService {
         // 4. 알림 설정 삭제 (재가입 시 새 row 생성됨)
         notificationSettingAdaptor.deleteByUserId(userId);
 
-        // 5. 탈퇴 사유 로그 저장
+        // 5. 성인인증 이력 삭제
+        adultVerificationAdaptor.deleteAllByUserId(userId);
+
+        // 6. 탈퇴 사유 로그 저장
         saveWithdrawHistory(userId, reasons, detail);
     }
 
