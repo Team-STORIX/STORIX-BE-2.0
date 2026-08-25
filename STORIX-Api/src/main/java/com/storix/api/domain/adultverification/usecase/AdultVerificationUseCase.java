@@ -22,6 +22,21 @@ public class AdultVerificationUseCase {
 
     // 본인인증 요청 발급
     public CustomResponse<AdultVerificationTicketResponse> issue(Long userId) {
+
+        // 1. 확정을 기다리는 티켓이 있으면 포트원 상태부터 본다. 외부 호출이라 트랜잭션 밖에서 끝낸다
+        String pendingId = adultVerificationService.findPendingIdentityVerificationId(userId);
+        // 아직 인증창을 안 띄운 티켓이면 포트원이 모르므로 pending 은 비어 있다
+        IdentityVerificationResult pending =
+                pendingId == null ? null : identityVerificationHelper.findVerification(pendingId);
+
+        // 2. 인증은 끝났는데 확정이 유실된 건. 여기서 확정해 과금된 인증을 살린다
+        // 취소로 실패한 건은 건드리지 않는다. 같은 id 로 인증창이 다시 열린다
+        if (pending != null && pending.isVerified()) {
+            log.warn(">>> [AdultVerification] 확정 유실 복구 userId={} identityVerificationId={}", userId, pendingId);
+            adultVerificationService.confirm(userId, pendingId, pending);
+        }
+
+        // 3. 발급. 2번으로 인증이 살아났다면 여기서 409 가 나간다
         AdultVerificationTicketResponse response =
                 AdultVerificationTicketResponse.from(adultVerificationService.issue(userId));
 

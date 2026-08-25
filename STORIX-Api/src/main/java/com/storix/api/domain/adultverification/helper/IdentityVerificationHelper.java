@@ -2,6 +2,7 @@ package com.storix.api.domain.adultverification.helper;
 
 import com.storix.common.property.PortOneProperties;
 import com.storix.domain.domains.adultverification.dto.IdentityVerificationResult;
+import com.storix.domain.domains.adultverification.exception.IncompleteIdentityVerificationException;
 import com.storix.infrastructure.external.portone.client.PortOneIdentityVerificationClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,15 @@ public class IdentityVerificationHelper {
 
     private final PortOneIdentityVerificationClient portOneIdentityVerificationClient;
     private final PortOneProperties portOneProperties;
+
+    // 인증창을 아직 띄우지 않았으면 포트원이 모르는 건이라 404 가 온다. 그때는 null 이다
+    public IdentityVerificationResult findVerification(String identityVerificationId) {
+        try {
+            return getVerification(identityVerificationId);
+        } catch (IncompleteIdentityVerificationException e) {
+            return null;
+        }
+    }
 
     public IdentityVerificationResult getVerification(String identityVerificationId) {
         return portOneIdentityVerificationClient
