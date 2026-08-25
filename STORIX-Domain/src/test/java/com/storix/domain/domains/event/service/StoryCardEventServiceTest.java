@@ -188,7 +188,7 @@ class StoryCardEventServiceTest {
             assertThat(status.card().message()).doesNotContain("\n");
             assertThat(status.card().immersion()).isEqualTo(IMMERSION);
             assertThat(status.card().luckyWork().displayLabel()).isEqualTo("웹툰 ㅣ 화산귀환");
-            assertThat(status.card().luckyWork().luckyWorkId()).isEqualTo(WORKS_ID);
+            assertThat(status.card().luckyWork().worksId()).isEqualTo(WORKS_ID);
             verify(storyCardContentAdaptor, never()).pickMessage(any(Genre.class));
         }
 

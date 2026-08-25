@@ -21,7 +21,7 @@ public record StoryCardLuckyWorkResponse(
         Platform platform,
 
         @Schema(description = "작품 상세 페이지로 이동할 때 쓰는 앱 내부 작품 ID")
-        Long luckyWorkId
+        Long worksId
 ) {
     public static StoryCardLuckyWorkResponse from(StoryCardDraw draw) {
         return StoryCardLuckyWorkResponse.builder()
@@ -29,7 +29,7 @@ public record StoryCardLuckyWorkResponse(
                 .worksType(draw.getLuckyWorkType())
                 .title(draw.getLuckyWorkTitle())
                 .platform(draw.getLuckyWorkPlatform())
-                .luckyWorkId(draw.getLuckyWorkId())
+                .worksId(draw.getLuckyWorkId())
                 .build();
     }
 }
