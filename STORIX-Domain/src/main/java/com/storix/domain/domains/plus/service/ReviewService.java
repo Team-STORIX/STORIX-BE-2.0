@@ -1,5 +1,6 @@
 package com.storix.domain.domains.plus.service;
 
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
@@ -19,7 +20,6 @@ import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import com.storix.domain.domains.user.exception.block.BlockedUserContentException;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.dto.StandardWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -39,13 +39,13 @@ import java.util.Objects;
 @Slf4j
 public class ReviewService {
 
+    private final WorksAdaptor worksAdaptor;
     private final UserAdaptor userAdaptor;
     private final UserBlockAdaptor userBlockAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final ReviewLikeAdaptor reviewLikeAdaptor;
     private final LibraryAdaptor libraryAdaptor;
 
-    private final LoadWorksPort loadWorksPort;
 
     private final AdultWorksHelper adultWorksHelper;
 
@@ -68,7 +68,7 @@ public class ReviewService {
         libraryAdaptor.incrementReviewCount(cmd.libraryUserId());
 
         // 작품 도메인 업데이트
-        loadWorksPort.updateIncrementingReviewInfoToWorks(cmd.worksId(), cmd.rating().getRatingValue());
+        worksAdaptor.updateIncrementingReviewInfo(cmd.worksId(), cmd.rating().getRatingValue());
 
         if (cmd.rating().getRatingValue() >= POSITIVE_REVIEW_THRESHOLD) {
             genreScorePublisher.publish(cmd.libraryUserId(), cmd.worksId(), GenreScoreEventType.REVIEW_WRITE_POSITIVE);
@@ -162,7 +162,7 @@ public class ReviewService {
         // 3) 작품 정보
         Long worksId = reviewInfo.worksId();
 
-        WorksInfo worksInfo = loadWorksPort.findWorksInfoById(worksId);
+        WorksInfo worksInfo = worksAdaptor.findWorksInfoById(worksId);
         StandardWorksInfo works = StandardWorksInfo.from(worksInfo);
 
         return DetailedReviewInfoWithProfile.of(profile, works, review);

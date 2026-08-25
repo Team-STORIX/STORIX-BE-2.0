@@ -20,7 +20,7 @@ import com.storix.domain.domains.report.dto.AdminReportSearchCondition;
 import com.storix.domain.domains.report.dto.AdminUserReportSummaryResponse;
 import com.storix.domain.domains.review.adaptor.ReviewReportAdaptor;
 import com.storix.domain.domains.review.domain.ReviewReport;
-import com.storix.domain.domains.topicroom.adaptor.TopicRoomPersistenceAdapter;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
@@ -60,7 +60,7 @@ public class AdminReportQueryService {
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final ReviewAdaptor reviewAdaptor;
-    private final TopicRoomPersistenceAdapter topicRoomPersistenceAdapter;
+    private final TopicRoomAdaptor topicRoomAdaptor;
     private final ChatAdaptor chatAdaptor;
     private final UserAdaptor userAdaptor;
 
@@ -281,7 +281,7 @@ public class AdminReportQueryService {
 
     private AdminReportDetailResponse getTopicRoomReportDetail(ReportCase reportCase) {
         List<TopicRoomReport> reports = topicRoomReportAdaptor.findAllByReportCaseId(reportCase.getId());
-        TopicRoom room = topicRoomPersistenceAdapter.findById(reportCase.getTargetId());
+        TopicRoom room = topicRoomAdaptor.findById(reportCase.getTargetId());
         Long reportedUserId = reports.isEmpty() ? reportCase.getReportedUserId() : reports.get(0).getReportedUserId();
 
         List<ChatMessageResponseDto> chatMessages = reportedUserId == null
@@ -349,7 +349,7 @@ public class AdminReportQueryService {
         List<TopicRoomReport> reports = topicRoomReportAdaptor.findAllByReportCaseId(reportCase.getId());
         ChatMessageResponseDto message = chatAdaptor.findAdminMessageById(reportCase.getTargetId());
         Long reportedUserId = reports.isEmpty() ? reportCase.getReportedUserId() : reports.get(0).getReportedUserId();
-        TopicRoom room = message == null ? null : topicRoomPersistenceAdapter.findById(message.roomId());
+        TopicRoom room = message == null ? null : topicRoomAdaptor.findById(message.roomId());
 
         Map<Long, String> nickNames = loadNickNames(collectUserIds(
                 reports.stream().map(TopicRoomReport::getReporterId).toList(),

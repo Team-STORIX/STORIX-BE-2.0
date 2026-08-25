@@ -1,6 +1,6 @@
 package com.storix.domain.domains.topicroom.listener;
 
-import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
+import com.storix.domain.domains.topicroom.service.TopicRoomService;
 import com.storix.domain.domains.user.event.UserAccessRevokedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class TopicRoomWithdrawListener {
 
-    private final TopicRoomUseCase topicRoomUseCase;
+    private final TopicRoomService topicRoomService;
 
     // 탈퇴 커밋 후 참여 중인 토픽룸 전체 나가기
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -21,6 +21,6 @@ public class TopicRoomWithdrawListener {
         if (event.type() != UserAccessRevokedEvent.UserAccessRevokedType.WITHDRAWN) {
             return;
         }
-        topicRoomUseCase.leaveAllRooms(event.userId());
+        topicRoomService.leaveAllRooms(event.userId());
     }
 }

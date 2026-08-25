@@ -1,8 +1,6 @@
 package com.storix.domain.domains.topicroom.service;
 
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomUserPort;
 import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
@@ -20,8 +18,6 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class TopicRoomUserService {
 
-    private final LoadTopicRoomUserPort loadTopicRoomUserPort;
-    private final LoadTopicRoomPort loadTopicRoomPort;
     private final UserAdaptor userAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
 
@@ -29,12 +25,12 @@ public class TopicRoomUserService {
     @Transactional(readOnly = true)
     public List<TopicRoomUserResponseDto> getRoomMembers(Long roomId) {
 
-        if  (!loadTopicRoomPort.existsById(roomId)) {
+        if  (!topicRoomAdaptor.existsById(roomId)) {
             throw UnknownTopicRoomException.EXCEPTION;
         }
 
         // 참여자 ID 목록 조회
-        List<Long> memberIds = loadTopicRoomUserPort.loadMemberIdsByRoomId(roomId);
+        List<Long> memberIds = topicRoomAdaptor.loadMemberIdsByRoomId(roomId);
 
         if (memberIds.isEmpty()) {
             return Collections.emptyList();

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -30,13 +31,15 @@ public class TopicRoomChatPushSender {
     private static final int MAX_RECENT_SENDERS = 3;
 
     private final TopicRoomChatPushService topicRoomChatPushService;
+    private final RedisTopicRoomPresenceAdapter redisTopicRoomPresenceAdapter;
     private final FcmPushExecutor fcmPushExecutor;
     private final ObjectMapper objectMapper;
 
     public void send(Long roomId, Long afterMessageId, Long upToMessageId,
                      Long senderId, String senderNickname, String lastMessage) {
+        Set<Long> online = redisTopicRoomPresenceAdapter.findOnlineUserIds(roomId);
         List<TopicRoomChatPushTarget> targets =
-                topicRoomChatPushService.resolveTargets(roomId, senderId, afterMessageId, upToMessageId);
+                topicRoomChatPushService.resolveTargets(roomId, senderId, afterMessageId, upToMessageId, online);
         if (targets.isEmpty()) {
             log.debug(">>>> [TopicRoomPush] 발송 대상 없음 roomId={}", roomId);
             return;

@@ -1,5 +1,6 @@
 package com.storix.domain.domains.profile.service;
 
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.hashtag.adaptor.HashtagAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
@@ -9,7 +10,6 @@ import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.profile.dto.FavoriteHashtagsResponse;
 import com.storix.domain.domains.profile.dto.FavoriteWorksWithReviewInfo;
 import com.storix.domain.domains.profile.dto.RatingCountResponse;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +29,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProfileFavoriteService {
 
+    private final WorksAdaptor worksAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final HashtagAdaptor hashtagAdaptor;
 
-    private final LoadWorksPort loadWorksPort;
 
     // 관심 작품 등록수 조회
     @Transactional(readOnly = true)
@@ -55,7 +55,7 @@ public class ProfileFavoriteService {
 
         // 1) 관심 작품 정보 조회
         Map<Long, WorksInfo> worksMap =
-                loadWorksPort.findAllWorksInfoByWorksIds(worksIds);
+                worksAdaptor.findAllWorksInfoByWorksIds(worksIds);
 
         // 2) 리뷰 관련 정보 조회
         List<ReviewedWorksIdAndRatingInfo> reviewedList =
