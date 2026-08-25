@@ -17,6 +17,7 @@ import com.storix.domain.domains.event.exception.StoryCardEventNotFoundException
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StoryCardEventService {
@@ -43,7 +45,7 @@ public class StoryCardEventService {
                 .map(draw -> StoryCardResponse.of(draw, true))
                 .orElse(null);
 
-        return StoryCardStatusResponse.builder()
+        StoryCardStatusResponse response = StoryCardStatusResponse.builder()
                 .appEventId(event.getId())
                 .eventStartDate(event.participationStartDate())
                 .eventEndDate(event.participationEndDate())
@@ -52,6 +54,15 @@ public class StoryCardEventService {
                 .drawnToday(card != null)
                 .card(card)
                 .build();
+
+        log.atInfo()
+                .addKeyValue("userId", userId)
+                .addKeyValue("appEventId", event.getId())
+                .addKeyValue("drawnToday", response.drawnToday())
+                .addKeyValue("card", card)
+                .log(">>> [StoryCardEvent] 오늘의 카드 조회");
+
+        return response;
     }
 
     @Transactional
@@ -64,7 +75,13 @@ public class StoryCardEventService {
 
         Optional<StoryCardDraw> alreadyDrawn = storyCardDrawAdaptor.findTodayDraw(event.getId(), userId, serviceDate);
         if (alreadyDrawn.isPresent()) {
-            return StoryCardResponse.of(alreadyDrawn.get(), true);
+            StoryCardResponse response = StoryCardResponse.of(alreadyDrawn.get(), true);
+            log.atInfo()
+                    .addKeyValue("userId", userId)
+                    .addKeyValue("appEventId", event.getId())
+                    .addKeyValue("card", response)
+                    .log(">>> [StoryCardEvent] 오늘 이미 뽑은 카드 반환");
+            return response;
         }
 
         Genre genre = randomGenre();
@@ -80,7 +97,13 @@ public class StoryCardEventService {
         ));
 
         // 사전 조회를 동시에 통과한 경우 저장에 실패한 쪽은 먼저 저장된 카드를 그대로 받는다
-        return StoryCardResponse.of(result.draw(), !result.created());
+        StoryCardResponse response = StoryCardResponse.of(result.draw(), !result.created());
+        log.atInfo()
+                .addKeyValue("userId", userId)
+                .addKeyValue("appEventId", event.getId())
+                .addKeyValue("card", response)
+                .log(">>> [StoryCardEvent] 카드 뽑기 완료");
+        return response;
     }
 
     private static Genre randomGenre() {
