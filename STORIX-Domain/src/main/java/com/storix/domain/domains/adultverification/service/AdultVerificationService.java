@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -35,6 +36,14 @@ public class AdultVerificationService {
     private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final UserAdaptor userAdaptor;
     private final PortOneProperties portOneProperties;
+
+    // 확정을 기다리는 티켓. 방치 정리된 건은 배치가 이미 포트원과 맞췄으므로 여기서는 보지 않는다
+    @Transactional(readOnly = true)
+    public String findPendingIdentityVerificationId(Long userId) {
+        return adultVerificationAdaptor.findLatestPending(userId)
+                .map(AdultVerification::getIdentityVerificationId)
+                .orElse(null);
+    }
 
     // 아직 확정되지 않은 최신 건. 발급 전에 포트원 상태를 물어보려면 부르는 쪽이 먼저 알아야 한다
     // 방치로 정리된 건까지 보는 이유는, 확정이 유실된 뒤 배치가 지나가도 복구할 수 있어야 해서다
@@ -170,6 +179,17 @@ public class AdultVerificationService {
                         ? AdultVerificationStatusInfo.verified(verification.getVerifiedAt(), verification.getExpiresAt())
                         : AdultVerificationStatusInfo.expired(verification.getVerifiedAt(), verification.getExpiresAt()))
                 .orElseGet(AdultVerificationStatusInfo::notVerified);
+    }
+
+    // 정리 후보. 확정이 유실된 건이 섞여 있을 수 있어 배치가 포트원에 하나씩 물어본다
+    @Transactional(readOnly = true)
+    public List<AdultVerification> findAbandonCandidates(LocalDateTime threshold, int limit) {
+        return adultVerificationAdaptor.findAbandonCandidates(threshold, limit);
+    }
+
+    @Transactional
+    public void abandon(String identityVerificationId) {
+        adultVerificationAdaptor.markAbandoned(identityVerificationId);
     }
 
     // 차단은 읽는 시점에 만료일로 판정되므로 여기서는 상태 정리만 한다

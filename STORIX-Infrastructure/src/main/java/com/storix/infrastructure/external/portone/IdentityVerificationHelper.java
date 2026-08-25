@@ -1,4 +1,4 @@
-package com.storix.api.domain.adultverification.helper;
+package com.storix.infrastructure.external.portone;
 
 import com.storix.common.property.PortOneProperties;
 import com.storix.domain.domains.adultverification.dto.IdentityVerificationResult;

@@ -25,8 +25,21 @@ public class AdultVerificationController {
 
     private final AdultVerificationUseCase adultVerificationUseCase;
 
+    @PostMapping("/sync")
+    @Operation(summary = "[1] 성인인증 상태 동기화", description = "프로필 > 설정 탭에 진입할 때 호출해주세요.   \n" +
+            "성인인증 유효 여부와 만료일을 반환합니다. 응답은 상태 조회 API 와 같습니다.   \n\n" +
+            "**확정 호출이 유실된 건을 여기서 되살립니다.**   \n" +
+            "인증은 끝났는데 확정이 안 된 티켓이 있으면 서버가 포트원에 다시 물어 확정한 뒤 결과를 내려줍니다.   \n" +
+            "그래서 앱이 종료돼 확정을 못 보냈어도, 설정 탭에 다시 들어오면 인증 완료로 보입니다.   \n" +
+            "확정을 기다리는 티켓이 없으면 외부 조회 없이 저장된 상태만 반환합니다.")
+    public CustomResponse<AdultVerificationStatusResponse> sync(
+            @AuthenticationPrincipal AuthUserDetails authUser
+    ) {
+        return adultVerificationUseCase.sync(authUser.getUserId());
+    }
+
     @PostMapping
-    @Operation(summary = "[1] 본인인증 요청 발급", description = "인증창을 띄우기 직전에 호출해주세요.   \n" +
+    @Operation(summary = "[2] 본인인증 요청 발급", description = "인증창을 띄우기 직전에 호출해주세요.   \n" +
             "응답으로 받은 identityVerificationId, storeId, channelKey 를 그대로 PortOne.requestIdentityVerification() 에 넘기면 됩니다.   \n" +
             "identityVerificationId 는 앱이 만들지 않고 서버가 발급합니다.   \n\n" +
             "**재시도 시 그대로 다시 호출하시면 됩니다.**   \n" +
@@ -42,7 +55,7 @@ public class AdultVerificationController {
     }
 
     @PostMapping("/confirm")
-    @Operation(summary = "[2] 본인인증 확정", description = "**인증창이 닫히면 성공·실패와 무관하게 항상 호출해주세요.**   \n" +
+    @Operation(summary = "[3] 본인인증 확정", description = "**인증창이 닫히면 성공·실패와 무관하게 항상 호출해주세요.**   \n" +
             "서버가 포트원에 다시 조회해 성인 여부를 판정합니다. 앱이 보낸 성공 여부는 신뢰하지 않습니다.   \n" +
             "그래서 실패로 보였어도 실제로 인증이 끝난 건이면 확정됩니다.   \n" +
             "SDK 가 `IdentityVerificationAlreadyVerified` 를 주는 경우에도 확정을 호출하면 그대로 풀립니다.   \n" +
@@ -59,8 +72,10 @@ public class AdultVerificationController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "성인인증 상태 조회", description = "현재 로그인한 유저의 성인인증 유효 여부와 만료 시각을 조회합니다.   \n" +
-            "유효기간은 1년이며 만료되면 재인증이 필요합니다.")
+    @Operation(summary = "성인인증 상태 조회", description = "저장된 성인인증 상태만 읽어 반환합니다. 외부 조회를 하지 않아 가볍습니다.   \n" +
+            "유효기간은 1년이며 만료되면 재인증이 필요합니다.   \n\n" +
+            "**설정 탭 진입 시에는 [1] 동기화 API 를 써주세요.**   \n" +
+            "이 API 는 확정이 유실된 건을 되살리지 않아, 실제로는 인증을 마쳤는데 미인증으로 보일 수 있습니다.")
     public CustomResponse<AdultVerificationStatusResponse> getStatus(
             @AuthenticationPrincipal AuthUserDetails authUser
     ) {

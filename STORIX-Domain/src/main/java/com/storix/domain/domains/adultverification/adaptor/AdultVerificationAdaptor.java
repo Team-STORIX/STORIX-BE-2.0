@@ -5,6 +5,8 @@ import com.storix.domain.domains.adultverification.domain.AdultVerificationStatu
 import com.storix.domain.domains.adultverification.exception.UnknownAdultVerificationException;
 import com.storix.domain.domains.adultverification.repository.AdultVerificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -76,9 +78,19 @@ public class AdultVerificationAdaptor {
                 AdultVerificationStatus.EXPIRED, AdultVerificationStatus.VERIFIED, today, LocalDateTime.now());
     }
 
-    public int markAbandonedBefore(LocalDateTime threshold) {
-        return adultVerificationRepository.markAbandonedBefore(
-                AdultVerificationStatus.ABANDONED, AdultVerificationStatus.PENDING, threshold, LocalDateTime.now());
+    public List<AdultVerification> findAbandonCandidates(LocalDateTime threshold, int limit) {
+        // 상한에 걸려 잘리면 다음 주기로 넘어가므로, 오래 밀린 건이 뒤로 밀리지 않게 정렬한다
+        return adultVerificationRepository.findByStatusAndUpdatedAtBefore(
+                AdultVerificationStatus.PENDING, threshold,
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.ASC, "updatedAt")));
+    }
+
+    public int markAbandoned(String identityVerificationId) {
+        return adultVerificationRepository.markAbandoned(
+                identityVerificationId,
+                AdultVerificationStatus.ABANDONED,
+                AdultVerificationStatus.PENDING,
+                LocalDateTime.now());
     }
 
     public int deleteAllByUserId(Long userId) {
