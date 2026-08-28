@@ -27,7 +27,6 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
 import com.storix.domain.domains.topicroom.publisher.TopicRoomActiveUserNumberPublisher;
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
-import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
@@ -45,7 +44,6 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +71,7 @@ public class TopicRoomService {
 
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
 
-        boolean excludeAdult = excludeAdultFor(userId);
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 참여 정보 조회
         Slice<TopicRoomUser> participations = topicRoomAdaptor.findParticipationsByUserId(userId, pageable);
@@ -117,7 +115,7 @@ public class TopicRoomService {
 
     public List<TopicRoomResponseDto> getTodayTrendingRooms(Long userId) {
 
-        boolean excludeAdult = excludeAdultFor(userId);
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         List<TopicRoomResponseDto> trendingRooms = new java.util.ArrayList<>();
 
@@ -141,7 +139,7 @@ public class TopicRoomService {
     }
 
     public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
-        boolean excludeAdult = excludeAdultFor(userId);
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 1. 상위 5개 토픽룸 가져오기
         List<TopicRoom> rooms = topicRoomAdaptor.loadHotTopicRooms();
@@ -187,7 +185,7 @@ public class TopicRoomService {
         List<Long> worksIds = worksAdaptor.findAllIdsByKeyword(keyword);
 
         Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(
-                worksIds, keyword, excludeAdultFor(userId), pageable);
+                worksIds, keyword, adultVerificationAdaptor.excludeAdultFor(userId), pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         String fallback = null;
@@ -211,9 +209,10 @@ public class TopicRoomService {
     public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable
     ) {
-        List<Long> worksIds = worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
+        List<Long> worksIds = worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres, excludeAdult);
 
-        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, excludeAdultFor(userId), pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, excludeAdult, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         return PlusSearchResponseWrapperDto.<TopicRoomResponseDto>builder()
@@ -367,16 +366,6 @@ public class TopicRoomService {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
         notificationPublisher.publish(NotificationEvent.reportReceived(reporterId));
-    }
-
-
-    // 비로그인이거나 성인인증이 유효하지 않은 유저는 성인 작품 방을 제외한다
-    private boolean excludeAdultFor(Long userId) {
-        if (userId == null) {
-            return true;
-        }
-        return !AdultVerificationPolicy.isValidOn(
-                adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId), LocalDate.now());
     }
 
     // 참여 여부 마킹 로직 공통화

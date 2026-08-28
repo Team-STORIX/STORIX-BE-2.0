@@ -1,6 +1,7 @@
 package com.storix.domain.domains.adultverification.adaptor;
 
 import com.storix.domain.domains.adultverification.domain.AdultVerification;
+import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.adultverification.domain.AdultVerificationStatus;
 import com.storix.domain.domains.adultverification.dto.LatestVerifiedAt;
 import com.storix.domain.domains.adultverification.exception.UnknownAdultVerificationException;
@@ -36,6 +37,14 @@ public class AdultVerificationAdaptor {
 
     public LocalDateTime findLatestVerifiedAtByUserId(Long userId) {
         return adultVerificationRepository.findLatestVerifiedAtByUserId(userId, AdultVerificationStatus.VERIFIED);
+    }
+
+    // 비로그인이거나 성인인증이 유효하지 않은 유저는 성인 작품을 제외한다
+    public boolean excludeAdultFor(Long userId) {
+        if (userId == null) {
+            return true;
+        }
+        return !AdultVerificationPolicy.isValidOn(findLatestVerifiedAtByUserId(userId), LocalDate.now());
     }
 
     public Map<Long, LocalDateTime> findLatestVerifiedAtByUserIds(List<Long> userIds) {

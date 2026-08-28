@@ -1,7 +1,6 @@
 package com.storix.domain.domains.profile.service;
 
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
-import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.hashtag.adaptor.HashtagAdaptor;
@@ -23,7 +22,6 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -50,7 +48,7 @@ public class ProfileFavoriteService {
     @Transactional(readOnly = true)
     public Slice<FavoriteWorksWithReviewInfo> findAllFavoriteWorksInfo(Long userId, Pageable pageable) {
 
-        boolean excludeAdult = excludeAdultFor(userId);
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 관심 작품 등록 리스트 조회
         Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, pageable);
@@ -191,14 +189,5 @@ public class ProfileFavoriteService {
             rankingMap.put(i + 1, rankedTags.get(i));
         }
         return new FavoriteHashtagsResponse(rankingMap);
-    }
-
-    // 비로그인이거나 성인인증이 유효하지 않은 유저는 성인 작품을 제외한다
-    private boolean excludeAdultFor(Long userId) {
-        if (userId == null) {
-            return true;
-        }
-        return !AdultVerificationPolicy.isValidOn(
-                adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId), LocalDate.now());
     }
 }

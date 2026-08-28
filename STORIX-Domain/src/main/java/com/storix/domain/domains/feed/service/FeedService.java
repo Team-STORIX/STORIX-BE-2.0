@@ -1,7 +1,6 @@
 package com.storix.domain.domains.feed.service;
 
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
-import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
@@ -28,7 +27,6 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +53,7 @@ public class FeedService {
     public Slice<ReaderBoardWithProfileInfo> getAllReaderBoard(Long userId, Pageable pageable) {
 
         List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
-        boolean excludeAdult = excludeAdultFor(userId);
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 1) 최신순 게시글 (차단 유저 제외)
         Slice<ReaderBoard> boards = readerFeedAdaptor.findAllExcludingBlocked(blockedIds, excludeAdult, pageable);
@@ -90,7 +88,7 @@ public class FeedService {
     @Transactional(readOnly = true)
     public Slice<SlicedWorksInfo> findFavoriteWorksList(Long userId, Pageable pageable) {
 
-        boolean excludeAdult = excludeAdultFor(userId);
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 관심 작품 등록 리스트 조회
         Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, pageable);
@@ -217,15 +215,6 @@ public class FeedService {
                 })
                 .filter(Objects::nonNull)
                 .toList();
-    }
-
-    // 비로그인이거나 성인인증이 유효하지 않은 유저는 성인 작품이 태그된 게시글을 제외한다
-    private boolean excludeAdultFor(Long userId) {
-        if (userId == null) {
-            return true;
-        }
-        return !AdultVerificationPolicy.isValidOn(
-                adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId), LocalDate.now());
     }
 
 }

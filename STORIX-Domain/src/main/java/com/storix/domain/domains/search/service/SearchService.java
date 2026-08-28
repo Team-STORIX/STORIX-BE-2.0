@@ -1,5 +1,6 @@
 package com.storix.domain.domains.search.service;
 
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
@@ -21,35 +22,38 @@ import java.util.List;
 public class SearchService {
 
     private final WorksAdaptor worksAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
 
     @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorks(Long userId, String keyword, Pageable pageable) {
 
-        return worksAdaptor.searchWorks(keyword, pageable).map(this::toWorkDto);
+        return worksAdaptor.searchWorks(keyword, adultVerificationAdaptor.excludeAdultFor(userId), pageable).map(this::toWorkDto);
     }
 
     @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorksWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
 
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
+
         Slice<Works> worksSlice;
         if (keyword != null && keyword.startsWith("#")) {
             // 2-1. 해시태그 검색
             String hashtagKeyword = keyword.substring(1).strip(); // # 제거
-            worksSlice = worksAdaptor.searchWorksByHashtagWithFilters(hashtagKeyword, worksTypes, genres, pageable);
+            worksSlice = worksAdaptor.searchWorksByHashtagWithFilters(hashtagKeyword, worksTypes, genres, excludeAdult, pageable);
         } else {
             // 2-2. 작품명 검색
-            worksSlice = worksAdaptor.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
+            worksSlice = worksAdaptor.searchWorksWithFilters(keyword, worksTypes, genres, excludeAdult, pageable);
         }
 
         return worksSlice.map(this::toWorkDto);
     }
 
     @Transactional(readOnly = true)
-    public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(String keyword, Pageable pageable) {
+    public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(Long userId, String keyword, Pageable pageable) {
 
         // 작품 검색
-        Slice<Works> worksSlice = worksAdaptor.searchWorks(keyword, pageable);
+        Slice<Works> worksSlice = worksAdaptor.searchWorks(keyword, adultVerificationAdaptor.excludeAdultFor(userId), pageable);
 
         return PlusSearchResponseWrapperDto.<WorksSearchResponseDto>builder()
                 .result(worksSlice.map(this::toWorkDto))
