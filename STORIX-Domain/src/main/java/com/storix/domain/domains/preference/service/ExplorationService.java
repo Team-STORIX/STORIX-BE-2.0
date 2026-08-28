@@ -145,7 +145,8 @@ public class ExplorationService {
                         w.getThumbnailUrl(),
                         w.getWorksType(),
                         w.getGenre(),
-                        w.getAvgRating()
+                        w.getAvgRating(),
+                        w.getAgeClassification()
                 ))
                 .toList();
     }

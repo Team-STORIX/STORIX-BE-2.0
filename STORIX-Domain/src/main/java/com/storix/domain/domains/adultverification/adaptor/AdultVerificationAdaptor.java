@@ -2,6 +2,7 @@ package com.storix.domain.domains.adultverification.adaptor;
 
 import com.storix.domain.domains.adultverification.domain.AdultVerification;
 import com.storix.domain.domains.adultverification.domain.AdultVerificationStatus;
+import com.storix.domain.domains.adultverification.dto.LatestVerifiedAt;
 import com.storix.domain.domains.adultverification.exception.UnknownAdultVerificationException;
 import com.storix.domain.domains.adultverification.repository.AdultVerificationRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +12,11 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -32,6 +36,15 @@ public class AdultVerificationAdaptor {
 
     public LocalDateTime findLatestVerifiedAtByUserId(Long userId) {
         return adultVerificationRepository.findLatestVerifiedAtByUserId(userId, AdultVerificationStatus.VERIFIED);
+    }
+
+    public Map<Long, LocalDateTime> findLatestVerifiedAtByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return adultVerificationRepository.findLatestVerifiedAtByUserIds(userIds, AdultVerificationStatus.VERIFIED)
+                .stream()
+                .collect(Collectors.toMap(LatestVerifiedAt::userId, LatestVerifiedAt::verifiedAt));
     }
 
     public Optional<AdultVerification> findLatestPending(Long userId) {

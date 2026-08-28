@@ -1,5 +1,7 @@
 package com.storix.domain.domains.profile.service;
 
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
+import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.hashtag.adaptor.HashtagAdaptor;
@@ -10,6 +12,7 @@ import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.profile.dto.FavoriteHashtagsResponse;
 import com.storix.domain.domains.profile.dto.FavoriteWorksWithReviewInfo;
 import com.storix.domain.domains.profile.dto.RatingCountResponse;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -33,6 +37,7 @@ public class ProfileFavoriteService {
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final HashtagAdaptor hashtagAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
 
 
     // 관심 작품 등록수 조회
@@ -44,6 +49,8 @@ public class ProfileFavoriteService {
     // 관심 작품 정보 조회
     @Transactional(readOnly = true)
     public Slice<FavoriteWorksWithReviewInfo> findAllFavoriteWorksInfo(Long userId, Pageable pageable) {
+
+        boolean excludeAdult = excludeAdultFor(userId);
 
         // 관심 작품 등록 리스트 조회
         Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, pageable);
@@ -77,6 +84,9 @@ public class ProfileFavoriteService {
                                 .addKeyValue("worksId", worksId)
                                 .addKeyValue("userId", userId)
                                 .log(">>> [Favorite] 관심작품 works 정보 없음");
+                        return null;
+                    }
+                    if (excludeAdult && AdultContentPolicy.isAdultOnly(worksInfo.ageClassification())) {
                         return null;
                     }
 
@@ -181,5 +191,14 @@ public class ProfileFavoriteService {
             rankingMap.put(i + 1, rankedTags.get(i));
         }
         return new FavoriteHashtagsResponse(rankingMap);
+    }
+
+    // 비로그인이거나 성인인증이 유효하지 않은 유저는 성인 작품을 제외한다
+    private boolean excludeAdultFor(Long userId) {
+        if (userId == null) {
+            return true;
+        }
+        return !AdultVerificationPolicy.isValidOn(
+                adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId), LocalDate.now());
     }
 }

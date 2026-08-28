@@ -14,6 +14,8 @@ import com.storix.domain.domains.event.dto.StoryCardStatusResponse;
 import com.storix.domain.domains.event.exception.StoryCardContentNotFoundException;
 import com.storix.domain.domains.event.exception.StoryCardEventNotActiveException;
 import com.storix.domain.domains.event.exception.StoryCardEventNotFoundException;
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
+import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ public class StoryCardEventService {
     private final StoryCardDrawAdaptor storyCardDrawAdaptor;
     private final StoryCardContentAdaptor storyCardContentAdaptor;
     private final WorksAdaptor worksAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
 
     @Transactional(readOnly = true)
     public StoryCardStatusResponse getStatus(Long userId, LocalDateTime now) {
@@ -85,6 +88,8 @@ public class StoryCardEventService {
         }
 
         Genre genre = randomGenre();
+        boolean excludeAdult = !AdultVerificationPolicy.isValidOn(
+                adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId), LocalDate.now());
         StoryCardDrawResult result = storyCardDrawAdaptor.saveIfAbsent(StoryCardDraw.of(
                 event.getId(),
                 userId,
@@ -92,7 +97,7 @@ public class StoryCardEventService {
                 genre,
                 storyCardContentAdaptor.pickMessage(genre),
                 storyCardContentAdaptor.pickImmersion(),
-                pickLuckyWork(genre),
+                pickLuckyWork(genre, excludeAdult),
                 now
         ));
 
@@ -112,8 +117,8 @@ public class StoryCardEventService {
     }
 
     // 행운의 작품은 works에서 관리한다 (is_story_card_lucky_work)
-    private StoryCardLuckyWorkPick pickLuckyWork(Genre genre) {
-        return worksAdaptor.pickStoryCardLuckyWork(genre)
+    private StoryCardLuckyWorkPick pickLuckyWork(Genre genre, boolean excludeAdult) {
+        return worksAdaptor.pickStoryCardLuckyWork(genre, excludeAdult)
                 .orElseThrow(() -> StoryCardContentNotFoundException.EXCEPTION);
     }
 

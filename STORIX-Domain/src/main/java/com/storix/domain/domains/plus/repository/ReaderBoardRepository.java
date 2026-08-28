@@ -112,12 +112,22 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
             @Param("blockedIds") List<Long> blockedIds,
             Pageable pageable);
 
-    @Query("SELECT rb FROM ReaderBoard rb WHERE rb.deleted = false ORDER BY rb.createdAt DESC")
-    Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    // excludeAdult=true 인 경우 성인작품 제외
+    @Query("SELECT rb FROM ReaderBoard rb " +
+            "LEFT JOIN Works w ON rb.worksId = w.id " +
+            "WHERE rb.deleted = false " +
+            "AND (:excludeAdult = false OR rb.worksId IS NULL OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18) " +
+            "ORDER BY rb.createdAt DESC")
+    Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(@Param("excludeAdult") boolean excludeAdult, Pageable pageable);
 
-    @Query("SELECT rb FROM ReaderBoard rb WHERE rb.userId NOT IN :blockedIds AND rb.deleted = false ORDER BY rb.createdAt DESC")
+    @Query("SELECT rb FROM ReaderBoard rb " +
+            "LEFT JOIN Works w ON rb.worksId = w.id " +
+            "WHERE rb.userId NOT IN :blockedIds AND rb.deleted = false " +
+            "AND (:excludeAdult = false OR rb.worksId IS NULL OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18) " +
+            "ORDER BY rb.createdAt DESC")
     Slice<ReaderBoard> findAllExcludingBlockedOrderByCreatedAtDesc(
             @Param("blockedIds") List<Long> blockedIds,
+            @Param("excludeAdult") boolean excludeAdult,
             Pageable pageable);
 
     // 피드 댓글

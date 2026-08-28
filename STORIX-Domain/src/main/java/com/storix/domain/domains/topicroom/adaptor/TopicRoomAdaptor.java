@@ -79,13 +79,13 @@ public class TopicRoomAdaptor {
     }
 
     @Cacheable(cacheNames = "trendingLoyaltySlot", cacheManager = "trendingCacheManager")
-    public List<TopicRoomResponseDto> findLoyaltySlot() {
-        return topicRoomRepository.findLoyaltySlot();
+    public List<TopicRoomResponseDto> findLoyaltySlot(boolean excludeAdult) {
+        return topicRoomRepository.findLoyaltySlot(excludeAdult);
     }
 
     @Cacheable(cacheNames = "trendingNewUserSlots", cacheManager = "trendingCacheManager")
-    public List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit) {
-        List<TopicRoomResponseDto> result = topicRoomRepository.findNewUserSlots(excludeIds, limit);
+    public List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit, boolean excludeAdult) {
+        List<TopicRoomResponseDto> result = topicRoomRepository.findNewUserSlots(excludeIds, limit, excludeAdult);
 
         if (excludeIds.isEmpty() && result.isEmpty()) {
             throw TodayTopicRoomNotFoundException.EXCEPTION;
@@ -94,16 +94,16 @@ public class TopicRoomAdaptor {
         return result;
     }
 
-    public Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, Pageable pageable) {
-        return topicRoomRepository.findBySearchCondition(worksIds, keyword, pageable);
+    public Slice<TopicRoomResponseDto> searchBySearchCondition(List<Long> worksIds, String keyword, boolean excludeAdult, Pageable pageable) {
+        return topicRoomRepository.findBySearchCondition(worksIds, keyword, excludeAdult, pageable);
     }
 
-    public Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, Pageable pageable) {
+    public Slice<TopicRoomResponseDto> searchWithFilters(List<Long> worksIds, boolean excludeAdult, Pageable pageable) {
         if (worksIds.isEmpty()) {
             throw SearchNoTopicRoomFoundException.EXCEPTION;
         }
 
-        Slice<TopicRoomResponseDto> result = topicRoomRepository.findBySearchWithFilters(worksIds, pageable);
+        Slice<TopicRoomResponseDto> result = topicRoomRepository.findBySearchWithFilters(worksIds, excludeAdult, pageable);
         if (result.isEmpty()) {
             throw SearchNoTopicRoomFoundException.EXCEPTION;
         }

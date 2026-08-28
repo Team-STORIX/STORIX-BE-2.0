@@ -1,5 +1,6 @@
 package com.storix.domain.domains.works.repository;
 
+import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -31,4 +32,6 @@ public interface WorksRepositoryCustom {
     );
 
     List<Long> findCandidateIds(List<Long> excludedIds, boolean excludeAdult);
+
+    List<StoryCardLuckyWorkPick> findStoryCardLuckyWorks(Genre genre, boolean excludeAdult);
 }

@@ -54,10 +54,10 @@ public class WorksAdaptor {
         worksRepository.decrementReviewsCountAndUpdateAverageRating(worksId, rating);
     }
 
-    public Optional<StoryCardLuckyWorkPick> pickStoryCardLuckyWork(Genre genre) {
+    public Optional<StoryCardLuckyWorkPick> pickStoryCardLuckyWork(Genre genre, boolean excludeAdult) {
 
         Map<Long, List<StoryCardLuckyWorkPick>> candidatesByWorks =
-                worksRepository.findStoryCardLuckyWorksByGenre(genre).stream()
+                worksRepository.findStoryCardLuckyWorks(genre, excludeAdult).stream()
                         .collect(Collectors.groupingBy(StoryCardLuckyWorkPick::worksId,
                                 LinkedHashMap::new, Collectors.toList()));
 

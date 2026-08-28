@@ -18,8 +18,8 @@ public interface TopicRoomRankingRepository {
     int updateActivityScores(LocalDateTime messageSince, LocalDateTime freshnessSince);
 
     // 충성 슬롯: 증가율 기준 상위 1개
-    List<TopicRoomResponseDto> findLoyaltySlot();
+    List<TopicRoomResponseDto> findLoyaltySlot(boolean excludeAdult);
 
     // 신규 슬롯: 참여자 수 기준 상위 2개
-    List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit);
+    List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit, boolean excludeAdult);
 }

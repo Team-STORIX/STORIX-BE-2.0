@@ -3,8 +3,10 @@ package com.storix.domain.domains.works.repository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
 import com.storix.domain.domains.works.domain.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.storix.domain.domains.works.domain.QWorks.works;
+import static com.storix.domain.domains.works.domain.QWorksPlatform.worksPlatform;
 
 @RequiredArgsConstructor
 public class WorksRepositoryImpl implements WorksRepositoryCustom {
@@ -126,6 +129,27 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
                 .select(works.id)
                 .from(works)
                 .where(builder)
+                .fetch();
+    }
+
+    @Override
+    public List<StoryCardLuckyWorkPick> findStoryCardLuckyWorks(Genre genre, boolean excludeAdult) {
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(works.isStoryCardLuckyWork.isTrue());
+        builder.and(works.genre.eq(genre));
+
+        if (excludeAdult) {
+            builder.and(works.ageClassification.ne(AgeClassification.AGE_18));
+        }
+
+        return queryFactory
+                .select(Projections.constructor(StoryCardLuckyWorkPick.class,
+                        works.id, works.worksName, works.worksType,
+                        worksPlatform.platform, worksPlatform.landingUrl))
+                .from(works)
+                .join(worksPlatform).on(worksPlatform.works.eq(works))
+                .where(builder)
+                .orderBy(works.id.asc())
                 .fetch();
     }
 
