@@ -16,6 +16,7 @@ import com.storix.domain.domains.event.dto.StoryCardStatusResponse;
 import com.storix.domain.domains.event.exception.StoryCardContentNotFoundException;
 import com.storix.domain.domains.event.exception.StoryCardEventNotActiveException;
 import com.storix.domain.domains.event.exception.StoryCardEventNotFoundException;
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Platform;
@@ -37,6 +38,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -66,6 +68,9 @@ class StoryCardEventServiceTest {
 
     @Mock
     private WorksAdaptor worksAdaptor;
+
+    @Mock
+    private AdultVerificationAdaptor adultVerificationAdaptor;
 
     @InjectMocks
     private StoryCardEventService storyCardEventService;
@@ -116,7 +121,7 @@ class StoryCardEventServiceTest {
         given(storyCardContentAdaptor.pickMessage(any(Genre.class)))
                 .willAnswer(inv -> message(inv.getArgument(0)));
         given(storyCardContentAdaptor.pickImmersion()).willReturn(immersion());
-        given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class))).willReturn(Optional.of(luckyWork()));
+        given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class), anyBoolean())).willReturn(Optional.of(luckyWork()));
         given(storyCardDrawAdaptor.saveIfAbsent(any(StoryCardDraw.class)))
                 .willAnswer(inv -> new StoryCardDrawResult(inv.getArgument(0), true));
     }
@@ -249,7 +254,7 @@ class StoryCardEventServiceTest {
             storyCardEventService.draw(USER_ID, serviceDate.atTime(10, 0));
 
             verify(storyCardContentAdaptor).pickMessage(messageGenre.capture());
-            verify(worksAdaptor).pickStoryCardLuckyWork(luckyWorkGenre.capture());
+            verify(worksAdaptor).pickStoryCardLuckyWork(luckyWorkGenre.capture(), anyBoolean());
             verify(storyCardDrawAdaptor).saveIfAbsent(saved.capture());
 
             Genre assigned = saved.getValue().getGenre();
@@ -326,7 +331,7 @@ class StoryCardEventServiceTest {
             given(storyCardContentAdaptor.pickMessage(any(Genre.class)))
                     .willAnswer(inv -> message(inv.getArgument(0)));
             given(storyCardContentAdaptor.pickImmersion()).willReturn(immersion());
-            given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class))).willReturn(Optional.of(luckyWork()));
+            given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class), anyBoolean())).willReturn(Optional.of(luckyWork()));
             // upsert가 no-op으로 끝나고 먼저 저장된 남의 카드를 읽어온 상황
             given(storyCardDrawAdaptor.saveIfAbsent(any(StoryCardDraw.class)))
                     .willReturn(new StoryCardDrawResult(winner, false));
@@ -346,7 +351,7 @@ class StoryCardEventServiceTest {
             given(storyCardContentAdaptor.pickMessage(any(Genre.class)))
                     .willAnswer(inv -> message(inv.getArgument(0)));
             given(storyCardContentAdaptor.pickImmersion()).willReturn(immersion());
-            given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class))).willReturn(Optional.empty());
+            given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class), anyBoolean())).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> storyCardEventService.draw(USER_ID, serviceDate.atTime(10, 0)))
                     .isInstanceOf(StoryCardContentNotFoundException.class);

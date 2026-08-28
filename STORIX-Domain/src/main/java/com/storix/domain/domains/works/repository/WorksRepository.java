@@ -1,8 +1,6 @@
 package com.storix.domain.domains.works.repository;
 
-import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
 import com.storix.domain.domains.onboarding.dto.OnboardingWorksInfo;
-import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
@@ -91,12 +89,12 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
     );
 
     // 서재 관련 작품 정보 조회
-    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating) " +
+    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds")
     List<LibraryWorksInfo> findLibraryWorksInfoByIds(@Param("worksIds") List<Long> worksIds);
 
-    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating) " +
+    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds " +
             "AND w.worksName LIKE %:keyword% ")
@@ -105,42 +103,33 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
                                                         Pageable pageable);
 
     // 작품 관련 정보 조회
-    @Query("SELECT new com.storix.domain.domains.works.dto.WorksInfo(w.id, w.thumbnailUrl, w.worksName, w.artistName, w.worksType, w.genre) " +
+    @Query("SELECT new com.storix.domain.domains.works.dto.WorksInfo(w.id, w.thumbnailUrl, w.worksName, w.artistName, w.worksType, w.genre, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds")
     List<WorksInfo> findWorksInfoByIds(@Param("worksIds") List<Long> worksIds);
 
     // 작품 상세 리뷰용
-    @Query("SELECT new com.storix.domain.domains.works.dto.WorksInfo(w.id, w.thumbnailUrl, w.worksName, w.artistName, w.worksType, w.genre) " +
+    @Query("SELECT new com.storix.domain.domains.works.dto.WorksInfo(w.id, w.thumbnailUrl, w.worksName, w.artistName, w.worksType, w.genre, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id = :worksId")
     Optional<WorksInfo> findWorksInfoById(@Param("worksId") Long worksId);
 
     @Query("SELECT new com.storix.domain.domains.works.dto.TopicRoomWorksInfo(" +
-            "w.id, w.worksName, w.thumbnailUrl, w.worksType) " +
+            "w.id, w.worksName, w.thumbnailUrl, w.worksType, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id IN :ids")
     List<TopicRoomWorksInfo> findSimpleInfoByIdIn(@Param("ids") List<Long> ids);
 
-    // 온보딩 작품 리스트 조회용
+    // 온보딩 작품 리스트 조회용. 비로그인 상태에서도 노출되는 공개 API라 성인 작품은 무조건 제외한다
     @Query("SELECT new com.storix.domain.domains.onboarding.dto.OnboardingWorksInfo(w.id, w.worksName, w.thumbnailUrl, w.author, w.illustrator, w.originalAuthor) " +
             "FROM Works w " +
             "WHERE w.isOnboarding = true " +
+            "AND w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18 " +
             "ORDER BY w.id ASC ")
     List<OnboardingWorksInfo> findAllOnboardingWorksInfo();
 
-    // 오늘의 스토리 카드 '행운의 작품' 후보 조회용
-    @Query("SELECT new com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick(" +
-            "w.id, w.worksName, w.worksType, p.platform, p.landingUrl) " +
-            "FROM Works w " +
-            "JOIN w.platforms p " +
-            "WHERE w.isStoryCardLuckyWork = true " +
-            "AND w.genre = :genre " +
-            "ORDER BY w.id ASC")
-    List<StoryCardLuckyWorkPick> findStoryCardLuckyWorksByGenre(@Param("genre") Genre genre);
-
     // 피드 관심 작품 리스트 조회용
-    @Query("SELECT new com.storix.domain.domains.works.dto.SlicedWorksInfo(w.id, w.thumbnailUrl, w.worksName) " +
+    @Query("SELECT new com.storix.domain.domains.works.dto.SlicedWorksInfo(w.id, w.thumbnailUrl, w.worksName, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds")
     List<SlicedWorksInfo> findAllSlicedWorksInfoByWorksIds(@Param("worksIds") List<Long> worksIds);

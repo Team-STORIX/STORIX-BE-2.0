@@ -27,6 +27,7 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.*;
 import com.storix.domain.domains.topicroom.publisher.TopicRoomActiveUserNumberPublisher;
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
+import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
@@ -44,6 +45,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +73,8 @@ public class TopicRoomService {
 
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
 
+        boolean excludeAdult = excludeAdultFor(userId);
+
         // 참여 정보 조회
         Slice<TopicRoomUser> participations = topicRoomAdaptor.findParticipationsByUserId(userId, pageable);
 
@@ -95,6 +99,9 @@ public class TopicRoomService {
                         logMissingWorksInfo(room);
                         return null;
                     }
+                    if (excludeAdult && AdultContentPolicy.isAdultOnly(worksInfo.ageClassification())) {
+                        return null;
+                    }
                     TopicRoomResponseDto dto = TopicRoomResponseDto.from(room, worksInfo, true);
                     dto.applyJoinedRoomState(
                             unreadMap.getOrDefault(room.getId(), 0),
@@ -110,10 +117,12 @@ public class TopicRoomService {
 
     public List<TopicRoomResponseDto> getTodayTrendingRooms(Long userId) {
 
+        boolean excludeAdult = excludeAdultFor(userId);
+
         List<TopicRoomResponseDto> trendingRooms = new java.util.ArrayList<>();
 
         // 1) 충성 유저 탐색 필터 - 슬롯 1개
-        List<TopicRoomResponseDto> loyaltySlot = topicRoomAdaptor.findLoyaltySlot();
+        List<TopicRoomResponseDto> loyaltySlot = topicRoomAdaptor.findLoyaltySlot(excludeAdult);
         trendingRooms.addAll(loyaltySlot);
 
         // 2) 신규 유저 락인 필터 - 슬롯 최대 2~3개
@@ -123,7 +132,7 @@ public class TopicRoomService {
                 .map(TopicRoomResponseDto::getTopicRoomId)
                 .toList();
 
-        List<TopicRoomResponseDto> newUserSlots = topicRoomAdaptor.findNewUserSlots(excludeIds, newUserSlotCount);
+        List<TopicRoomResponseDto> newUserSlots = topicRoomAdaptor.findNewUserSlots(excludeIds, newUserSlotCount, excludeAdult);
         trendingRooms.addAll(newUserSlots);
 
         // 참여 여부 마킹
@@ -132,6 +141,8 @@ public class TopicRoomService {
     }
 
     public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
+        boolean excludeAdult = excludeAdultFor(userId);
+
         // 1. 상위 5개 토픽룸 가져오기
         List<TopicRoom> rooms = topicRoomAdaptor.loadHotTopicRooms();
         if (rooms.isEmpty()) return Collections.emptyList();
@@ -159,6 +170,9 @@ public class TopicRoomService {
                         logMissingWorksInfo(room);
                         return null;
                     }
+                    if (excludeAdult && AdultContentPolicy.isAdultOnly(worksInfo.ageClassification())) {
+                        return null;
+                    }
                     boolean isJoined = joinedRoomIds.contains(room.getId());
                     String lastMessageSenderNickname = nicknameMap.get(room.getLastMessageSenderId());
 
@@ -172,7 +186,8 @@ public class TopicRoomService {
 
         List<Long> worksIds = worksAdaptor.findAllIdsByKeyword(keyword);
 
-        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(worksIds, keyword, pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(
+                worksIds, keyword, excludeAdultFor(userId), pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         String fallback = null;
@@ -198,7 +213,7 @@ public class TopicRoomService {
     ) {
         List<Long> worksIds = worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
 
-        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, excludeAdultFor(userId), pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         return PlusSearchResponseWrapperDto.<TopicRoomResponseDto>builder()
@@ -354,6 +369,15 @@ public class TopicRoomService {
         notificationPublisher.publish(NotificationEvent.reportReceived(reporterId));
     }
 
+
+    // 비로그인이거나 성인인증이 유효하지 않은 유저는 성인 작품 방을 제외한다
+    private boolean excludeAdultFor(Long userId) {
+        if (userId == null) {
+            return true;
+        }
+        return !AdultVerificationPolicy.isValidOn(
+                adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId), LocalDate.now());
+    }
 
     // 참여 여부 마킹 로직 공통화
     private void applyMembershipStatus(List<TopicRoomResponseDto> rooms, Long userId) {

@@ -1,5 +1,6 @@
 package com.storix.domain.domains.works.dto;
 
+import com.storix.domain.domains.works.domain.AgeClassification;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.domain.Genre;
 
@@ -13,6 +14,7 @@ public record LibraryWorksInfo(
         String thumbnailUrl,
         WorksType worksType,
         Genre genre,
-        Double rating
+        Double rating,
+        AgeClassification ageClassification
 ) {
 }

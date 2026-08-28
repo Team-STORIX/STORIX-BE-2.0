@@ -162,6 +162,8 @@ public class ReviewService {
         // 3) 작품 정보
         Long worksId = reviewInfo.worksId();
 
+        adultWorksHelper.CheckUserAuthorityWithWorks(userId, worksId);
+
         WorksInfo worksInfo = worksAdaptor.findWorksInfoById(worksId);
         StandardWorksInfo works = StandardWorksInfo.from(worksInfo);
 
