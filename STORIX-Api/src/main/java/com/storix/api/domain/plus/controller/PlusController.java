@@ -54,13 +54,14 @@ public class PlusController {
     @GetMapping("/reader/works")
     @Operation(summary = "작품 검색", description = "작품명 검색합니다. 결과값은 무한 스크롤로 구성됩니다.")
     public CustomResponse<PlusSearchResponseWrapperDto<WorksSearchResponseDto>> searchFavoriteWorks(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam String keyword,
             @RequestParam(defaultValue = "NAME") WorksPlusSortType sort,
             @RequestParam(defaultValue = "0") int page
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
 
-        return searchUseCase.searchWorksForWriting(keyword, pageable);
+        return searchUseCase.searchWorksForWriting(authUserDetails.getUserId(), keyword, pageable);
     }
 
     @Operation(summary = "리뷰 중복 여부 조회", description = "리뷰 중복 여부를 조회하는 api 입니다.")

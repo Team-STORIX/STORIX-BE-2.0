@@ -23,8 +23,8 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
             "OR w.author LIKE %:keyword% " +
             "OR w.illustrator LIKE %:keyword% " +
             "OR w.originalAuthor LIKE %:keyword% ) " +
-            "AND w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18 ")
-    Slice<Works> findBySearchKeyword(@Param("keyword") String keyword, Pageable pageable);
+            "AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18) ")
+    Slice<Works> findBySearchKeyword(@Param("keyword") String keyword, @Param("excludeAdult") boolean excludeAdult, Pageable pageable);
 
     @Query("SELECT (COUNT(w) > 0) FROM Works w " +
             "WHERE w.author = :nickName " +

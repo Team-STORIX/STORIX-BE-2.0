@@ -1,7 +1,6 @@
 package com.storix.domain.domains.library.service;
 
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
-import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.library.dto.StandardLibraryWorksInfo;
@@ -18,7 +17,6 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,7 +44,7 @@ public class LibraryService {
     // 서재 내 리뷰한 작품 정보 조회
     @Transactional(readOnly = true)
     public Slice<StandardLibraryWorksInfo> getReviewedWorksInfo(Long userId, Pageable pageable) {
-        boolean excludeAdult = excludeAdultFor(userId);
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 리뷰 정보 조회
         Slice<ReviewedWorksIdAndRatingInfo> reviewInfo = reviewAdaptor.getWorksListByUserId(userId, pageable);
@@ -96,7 +94,7 @@ public class LibraryService {
     @Transactional(readOnly = true)
     public Slice<StandardLibraryWorksInfo> searchReviewedWorksInfo(Long userId, String keyword, Pageable pageable) {
 
-        boolean excludeAdult = excludeAdultFor(userId);
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 모든 리뷰의 worksId, rating 리스트 조회
         List<ReviewedWorksIdAndRatingInfo> reviewInfo = reviewAdaptor.findAllWorksIdsByUserId(userId);
@@ -138,15 +136,6 @@ public class LibraryService {
                 .toList();
 
         return new SliceImpl<>(content, pageable, worksSlice.hasNext());
-    }
-
-    // 비로그인이거나 성인인증이 유효하지 않은 유저는 성인 작품을 제외한다
-    private boolean excludeAdultFor(Long userId) {
-        if (userId == null) {
-            return true;
-        }
-        return !AdultVerificationPolicy.isValidOn(
-                adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId), LocalDate.now());
     }
 
 }
