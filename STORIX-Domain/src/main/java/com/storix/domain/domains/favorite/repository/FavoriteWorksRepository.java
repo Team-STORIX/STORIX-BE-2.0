@@ -28,8 +28,10 @@ public interface FavoriteWorksRepository extends JpaRepository<FavoriteWorks, Lo
     int countByUserId(Long userId);
 
     @Query("SELECT f.worksId FROM FavoriteWorks f " +
-            "WHERE f.userId = :userId")
-    Slice<Long> findWorksIdsByUserId(Long userId, Pageable pageable);
+            "JOIN Works w ON f.worksId = w.id " +
+            "WHERE f.userId = :userId " +
+            "AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)")
+    Slice<Long> findWorksIdsByUserId(@Param("userId") Long userId, @Param("excludeAdult") boolean excludeAdult, Pageable pageable);
 
     // 선호 해시태그 용
     @Query("SELECT f.worksId FROM FavoriteWorks f " +

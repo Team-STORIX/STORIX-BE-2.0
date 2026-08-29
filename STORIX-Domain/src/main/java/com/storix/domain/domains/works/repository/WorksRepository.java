@@ -97,9 +97,11 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
     @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds " +
-            "AND w.worksName LIKE %:keyword% ")
+            "AND w.worksName LIKE %:keyword% " +
+            "AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)")
     Slice<LibraryWorksInfo> searchLibraryWorksInfoByIds(@Param("worksIds") List<Long> worksIds,
                                                         @Param("keyword") String keyword,
+                                                        @Param("excludeAdult") boolean excludeAdult,
                                                         Pageable pageable);
 
     // 작품 관련 정보 조회

@@ -89,7 +89,7 @@ public class FeedService {
     public Slice<SlicedWorksInfo> findFavoriteWorksList(Long userId, Pageable pageable) {
 
         // 관심 작품 등록 리스트 조회
-        Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, pageable);
+        Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, false, pageable);
         List<Long> worksIds = worksIdsSlice.getContent();
 
         if (worksIds.isEmpty()) {

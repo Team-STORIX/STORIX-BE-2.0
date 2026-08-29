@@ -11,7 +11,6 @@ import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.profile.dto.FavoriteHashtagsResponse;
 import com.storix.domain.domains.profile.dto.FavoriteWorksWithReviewInfo;
 import com.storix.domain.domains.profile.dto.RatingCountResponse;
-import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -50,8 +49,8 @@ public class ProfileFavoriteService {
 
         boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
-        // 관심 작품 등록 리스트 조회
-        Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, pageable);
+        // 관심 작품 등록 리스트 조회. DB 단에서 성인 작품을 걸러야 페이지 크기가 줄어들지 않는다
+        Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, excludeAdult, pageable);
         List<Long> worksIds = worksIdsSlice.getContent();
 
         if (worksIds.isEmpty()) {
@@ -82,9 +81,6 @@ public class ProfileFavoriteService {
                                 .addKeyValue("worksId", worksId)
                                 .addKeyValue("userId", userId)
                                 .log(">>> [Favorite] 관심작품 works 정보 없음");
-                        return null;
-                    }
-                    if (excludeAdult && AdultContentPolicy.isAdultOnly(worksInfo.ageClassification())) {
                         return null;
                     }
 
