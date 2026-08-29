@@ -101,6 +101,8 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public Slice<SliceReviewInfoWithProfile> findAllReviewWithoutMine(Long userId, Long worksId, Pageable pageable) {
 
+        adultWorksHelper.CheckUserAuthorityWithWorks(userId, worksId);
+
         List<Long> blockedIds = userId != null
                 ? userBlockAdaptor.findBlockedUserIds(userId)
                 : List.of();

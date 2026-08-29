@@ -6,6 +6,8 @@ import com.storix.domain.domains.notification.service.FeaturedNotificationServic
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
+import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,10 +40,15 @@ public class HotTopicRoomFeatureService {
         List<Long> allMemberIds = membersByRoom.values().stream().flatMap(List::stream).distinct().toList();
         Map<Long, LocalDateTime> verifiedAtByUserId = adultVerificationAdaptor.findLatestVerifiedAtByUserIds(allMemberIds);
 
+        // 방마다 개별 조회하지 않도록 작품 정보를 한 번에 배치 조회한다
+        List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
+        Map<Long, TopicRoomWorksInfo> worksByWorksId = worksAdaptor.loadWorksMapByIds(worksIds);
+
         for (TopicRoom room : rooms) {
             try {
                 List<Long> members = membersByRoom.getOrDefault(room.getId(), List.of());
-                boolean isAdultRoom = Boolean.TRUE.equals(worksAdaptor.isWorksForAdult(room.getWorksId()));
+                TopicRoomWorksInfo works = worksByWorksId.get(room.getWorksId());
+                boolean isAdultRoom = works != null && AdultContentPolicy.isAdultOnly(works.ageClassification());
 
                 List<Long> targetMembers = isAdultRoom
                         ? members.stream()

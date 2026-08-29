@@ -25,8 +25,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo(r.worksId, r.id, r.rating) " +
             "FROM Review r " +
-            "WHERE r.libraryUserId = :userId AND r.deleted = false")
-    Slice<ReviewedWorksIdAndRatingInfo> findWorksIdsByUserId(@Param("userId") Long userId, Pageable pageable);
+            "JOIN Works w ON r.worksId = w.id " +
+            "WHERE r.libraryUserId = :userId AND r.deleted = false " +
+            "AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)")
+    Slice<ReviewedWorksIdAndRatingInfo> findWorksIdsByUserId(@Param("userId") Long userId, @Param("excludeAdult") boolean excludeAdult, Pageable pageable);
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo(r.worksId, r.id, r.rating) " +
             "FROM Review r " +

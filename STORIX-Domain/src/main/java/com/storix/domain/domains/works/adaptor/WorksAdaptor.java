@@ -132,12 +132,12 @@ public class WorksAdaptor {
         return worksRepository.findLibraryWorksInfoByIds(worksIds);
     }
 
-    public Slice<LibraryWorksInfo> searchLibraryWorksInfoByIds(List<Long> worksIds, String keyword, Pageable pageable) {
+    public Slice<LibraryWorksInfo> searchLibraryWorksInfoByIds(List<Long> worksIds, String keyword, boolean excludeAdult, Pageable pageable) {
         if (worksIds == null || worksIds.isEmpty()) {
             return new SliceImpl<>(List.of(), pageable, false);
         }
 
-        return worksRepository.searchLibraryWorksInfoByIds(worksIds, keyword, pageable);
+        return worksRepository.searchLibraryWorksInfoByIds(worksIds, keyword, excludeAdult, pageable);
     }
 
     // 작품 정보 조회용

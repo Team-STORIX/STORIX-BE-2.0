@@ -7,7 +7,6 @@ import com.storix.domain.domains.library.dto.StandardLibraryWorksInfo;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.works.application.helper.ArtistNameParseHelper;
-import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,8 +45,8 @@ public class LibraryService {
     public Slice<StandardLibraryWorksInfo> getReviewedWorksInfo(Long userId, Pageable pageable) {
         boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
-        // 리뷰 정보 조회
-        Slice<ReviewedWorksIdAndRatingInfo> reviewInfo = reviewAdaptor.getWorksListByUserId(userId, pageable);
+        // 리뷰 정보 조회. DB 단에서 성인 작품을 걸러야 페이지 크기가 줄어들지 않는다
+        Slice<ReviewedWorksIdAndRatingInfo> reviewInfo = reviewAdaptor.getWorksListByUserId(userId, excludeAdult, pageable);
 
         // 작품 정보 조회
         List<Long> worksIds = reviewInfo.stream()
@@ -73,9 +72,6 @@ public class LibraryService {
                         log.atError()
                                 .addKeyValue("worksId", r.worksId())
                                 .log(">>> [Library] 리뷰작품 works 정보 없음");
-                        return null;
-                    }
-                    if (excludeAdult && AdultContentPolicy.isAdultOnly(works.ageClassification())) {
                         return null;
                     }
 
@@ -108,7 +104,7 @@ public class LibraryService {
             return new SliceImpl<>(List.of(), pageable, false);
         }
 
-        Slice<LibraryWorksInfo> worksSlice = worksAdaptor.searchLibraryWorksInfoByIds(allWorksIds, keyword, pageable);
+        Slice<LibraryWorksInfo> worksSlice = worksAdaptor.searchLibraryWorksInfoByIds(allWorksIds, keyword, excludeAdult, pageable);
 
         // 리뷰 정보 반영한 작품 검색 결과 세팅
         Map<Long, ReviewedWorksIdAndRatingInfo> reviewMap = reviewInfo.stream()
@@ -121,9 +117,6 @@ public class LibraryService {
                         log.atError()
                                 .addKeyValue("worksId", w.worksId())
                                 .log(">>> [Library] 검색 작품의 리뷰 정보 없음");
-                        return null;
-                    }
-                    if (excludeAdult && AdultContentPolicy.isAdultOnly(w.ageClassification())) {
                         return null;
                     }
 
