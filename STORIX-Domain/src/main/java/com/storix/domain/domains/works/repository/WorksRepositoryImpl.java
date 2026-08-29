@@ -30,10 +30,9 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
             String keyword,
             List<WorksType> worksTypes,
             List<Genre> genres,
-            boolean excludeAdult,
             Pageable pageable
     ) {
-        BooleanBuilder builder = buildFilterCondition(worksTypes, genres, excludeAdult);
+        BooleanBuilder builder = buildFilterCondition(worksTypes, genres);
 
         // 작품명 + 작가명 검색
         if (keyword != null && !keyword.isBlank()) {
@@ -66,14 +65,13 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
             String hashtagKeyword,
             List<WorksType> worksTypes,
             List<Genre> genres,
-            boolean excludeAdult,
             Pageable pageable
     ) {
         if (hashtagKeyword == null || hashtagKeyword.isBlank()) {
             return new SliceImpl<>(List.of(), pageable, false);
         }
 
-        BooleanBuilder builder = buildFilterCondition(worksTypes, genres, excludeAdult);
+        BooleanBuilder builder = buildFilterCondition(worksTypes, genres);
 
         // 해시태그명 접두 검색 (#~로 시작하는 해시태그를 가진 작품)
         builder.and(works.hashtags.any().name.startsWith(hashtagKeyword));
@@ -98,10 +96,9 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
     public List<Long> searchIdsWithFilters(
             String keyword,
             List<WorksType> worksTypes,
-            List<Genre> genres,
-            boolean excludeAdult
+            List<Genre> genres
     ) {
-        BooleanBuilder builder = buildFilterCondition(worksTypes, genres, excludeAdult);
+        BooleanBuilder builder = buildFilterCondition(worksTypes, genres);
 
         // 작품명만 검색
         if (keyword != null && !keyword.isBlank()) {
@@ -156,8 +153,8 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
                 .fetch();
     }
 
-    // 작품 다중 필터링 공통 로직
-    private BooleanBuilder buildFilterCondition(List<WorksType> worksTypes, List<Genre> genres, boolean excludeAdult) {
+    // 작품 다중 필터링 공통 로직. 성인 작품도 노출하되 isAdultOnly 플래그로 프론트에서 판단한다
+    private BooleanBuilder buildFilterCondition(List<WorksType> worksTypes, List<Genre> genres) {
         BooleanBuilder builder = new BooleanBuilder();
 
         // 1. 작품 유형 필터링
@@ -168,11 +165,6 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
         // 2. 장르 필터링
         if (genres != null && !genres.isEmpty()) {
             builder.and(works.genre.in(genres));
-        }
-
-        // 3. 성인 작품 제외
-        if (excludeAdult) {
-            builder.and(works.ageClassification.ne(AgeClassification.AGE_18));
         }
 
         return builder;

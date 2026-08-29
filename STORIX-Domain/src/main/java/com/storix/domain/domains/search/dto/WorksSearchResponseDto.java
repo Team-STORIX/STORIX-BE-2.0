@@ -13,4 +13,5 @@ public class WorksSearchResponseDto {
     private Double avgRating;   // DTO에서 Double로
     private String thumbnailUrl;
     private String worksType;
+    private Boolean isAdultOnly;
 }

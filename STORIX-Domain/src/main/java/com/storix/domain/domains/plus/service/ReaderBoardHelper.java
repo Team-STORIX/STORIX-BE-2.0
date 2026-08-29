@@ -17,6 +17,7 @@ import com.storix.domain.domains.profile.dto.ReaderBoardWithProfileInfo;
 import com.storix.domain.domains.feed.exception.TodayFeedNotFoundException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -149,13 +150,37 @@ public class ReaderBoardHelper {
                 ? readerFeedAdaptor.findLikedBoardIds(userId, boardIds)
                 : Collections.emptySet();
 
+        // 3) 참조 작품의 성인 여부 조회. 프론트에서 이 플래그로 블러 등 필터링 처리한다
+        List<Long> worksIds = boards.stream()
+                .filter(board -> Boolean.TRUE.equals(board.isWorksSelected()) && board.worksId() != null)
+                .map(StandardReaderBoardInfo::worksId)
+                .distinct()
+                .toList();
+        Map<Long, WorksInfo> worksMap = worksIds.isEmpty()
+                ? Collections.emptyMap()
+                : worksAdaptor.findAllWorksInfoByWorksIds(worksIds);
 
         // 최종 매핑
         return boards.stream()
-                .map(board -> ReaderBoardInfo.ofHomeBoard(
-                        board,
-                        likedBoardIds.contains(board.boardId())
-                ))
+                .map(board -> {
+                    boolean isAdultOnly = false;
+                    if (Boolean.TRUE.equals(board.isWorksSelected()) && board.worksId() != null) {
+                        WorksInfo works = worksMap.get(board.worksId());
+                        if (works == null) {
+                            log.atError()
+                                    .addKeyValue("worksId", board.worksId())
+                                    .addKeyValue("boardId", board.boardId())
+                                    .log(">>> [ReaderBoard] 오늘의 피드 참조 works 정보 없음");
+                        } else {
+                            isAdultOnly = AdultContentPolicy.isAdultOnly(works.ageClassification());
+                        }
+                    }
+                    return ReaderBoardInfo.ofHomeBoard(
+                            board,
+                            likedBoardIds.contains(board.boardId()),
+                            isAdultOnly
+                    );
+                })
                 .toList();
     }
 

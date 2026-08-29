@@ -71,8 +71,6 @@ public class TopicRoomService {
 
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
 
-        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
-
         // 참여 정보 조회
         Slice<TopicRoomUser> participations = topicRoomAdaptor.findParticipationsByUserId(userId, pageable);
 
@@ -97,9 +95,6 @@ public class TopicRoomService {
                         logMissingWorksInfo(room);
                         return null;
                     }
-                    if (excludeAdult && AdultContentPolicy.isAdultOnly(worksInfo.ageClassification())) {
-                        return null;
-                    }
                     TopicRoomResponseDto dto = TopicRoomResponseDto.from(room, worksInfo, true);
                     dto.applyJoinedRoomState(
                             unreadMap.getOrDefault(room.getId(), 0),
@@ -115,12 +110,10 @@ public class TopicRoomService {
 
     public List<TopicRoomResponseDto> getTodayTrendingRooms(Long userId) {
 
-        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
-
         List<TopicRoomResponseDto> trendingRooms = new java.util.ArrayList<>();
 
         // 1) 충성 유저 탐색 필터 - 슬롯 1개
-        List<TopicRoomResponseDto> loyaltySlot = topicRoomAdaptor.findLoyaltySlot(excludeAdult);
+        List<TopicRoomResponseDto> loyaltySlot = topicRoomAdaptor.findLoyaltySlot();
         trendingRooms.addAll(loyaltySlot);
 
         // 2) 신규 유저 락인 필터 - 슬롯 최대 2~3개
@@ -130,7 +123,7 @@ public class TopicRoomService {
                 .map(TopicRoomResponseDto::getTopicRoomId)
                 .toList();
 
-        List<TopicRoomResponseDto> newUserSlots = topicRoomAdaptor.findNewUserSlots(excludeIds, newUserSlotCount, excludeAdult);
+        List<TopicRoomResponseDto> newUserSlots = topicRoomAdaptor.findNewUserSlots(excludeIds, newUserSlotCount);
         trendingRooms.addAll(newUserSlots);
 
         // 참여 여부 마킹
@@ -139,7 +132,6 @@ public class TopicRoomService {
     }
 
     public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
-        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 1. 상위 5개 토픽룸 가져오기
         List<TopicRoom> rooms = topicRoomAdaptor.loadHotTopicRooms();
@@ -168,9 +160,6 @@ public class TopicRoomService {
                         logMissingWorksInfo(room);
                         return null;
                     }
-                    if (excludeAdult && AdultContentPolicy.isAdultOnly(worksInfo.ageClassification())) {
-                        return null;
-                    }
                     boolean isJoined = joinedRoomIds.contains(room.getId());
                     String lastMessageSenderNickname = nicknameMap.get(room.getLastMessageSenderId());
 
@@ -184,8 +173,7 @@ public class TopicRoomService {
 
         List<Long> worksIds = worksAdaptor.findAllIdsByKeyword(keyword);
 
-        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(
-                worksIds, keyword, adultVerificationAdaptor.excludeAdultFor(userId), pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(worksIds, keyword, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         String fallback = null;
@@ -209,10 +197,9 @@ public class TopicRoomService {
     public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable
     ) {
-        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
-        List<Long> worksIds = worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres, excludeAdult);
+        List<Long> worksIds = worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
 
-        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, excludeAdult, pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
 
         return PlusSearchResponseWrapperDto.<TopicRoomResponseDto>builder()
