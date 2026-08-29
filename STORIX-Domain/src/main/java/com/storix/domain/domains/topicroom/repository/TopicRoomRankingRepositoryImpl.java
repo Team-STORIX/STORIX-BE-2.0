@@ -94,13 +94,10 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
 
     // 충성 유저 탐색 필터 - 슬롯 1개
     @Override
-    public List<TopicRoomResponseDto> findLoyaltySlot(boolean excludeAdult) {
+    public List<TopicRoomResponseDto> findLoyaltySlot() {
 
         BooleanBuilder condition = commonFilter();
         condition.and(topicRoom.activeUserNumber.goe(5));
-        if (excludeAdult) {
-            condition.and(works.ageClassification.ne(AgeClassification.AGE_18));
-        }
 
         // 절대 증가 수: 현재 참여자 수 - 24시간 전 참여자 수
         NumberExpression<Integer> absoluteGrowth =
@@ -115,7 +112,8 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
                         works.thumbnailUrl,
                         topicRoom.activeUserNumber,
                         topicRoom.lastChatTime,
-                        Expressions.constant(false)
+                        Expressions.constant(false),
+                        works.ageClassification.eq(AgeClassification.AGE_18)
                 ))
                 .from(topicRoom)
                 .join(works).on(topicRoom.worksId.eq(works.id))
@@ -131,7 +129,7 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
 
     // 신규 유저 락인 필터 - 슬롯 2개 ~ 3개
     @Override
-    public List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit, boolean excludeAdult) {
+    public List<TopicRoomResponseDto> findNewUserSlots(List<Long> excludeIds, int limit) {
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -143,10 +141,6 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
             condition.and(topicRoom.id.notIn(excludeIds));
         }
 
-        if (excludeAdult) {
-            condition.and(works.ageClassification.ne(AgeClassification.AGE_18));
-        }
-
         return queryFactory
                 .select(Projections.constructor(TopicRoomResponseDto.class,
                         topicRoom.id,
@@ -156,7 +150,8 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
                         works.thumbnailUrl,
                         topicRoom.activeUserNumber,
                         topicRoom.lastChatTime,
-                        Expressions.constant(false)
+                        Expressions.constant(false),
+                        works.ageClassification.eq(AgeClassification.AGE_18)
                 ))
                 .from(topicRoom)
                 .join(works).on(topicRoom.worksId.eq(works.id))

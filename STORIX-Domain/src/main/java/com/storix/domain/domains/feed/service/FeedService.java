@@ -3,7 +3,6 @@ package com.storix.domain.domains.feed.service;
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
-import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
@@ -85,10 +84,9 @@ public class FeedService {
                 profileMap.get(info.userId()));
     }
 
+    // 성인 작품도 노출하고, isAdultOnly 플래그로 프론트에서 블러 처리한다
     @Transactional(readOnly = true)
     public Slice<SlicedWorksInfo> findFavoriteWorksList(Long userId, Pageable pageable) {
-
-        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 관심 작품 등록 리스트 조회
         Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, pageable);
@@ -106,7 +104,6 @@ public class FeedService {
         List<SlicedWorksInfo> result = worksIds.stream()
                 .map(slicedWorksInfoMap::get)
                 .filter(Objects::nonNull)
-                .filter(info -> !excludeAdult || !AdultContentPolicy.isAdultOnly(info.ageClassification()))
                 .toList();
 
         return new SliceImpl<>(result, pageable, worksIdsSlice.hasNext());

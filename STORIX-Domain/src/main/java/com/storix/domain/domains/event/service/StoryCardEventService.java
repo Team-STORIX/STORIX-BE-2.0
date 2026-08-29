@@ -15,7 +15,6 @@ import com.storix.domain.domains.event.exception.StoryCardContentNotFoundExcepti
 import com.storix.domain.domains.event.exception.StoryCardEventNotActiveException;
 import com.storix.domain.domains.event.exception.StoryCardEventNotFoundException;
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
-import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
@@ -88,8 +87,7 @@ public class StoryCardEventService {
         }
 
         Genre genre = randomGenre();
-        boolean excludeAdult = !AdultVerificationPolicy.isValidOn(
-                adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId), LocalDate.now());
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
         StoryCardDrawResult result = storyCardDrawAdaptor.saveIfAbsent(StoryCardDraw.of(
                 event.getId(),
                 userId,

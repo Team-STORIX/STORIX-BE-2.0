@@ -80,12 +80,12 @@ public class WorksAdaptor {
         return worksRepository.findBySearchKeyword(keyword, excludeAdult, pageable);
     }
 
-    public Slice<Works> searchWorksWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, boolean excludeAdult, Pageable pageable) {
-        return worksRepository.searchWithFilters(keyword, worksTypes, genres, excludeAdult, pageable);
+    public Slice<Works> searchWorksWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        return worksRepository.searchWithFilters(keyword, worksTypes, genres, pageable);
     }
 
-    public Slice<Works> searchWorksByHashtagWithFilters(String hashtagKeyword, List<WorksType> worksTypes, List<Genre> genres, boolean excludeAdult, Pageable pageable) {
-        return worksRepository.searchByHashtagWithFilters(hashtagKeyword, worksTypes, genres, excludeAdult, pageable);
+    public Slice<Works> searchWorksByHashtagWithFilters(String hashtagKeyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        return worksRepository.searchByHashtagWithFilters(hashtagKeyword, worksTypes, genres, pageable);
     }
 
     // 작품 조회
@@ -98,8 +98,8 @@ public class WorksAdaptor {
         return worksRepository.findAllIdsByKeyword(keyword);
     }
 
-    public List<Long> findAllIdsByKeywordWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, boolean excludeAdult) {
-        return worksRepository.searchIdsWithFilters(keyword, worksTypes, genres, excludeAdult);
+    public List<Long> findAllIdsByKeywordWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres) {
+        return worksRepository.searchIdsWithFilters(keyword, worksTypes, genres);
     }
 
     public Works findByIdWithHashtags(Long worksId) {

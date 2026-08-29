@@ -15,7 +15,6 @@ public interface WorksRepositoryCustom {
             String keyword,
             List<WorksType> worksTypes,
             List<Genre> genres,
-            boolean excludeAdult,
             Pageable pageable
     );
 
@@ -23,15 +22,13 @@ public interface WorksRepositoryCustom {
             String hashtagKeyword,
             List<WorksType> worksTypes,
             List<Genre> genres,
-            boolean excludeAdult,
             Pageable pageable
     );
 
     List<Long> searchIdsWithFilters(
             String keyword,
             List<WorksType> worksTypes,
-            List<Genre> genres,
-            boolean excludeAdult
+            List<Genre> genres
     );
 
     List<Long> findCandidateIds(List<Long> excludedIds, boolean excludeAdult);

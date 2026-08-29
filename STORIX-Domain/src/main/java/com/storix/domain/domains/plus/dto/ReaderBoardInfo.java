@@ -28,7 +28,10 @@ public record ReaderBoardInfo(
         BoardTheme theme,
 
         // 좋아요 여부
-        boolean isLiked
+        boolean isLiked,
+
+        // 참조 작품이 성인 작품인지 여부. 작품 미선택이면 false
+        Boolean isAdultOnly
 ) {
     // 내 게시글 조회
     public static ReaderBoardInfo ofMyBoard(ReaderBoard board, boolean isLiked) {
@@ -66,12 +69,12 @@ public record ReaderBoardInfo(
     }
 
     // 오늘의 피드 게시글 조회
-    public static ReaderBoardInfo ofHomeBoard(StandardReaderBoardInfo board, boolean isLiked) {
+    public static ReaderBoardInfo ofHomeBoard(StandardReaderBoardInfo board, boolean isLiked, boolean isAdultOnly) {
         return ReaderBoardInfo.builder()
                 .userId(board.userId())
                 .boardId(board.boardId())
-                .isWorksSelected(null)
-                .worksId(null)
+                .isWorksSelected(board.isWorksSelected())
+                .worksId(board.worksId())
                 .lastCreatedTime(null)
                 .content(board.content())
                 .likeCount(board.likeCount())
@@ -79,6 +82,7 @@ public record ReaderBoardInfo(
                 .isSpoiler(board.isSpoiler())
                 .spoilerScript(board.spoilerScript())
                 .isLiked(isLiked)
+                .isAdultOnly(isAdultOnly)
                 .build();
     }
 

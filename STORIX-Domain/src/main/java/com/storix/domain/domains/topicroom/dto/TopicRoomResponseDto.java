@@ -1,6 +1,7 @@
 package com.storix.domain.domains.topicroom.dto;
 
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import lombok.*;
@@ -24,9 +25,11 @@ public class TopicRoomResponseDto {
     private Boolean isJoined;
     private Integer unreadCount;
     private Boolean notificationEnabled;
+    private Boolean isAdultOnly;
 
     public TopicRoomResponseDto(Long topicRoomId, String topicRoomName, WorksType worksType, String worksName,
-                                String thumbnailUrl, Integer activeUserNumber, LocalDateTime lastChatTime, boolean isJoined) {
+                                String thumbnailUrl, Integer activeUserNumber, LocalDateTime lastChatTime, boolean isJoined,
+                                boolean isAdultOnly) {
         this.topicRoomId = topicRoomId;
         this.topicRoomName = topicRoomName;
         this.worksType = (worksType != null) ? worksType.getDbValue() : null;
@@ -36,6 +39,7 @@ public class TopicRoomResponseDto {
         this.lastChatTime = formatTimeAgo(lastChatTime); // 시간 포맷팅 로직 적용
         this.isJoined = isJoined;
         this.unreadCount = 0;
+        this.isAdultOnly = isAdultOnly;
     }
 
     public static TopicRoomResponseDto from(TopicRoom room, TopicRoomWorksInfo worksInfo, boolean isJoined) {
@@ -49,6 +53,7 @@ public class TopicRoomResponseDto {
                 .lastChatTime(formatTimeAgo(room.getLastChatTime()))
                 .isJoined(isJoined)
                 .unreadCount(0)
+                .isAdultOnly(AdultContentPolicy.isAdultOnly(worksInfo.ageClassification()))
                 .build();
     }
 

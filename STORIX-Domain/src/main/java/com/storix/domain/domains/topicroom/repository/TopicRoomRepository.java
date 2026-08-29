@@ -16,25 +16,25 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
 
     @Query("""
         SELECT new com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto(
-            t.id, t.topicRoomName, w.worksType, w.worksName, w.thumbnailUrl, t.activeUserNumber, t.lastChatTime, false
+            t.id, t.topicRoomName, w.worksType, w.worksName, w.thumbnailUrl, t.activeUserNumber, t.lastChatTime, false,
+            (w.ageClassification = com.storix.domain.domains.works.domain.AgeClassification.AGE_18)
         )
         FROM TopicRoom t
         JOIN Works w ON t.worksId = w.id
         WHERE (w.id IN :worksIds OR t.topicRoomName LIKE %:keyword%)
-        AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)
     """)
-    Slice<TopicRoomResponseDto> findBySearchCondition(@Param("worksIds") List<Long> worksIds, @Param("keyword") String keyword, @Param("excludeAdult") boolean excludeAdult, Pageable pageable);
+    Slice<TopicRoomResponseDto> findBySearchCondition(@Param("worksIds") List<Long> worksIds, @Param("keyword") String keyword, Pageable pageable);
 
     @Query("""
         SELECT new com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto(
-            t.id, t.topicRoomName, w.worksType, w.worksName, w.thumbnailUrl, t.activeUserNumber, t.lastChatTime, false
+            t.id, t.topicRoomName, w.worksType, w.worksName, w.thumbnailUrl, t.activeUserNumber, t.lastChatTime, false,
+            (w.ageClassification = com.storix.domain.domains.works.domain.AgeClassification.AGE_18)
         )
         FROM TopicRoom t
         JOIN Works w ON t.worksId = w.id
         WHERE w.id IN :worksIds
-        AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)
     """)
-    Slice<TopicRoomResponseDto> findBySearchWithFilters(@Param("worksIds") List<Long> worksIds, @Param("excludeAdult") boolean excludeAdult, Pageable pageable);
+    Slice<TopicRoomResponseDto> findBySearchWithFilters(@Param("worksIds") List<Long> worksIds, Pageable pageable);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE TopicRoom t SET t.activeUserNumber = t.activeUserNumber + 1 WHERE t.id = :id")
