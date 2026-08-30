@@ -4,8 +4,10 @@ import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.notification.adaptor.AdminNotificationAdaptor;
 import com.storix.domain.domains.notification.domain.AdminNotification;
 import com.storix.domain.domains.notification.domain.AdminNotificationTargetAudience;
+import com.storix.domain.domains.notification.domain.AdminNotificationType;
 import com.storix.domain.domains.notification.dto.AdminNotificationCommand;
 import com.storix.domain.domains.notification.exception.AdminNotificationEventNoWinnerException;
+import com.storix.domain.domains.notification.exception.AdminNotificationMarketingNightException;
 import com.storix.domain.domains.notification.exception.AdminNotificationNotCancelableException;
 import com.storix.domain.domains.notification.exception.AdminNotificationNotUpdatableException;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +25,12 @@ public class AdminNotificationService {
 
     private final AdminNotificationAdaptor adminNotificationAdaptor;
     private final AppEventAdaptor appEventAdaptor;
+    private final MarketingNightPolicy marketingNightPolicy;
 
     @Transactional
     public Long create(AdminNotificationCommand cmd, Long assigneeAdminId) {
         validateEventWinnersTarget(cmd);
-        return adminNotificationAdaptor.save(AdminNotification.builder()
+        AdminNotification adminNotification = AdminNotification.builder()
                 .title(cmd.title())
                 .content(cmd.content())
                 .notificationType(cmd.notificationType())
@@ -38,7 +41,9 @@ public class AdminNotificationService {
                 .eventTargetId(cmd.eventTargetId())
                 .targetLink(cmd.targetLink())
                 .assigneeAdminId(assigneeAdminId)
-                .build()).getId();
+                .build();
+        validateMarketingSendTime(adminNotification);
+        return adminNotificationAdaptor.save(adminNotification).getId();
     }
 
     @Transactional
@@ -60,7 +65,17 @@ public class AdminNotificationService {
                 cmd.eventTargetId(),
                 cmd.targetLink()
         );
+        validateMarketingSendTime(adminNotification);
         return adminNotification;
+    }
+
+    // 마케팅은 수신 동의 없이 야간(21시~익일 8시) 발송 불가
+    private void validateMarketingSendTime(AdminNotification adminNotification) {
+        if (adminNotification.getNotificationType() == AdminNotificationType.MARKETING
+                && adminNotification.getScheduledAt() != null
+                && marketingNightPolicy.isBlocked(adminNotification.getScheduledAt())) {
+            throw AdminNotificationMarketingNightException.EXCEPTION;
+        }
     }
 
     // 당첨자 발송은 대상 이벤트가 당첨자를 뽑는 이벤트일 때만 허용한다.
