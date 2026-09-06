@@ -23,11 +23,12 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // 서재탭
     boolean existsByLibraryUserIdAndWorksIdAndDeletedFalse(Long libraryUserId, Long worksId);
 
+    // LEFT JOIN 으로 Works 가 지워져도 리뷰가 사라지지 않도록 유지한다
     @Query("SELECT new com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo(r.worksId, r.id, r.rating) " +
             "FROM Review r " +
-            "JOIN Works w ON r.worksId = w.id " +
+            "LEFT JOIN Works w ON r.worksId = w.id " +
             "WHERE r.libraryUserId = :userId AND r.deleted = false " +
-            "AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)")
+            "AND (:excludeAdult = false OR w.id IS NULL OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)")
     Slice<ReviewedWorksIdAndRatingInfo> findWorksIdsByUserId(@Param("userId") Long userId, @Param("excludeAdult") boolean excludeAdult, Pageable pageable);
 
     @Query("SELECT new com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo(r.worksId, r.id, r.rating) " +

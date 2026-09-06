@@ -27,10 +27,11 @@ public interface FavoriteWorksRepository extends JpaRepository<FavoriteWorks, Lo
     // 관심 작품 조회용
     int countByUserId(Long userId);
 
+    // LEFT JOIN 으로 Works 가 지워져도 favorite 이 사라지지 않도록 유지한다
     @Query("SELECT f.worksId FROM FavoriteWorks f " +
-            "JOIN Works w ON f.worksId = w.id " +
+            "LEFT JOIN Works w ON f.worksId = w.id " +
             "WHERE f.userId = :userId " +
-            "AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)")
+            "AND (:excludeAdult = false OR w.id IS NULL OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)")
     Slice<Long> findWorksIdsByUserId(@Param("userId") Long userId, @Param("excludeAdult") boolean excludeAdult, Pageable pageable);
 
     // 선호 해시태그 용

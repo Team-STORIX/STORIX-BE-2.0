@@ -1,6 +1,5 @@
 package com.storix.domain.domains.profile.service;
 
-import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.hashtag.adaptor.HashtagAdaptor;
@@ -34,7 +33,6 @@ public class ProfileFavoriteService {
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final HashtagAdaptor hashtagAdaptor;
-    private final AdultVerificationAdaptor adultVerificationAdaptor;
 
 
     // 관심 작품 등록수 조회
@@ -47,10 +45,8 @@ public class ProfileFavoriteService {
     @Transactional(readOnly = true)
     public Slice<FavoriteWorksWithReviewInfo> findAllFavoriteWorksInfo(Long userId, Pageable pageable) {
 
-        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
-
-        // 관심 작품 등록 리스트 조회. DB 단에서 성인 작품을 걸러야 페이지 크기가 줄어들지 않는다
-        Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, excludeAdult, pageable);
+        // 관심 작품 등록 리스트 조회
+        Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, false, pageable);
         List<Long> worksIds = worksIdsSlice.getContent();
 
         if (worksIds.isEmpty()) {

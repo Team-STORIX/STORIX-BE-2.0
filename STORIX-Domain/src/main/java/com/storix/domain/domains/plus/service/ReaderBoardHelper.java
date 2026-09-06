@@ -160,7 +160,6 @@ public class ReaderBoardHelper {
                 ? Collections.emptyMap()
                 : worksAdaptor.findAllWorksInfoByWorksIds(worksIds);
 
-        // 최종 매핑
         return boards.stream()
                 .map(board -> {
                     boolean isAdultOnly = false;
@@ -171,6 +170,7 @@ public class ReaderBoardHelper {
                                     .addKeyValue("worksId", board.worksId())
                                     .addKeyValue("boardId", board.boardId())
                                     .log(">>> [ReaderBoard] 오늘의 피드 참조 works 정보 없음");
+                            isAdultOnly = true;
                         } else {
                             isAdultOnly = AdultContentPolicy.isAdultOnly(works.ageClassification());
                         }

@@ -32,7 +32,7 @@ public class SearchUseCase {
             searchHistoryService.addSearchLog(userId, keyword);
         }
 
-        Slice<WorksSearchResponseDto> result = searchService.searchWorks(userId, keyword, pageable);
+        Slice<WorksSearchResponseDto> result = searchService.searchWorks(keyword, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, wrapWithFallback(result));
     }
@@ -45,18 +45,18 @@ public class SearchUseCase {
         }
 
         Slice<WorksSearchResponseDto> result =
-                searchService.searchWorksWithFilters(userId, keyword, worksTypes, genres, pageable);
+                searchService.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, wrapWithFallback(result));
     }
 
     // [+] 탭 검색
-    public CustomResponse<PlusSearchResponseWrapperDto<WorksSearchResponseDto>> searchWorksForWriting(Long userId, String keyword, Pageable pageable) {
+    public CustomResponse<PlusSearchResponseWrapperDto<WorksSearchResponseDto>> searchWorksForWriting(String keyword, Pageable pageable) {
         if (pageable.getPageNumber() == 0) {
             searchHistoryService.addTrendingScore(keyword);
         }
 
-        PlusSearchResponseWrapperDto<WorksSearchResponseDto> result = searchService.searchWorksForWriting(userId, keyword, pageable);
+        PlusSearchResponseWrapperDto<WorksSearchResponseDto> result = searchService.searchWorksForWriting(keyword, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.PLUS_WORKS_LOAD_SUCCESS, result);
     }

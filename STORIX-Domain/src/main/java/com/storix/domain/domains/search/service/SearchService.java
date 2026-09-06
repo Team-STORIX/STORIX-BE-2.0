@@ -23,16 +23,16 @@ public class SearchService {
 
     private final WorksAdaptor worksAdaptor;
 
-    // 작품 탭 검색: 성인 작품도 노출하고, isAdultOnly 플래그로 프론트에서 블러 처리한다
+    // 작품 탭 검색
     @Transactional(readOnly = true)
-    public Slice<WorksSearchResponseDto> searchWorks(Long userId, String keyword, Pageable pageable) {
+    public Slice<WorksSearchResponseDto> searchWorks(String keyword, Pageable pageable) {
 
         return worksAdaptor.searchWorks(keyword, false, pageable).map(this::toWorkDto);
     }
 
     @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorksWithFilters(
-            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+            String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
 
         Slice<Works> worksSlice;
         if (keyword != null && keyword.startsWith("#")) {
@@ -47,9 +47,9 @@ public class SearchService {
         return worksSlice.map(this::toWorkDto);
     }
 
-    // 피드 작성용 작품 검색: 성인 작품도 노출하고, isAdultOnly 플래그로 프론트에서 블러 처리한다
+    // 피드 작성용 작품 검색
     @Transactional(readOnly = true)
-    public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(Long userId, String keyword, Pageable pageable) {
+    public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(String keyword, Pageable pageable) {
 
         // 작품 검색
         Slice<Works> worksSlice = worksAdaptor.searchWorks(keyword, false, pageable);
