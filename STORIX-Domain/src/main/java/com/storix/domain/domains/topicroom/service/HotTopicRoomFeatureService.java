@@ -14,8 +14,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -33,27 +36,31 @@ public class HotTopicRoomFeatureService {
             return;
         }
 
-        List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
-        Map<Long, List<Long>> membersByRoom = topicRoomAdaptor.loadMembersByRoomIds(roomIds);
-
-        // 방 참여 시점 이후 성인인증이 만료된 멤버는 성인 작품 방 알림에서 제외한다
-        List<Long> allMemberIds = membersByRoom.values().stream().flatMap(List::stream).distinct().toList();
-        Map<Long, LocalDateTime> verifiedAtByUserId = adultVerificationAdaptor.findLatestVerifiedAtByUserIds(allMemberIds);
-
-        // 방마다 개별 조회하지 않도록 작품 정보를 한 번에 배치 조회한다
         List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
-        Map<Long, TopicRoomWorksInfo> worksByWorksId = worksAdaptor.loadWorksMapByIds(worksIds);
+        Map<Long, TopicRoomWorksInfo> worksByWorksId = safeLoadWorks(worksIds);
+
+        List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
+        Map<Long, List<Long>> membersByRoom = safeLoadMembers(roomIds);
+
+        Set<Long> adultRoomMemberIds = rooms.stream()
+                .filter(room -> isAdultRoom(worksByWorksId, room))
+                .flatMap(room -> membersByRoom.getOrDefault(room.getId(), List.of()).stream())
+                .collect(Collectors.toSet());
+        Map<Long, LocalDateTime> verifiedAtByUserId = adultRoomMemberIds.isEmpty()
+                ? Collections.emptyMap()
+                : safeLoadVerifiedAt(adultRoomMemberIds.stream().toList());
+
+        LocalDate today = LocalDate.now();
 
         for (TopicRoom room : rooms) {
             try {
                 List<Long> members = membersByRoom.getOrDefault(room.getId(), List.of());
-                TopicRoomWorksInfo works = worksByWorksId.get(room.getWorksId());
-                boolean isAdultRoom = works != null && AdultContentPolicy.isAdultOnly(works.ageClassification());
+                boolean isAdultRoom = isAdultRoom(worksByWorksId, room);
 
                 List<Long> targetMembers = isAdultRoom
                         ? members.stream()
                                 .filter(memberId -> AdultVerificationPolicy.isValidOn(
-                                        verifiedAtByUserId.get(memberId), LocalDate.now()))
+                                        verifiedAtByUserId.get(memberId), today))
                                 .toList()
                         : members;
 
@@ -61,6 +68,46 @@ public class HotTopicRoomFeatureService {
             } catch (Exception e) {
                 log.error(">>> [HotTopicRoom] 룸 선정 알림 실패 roomId={}", room.getId(), e);
             }
+        }
+    }
+
+    // 작품 정보를 못 찾으면 성인 여부를 확신할 수 없으므로 안전하게 성인 방으로 간주한다
+    private boolean isAdultRoom(Map<Long, TopicRoomWorksInfo> worksByWorksId, TopicRoom room) {
+        TopicRoomWorksInfo works = worksByWorksId.get(room.getWorksId());
+        if (works == null) {
+            log.atError()
+                    .addKeyValue("roomId", room.getId())
+                    .addKeyValue("worksId", room.getWorksId())
+                    .log(">>> [HotTopicRoom] 방의 참조 works 정보 없음");
+            return true;
+        }
+        return AdultContentPolicy.isAdultOnly(works.ageClassification());
+    }
+
+    private Map<Long, TopicRoomWorksInfo> safeLoadWorks(List<Long> worksIds) {
+        try {
+            return worksAdaptor.loadWorksMapByIds(worksIds);
+        } catch (Exception e) {
+            log.error(">>> [HotTopicRoom] 작품 정보 배치 조회 실패", e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private Map<Long, List<Long>> safeLoadMembers(List<Long> roomIds) {
+        try {
+            return topicRoomAdaptor.loadMembersByRoomIds(roomIds);
+        } catch (Exception e) {
+            log.error(">>> [HotTopicRoom] 방별 멤버 조회 실패", e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private Map<Long, LocalDateTime> safeLoadVerifiedAt(List<Long> memberIds) {
+        try {
+            return adultVerificationAdaptor.findLatestVerifiedAtByUserIds(memberIds);
+        } catch (Exception e) {
+            log.error(">>> [HotTopicRoom] 성인 인증 배치 조회 실패", e);
+            return Collections.emptyMap();
         }
     }
 }
