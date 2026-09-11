@@ -19,12 +19,11 @@ import java.util.Optional;
 public interface WorksRepository extends JpaRepository<Works, Long>, WorksRepositoryCustom {
 
     @Query("SELECT w FROM Works w " +
-            "WHERE ( w.worksName LIKE %:keyword% " +
+            "WHERE w.worksName LIKE %:keyword% " +
             "OR w.author LIKE %:keyword% " +
             "OR w.illustrator LIKE %:keyword% " +
-            "OR w.originalAuthor LIKE %:keyword% ) " +
-            "AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18) ")
-    Slice<Works> findBySearchKeyword(@Param("keyword") String keyword, @Param("excludeAdult") boolean excludeAdult, Pageable pageable);
+            "OR w.originalAuthor LIKE %:keyword% ")
+    Slice<Works> findBySearchKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     @Query("SELECT (COUNT(w) > 0) FROM Works w " +
             "WHERE w.author = :nickName " +
@@ -97,11 +96,9 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
     @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds " +
-            "AND w.worksName LIKE %:keyword% " +
-            "AND (:excludeAdult = false OR w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18)")
+            "AND w.worksName LIKE %:keyword%")
     Slice<LibraryWorksInfo> searchLibraryWorksInfoByIds(@Param("worksIds") List<Long> worksIds,
                                                         @Param("keyword") String keyword,
-                                                        @Param("excludeAdult") boolean excludeAdult,
                                                         Pageable pageable);
 
     // 작품 관련 정보 조회

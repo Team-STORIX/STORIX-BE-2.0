@@ -56,8 +56,8 @@ public class ChatUseCase {
 
         log.info(">>>> [ChatService] 과거 내역 조회 요청 - RoomID: {}, Page: {}", roomId, pageable.getPageNumber());
 
-        // 토픽룸 존재 여부 검증
-        chatService.validateRoomExistence(roomId);
+        // 토픽룸 존재 여부 및 성인 인증 검증
+        chatService.validateRoomAccess(userId, roomId);
 
         // 채팅방 입장 시점 확인
         LocalDateTime joinedAt = chatService.getRoomJoinedAt(userId, roomId);

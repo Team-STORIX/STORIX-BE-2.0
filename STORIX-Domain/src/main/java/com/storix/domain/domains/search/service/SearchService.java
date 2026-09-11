@@ -27,7 +27,7 @@ public class SearchService {
     @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorks(String keyword, Pageable pageable) {
 
-        return worksAdaptor.searchWorks(keyword, false, pageable).map(this::toWorkDto);
+        return worksAdaptor.searchWorks(keyword, pageable).map(this::toWorkDto);
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +52,7 @@ public class SearchService {
     public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(String keyword, Pageable pageable) {
 
         // 작품 검색
-        Slice<Works> worksSlice = worksAdaptor.searchWorks(keyword, false, pageable);
+        Slice<Works> worksSlice = worksAdaptor.searchWorks(keyword, pageable);
 
         return PlusSearchResponseWrapperDto.<WorksSearchResponseDto>builder()
                 .result(worksSlice.map(this::toWorkDto))

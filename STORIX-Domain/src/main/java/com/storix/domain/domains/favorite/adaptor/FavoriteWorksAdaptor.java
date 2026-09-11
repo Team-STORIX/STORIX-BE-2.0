@@ -63,8 +63,8 @@ public class FavoriteWorksAdaptor {
     }
 
     // 관심 작품 리스트 조회
-    public Slice<Long> findSliceFavoriteWorksId(Long userId, boolean excludeAdult, Pageable pageable) {
-        return favoriteWorksRepository.findWorksIdsByUserId(userId, excludeAdult, pageable);
+    public Slice<Long> findSliceFavoriteWorksId(Long userId, Pageable pageable) {
+        return favoriteWorksRepository.findWorksIdsByUserId(userId, pageable);
     }
 
     public List<Long> findAllFavoriteWorksIdsByUserId(Long userId) {
