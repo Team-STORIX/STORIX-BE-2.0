@@ -6,6 +6,7 @@ import com.storix.domain.domains.notification.dto.AdminNotificationDispatchCount
 import com.storix.domain.domains.notification.domain.NotificationType;
 import com.storix.domain.domains.notification.event.AdminNotificationChunkEvent;
 import com.storix.domain.domains.notification.service.AdminNotificationDeliveryResultService;
+import com.storix.domain.domains.notification.service.MarketingNightPolicy;
 import com.storix.common.utils.NightWindow;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
@@ -43,6 +44,7 @@ public class AdminNotificationDispatcher {
     private final NotificationAdaptor notificationAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
     private final ChatAdaptor chatAdaptor;
+    private final MarketingNightPolicy marketingNightPolicy;
 
     // 대상 유저에게 발송하고 결과를 로그에 반영
     public AdminNotificationDispatchCounts dispatch(AdminNotificationChunkEvent event, LocalDateTime now) {
@@ -56,7 +58,7 @@ public class AdminNotificationDispatcher {
         NotificationType notificationType = event.notificationType().getNotificationType();
 
         // 0. 야간 마케팅 발송 연기 - 실제 발송 시점이 야간이면 발송/인앱생성 없이 다음 08:00로 미룸
-        if (event.isMarketing() && NightWindow.isNight(now)) {
+        if (event.isMarketing() && marketingNightPolicy.isBlocked(now)) {
             LocalDateTime deferUntil = NightWindow.nextAllowedAt(now);
             deliveryResultService.deferMarketingChunk(adminNotificationId, userIds, deferUntil);
             log.info(">>> [AdminNotification] 야간 마케팅 발송 연기 count={}, until={}", userIds.size(), deferUntil);
