@@ -1,6 +1,7 @@
 package com.storix.domain.domains.library.dto;
 
 import com.storix.domain.domains.plus.domain.Rating;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 
 public record StandardLibraryWorksInfo(
@@ -11,6 +12,9 @@ public record StandardLibraryWorksInfo(
         String thumbnailUrl,
         String worksType,
         String genre,
+
+        // 성인 작품 여부
+        boolean isAdultOnly,
 
         // 리뷰 정보
         Long reviewId,
@@ -30,6 +34,7 @@ public record StandardLibraryWorksInfo(
                 worksInfo.thumbnailUrl(),
                 worksInfo.worksType() != null ? worksInfo.worksType().getDbValue() : null,
                 worksInfo.genre() != null ? worksInfo.genre().getDbValue() : null,
+                AdultContentPolicy.isAdultOnly(worksInfo.ageClassification()),
 
                 // 리뷰 정보
                 reviewId,

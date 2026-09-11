@@ -76,8 +76,8 @@ public class WorksAdaptor {
     }
 
     // 작품 검색
-    public Slice<Works> searchWorks(String keyword, boolean excludeAdult, Pageable pageable) {
-        return worksRepository.findBySearchKeyword(keyword, excludeAdult, pageable);
+    public Slice<Works> searchWorks(String keyword, Pageable pageable) {
+        return worksRepository.findBySearchKeyword(keyword, pageable);
     }
 
     public Slice<Works> searchWorksWithFilters(String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
@@ -132,12 +132,12 @@ public class WorksAdaptor {
         return worksRepository.findLibraryWorksInfoByIds(worksIds);
     }
 
-    public Slice<LibraryWorksInfo> searchLibraryWorksInfoByIds(List<Long> worksIds, String keyword, boolean excludeAdult, Pageable pageable) {
+    public Slice<LibraryWorksInfo> searchLibraryWorksInfoByIds(List<Long> worksIds, String keyword, Pageable pageable) {
         if (worksIds == null || worksIds.isEmpty()) {
             return new SliceImpl<>(List.of(), pageable, false);
         }
 
-        return worksRepository.searchLibraryWorksInfoByIds(worksIds, keyword, excludeAdult, pageable);
+        return worksRepository.searchLibraryWorksInfoByIds(worksIds, keyword, pageable);
     }
 
     // 작품 정보 조회용

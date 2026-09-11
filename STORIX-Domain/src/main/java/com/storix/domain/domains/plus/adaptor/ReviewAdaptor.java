@@ -45,8 +45,8 @@ public class ReviewAdaptor {
     }
 
     // 서재탭
-    public Slice<ReviewedWorksIdAndRatingInfo> getWorksListByUserId(Long userId, boolean excludeAdult, Pageable pageable) {
-        return reviewRepository.findWorksIdsByUserId(userId, excludeAdult, pageable);
+    public Slice<ReviewedWorksIdAndRatingInfo> getWorksListByUserId(Long userId, Pageable pageable) {
+        return reviewRepository.findWorksIdsByUserId(userId, pageable);
     }
 
     public List<ReviewedWorksIdAndRatingInfo> findAllWorksIdsByUserId(Long userId) {

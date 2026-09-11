@@ -75,15 +75,15 @@ public class ReaderFeedAdaptor {
     }
 
     // 전체 게시글 확인
-    public Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(boolean excludeAdult, Pageable pageable) {
-        return readerBoardRepository.findAllByOrderByCreatedAtDesc(excludeAdult, pageable);
+    public Slice<ReaderBoard> findAllByOrderByCreatedAtDesc(Pageable pageable) {
+        return readerBoardRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
-    public Slice<ReaderBoard> findAllExcludingBlocked(List<Long> blockedIds, boolean excludeAdult, Pageable pageable) {
+    public Slice<ReaderBoard> findAllExcludingBlocked(List<Long> blockedIds, Pageable pageable) {
         if (blockedIds.isEmpty()) {
-            return readerBoardRepository.findAllByOrderByCreatedAtDesc(excludeAdult, pageable);
+            return readerBoardRepository.findAllByOrderByCreatedAtDesc(pageable);
         }
-        return readerBoardRepository.findAllExcludingBlockedOrderByCreatedAtDesc(blockedIds, excludeAdult, pageable);
+        return readerBoardRepository.findAllExcludingBlockedOrderByCreatedAtDesc(blockedIds, pageable);
     }
 
     // 리스트 좋아요 정보 확인

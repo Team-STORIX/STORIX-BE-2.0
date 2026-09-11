@@ -1,8 +1,6 @@
 package com.storix.domain.domains.feed.service;
 
-import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
-import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
@@ -38,8 +36,6 @@ import java.util.Set;
 public class FeedService {
 
     private final WorksAdaptor worksAdaptor;
-    private final AdultWorksHelper adultWorksHelper;
-    private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final UserAdaptor userAdaptor;
     private final UserBlockAdaptor userBlockAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
@@ -52,10 +48,9 @@ public class FeedService {
     public Slice<ReaderBoardWithProfileInfo> getAllReaderBoard(Long userId, Pageable pageable) {
 
         List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
-        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 1) 최신순 게시글 (차단 유저 제외)
-        Slice<ReaderBoard> boards = readerFeedAdaptor.findAllExcludingBlocked(blockedIds, excludeAdult, pageable);
+        Slice<ReaderBoard> boards = readerFeedAdaptor.findAllExcludingBlocked(blockedIds, pageable);
 
         List<Long> boardIds = boards.getContent().stream()
                 .map(ReaderBoard::getId)
@@ -89,7 +84,7 @@ public class FeedService {
     public Slice<SlicedWorksInfo> findFavoriteWorksList(Long userId, Pageable pageable) {
 
         // 관심 작품 등록 리스트 조회
-        Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, false, pageable);
+        Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, pageable);
         List<Long> worksIds = worksIdsSlice.getContent();
 
         if (worksIds.isEmpty()) {
@@ -111,8 +106,6 @@ public class FeedService {
 
     @Transactional(readOnly = true)
     public Slice<ReaderBoardWithProfileInfo> findAllReaderBoardFeedByWorksId(Long userId, Long worksId, Pageable pageable) {
-
-        adultWorksHelper.CheckUserAuthorityWithWorks(userId, worksId);
 
         List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
 
@@ -146,10 +139,6 @@ public class FeedService {
 
         if (blockedIds.contains(boardInfo.userId())) {
             throw BlockedUserContentException.EXCEPTION;
-        }
-
-        if (Boolean.TRUE.equals(boardInfo.isWorksSelected()) && boardInfo.worksId() != null) {
-            adultWorksHelper.CheckUserAuthorityWithWorks(userId, boardInfo.worksId());
         }
 
         StandardProfileInfo writerProfile =
