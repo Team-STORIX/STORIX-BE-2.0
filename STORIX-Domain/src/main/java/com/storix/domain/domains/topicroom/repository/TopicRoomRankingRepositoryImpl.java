@@ -7,6 +7,7 @@ import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
+import com.storix.domain.domains.works.domain.AgeClassification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -111,7 +112,8 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
                         works.thumbnailUrl,
                         topicRoom.activeUserNumber,
                         topicRoom.lastChatTime,
-                        Expressions.constant(false)
+                        Expressions.constant(false),
+                        works.ageClassification.eq(AgeClassification.AGE_18)
                 ))
                 .from(topicRoom)
                 .join(works).on(topicRoom.worksId.eq(works.id))
@@ -148,7 +150,8 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
                         works.thumbnailUrl,
                         topicRoom.activeUserNumber,
                         topicRoom.lastChatTime,
-                        Expressions.constant(false)
+                        Expressions.constant(false),
+                        works.ageClassification.eq(AgeClassification.AGE_18)
                 ))
                 .from(topicRoom)
                 .join(works).on(topicRoom.worksId.eq(works.id))

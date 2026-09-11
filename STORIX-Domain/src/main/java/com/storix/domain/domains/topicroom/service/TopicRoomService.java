@@ -132,6 +132,7 @@ public class TopicRoomService {
     }
 
     public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
+
         // 1. 상위 5개 토픽룸 가져오기
         List<TopicRoom> rooms = topicRoomAdaptor.loadHotTopicRooms();
         if (rooms.isEmpty()) return Collections.emptyList();
@@ -353,7 +354,6 @@ public class TopicRoomService {
         }
         notificationPublisher.publish(NotificationEvent.reportReceived(reporterId));
     }
-
 
     // 참여 여부 마킹 로직 공통화
     private void applyMembershipStatus(List<TopicRoomResponseDto> rooms, Long userId) {

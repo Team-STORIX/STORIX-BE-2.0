@@ -3,8 +3,10 @@ package com.storix.domain.domains.works.repository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
 import com.storix.domain.domains.works.domain.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.storix.domain.domains.works.domain.QWorks.works;
+import static com.storix.domain.domains.works.domain.QWorksPlatform.worksPlatform;
 
 @RequiredArgsConstructor
 public class WorksRepositoryImpl implements WorksRepositoryCustom {
@@ -110,7 +113,47 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
     }
 
 
-    // 작품 다중 필터링 공통 로직
+    @Override
+    public List<Long> findCandidateIds(List<Long> excludedIds, boolean excludeAdult) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if (excludedIds != null && !excludedIds.isEmpty()) {
+            builder.and(works.id.notIn(excludedIds));
+        }
+
+        if (excludeAdult) {
+            builder.and(works.ageClassification.ne(AgeClassification.AGE_18));
+        }
+
+        return queryFactory
+                .select(works.id)
+                .from(works)
+                .where(builder)
+                .fetch();
+    }
+
+    @Override
+    public List<StoryCardLuckyWorkPick> findStoryCardLuckyWorks(Genre genre, boolean excludeAdult) {
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(works.isStoryCardLuckyWork.isTrue());
+        builder.and(works.genre.eq(genre));
+
+        if (excludeAdult) {
+            builder.and(works.ageClassification.ne(AgeClassification.AGE_18));
+        }
+
+        return queryFactory
+                .select(Projections.constructor(StoryCardLuckyWorkPick.class,
+                        works.id, works.worksName, works.worksType,
+                        worksPlatform.platform, worksPlatform.landingUrl))
+                .from(works)
+                .join(worksPlatform).on(worksPlatform.works.eq(works))
+                .where(builder)
+                .orderBy(works.id.asc())
+                .fetch();
+    }
+
+    // 작품 다중 필터링 공통 로직. 성인 작품도 노출하되 isAdultOnly 플래그로 프론트에서 판단한다
     private BooleanBuilder buildFilterCondition(List<WorksType> worksTypes, List<Genre> genres) {
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -123,9 +166,6 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
         if (genres != null && !genres.isEmpty()) {
             builder.and(works.genre.in(genres));
         }
-
-        // 3. 성인 작품 제외 (성인 인증 기능 추가 후 제거)
-        builder.and(works.ageClassification.ne(AgeClassification.AGE_18));
 
         return builder;
     }

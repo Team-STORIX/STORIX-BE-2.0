@@ -2,6 +2,7 @@ package com.storix.domain.domains.topicroom.dto;
 
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 
 import java.time.Duration;
@@ -19,7 +20,8 @@ public record TopicRoomPreviewResponseDto(
         Long lastMessageSenderId,
         String lastMessageSenderNickname,
         String lastChatTime,
-        Boolean isJoined
+        Boolean isJoined,
+        Boolean isAdultOnly
 ) {
     public static TopicRoomPreviewResponseDto from(
             TopicRoom room,
@@ -39,7 +41,8 @@ public record TopicRoomPreviewResponseDto(
                 room.getLastMessageSenderId(),
                 lastMessageSenderNickname,
                 formatTimeAgo(room.getLastChatTime()),
-                isJoined
+                isJoined,
+                AdultContentPolicy.isAdultOnly(worksInfo.ageClassification())
         );
     }
 

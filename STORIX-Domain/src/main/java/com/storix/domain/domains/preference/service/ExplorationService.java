@@ -4,6 +4,7 @@ import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.ErrorCode;
 import com.storix.common.exception.STORIXCodeException;
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.preference.dto.*;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
@@ -29,6 +30,7 @@ public class ExplorationService {
     private final ExplorationCacheHelper cacheHelper;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final ReviewAdaptor reviewAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
 
     @Transactional(readOnly = true)
     public List<ExplorationWorksResponseDto> getExplorationWorks(Long userId) {
@@ -54,7 +56,9 @@ public class ExplorationService {
         int needed = DAILY_EXPLORATION_LIMIT - sessionCount;
         if (needed <= 0) return Collections.emptyList();
 
-        return worksAdaptor.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed)
+        boolean excludeAdult = adultVerificationAdaptor.excludeAdultFor(userId);
+
+        return worksAdaptor.findRandomWorksExcluding(new ArrayList<>(allHistoryIds), needed, excludeAdult)
                 .stream()
                 .map(ExplorationWorksResponseDto::from)
                 .toList();
@@ -138,7 +142,8 @@ public class ExplorationService {
                         w.getThumbnailUrl(),
                         w.getWorksType(),
                         w.getGenre(),
-                        w.getAvgRating()
+                        w.getAvgRating(),
+                        w.getAgeClassification()
                 ))
                 .toList();
     }

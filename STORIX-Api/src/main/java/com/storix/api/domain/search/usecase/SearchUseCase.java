@@ -32,7 +32,7 @@ public class SearchUseCase {
             searchHistoryService.addSearchLog(userId, keyword);
         }
 
-        Slice<WorksSearchResponseDto> result = searchService.searchWorks(userId, keyword, pageable);
+        Slice<WorksSearchResponseDto> result = searchService.searchWorks(keyword, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, wrapWithFallback(result));
     }
@@ -45,7 +45,7 @@ public class SearchUseCase {
         }
 
         Slice<WorksSearchResponseDto> result =
-                searchService.searchWorksWithFilters(userId, keyword, worksTypes, genres, pageable);
+                searchService.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, wrapWithFallback(result));
     }

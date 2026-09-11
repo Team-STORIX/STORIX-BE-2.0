@@ -1,6 +1,7 @@
 package com.storix.domain.domains.feed.service;
 
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
+import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
@@ -36,6 +37,7 @@ import java.util.Set;
 public class FeedService {
 
     private final WorksAdaptor worksAdaptor;
+    private final AdultWorksHelper adultWorksHelper;
     private final UserAdaptor userAdaptor;
     private final UserBlockAdaptor userBlockAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
@@ -79,6 +81,7 @@ public class FeedService {
                 profileMap.get(info.userId()));
     }
 
+    // 성인 작품도 노출하고, isAdultOnly 플래그로 프론트에서 블러 처리한다
     @Transactional(readOnly = true)
     public Slice<SlicedWorksInfo> findFavoriteWorksList(Long userId, Pageable pageable) {
 
@@ -138,6 +141,11 @@ public class FeedService {
 
         if (blockedIds.contains(boardInfo.userId())) {
             throw BlockedUserContentException.EXCEPTION;
+        }
+
+        // 상세 조회 시 인증 안되어 있는 경우 예외
+        if (Boolean.TRUE.equals(boardInfo.isWorksSelected()) && boardInfo.worksId() != null) {
+            adultWorksHelper.CheckUserAuthorityWithWorks(userId, boardInfo.worksId());
         }
 
         StandardProfileInfo writerProfile =

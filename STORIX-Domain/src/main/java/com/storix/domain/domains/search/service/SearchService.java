@@ -3,6 +3,7 @@ package com.storix.domain.domains.search.service;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -22,15 +23,16 @@ public class SearchService {
 
     private final WorksAdaptor worksAdaptor;
 
+    // 작품 탭 검색
     @Transactional(readOnly = true)
-    public Slice<WorksSearchResponseDto> searchWorks(Long userId, String keyword, Pageable pageable) {
+    public Slice<WorksSearchResponseDto> searchWorks(String keyword, Pageable pageable) {
 
         return worksAdaptor.searchWorks(keyword, pageable).map(this::toWorkDto);
     }
 
     @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorksWithFilters(
-            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+            String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
 
         Slice<Works> worksSlice;
         if (keyword != null && keyword.startsWith("#")) {
@@ -45,6 +47,7 @@ public class SearchService {
         return worksSlice.map(this::toWorkDto);
     }
 
+    // 피드 작성용 작품 검색
     @Transactional(readOnly = true)
     public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(String keyword, Pageable pageable) {
 
@@ -65,6 +68,7 @@ public class SearchService {
                 .reviewsCount(works.getReviewsCount() != null ? works.getReviewsCount() : 0L)
                 .avgRating(roundAvgRating(works.getAvgRating()))
                 .worksType(works.getWorksType() != null ? works.getWorksType().getDbValue() : null)
+                .isAdultOnly(AdultContentPolicy.isAdultOnly(works.getAgeClassification()))
                 .build();
     }
 

@@ -101,6 +101,8 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public Slice<SliceReviewInfoWithProfile> findAllReviewWithoutMine(Long userId, Long worksId, Pageable pageable) {
 
+        adultWorksHelper.CheckUserAuthorityWithWorks(userId, worksId);
+
         List<Long> blockedIds = userId != null
                 ? userBlockAdaptor.findBlockedUserIds(userId)
                 : List.of();
@@ -161,6 +163,8 @@ public class ReviewService {
 
         // 3) 작품 정보
         Long worksId = reviewInfo.worksId();
+
+        adultWorksHelper.CheckUserAuthorityWithWorks(userId, worksId);
 
         WorksInfo worksInfo = worksAdaptor.findWorksInfoById(worksId);
         StandardWorksInfo works = StandardWorksInfo.from(worksInfo);

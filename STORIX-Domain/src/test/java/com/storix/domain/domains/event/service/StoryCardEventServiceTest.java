@@ -16,6 +16,7 @@ import com.storix.domain.domains.event.dto.StoryCardStatusResponse;
 import com.storix.domain.domains.event.exception.StoryCardContentNotFoundException;
 import com.storix.domain.domains.event.exception.StoryCardEventNotActiveException;
 import com.storix.domain.domains.event.exception.StoryCardEventNotFoundException;
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Platform;
@@ -37,6 +38,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -66,6 +68,9 @@ class StoryCardEventServiceTest {
 
     @Mock
     private WorksAdaptor worksAdaptor;
+
+    @Mock
+    private AdultVerificationAdaptor adultVerificationAdaptor;
 
     @InjectMocks
     private StoryCardEventService storyCardEventService;
@@ -111,12 +116,17 @@ class StoryCardEventServiceTest {
                 message(genre), immersion(), luckyWork(), drawnOn.atTime(9, 0));
     }
 
-    // 새 카드 뽑기에 필요한 콘텐츠 추출을 한 번에 스텁한다
+    // 새 카드 뽑기에 필요한 콘텐츠 추출을 한 번에 스텁한다 (성인인증 유효 유저 기준)
     private void givenPickedContent() {
+        givenPickedContent(false);
+    }
+
+    private void givenPickedContent(boolean excludeAdult) {
+        given(adultVerificationAdaptor.excludeAdultFor(USER_ID)).willReturn(excludeAdult);
         given(storyCardContentAdaptor.pickMessage(any(Genre.class)))
                 .willAnswer(inv -> message(inv.getArgument(0)));
         given(storyCardContentAdaptor.pickImmersion()).willReturn(immersion());
-        given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class))).willReturn(Optional.of(luckyWork()));
+        given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class), anyBoolean())).willReturn(Optional.of(luckyWork()));
         given(storyCardDrawAdaptor.saveIfAbsent(any(StoryCardDraw.class)))
                 .willAnswer(inv -> new StoryCardDrawResult(inv.getArgument(0), true));
     }
@@ -249,13 +259,45 @@ class StoryCardEventServiceTest {
             storyCardEventService.draw(USER_ID, serviceDate.atTime(10, 0));
 
             verify(storyCardContentAdaptor).pickMessage(messageGenre.capture());
-            verify(worksAdaptor).pickStoryCardLuckyWork(luckyWorkGenre.capture());
+            verify(worksAdaptor).pickStoryCardLuckyWork(luckyWorkGenre.capture(), anyBoolean());
             verify(storyCardDrawAdaptor).saveIfAbsent(saved.capture());
 
             Genre assigned = saved.getValue().getGenre();
             assertThat(messageGenre.getValue()).isEqualTo(assigned);
             assertThat(luckyWorkGenre.getValue()).isEqualTo(assigned);
             assertThat(StoryCardGenres.isSupported(assigned)).isTrue();
+        }
+
+        @Test
+        @DisplayName("성인인증이 유효한 유저는 excludeAdult=false로 행운의 작품을 뽑는다")
+        void draw_verified_user_does_not_exclude_adult_works() {
+            LocalDate serviceDate = START.plusDays(1);
+            givenEvent(defaultEvent());
+            given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, serviceDate)).willReturn(Optional.empty());
+            givenPickedContent(false);
+
+            ArgumentCaptor<Boolean> excludeAdult = ArgumentCaptor.forClass(Boolean.class);
+
+            storyCardEventService.draw(USER_ID, serviceDate.atTime(10, 0));
+
+            verify(worksAdaptor).pickStoryCardLuckyWork(any(Genre.class), excludeAdult.capture());
+            assertThat(excludeAdult.getValue()).isFalse();
+        }
+
+        @Test
+        @DisplayName("성인인증이 없거나 만료된 유저는 excludeAdult=true로 행운의 작품을 뽑는다")
+        void draw_unverified_user_excludes_adult_works() {
+            LocalDate serviceDate = START.plusDays(1);
+            givenEvent(defaultEvent());
+            given(storyCardDrawAdaptor.findTodayDraw(EVENT_ID, USER_ID, serviceDate)).willReturn(Optional.empty());
+            givenPickedContent(true);
+
+            ArgumentCaptor<Boolean> excludeAdult = ArgumentCaptor.forClass(Boolean.class);
+
+            storyCardEventService.draw(USER_ID, serviceDate.atTime(10, 0));
+
+            verify(worksAdaptor).pickStoryCardLuckyWork(any(Genre.class), excludeAdult.capture());
+            assertThat(excludeAdult.getValue()).isTrue();
         }
 
         @Test
@@ -326,7 +368,7 @@ class StoryCardEventServiceTest {
             given(storyCardContentAdaptor.pickMessage(any(Genre.class)))
                     .willAnswer(inv -> message(inv.getArgument(0)));
             given(storyCardContentAdaptor.pickImmersion()).willReturn(immersion());
-            given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class))).willReturn(Optional.of(luckyWork()));
+            given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class), anyBoolean())).willReturn(Optional.of(luckyWork()));
             // upsert가 no-op으로 끝나고 먼저 저장된 남의 카드를 읽어온 상황
             given(storyCardDrawAdaptor.saveIfAbsent(any(StoryCardDraw.class)))
                     .willReturn(new StoryCardDrawResult(winner, false));
@@ -346,7 +388,7 @@ class StoryCardEventServiceTest {
             given(storyCardContentAdaptor.pickMessage(any(Genre.class)))
                     .willAnswer(inv -> message(inv.getArgument(0)));
             given(storyCardContentAdaptor.pickImmersion()).willReturn(immersion());
-            given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class))).willReturn(Optional.empty());
+            given(worksAdaptor.pickStoryCardLuckyWork(any(Genre.class), anyBoolean())).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> storyCardEventService.draw(USER_ID, serviceDate.atTime(10, 0)))
                     .isInstanceOf(StoryCardContentNotFoundException.class);

@@ -1,5 +1,6 @@
 package com.storix.domain.domains.feed.dto;
 
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.dto.WorksInfo;
 
 import java.util.List;
@@ -12,6 +13,9 @@ public record BoardWorksInfo(
         String artistName,
         String worksType,
         String genre,
+
+        // 성인 작품 여부
+        boolean isAdultOnly,
 
         // 해시태그 정보
         List<String> hashtags
@@ -29,6 +33,7 @@ public record BoardWorksInfo(
                 works.artistName(),
                 works.worksType() != null ? works.worksType().getDbValue() : null,
                 works.genre() != null ? works.genre().getDbValue() : null,
+                AdultContentPolicy.isAdultOnly(works.ageClassification()),
                 hashtags
         );
     }

@@ -11,6 +11,8 @@ public record StandardReaderBoardInfo(
         int replyCount,
         boolean isSpoiler,
         String spoilerScript,
+        Boolean isWorksSelected,
+        Long worksId,
 
         // 인기 점수
         int popularityScore
