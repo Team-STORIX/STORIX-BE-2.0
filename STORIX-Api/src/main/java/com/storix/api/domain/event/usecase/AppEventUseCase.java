@@ -97,7 +97,7 @@ public class AppEventUseCase {
 
         return CustomResponse.onSuccess(
                 SuccessCode.APP_EVENTS_LOAD_SUCCESS,
-                userAppEventService.getPendingEvents(userId)
+                userAppEventCacheHelper.getPendingEvents(userId, () -> userAppEventService.getPendingEvents(userId))
         );
     }
 

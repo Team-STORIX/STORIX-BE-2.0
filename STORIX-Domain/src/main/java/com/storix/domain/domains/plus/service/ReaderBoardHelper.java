@@ -1,5 +1,6 @@
 package com.storix.domain.domains.plus.service;
 
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyInfo;
@@ -16,7 +17,6 @@ import com.storix.domain.domains.profile.dto.ReaderBoardWithProfileInfo;
 import com.storix.domain.domains.feed.exception.TodayFeedNotFoundException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
-import com.storix.domain.domains.works.application.port.LoadWorksPort;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,13 +34,13 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class ReaderBoardHelper {
 
+    private final WorksAdaptor worksAdaptor;
     private final UserAdaptor userAdaptor;
     private final BoardAdaptor boardAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final BoardImageAdaptor boardImageAdaptor;
     private final HashtagAdaptor hashTagAdaptor;
 
-    private final LoadWorksPort loadWorksPort;
 
     // 게시글 리스트 조회
     public Slice<ReaderBoardInfo> findReaderBoardInfo(Long userId, Long worksId, Pageable pageable) {
@@ -185,7 +185,7 @@ public class ReaderBoardHelper {
         // 2) 게시글 작품 정보 매핑
         Map<Long, WorksInfo> worksMap = worksIds.isEmpty()
                 ? Collections.emptyMap()
-                : loadWorksPort.findAllWorksInfoByWorksIds(worksIds);
+                : worksAdaptor.findAllWorksInfoByWorksIds(worksIds);
 
         // 3) 게시글 작품 해시태그 정보 매핑
         Map<Long, List<String>> hashtagMap = worksIds.isEmpty()
@@ -236,7 +236,7 @@ public class ReaderBoardHelper {
         List<String> hashtags = List.of();
 
         if (Boolean.TRUE.equals(boardInfo.isWorksSelected()) && worksId != null) {
-            works = loadWorksPort.findAllWorksInfoByWorksIds(List.of(worksId)).get(worksId);
+            works = worksAdaptor.findAllWorksInfoByWorksIds(List.of(worksId)).get(worksId);
             if (works == null) {
                 log.atError()
                         .addKeyValue("worksId", worksId)

@@ -78,9 +78,6 @@ public class User extends BaseTimeEntity {
     @Column(name = "age_over_14")
     private Boolean ageOver14;
 
-    @Column(name = "is_adult_verified")
-    private Boolean isAdultVerified = false;
-
     // 계정 상태
     @Enumerated(EnumType.STRING)
     @Column(name = "account_state", nullable = false)
@@ -211,7 +208,6 @@ public class User extends BaseTimeEntity {
         nickName = STORIXStatic.WITHDRAW_PREFIX + UUID.randomUUID() + ":" + nickName;
         oauthInfo = oauthInfo.withDrawOauthInfo();
         ageOver14 = null;
-        isAdultVerified = null;
         deletedAt = LocalDateTime.now();
     }
 

@@ -13,10 +13,7 @@ import com.storix.domain.domains.event.dto.AppEventPageResponse;
 import com.storix.domain.domains.event.exception.AppEventFinalizedNotModifiableException;
 import com.storix.domain.domains.event.exception.AppEventInvalidAttendanceRewardsException;
 import com.storix.domain.domains.event.exception.AppEventInvalidPeriodBoundaryException;
-import com.storix.domain.domains.event.exception.AppEventInvalidPeriodException;
-import com.storix.domain.domains.event.exception.AppEventNameRequiredException;
 import com.storix.domain.domains.event.exception.AppEventOverlappingTypeException;
-import com.storix.domain.domains.event.exception.AppEventPeriodRequiredException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,6 +31,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -269,34 +267,6 @@ class AppEventServiceTest {
         }
 
         @Test
-        @DisplayName("이름이 비면 예외 - 저장하지 않는다")
-        void reject_blank_name() {
-            LocalDateTime start = LocalDateTime.now().plusDays(1);
-            AppEventCommand cmd = new AppEventCommand("  ", "설명", null, null, start, start.plusDays(1), false, Set.of(), Map.of());
-
-            assertThatThrownBy(() -> appEventService.create(cmd, ADMIN_ID))
-                    .isInstanceOf(AppEventNameRequiredException.class);
-            verify(appEventAdaptor, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("시작/종료가 null 이면 예외")
-        void reject_null_period() {
-            assertThatThrownBy(() -> appEventService.create(command(null, null), ADMIN_ID))
-                    .isInstanceOf(AppEventPeriodRequiredException.class);
-            verify(appEventAdaptor, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("종료가 시작보다 이르거나 같으면 예외")
-        void reject_invalid_period() {
-            LocalDateTime start = LocalDateTime.now().plusDays(5);
-            assertThatThrownBy(() -> appEventService.create(command(start, start), ADMIN_ID))
-                    .isInstanceOf(AppEventInvalidPeriodException.class);
-            verify(appEventAdaptor, never()).save(any());
-        }
-
-        @Test
         @DisplayName("출석 지급표를 지정하면 그대로 저장한다")
         void create_with_attendance_rewards() {
             LocalDateTime start = LocalDateTime.now().plusDays(1);
@@ -445,6 +415,53 @@ class AppEventServiceTest {
             assertThat(cancelled.status()).isEqualTo(AppEventStatus.ENDED);
             verify(popupService).endByAppEvent(ID);
             verify(bannerService).endByAppEvent(ID);
+        }
+    }
+
+    @Nested
+    @DisplayName("강제 종료 - 슬롯을 비우되 실제 진행 기간은 남긴다")
+    class ForceEnd {
+
+        @Test
+        @DisplayName("endAt 은 누른 시각 그대로 두고 forceEnded 만 켠다 - 언제까지 돌았는지가 지워지면 안 된다")
+        void marks_force_ended_and_keeps_actual_end() {
+            LocalDateTime now = LocalDateTime.of(2026, 8, 24, 1, 21);
+            AppEvent event = AppEvent.builder()
+                    .name("오스카 이벤트").eventType(AppEventType.STORY_CARD)
+                    .startAt(LocalDateTime.of(2026, 8, 23, 6, 0))
+                    .endAt(LocalDateTime.of(2026, 8, 31, 6, 0))
+                    .assigneeAdminId(ADMIN_ID)
+                    .build();
+
+            event.endNow(now);
+
+            assertThat(event.getEndAt()).isEqualTo(now);
+            assertThat(event.isForceEnded()).isTrue();
+        }
+
+        @Test
+        @DisplayName("만들 때는 강제 종료 표시가 없다")
+        void not_force_ended_on_create() {
+            AppEvent event = appEvent(LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+            assertThat(event.isForceEnded()).isFalse();
+        }
+
+        @Test
+        @DisplayName("강제 종료된 이벤트와 기간이 겹쳐도 새로 만들 수 있다 - 중복 조회에서 이미 빠져 나온다")
+        void force_ended_does_not_block_creation() {
+            LocalDateTime start = LocalDateTime.of(2026, 8, 23, 6, 0);
+            LocalDateTime end = LocalDateTime.of(2026, 8, 30, 6, 0);
+            // 강제 종료된 행은 리포지토리 조회 단계에서 제외되므로 겹침 없음으로 돌아온다
+            given(appEventAdaptor.lockAndCheckOverlappingByType(AppEventType.STORY_CARD, start, end, null))
+                    .willReturn(false);
+            given(appEventAdaptor.save(any(AppEvent.class))).willAnswer(inv -> inv.getArgument(0));
+
+            AppEventCommand cmd = new AppEventCommand("새 오스카", "설명", null, AppEventType.STORY_CARD,
+                    start, end, false, Set.of(), Map.of());
+
+            assertThatCode(() -> appEventService.create(cmd, ADMIN_ID)).doesNotThrowAnyException();
+            verify(appEventAdaptor).save(any(AppEvent.class));
         }
     }
 

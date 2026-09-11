@@ -147,6 +147,9 @@ public class SecurityConfig {
                                 // [Notification] 테스트 엔드포인트는 테스터(TESTER) 만
                                 .requestMatchers("/api/v1/notifications/tester/**").hasRole("TESTER")
 
+                                // [AdultVerification] 이력 삭제도 테스터(TESTER) 만
+                                .requestMatchers("/api/v1/adult-verifications/tester/**").hasRole("TESTER")
+
                                 .anyRequest().hasRole("READER")
                 )
 
@@ -176,6 +179,7 @@ public class SecurityConfig {
                 "https://api.storix.kr",
                 "https://admin.storix.kr",
                 "https://dev.storix.kr",
+                "https://www-dev.storix.kr",
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "https://storix-fe-git-develop-kim-yunseongs-projects.vercel.app",

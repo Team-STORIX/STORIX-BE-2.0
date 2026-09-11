@@ -1,5 +1,6 @@
 package com.storix.api.domain.chat.usecase;
 
+import com.storix.api.domain.chat.helper.ChatPublishHelper;
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.dto.ChatHistoryResponseDto;
@@ -7,8 +8,6 @@ import com.storix.domain.domains.chat.dto.ChatMessageRequestDto;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.chat.service.ChatAsyncService;
 import com.storix.domain.domains.chat.service.ChatService;
-import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
-import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +24,8 @@ import java.util.List;
 public class ChatUseCase {
 
     private final ChatService chatService;
+    private final ChatPublishHelper chatPublishHelper;
     private final ChatAsyncService chatAsyncService;
-    private final UserBlockAdaptor userBlockAdaptor;
-    private final TopicRoomAdaptor topicRoomAdaptor;
 
     // 트랜잭션은 save 안쪽으로 좁힌다. Redis 발행 동안 DB 커넥션을 붙잡지 않기 위함
     public void sendMessage(Long userId, ChatMessageRequestDto request) {
@@ -45,7 +43,7 @@ public class ChatUseCase {
         ChatMessage saved = chatService.save(chatMessage);
 
         // Redis 발행
-        chatService.publishRedis(saved, sender);
+        chatPublishHelper.publish(saved, sender);
 
         // 메시지 전송 후 비동기 처리
         chatAsyncService.processAfterMessageSent(saved, nickname);
@@ -63,10 +61,10 @@ public class ChatUseCase {
 
         // 채팅방 입장 시점 확인
         LocalDateTime joinedAt = chatService.getRoomJoinedAt(userId, roomId);
-        Integer activeUserNumber = topicRoomAdaptor.findActiveUserNumberById(roomId);
+        Integer activeUserNumber = chatService.getActiveUserNumber(roomId);
 
         // 차단 유저 필터링
-        List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
+        List<Long> blockedIds = chatService.getBlockedUserIds(userId);
 
         // 과거 메시지 조회 (차단 유저 제외)
         Slice<ChatMessageResponseDto> chatMessages = chatService.getChatMessages(roomId, blockedIds, pageable);

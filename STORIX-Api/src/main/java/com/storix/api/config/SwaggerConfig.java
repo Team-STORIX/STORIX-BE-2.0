@@ -30,9 +30,11 @@ public class SwaggerConfig {
                         .scheme("Bearer")
                         .bearerFormat("JWT"));
 
+        // 상대 경로라 스웨거를 연 주소를 그대로 따라간다. 비워두면 springdoc 이 절대 URL 을 만드는데,
+        // 프록시 뒤에서는 http 로 잡혀 https 페이지에서 요청이 막힌다
         return new OpenAPI()
-                .info(info)
                 .addServersItem(new Server().url("/"))
+                .info(info)
                 .addSecurityItem(securityRequirement)
                 .components(components);
 

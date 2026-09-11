@@ -145,7 +145,13 @@ public enum SuccessCode {
     USER_BLOCK_SUCCESS(HttpStatus.CREATED, "BLOCK_SUCCESS_001", "사용자 차단에 성공했습니다."),
 
     // App version success
-    APP_VERSION_CHECK_SUCCESS(HttpStatus.OK, "APP_VERSION_SUCCESS_001", "앱 버전 확인에 성공했습니다.");
+    APP_VERSION_CHECK_SUCCESS(HttpStatus.OK, "APP_VERSION_SUCCESS_001", "앱 버전 확인에 성공했습니다."),
+
+    // Adult verification success
+    ADULT_VERIFICATION_READY_SUCCESS(HttpStatus.CREATED, "ADULT_VERIFICATION_SUCCESS_001", "본인인증 요청 발급에 성공했습니다."),
+    ADULT_VERIFICATION_CONFIRM_SUCCESS(HttpStatus.OK, "ADULT_VERIFICATION_SUCCESS_002", "성인인증에 성공했습니다."),
+    ADULT_VERIFICATION_STATUS_LOAD_SUCCESS(HttpStatus.OK, "ADULT_VERIFICATION_SUCCESS_003", "성인인증 상태 조회에 성공했습니다."),
+    ADULT_VERIFICATION_RESET_SUCCESS(HttpStatus.OK, "ADULT_VERIFICATION_SUCCESS_004", "성인인증 이력 삭제에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -1,17 +1,22 @@
 package com.storix.api.domain.event.controller.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.storix.api.global.validation.FieldsCompare;
+import com.storix.api.global.validation.RequiredIf;
 import com.storix.domain.domains.event.domain.ContentTargetType;
 import com.storix.domain.domains.event.domain.PopupExposurePolicy;
 import com.storix.domain.domains.event.dto.PopupCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
+@FieldsCompare(before = "displayStartAt", after = "displayEndAt", field = "displayEndAt",
+        message = "노출 종료 일시는 시작 일시 이후여야 합니다.")
+@RequiredIf(when = "contentTargetType", is = "APP_EVENT", field = "appEventId",
+        message = "APP_EVENT 유형 팝업은 앱 이벤트 id(appEventId)가 필수입니다.")
 public record PopupRequest(
         @Schema(description = "소속 앱 이벤트 id (선택). 지정 시 노출기간이 이벤트 기간 안으로 제한, 수정 시 무시", example = "10")
         Long appEventId,
@@ -47,18 +52,6 @@ public record PopupRequest(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
         LocalDateTime displayEndAt
 ) {
-    @AssertTrue(message = "노출 종료 일시는 시작 일시 이후여야 합니다.")
-    private boolean isDisplayPeriodValid() {
-        if (displayStartAt == null || displayEndAt == null) return true; // 부재는 @NotNull 이 담당
-        return displayStartAt.isBefore(displayEndAt);
-    }
-
-    @AssertTrue(message = "APP_EVENT 유형 팝업은 앱 이벤트 id(appEventId)가 필수입니다.")
-    private boolean isAppEventProvidedForAppEventType() {
-        if (contentTargetType != ContentTargetType.APP_EVENT) return true; // 다른 유형은 이벤트 무관
-        return appEventId != null;
-    }
-
     public PopupCommand toCommand(String imageObjectKey) {
         return new PopupCommand(appEventId, contentTargetType, exposurePolicy, popupTitle, imageObjectKey, content, ctaText, displayStartAt, displayEndAt);
     }

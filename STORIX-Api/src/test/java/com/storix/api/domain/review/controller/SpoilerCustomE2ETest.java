@@ -10,7 +10,6 @@ import com.storix.domain.domains.plus.domain.Rating;
 import com.storix.common.code.ErrorCode;
 import com.storix.common.exception.STORIXCodeException;
 import com.storix.common.payload.ErrorResponse;
-import com.storix.domain.domains.plus.exception.SpoilerScriptRequiredException;
 import com.storix.domain.domains.review.dto.ModifyReviewRequest;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.Role;
@@ -128,14 +127,11 @@ class SpoilerCustomE2ETest {
                     Rating.THREE, true, "", "스포일러 내용이 있는 리뷰"
             );
 
-            given(worksDetailKebabUseCase.modifyMyReview(eq(USER_ID), eq(REVIEW_ID), any()))
-                    .willThrow(SpoilerScriptRequiredException.EXCEPTION);
-
             // when & then
             mockMvc.perform(patch("/api/v1/works/review/{reviewId}", REVIEW_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnprocessableEntity());
         }
 
         @Test
@@ -146,14 +142,11 @@ class SpoilerCustomE2ETest {
                     Rating.THREE, true, null, "스포일러 내용이 있는 리뷰"
             );
 
-            given(worksDetailKebabUseCase.modifyMyReview(eq(USER_ID), eq(REVIEW_ID), any()))
-                    .willThrow(SpoilerScriptRequiredException.EXCEPTION);
-
             // when & then
             mockMvc.perform(patch("/api/v1/works/review/{reviewId}", REVIEW_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnprocessableEntity());
         }
 
         @Test
@@ -179,7 +172,7 @@ class SpoilerCustomE2ETest {
         }
 
         @Test
-        @DisplayName("실패: 리뷰 내용이 비어있으면 400 에러")
+        @DisplayName("실패: 리뷰 내용이 비어있으면 422 에러")
         void modifyReview_emptyContent_fail() throws Exception {
             // given
             ModifyReviewRequest request = new ModifyReviewRequest(
@@ -190,11 +183,11 @@ class SpoilerCustomE2ETest {
             mockMvc.perform(patch("/api/v1/works/review/{reviewId}", REVIEW_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnprocessableEntity());
         }
 
         @Test
-        @DisplayName("실패: 별점이 null이면 400 에러")
+        @DisplayName("실패: 별점이 null이면 422 에러")
         void modifyReview_nullRating_fail() throws Exception {
             // given
             String requestJson = """
@@ -210,11 +203,11 @@ class SpoilerCustomE2ETest {
             mockMvc.perform(patch("/api/v1/works/review/{reviewId}", REVIEW_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(requestJson))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnprocessableEntity());
         }
 
         @Test
-        @DisplayName("실패: 리뷰 내용이 500자 초과하면 400 에러")
+        @DisplayName("실패: 리뷰 내용이 500자 초과하면 422 에러")
         void modifyReview_tooLongContent_fail() throws Exception {
             // given
             String longContent = "가".repeat(501);
@@ -226,7 +219,7 @@ class SpoilerCustomE2ETest {
             mockMvc.perform(patch("/api/v1/works/review/{reviewId}", REVIEW_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnprocessableEntity());
         }
     }
 
@@ -239,6 +232,20 @@ class SpoilerCustomE2ETest {
         @ExceptionHandler(STORIXCodeException.class)
         public ResponseEntity<ErrorResponse> handleSTORIXCodeException(STORIXCodeException ex) {
             ErrorCode errorCode = ex.getErrorCode();
+            return ResponseEntity.status(errorCode.getHttpStatus()).body(new ErrorResponse(errorCode));
+        }
+
+        // 실제 핸들러와 같은 ErrorCode 를 써서 상태코드 변경이 테스트에 그대로 반영되게 한다
+        @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+        public ResponseEntity<ErrorResponse> handleMethodValidation(
+                org.springframework.web.method.annotation.HandlerMethodValidationException ex) {
+            ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
+            return ResponseEntity.status(errorCode.getHttpStatus()).body(new ErrorResponse(errorCode));
+        }
+
+        @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+        public ResponseEntity<ErrorResponse> handleValidation(org.springframework.web.bind.MethodArgumentNotValidException ex) {
+            ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
             return ResponseEntity.status(errorCode.getHttpStatus()).body(new ErrorResponse(errorCode));
         }
     }

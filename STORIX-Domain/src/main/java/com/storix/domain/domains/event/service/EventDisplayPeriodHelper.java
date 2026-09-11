@@ -20,12 +20,6 @@ public class EventDisplayPeriodHelper {
         }
     }
 
-    public void requireAppEventForType(ContentTargetType contentTargetType, boolean hasAppEvent, Supplier<RuntimeException> onMissing) {
-        if (contentTargetType == ContentTargetType.APP_EVENT && !hasAppEvent) {
-            throw onMissing.get();
-        }
-    }
-
     public DisplayPeriod clampToAppEvent(AppEvent appEvent, LocalDateTime displayStartAt, LocalDateTime displayEndAt, Supplier<RuntimeException> onOutOfPeriod) {
         if (appEvent == null) {
             return new DisplayPeriod(displayStartAt, displayEndAt);

@@ -1,7 +1,6 @@
 package com.storix.batch.scheduler;
 
-import com.storix.domain.domains.topicroom.application.port.LoadTopicRoomPort;
-import com.storix.domain.domains.topicroom.application.port.UpdateTopicRoomPort;
+import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +21,7 @@ public class TopicRoomRankingScheduler {
     private static final int MESSAGE_WINDOW_HOURS = 24;
     private static final int FRESHNESS_HOURS = 24;
 
-    private final LoadTopicRoomPort loadTopicRoomPort;
-    private final UpdateTopicRoomPort updateTopicRoomPort;
+    private final TopicRoomAdaptor topicRoomAdaptor;
 
     @CacheEvict(cacheNames = {"trendingLoyaltySlot", "trendingNewUserSlots"},
             allEntries = true, cacheManager = "trendingCacheManager")
@@ -32,7 +30,7 @@ public class TopicRoomRankingScheduler {
     public void calculatePopularity() {
         log.info(">>>> [Scheduler] 인기도 점수 및 증가율 계산 시작");
 
-        List<TopicRoom> activeRooms = loadTopicRoomPort.findAllActiveRooms();
+        List<TopicRoom> activeRooms = topicRoomAdaptor.findAllActiveRooms();
 
         if (activeRooms.isEmpty()) { return; }
 
@@ -43,7 +41,7 @@ public class TopicRoomRankingScheduler {
             room.updatePopularityGrowthRate(calculateGrowthRate(room));
         }
 
-        updateTopicRoomPort.updatePopularity(activeRooms);
+        topicRoomAdaptor.updatePopularity(activeRooms);
         log.info(">>>> [Scheduler] 총 {}개의 토픽룸 점수 갱신 완료", activeRooms.size());
     }
 
@@ -53,7 +51,7 @@ public class TopicRoomRankingScheduler {
     public void snapshotActiveUserNumbers() {
         log.info(">>>> [Scheduler] 참여자 수 스냅샷 시작");
 
-        List<TopicRoom> activeRooms = loadTopicRoomPort.findAllActiveRooms();
+        List<TopicRoom> activeRooms = topicRoomAdaptor.findAllActiveRooms();
 
         if (activeRooms.isEmpty()) { return; }
 
@@ -61,7 +59,7 @@ public class TopicRoomRankingScheduler {
             room.snapshotActiveUserNumber();
         }
 
-        updateTopicRoomPort.updatePreviousActiveUserNumbers(activeRooms);
+        topicRoomAdaptor.updatePreviousActiveUserNumbers(activeRooms);
         log.info(">>>> [Scheduler] 총 {}개의 토픽룸 스냅샷 완료", activeRooms.size());
     }
 
@@ -69,7 +67,7 @@ public class TopicRoomRankingScheduler {
     @Scheduled(cron = "0 0 * * * *")
     public void calculateHotActivityScore() {
         LocalDateTime now = LocalDateTime.now();
-        int updated = updateTopicRoomPort.updateActivityScores(
+        int updated = topicRoomAdaptor.updateActivityScores(
                 now.minusHours(MESSAGE_WINDOW_HOURS), now.minusHours(FRESHNESS_HOURS));
         log.info(">>>> [Scheduler] 토픽룸 활동 점수 {}건 갱신 완료", updated);
     }

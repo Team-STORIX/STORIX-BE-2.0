@@ -1,7 +1,6 @@
 package com.storix.infrastructure.external.topicroom;
 
 import com.storix.common.utils.RedisKeyStatic;
-import com.storix.domain.domains.topicroom.application.port.TopicRoomPushBatchPort;
 import com.storix.domain.domains.topicroom.dto.PendingChatPush;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
-public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
+public class RedisTopicRoomPushBatchAdapter {
 
     private static final Duration SEND_INTERVAL = Duration.ofSeconds(30);
     private static final Duration PENDING_TTL = Duration.ofMinutes(5);
@@ -46,7 +45,6 @@ public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
     }
 
     // SETNX + TTL 이라 서버가 여러 대여도 한 곳만 발송을 가져간다
-    @Override
     public boolean tryAcquireSendSlot(Long roomId) {
         try {
             return Boolean.TRUE.equals(
@@ -58,7 +56,6 @@ public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
         }
     }
 
-    @Override
     public void accumulate(Long roomId, Long messageId, Long senderId, String senderNickname, String message) {
         try {
             String pendingKey = pendingKey(roomId);
@@ -79,7 +76,6 @@ public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
         }
     }
 
-    @Override
     public boolean enqueue(Long roomId) {
         try {
             return Boolean.TRUE.equals(redisTemplate.opsForZSet().addIfAbsent(
@@ -90,7 +86,6 @@ public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
         }
     }
 
-    @Override
     public List<Long> pollDueRoomIds(int limit) {
         try {
             Set<Object> due = redisTemplate.opsForZSet().rangeByScore(
@@ -105,7 +100,6 @@ public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
         }
     }
 
-    @Override
     public PendingChatPush drain(Long roomId) {
         try {
             List<?> flat = redisTemplate.execute(
@@ -132,7 +126,6 @@ public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
         }
     }
 
-    @Override
     public Long findLastPushedMessageId(Long roomId) {
         try {
             Object anchor = redisTemplate.opsForValue().get(anchorKey(roomId));
@@ -143,7 +136,6 @@ public class RedisTopicRoomPushBatchAdapter implements TopicRoomPushBatchPort {
         }
     }
 
-    @Override
     public void markPushed(Long roomId, Long messageId) {
         try {
             redisTemplate.opsForValue().set(anchorKey(roomId), String.valueOf(messageId), ANCHOR_TTL);

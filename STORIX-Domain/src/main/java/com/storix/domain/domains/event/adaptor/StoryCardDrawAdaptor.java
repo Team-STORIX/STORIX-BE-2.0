@@ -31,6 +31,7 @@ public class StoryCardDrawAdaptor {
                 candidate.getGenre().getDbValue(),
                 candidate.getMessage(),
                 candidate.getImmersion(),
+                candidate.getLuckyWorkId(),
                 candidate.getLuckyWorkTitle(),
                 candidate.getLuckyWorkType().getDbValue(),
                 candidate.getLuckyWorkPlatform().name(),

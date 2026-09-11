@@ -1,6 +1,6 @@
 package com.storix.api.domain.preference;
 
-import com.storix.domain.domains.preference.application.ExplorationUseCase;
+import com.storix.api.domain.preference.usecase.ExplorationUseCase;
 import com.storix.domain.domains.preference.dto.ExplorationResultResponseDto;
 import com.storix.domain.domains.preference.dto.ExplorationSubmitRequestDto;
 import com.storix.domain.domains.preference.dto.ExplorationWorksResponseDto;

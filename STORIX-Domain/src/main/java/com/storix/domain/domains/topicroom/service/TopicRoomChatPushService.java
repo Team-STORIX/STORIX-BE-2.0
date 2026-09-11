@@ -6,7 +6,6 @@ import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.pushdevice.dto.ActivePushToken;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
-import com.storix.domain.domains.topicroom.application.port.TopicRoomPresencePort;
 import com.storix.domain.domains.chat.dto.ChatMessageText;
 import com.storix.domain.domains.topicroom.dto.RecentSender;
 import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
@@ -36,19 +35,18 @@ import java.util.stream.Collectors;
 public class TopicRoomChatPushService {
 
     private final TopicRoomAdaptor topicRoomAdaptor;
-    private final TopicRoomPresencePort topicRoomPresencePort;
     private final PushDeviceAdaptor pushDeviceAdaptor;
     private final NotificationAdaptor notificationAdaptor;
     private final ChatAdaptor chatAdaptor;
     private final UserAdaptor userAdaptor;
 
+    // online 은 부르는 쪽이 Redis 에서 읽어 넘긴다. 트랜잭션 안에서 Redis 를 다녀오지 않기 위함
     @Transactional(readOnly = true)
     public List<TopicRoomChatPushTarget> resolveTargets(
-            Long roomId, Long senderId, Long afterMessageId, Long upToMessageId) {
+            Long roomId, Long senderId, Long afterMessageId, Long upToMessageId, Set<Long> online) {
         List<Long> candidates = topicRoomAdaptor.findChatPushTargetUserIds(roomId, senderId);
         if (candidates.isEmpty()) return List.of();
 
-        Set<Long> online = topicRoomPresencePort.findOnlineUserIds(roomId);
         List<Long> offline = candidates.stream().filter(id -> !online.contains(id)).toList();
         if (offline.isEmpty()) return List.of();
 

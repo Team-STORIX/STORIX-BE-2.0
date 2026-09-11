@@ -1,7 +1,7 @@
 package com.storix.api.domain.topicroom;
 
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
-import com.storix.domain.domains.topicroom.application.usecase.TopicRoomUseCase;
+import com.storix.api.domain.topicroom.usecase.TopicRoomUseCase;
 import com.storix.domain.domains.topicroom.dto.TopicRoomCreateRequestDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomPreviewResponseDto;
 import com.storix.domain.domains.topicroom.dto.TopicRoomReportRequestDto;
@@ -10,8 +10,6 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
 import com.storix.api.domain.topicroom.dto.TopicRoomNotificationRequest;
 import com.storix.api.domain.topicroom.dto.TopicRoomNotificationResponse;
 import com.storix.api.domain.topicroom.dto.TopicRoomUnreadResponse;
-import com.storix.domain.domains.topicroom.service.TopicRoomUnreadService;
-import com.storix.domain.domains.topicroom.service.TopicRoomUserService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
@@ -36,8 +34,6 @@ import java.util.List;
 public class TopicRoomController {
 
     private final TopicRoomUseCase topicRoomUseCase;
-    private final TopicRoomUserService topicRoomUserService;
-    private final TopicRoomUnreadService topicRoomUnreadService;
 
     // 1. 참여 목록
     @GetMapping("/me")
@@ -142,7 +138,7 @@ public class TopicRoomController {
     public CustomResponse<List<TopicRoomUserResponseDto>> getRoomMembers(@PathVariable Long roomId) {
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                topicRoomUserService.getRoomMembers(roomId));
+                topicRoomUseCase.getRoomMembers(roomId));
     }
 
     // 10. 읽음 처리
@@ -152,7 +148,7 @@ public class TopicRoomController {
             @AuthenticationPrincipal AuthUserDetails authUser,
             @PathVariable Long roomId) {
 
-        topicRoomUnreadService.markRoomRead(authUser.getUserId(), roomId);
+        topicRoomUseCase.markRoomRead(authUser.getUserId(), roomId);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS);
     }
@@ -165,7 +161,7 @@ public class TopicRoomController {
 
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
-                new TopicRoomUnreadResponse(topicRoomUnreadService.hasAnyUnread(authUser.getUserId())));
+                new TopicRoomUnreadResponse(topicRoomUseCase.hasAnyUnread(authUser.getUserId())));
     }
 
     // 12. 토픽룸별 알림 설정
@@ -176,7 +172,7 @@ public class TopicRoomController {
             @PathVariable Long roomId,
             @Valid @RequestBody TopicRoomNotificationRequest request) {
 
-        topicRoomUserService.changeNotification(authUser.getUserId(), roomId, request.enabled());
+        topicRoomUseCase.changeNotification(authUser.getUserId(), roomId, request.enabled());
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS);
     }
@@ -190,6 +186,6 @@ public class TopicRoomController {
         return CustomResponse.onSuccess(
                 SuccessCode.SUCCESS,
                 new TopicRoomNotificationResponse(
-                        topicRoomUserService.isNotificationEnabled(authUser.getUserId(), roomId)));
+                        topicRoomUseCase.isNotificationEnabled(authUser.getUserId(), roomId)));
     }
 }

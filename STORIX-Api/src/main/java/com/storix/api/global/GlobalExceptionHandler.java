@@ -14,12 +14,18 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.context.MessageSourceResolvable;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.validation.method.ParameterErrors;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -83,6 +89,48 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(response);
+    }
+
+    /**
+     * 파라미터에 제약이 붙은 컨트롤러 메서드는 @Valid 실패도 이 예외로 온다 (Spring 6.1+).
+     * 핸들러가 없으면 폴백으로 떨어져 500 이 나가므로 검증 실패로 명확히 잡는다.
+     */
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(HandlerMethodValidationException e) {
+
+        List<FieldErrorResponse> fieldErrors = e.getAllValidationResults().stream()
+                .flatMap(result -> result instanceof ParameterErrors errors
+                        ? errors.getFieldErrors().stream().map(GlobalExceptionHandler::toFieldError)
+                        : result.getResolvableErrors().stream().map(error -> toFieldError(result, error)))
+                .toList();
+
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
+        ErrorResponse response = new ErrorResponse(errorCode, fieldErrors);
+
+        warnFailure(errorCode, fieldErrors);
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(response);
+    }
+
+    private static FieldErrorResponse toFieldError(org.springframework.validation.FieldError fieldError) {
+        return new FieldErrorResponse(
+                fieldError.getField(),
+                fieldError.getRejectedValue(),
+                fieldError.getCode(),
+                fieldError.getDefaultMessage()
+        );
+    }
+
+    private static FieldErrorResponse toFieldError(ParameterValidationResult result, MessageSourceResolvable error) {
+        String name = result.getMethodParameter().getParameterName();
+        return new FieldErrorResponse(
+                name != null ? name : "unknown",
+                result.getArgument(),
+                error.getCodes() != null && error.getCodes().length > 0 ? error.getCodes()[0] : null,
+                error.getDefaultMessage()
+        );
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -267,6 +315,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException e) {
 
         ErrorCode errorCode = ErrorCode.IMAGE_FILE_TOO_LARGE;
+        ErrorResponse response = new ErrorResponse(errorCode);
+
+        warnFailure(errorCode);
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(response);
+    }
+
+    /** 매핑되지 않은 경로 */
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNotFound(Exception e) {
+
+        ErrorCode errorCode = ErrorCode.ENDPOINT_NOT_FOUND;
         ErrorResponse response = new ErrorResponse(errorCode);
 
         warnFailure(errorCode);

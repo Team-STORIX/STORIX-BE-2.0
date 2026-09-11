@@ -3,9 +3,9 @@ package com.storix.api.domain.event.controller.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.domain.PromotionType;
+import com.storix.api.global.validation.FieldsCompare;
 import com.storix.domain.domains.event.dto.AppEventCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
+@FieldsCompare(before = "startAt", after = "endAt", field = "endAt",
+        message = "이벤트 종료 일시는 시작 일시 이후여야 합니다.")
 public record AppEventRequest(
         @Schema(description = "앱 이벤트명", example = "앱 출시 기념 출석 체크 이벤트")
         @NotBlank(message = "앱 이벤트명은 필수입니다.")
@@ -71,11 +73,6 @@ public record AppEventRequest(
         )
         Map<Integer, Integer> attendanceRewards
 ) {
-    @AssertTrue(message = "이벤트 종료 일시는 시작 일시 이후여야 합니다.")
-    private boolean isPeriodValid() {
-        if (startAt == null || endAt == null) return true;
-        return startAt.isBefore(endAt);
-    }
 
     public AppEventCommand toCommand() {
         return new AppEventCommand(name, description, pageKey, eventType, startAt, endAt, hasWinner, promotionTypes, attendanceRewards);

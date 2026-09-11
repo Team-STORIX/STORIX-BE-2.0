@@ -8,7 +8,6 @@ import com.storix.domain.domains.event.dto.EventWinner;
 import com.storix.domain.domains.event.exception.AppEventInvalidWinnerCountException;
 import com.storix.domain.domains.event.exception.AppEventNoWinnerException;
 import com.storix.domain.domains.event.exception.AppEventNotEndedException;
-import com.storix.domain.domains.event.exception.EventWinnerFinalizerNotImplementedException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +61,10 @@ public class AppEventFinalizeService {
         EventWinnerFinalizer finalizer = finalizers.stream()
                 .filter(f -> f.supports(event))
                 .findFirst()
-                .orElseThrow(() -> EventWinnerFinalizerNotImplementedException.EXCEPTION);
+                // 이벤트 종류에 맞는 확정 구현이 없다는 뜻이라 클라이언트가 할 수 있는 게 없다.
+                // 전용 에러코드 대신 폴백으로 보내 500 과 스택트레이스를 남긴다
+                .orElseThrow(() -> new IllegalStateException(
+                        "당첨자 확정 구현이 없습니다. eventType=" + event.getEventType()));
 
         List<EventWinner> winners = finalizer.resolveWinners(event, winnerCount);
         appEventWinnerService.saveWinners(appEventId, winners);

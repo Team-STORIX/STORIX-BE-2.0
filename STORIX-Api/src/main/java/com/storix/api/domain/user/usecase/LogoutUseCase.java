@@ -20,8 +20,11 @@ public class LogoutUseCase {
     // 로그아웃
     public ResponseEntity<CustomResponse<Void>> execute(Long userId, String installationId, String refreshToken) {
 
-        // refreshToken 삭제 + [Native] 해당 디바이스 FCM 토큰 비활성화
-        authService.logout(userId, installationId, refreshToken);
+        // refreshToken 삭제 (Redis) 는 트랜잭션 밖에서 끝낸다
+        authService.deleteRefreshToken(userId, refreshToken);
+
+        // [Native] 해당 디바이스 FCM 토큰 비활성화
+        authService.deactivatePushDevice(userId, installationId);
 
         return ResponseEntity.ok()
                     .headers(cookieHelper.deleteCookie())
