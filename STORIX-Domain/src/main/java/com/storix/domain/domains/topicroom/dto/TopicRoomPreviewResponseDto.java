@@ -21,7 +21,8 @@ public record TopicRoomPreviewResponseDto(
         String lastMessageSenderNickname,
         String lastChatTime,
         Boolean isJoined,
-        Boolean isAdultOnly
+        Boolean isAdultOnly,
+        Boolean isBlinded
 ) {
     public static TopicRoomPreviewResponseDto from(
             TopicRoom room,
@@ -48,7 +49,8 @@ public record TopicRoomPreviewResponseDto(
                 mask ? null : lastMessageSenderNickname,
                 formatTimeAgo(room.getLastChatTime()),
                 isJoined,
-                isAdultOnly
+                isAdultOnly,
+                mask
         );
     }
 

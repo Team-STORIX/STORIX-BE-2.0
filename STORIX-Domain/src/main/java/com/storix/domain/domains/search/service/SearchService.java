@@ -71,16 +71,18 @@ public class SearchService {
 
     private WorksSearchResponseDto toWorkDto(Works works, boolean excludeAdult) {
         boolean isAdultOnly = AdultContentPolicy.isAdultOnly(works.getAgeClassification());
+        boolean isBlinded = isAdultOnly && excludeAdult;
 
         return WorksSearchResponseDto.builder()
                 .worksId(works.getId())
                 .worksName(works.getWorksName())
                 .artistName(works.getArtistName())
-                .thumbnailUrl(isAdultOnly && excludeAdult ? null : works.getThumbnailUrl())
+                .thumbnailUrl(isBlinded ? null : works.getThumbnailUrl())
                 .reviewsCount(works.getReviewsCount() != null ? works.getReviewsCount() : 0L)
                 .avgRating(roundAvgRating(works.getAvgRating()))
                 .worksType(works.getWorksType() != null ? works.getWorksType().getDbValue() : null)
                 .isAdultOnly(isAdultOnly)
+                .isBlinded(isBlinded)
                 .build();
     }
 
