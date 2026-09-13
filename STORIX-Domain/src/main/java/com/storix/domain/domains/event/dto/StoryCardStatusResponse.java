@@ -28,8 +28,7 @@ public record StoryCardStatusResponse(
         @Schema(description = "오늘 뽑은 카드. 아직 안 뽑았으면 null이고, 카드 선택 화면을 띄워주세요")
         StoryCardResponse card
 ) {
-    // 카드 이미지 objectKey → 전체 URL
-    public StoryCardStatusResponse withBaseUrl(String baseUrl) {
+    public StoryCardStatusResponse withBaseUrl(String baseUrl, String imageVersion) {
         if (card == null) {
             return this;
         }
@@ -40,7 +39,7 @@ public record StoryCardStatusResponse(
                 .serviceDate(serviceDate)
                 .eventActive(eventActive)
                 .drawnToday(drawnToday)
-                .card(card.withBaseUrl(baseUrl))
+                .card(card.withBaseUrl(baseUrl, imageVersion))
                 .build();
     }
 }

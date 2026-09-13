@@ -21,13 +21,15 @@ public class StoryCardEventUseCase {
 
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
+    @Value("${story-card.image-version:20260913}") private String imageVersion;
+
     // 오늘의 스토리 카드 현황 조회
     public CustomResponse<StoryCardStatusResponse> getStatus(Long userId) {
 
         return CustomResponse.onSuccess(
                 SuccessCode.STORY_CARD_LOAD_SUCCESS,
                 storyCardEventService.getStatus(userId, LocalDateTime.now(KST))
-                        .withBaseUrl(baseUrl)
+                        .withBaseUrl(baseUrl, imageVersion)
         );
     }
 
@@ -37,7 +39,7 @@ public class StoryCardEventUseCase {
         return CustomResponse.onSuccess(
                 SuccessCode.STORY_CARD_DRAW_SUCCESS,
                 storyCardEventService.draw(userId, LocalDateTime.now(KST))
-                        .withBaseUrl(baseUrl)
+                        .withBaseUrl(baseUrl, imageVersion)
         );
     }
 }

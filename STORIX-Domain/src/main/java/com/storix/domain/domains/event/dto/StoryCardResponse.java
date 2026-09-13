@@ -21,13 +21,13 @@ public record StoryCardResponse(
         @Schema(description = "오늘의 장르", example = "판타지")
         String genre,
 
-        @Schema(description = "장르별 AI 이미지. objectKey로 담겼다가 응답 직전 전체 URL로 치환된다")
+        @Schema(description = "장르별 AI 이미지. objectKey로 담겼다가 응답 직전 전체 URL + ?v={이미지 버전}으로 치환된다")
         String aiImageUrl,
 
-        @Schema(description = "장르별 배경 이미지. objectKey로 담겼다가 응답 직전 전체 URL로 치환된다")
+        @Schema(description = "장르별 배경 이미지. objectKey로 담겼다가 응답 직전 전체 URL + ?v={이미지 버전}으로 치환된다")
         String backgroundImageUrl,
 
-        @Schema(description = "장르 아이콘. objectKey로 담겼다가 응답 직전 전체 URL로 치환된다")
+        @Schema(description = "장르 아이콘. objectKey로 담겼다가 응답 직전 전체 URL + ?v={이미지 버전}으로 치환된다")
         String iconImageUrl,
 
         @Schema(description = "오늘의 한마디 (줄바꿈을 공백으로 편 한 줄. 공유/저장 텍스트용)")
@@ -42,6 +42,8 @@ public record StoryCardResponse(
         @Schema(description = "행운의 작품")
         StoryCardLuckyWorkResponse luckyWork
 ) {
+    private static final String VERSION_QUERY_KEY = "v";
+
     public static StoryCardResponse of(StoryCardDraw draw, boolean alreadyDrawn) {
         return StoryCardResponse.builder()
                 .drawnOn(draw.getDrawnOn())
@@ -57,19 +59,26 @@ public record StoryCardResponse(
                 .build();
     }
 
-    // objectKey → 전체 URL로 변환
-    public StoryCardResponse withBaseUrl(String baseUrl) {
+    public StoryCardResponse withBaseUrl(String baseUrl, String imageVersion) {
         return this.toBuilder()
-                .aiImageUrl(prefixed(aiImageUrl, baseUrl))
-                .backgroundImageUrl(prefixed(backgroundImageUrl, baseUrl))
-                .iconImageUrl(prefixed(iconImageUrl, baseUrl))
+                .aiImageUrl(prefixed(aiImageUrl, baseUrl, imageVersion))
+                .backgroundImageUrl(prefixed(backgroundImageUrl, baseUrl, imageVersion))
+                .iconImageUrl(prefixed(iconImageUrl, baseUrl, imageVersion))
                 .build();
     }
 
-    private static String prefixed(String objectKey, String baseUrl) {
+    private static String prefixed(String objectKey, String baseUrl, String imageVersion) {
         if (objectKey == null || objectKey.isBlank()) {
             return objectKey;
         }
-        return baseUrl + "/" + objectKey;
+
+        String url = baseUrl + "/" + objectKey;
+
+        if (imageVersion == null || imageVersion.isBlank()) {
+            return url;
+        }
+
+        String separator = url.indexOf('?') < 0 ? "?" : "&";
+        return url + separator + VERSION_QUERY_KEY + "=" + imageVersion;
     }
 }
