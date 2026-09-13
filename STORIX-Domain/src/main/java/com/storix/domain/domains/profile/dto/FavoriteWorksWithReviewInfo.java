@@ -20,16 +20,18 @@ public record FavoriteWorksWithReviewInfo(
         // 성인 작품 여부
         boolean isAdultOnly
 ) {
-    public static FavoriteWorksWithReviewInfo of(WorksInfo base, boolean isReviewed, String rating) {
+    public static FavoriteWorksWithReviewInfo of(WorksInfo base, boolean isReviewed, String rating, boolean excludeAdult) {
+        boolean isAdultOnly = AdultContentPolicy.isAdultOnly(base.ageClassification());
+
         return new FavoriteWorksWithReviewInfo(
                 base.worksId(),
                 base.worksName(),
                 base.artistName(),
-                base.thumbnailUrl(),
+                isAdultOnly && excludeAdult ? null : base.thumbnailUrl(),
                 base.worksType() != null ? base.worksType().getDbValue() : null,
                 isReviewed,
                 rating,
-                AdultContentPolicy.isAdultOnly(base.ageClassification())
+                isAdultOnly
         );
     }
 }

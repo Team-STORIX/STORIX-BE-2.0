@@ -57,6 +57,29 @@ public class TopicRoomResponseDto {
                 .build();
     }
 
+    // 캐시에서 온 인스턴스를 그대로 고치면 다른 유저의 응답까지 오염될 수 있으므로, 유저별 가공은 복사본에서 한다
+    public TopicRoomResponseDto copy() {
+        return TopicRoomResponseDto.builder()
+                .topicRoomId(topicRoomId)
+                .topicRoomName(topicRoomName)
+                .worksType(worksType)
+                .worksName(worksName)
+                .thumbnailUrl(thumbnailUrl)
+                .activeUserNumber(activeUserNumber)
+                .lastChatTime(lastChatTime)
+                .isJoined(isJoined)
+                .unreadCount(unreadCount)
+                .notificationEnabled(notificationEnabled)
+                .isAdultOnly(isAdultOnly)
+                .build();
+    }
+
+    public void maskAdultThumbnail(boolean excludeAdult) {
+        if (excludeAdult && Boolean.TRUE.equals(isAdultOnly)) {
+            this.thumbnailUrl = null;
+        }
+    }
+
     public void markAsJoined(boolean status) {
         this.isJoined = status;
     }

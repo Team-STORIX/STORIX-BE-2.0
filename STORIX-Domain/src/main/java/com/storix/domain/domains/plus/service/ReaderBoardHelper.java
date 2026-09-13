@@ -1,5 +1,6 @@
 package com.storix.domain.domains.plus.service;
 
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Slf4j
 @Service
@@ -41,6 +43,7 @@ public class ReaderBoardHelper {
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final BoardImageAdaptor boardImageAdaptor;
     private final HashtagAdaptor hashTagAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
 
 
     // 게시글 리스트 조회
@@ -160,6 +163,8 @@ public class ReaderBoardHelper {
                 ? Collections.emptyMap()
                 : worksAdaptor.findAllWorksInfoByWorksIds(worksIds);
 
+        Supplier<Boolean> excludeAdult = lazyExcludeAdultFor(userId);
+
         return boards.stream()
                 .map(board -> {
                     boolean isAdultOnly = false;
@@ -175,16 +180,20 @@ public class ReaderBoardHelper {
                             isAdultOnly = AdultContentPolicy.isAdultOnly(works.ageClassification());
                         }
                     }
-                    return ReaderBoardInfo.ofHomeBoard(
+                    ReaderBoardInfo info = ReaderBoardInfo.ofHomeBoard(
                             board,
                             likedBoardIds.contains(board.boardId()),
                             isAdultOnly
                     );
+                    return (isAdultOnly && excludeAdult.get())
+                            ? ReaderBoardInfo.ofMaskedAdultBoard(info)
+                            : info;
                 })
                 .toList();
     }
 
     public Slice<ReaderBoardWithProfileInfo> map(
+            Long userId,
             Slice<ReaderBoardInfo> boards,
             Function<ReaderBoardInfo, StandardProfileInfo> profileResolver
     ) {
@@ -217,6 +226,8 @@ public class ReaderBoardHelper {
                 ? Collections.emptyMap()
                 : hashTagAdaptor.findHashTagsByWorksIds(worksIds);
 
+        Supplier<Boolean> excludeAdult = lazyExcludeAdultFor(userId);
+
         // 최종 매핑
         return boards.map(boardInfo -> {
             StandardProfileInfo profile = profileResolver.apply(boardInfo);
@@ -234,14 +245,40 @@ public class ReaderBoardHelper {
                         .addKeyValue("boardId", boardInfo.boardId())
                         .log(">>> [ReaderBoard] 게시물 참조 works 정보 없음");
             }
+
+            // works 유실 시 성인 여부를 알 수 없으므로 성인 작품으로 간주한다
+            boolean isAdultOnly = useWorks && (works == null || AdultContentPolicy.isAdultOnly(works.ageClassification()));
+
+            // 인증이 유효하지 않으면 프로필·좋아요·댓글 수만 반환한다.
+            if (isAdultOnly && excludeAdult.get()) {
+                return ReaderBoardWithProfileInfo.of(
+                        profile,
+                        ReaderBoardInfo.ofMaskedAdultBoard(boardInfo),
+                        List.of(),
+                        null,
+                        List.of()
+                );
+            }
+
             return ReaderBoardWithProfileInfo.of(
                     profile,
-                    boardInfo,
+                    boardInfo.withAdultOnly(isAdultOnly),
                     imageMap.getOrDefault(boardInfo.boardId(), List.of()),
                     works,
                     useWorks ? hashtagMap.getOrDefault(worksId, List.of()) : List.of()
             );
         });
+    }
+
+    // 성인 게시글을 만났을 때 한 번만 인증 여부를 조회하고 그 결과를 재사용한다
+    private Supplier<Boolean> lazyExcludeAdultFor(Long userId) {
+        Boolean[] cached = new Boolean[1];
+        return () -> {
+            if (cached[0] == null) {
+                cached[0] = adultVerificationAdaptor.excludeAdultFor(userId);
+            }
+            return cached[0];
+        };
     }
 
     public ReaderBoardWithProfileInfo mapSingle(
@@ -272,9 +309,11 @@ public class ReaderBoardHelper {
                     .getOrDefault(worksId, List.of());
         }
 
+        boolean isAdultOnly = works != null && AdultContentPolicy.isAdultOnly(works.ageClassification());
+
         return ReaderBoardWithProfileInfo.of(
                 profile,
-                boardInfo,
+                boardInfo.withAdultOnly(isAdultOnly),
                 imageMap.getOrDefault(boardId, List.of()),
                 works,
                 hashtags

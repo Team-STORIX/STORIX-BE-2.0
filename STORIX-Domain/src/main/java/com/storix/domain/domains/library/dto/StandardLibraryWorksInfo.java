@@ -24,17 +24,20 @@ public record StandardLibraryWorksInfo(
             LibraryWorksInfo worksInfo,
             String artistName,
             Long reviewId,
-            Rating rating
+            Rating rating,
+            boolean excludeAdult
     ) {
+        boolean isAdultOnly = AdultContentPolicy.isAdultOnly(worksInfo.ageClassification());
+
         return new StandardLibraryWorksInfo(
                 // 작품 정보
                 worksInfo.worksId(),
                 worksInfo.worksName(),
                 artistName,
-                worksInfo.thumbnailUrl(),
+                isAdultOnly && excludeAdult ? null : worksInfo.thumbnailUrl(),
                 worksInfo.worksType() != null ? worksInfo.worksType().getDbValue() : null,
                 worksInfo.genre() != null ? worksInfo.genre().getDbValue() : null,
-                AdultContentPolicy.isAdultOnly(worksInfo.ageClassification()),
+                isAdultOnly,
 
                 // 리뷰 정보
                 reviewId,

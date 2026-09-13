@@ -87,6 +87,37 @@ public record ReaderBoardInfo(
     }
 
 
+    public ReaderBoardInfo withAdultOnly(boolean adultOnly) {
+        return ReaderBoardInfo.builder()
+                .userId(userId)
+                .boardId(boardId)
+                .isWorksSelected(isWorksSelected)
+                .worksId(worksId)
+                .lastCreatedTime(lastCreatedTime)
+                .content(content)
+                .likeCount(likeCount)
+                .replyCount(replyCount)
+                .isSpoiler(isSpoiler)
+                .spoilerScript(spoilerScript)
+                .theme(theme)
+                .isLiked(isLiked)
+                .isAdultOnly(adultOnly)
+                .build();
+    }
+
+    // 성인 인증이 유효하지 않은 유저용
+    // 프로필·좋아요·댓글 수만 남기고 나머지 게시글 정보는 반환하지 않는다
+    public static ReaderBoardInfo ofMaskedAdultBoard(ReaderBoardInfo origin) {
+        return ReaderBoardInfo.builder()
+                .userId(origin.userId())
+                .boardId(origin.boardId())
+                .likeCount(origin.likeCount())
+                .replyCount(origin.replyCount())
+                .isLiked(origin.isLiked())
+                .isAdultOnly(true)
+                .build();
+    }
+
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
 

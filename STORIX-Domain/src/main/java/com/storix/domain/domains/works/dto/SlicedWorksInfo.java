@@ -15,4 +15,12 @@ public record SlicedWorksInfo(
     public boolean isAdultOnly() {
         return AdultContentPolicy.isAdultOnly(ageClassification);
     }
+
+    // 성인인증 표지 마스킹
+    public SlicedWorksInfo maskIfAdult(boolean excludeAdult) {
+        if (!excludeAdult || !isAdultOnly()) {
+            return this;
+        }
+        return new SlicedWorksInfo(worksId, null, worksName, ageClassification);
+    }
 }
