@@ -26,6 +26,7 @@ public class TopicRoomResponseDto {
     private Integer unreadCount;
     private Boolean notificationEnabled;
     private Boolean isAdultOnly;
+    private Boolean isBlinded;
 
     public TopicRoomResponseDto(Long topicRoomId, String topicRoomName, WorksType worksType, String worksName,
                                 String thumbnailUrl, Integer activeUserNumber, LocalDateTime lastChatTime, boolean isJoined,
@@ -40,6 +41,7 @@ public class TopicRoomResponseDto {
         this.isJoined = isJoined;
         this.unreadCount = 0;
         this.isAdultOnly = isAdultOnly;
+        this.isBlinded = false;
     }
 
     public static TopicRoomResponseDto from(TopicRoom room, TopicRoomWorksInfo worksInfo, boolean isJoined) {
@@ -54,6 +56,7 @@ public class TopicRoomResponseDto {
                 .isJoined(isJoined)
                 .unreadCount(0)
                 .isAdultOnly(AdultContentPolicy.isAdultOnly(worksInfo.ageClassification()))
+                .isBlinded(false)
                 .build();
     }
 
@@ -71,11 +74,13 @@ public class TopicRoomResponseDto {
                 .unreadCount(unreadCount)
                 .notificationEnabled(notificationEnabled)
                 .isAdultOnly(isAdultOnly)
+                .isBlinded(isBlinded)
                 .build();
     }
 
     public void maskAdultThumbnail(boolean excludeAdult) {
-        if (excludeAdult && Boolean.TRUE.equals(isAdultOnly)) {
+        this.isBlinded = excludeAdult && Boolean.TRUE.equals(isAdultOnly);
+        if (isBlinded) {
             this.thumbnailUrl = null;
         }
     }

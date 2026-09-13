@@ -31,7 +31,8 @@ public record ReaderBoardInfo(
         boolean isLiked,
 
         // 참조 작품이 성인 작품인지 여부. 작품 미선택이면 false
-        Boolean isAdultOnly
+        Boolean isAdultOnly,
+        Boolean isBlinded
 ) {
     // 내 게시글 조회
     public static ReaderBoardInfo ofMyBoard(ReaderBoard board, boolean isLiked) {
@@ -83,6 +84,7 @@ public record ReaderBoardInfo(
                 .spoilerScript(board.spoilerScript())
                 .isLiked(isLiked)
                 .isAdultOnly(isAdultOnly)
+                .isBlinded(false)
                 .build();
     }
 
@@ -102,6 +104,7 @@ public record ReaderBoardInfo(
                 .theme(theme)
                 .isLiked(isLiked)
                 .isAdultOnly(adultOnly)
+                .isBlinded(false)
                 .build();
     }
 
@@ -115,6 +118,7 @@ public record ReaderBoardInfo(
                 .replyCount(origin.replyCount())
                 .isLiked(origin.isLiked())
                 .isAdultOnly(true)
+                .isBlinded(true)
                 .build();
     }
 

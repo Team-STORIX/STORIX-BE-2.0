@@ -14,4 +14,5 @@ public class WorksSearchResponseDto {
     private String thumbnailUrl;
     private String worksType;
     private Boolean isAdultOnly;
+    private Boolean isBlinded;
 }
