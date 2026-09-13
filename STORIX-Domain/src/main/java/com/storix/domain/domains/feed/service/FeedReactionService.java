@@ -31,16 +31,17 @@ public class FeedReactionService {
     @Transactional
     public LikeToggleResponse toggleReaderBoardLike(Long userId, Long boardId) {
 
+        // like·unlike 모두 성인 인증 검증. 삭제된 게시글의 취소는 허용해야 하므로 삭제 여부는 보지 않는다
+        checkAdultAuthority(userId, readerFeedAdaptor.findReaderBoardById(boardId));
+
         // unlike > 작성자 조회 불필요
         int isDeleted = readerFeedAdaptor.isBoardLikeDeleted(userId, boardId);
         if (isDeleted == 1) {
             return readerFeedAdaptor.deleteReaderBoardLike(boardId);
         }
 
-        // like > 삭제된 게시글 차단 + 작성자 조회
+        // like > 삭제된 게시글 차단 + 작성자 조회 (같은 트랜잭션의 1차 캐시라 추가 쿼리 없음)
         ReaderBoard board = readerFeedAdaptor.findActiveReaderBoardById(boardId);
-
-        checkAdultAuthority(userId, board);
 
         LikeToggleResponse response = readerFeedAdaptor.insertReaderBoardLike(userId, boardId);
         publishFeedLikeNotification(userId, board.getUserId(), boardId);
@@ -109,15 +110,16 @@ public class FeedReactionService {
     @Transactional
     public LikeToggleResponse toggleReaderBoardReplyLike(Long userId, Long boardId, Long replyId) {
 
+        // like·unlike 모두 성인 인증 검증. 삭제된 게시글의 취소는 허용해야 하므로 삭제 여부는 보지 않는다
+        checkAdultAuthority(userId, readerFeedAdaptor.findReaderBoardById(boardId));
+
         // unlike(취소) 분기 — 작성자 조회 불필요
         int isDeleted = readerFeedAdaptor.isReplyLikeDeleted(userId, replyId);
         if (isDeleted == 1) {
             return readerFeedAdaptor.deleteReaderBoardReplyLike(replyId);
         }
 
-        // 성인 검증을 위해 게시글을, 알림 발행을 위해 댓글 작성자를 조회
-        checkAdultAuthority(userId, readerFeedAdaptor.findActiveReaderBoardById(boardId));
-
+        // like 분기 — 알림 발행을 위해 댓글 작성자 조회
         Long replyOwnerUserId = readerFeedAdaptor.findReplyOwnerUserId(boardId, replyId);
         LikeToggleResponse response = readerFeedAdaptor.insertReaderBoardReplyLike(userId, replyId);
         publishReplyLikeNotification(userId, replyOwnerUserId, boardId, replyId);
@@ -126,7 +128,7 @@ public class FeedReactionService {
 
     /* ─────────── 성인 인증 헬퍼 ─────────── */
 
-    // 성인 작품 게시글에 반응·댓글을 남기려면 인증이 유효해야 한다. 취소(unlike)는 막지 않는다
+    // 성인 작품 게시글에 반응(취소 포함)·댓글을 남기려면 인증이 유효해야 한다
     private void checkAdultAuthority(Long userId, ReaderBoard board) {
         if (board.isWorksSelected() && board.getWorksId() != null) {
             adultWorksHelper.CheckUserAuthorityWithWorks(userId, board.getWorksId());
