@@ -44,6 +44,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,8 @@ public class TopicRoomService {
                 .toList();
         Map<Long, Integer> unreadMap = topicRoomUnreadService.getUnreadCounts(userId, roomIds);
 
+        boolean excludeAdult = excludeAdultFor(userId, worksMap.values());
+
         List<TopicRoomResponseDto> content = participations.getContent().stream()
                 .map(participation -> {
                     TopicRoom room = participation.getTopicRoom();
@@ -96,6 +99,7 @@ public class TopicRoomService {
                         return null;
                     }
                     TopicRoomResponseDto dto = TopicRoomResponseDto.from(room, worksInfo, true);
+                    dto.maskAdultThumbnail(excludeAdult);
                     dto.applyJoinedRoomState(
                             unreadMap.getOrDefault(room.getId(), 0),
                             participation.isNotificationEnabled());
@@ -126,9 +130,20 @@ public class TopicRoomService {
         List<TopicRoomResponseDto> newUserSlots = topicRoomAdaptor.findNewUserSlots(excludeIds, newUserSlotCount);
         trendingRooms.addAll(newUserSlots);
 
+        // 3) 유저별 가공
+        List<TopicRoomResponseDto> rooms = trendingRooms.stream()
+                .map(TopicRoomResponseDto::copy)
+                .toList();
+
         // 참여 여부 마킹
-        applyMembershipStatus(trendingRooms, userId);
-        return trendingRooms;
+        applyMembershipStatus(rooms, userId);
+
+        // 성인 작품 표지 가리기
+        boolean excludeAdult = rooms.stream().anyMatch(room -> Boolean.TRUE.equals(room.getIsAdultOnly()))
+                && adultVerificationAdaptor.excludeAdultFor(userId);
+        rooms.forEach(room -> room.maskAdultThumbnail(excludeAdult));
+
+        return rooms;
     }
 
     public List<TopicRoomPreviewResponseDto> getPopularRooms(Long userId) {
@@ -153,6 +168,8 @@ public class TopicRoomService {
                 ? topicRoomAdaptor.loadJoinedRoomIds(userId, roomIds)
                 : Collections.emptySet();
 
+        boolean excludeAdult = excludeAdultFor(userId, worksMap.values());
+
         return rooms.stream()
                 .map(room -> {
                     TopicRoomWorksInfo worksInfo = worksMap.get(room.getWorksId());
@@ -163,7 +180,7 @@ public class TopicRoomService {
                     boolean isJoined = joinedRoomIds.contains(room.getId());
                     String lastMessageSenderNickname = nicknameMap.get(room.getLastMessageSenderId());
 
-                    return TopicRoomPreviewResponseDto.from(room, worksInfo, lastMessageSenderNickname, isJoined);
+                    return TopicRoomPreviewResponseDto.from(room, worksInfo, lastMessageSenderNickname, isJoined, excludeAdult);
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -175,6 +192,7 @@ public class TopicRoomService {
 
         Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(worksIds, keyword, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
+        maskAdultThumbnails(rooms.getContent(), userId);
 
         String fallback = null;
 
@@ -201,6 +219,7 @@ public class TopicRoomService {
 
         Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
+        maskAdultThumbnails(rooms.getContent(), userId);
 
         return PlusSearchResponseWrapperDto.<TopicRoomResponseDto>builder()
                 .result(rooms)
@@ -365,6 +384,18 @@ public class TopicRoomService {
                 }
             });
         }
+    }
+
+    private boolean excludeAdultFor(Long userId, Collection<TopicRoomWorksInfo> worksInfos) {
+        return worksInfos.stream().anyMatch(works -> AdultContentPolicy.isAdultOnly(works.ageClassification()))
+                && adultVerificationAdaptor.excludeAdultFor(userId);
+    }
+
+    private void maskAdultThumbnails(List<TopicRoomResponseDto> rooms, Long userId) {
+        boolean excludeAdult = rooms.stream().anyMatch(room -> Boolean.TRUE.equals(room.getIsAdultOnly()))
+                && adultVerificationAdaptor.excludeAdultFor(userId);
+
+        rooms.forEach(room -> room.maskAdultThumbnail(excludeAdult));
     }
 
     private void publishActiveUserNumberChanged(Long roomId, Integer activeUserNumber) {

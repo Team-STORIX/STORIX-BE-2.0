@@ -12,6 +12,7 @@ import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
+import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ public class FeedReactionService {
 
     private final UserAdaptor userAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
+    private final AdultWorksHelper adultWorksHelper;
 
     private final NotificationPublisher notificationPublisher;
 
@@ -37,6 +39,9 @@ public class FeedReactionService {
 
         // like > 삭제된 게시글 차단 + 작성자 조회
         ReaderBoard board = readerFeedAdaptor.findActiveReaderBoardById(boardId);
+
+        checkAdultAuthority(userId, board);
+
         LikeToggleResponse response = readerFeedAdaptor.insertReaderBoardLike(userId, boardId);
         publishFeedLikeNotification(userId, board.getUserId(), boardId);
         return response;
@@ -47,6 +52,8 @@ public class FeedReactionService {
     public ReaderBoardReplyResponse uploadReaderBoardReply(Long userId, Long boardId, String comment) {
 
         ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardById(boardId);
+
+        checkAdultAuthority(userId, readerBoard);
 
         CreateFeedReplyCommand cmd =
                 new CreateFeedReplyCommand(readerBoard, userId, comment, null);
@@ -72,6 +79,8 @@ public class FeedReactionService {
 
         ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardById(boardId);
         ReaderBoardReply parentReply = readerFeedAdaptor.findReplyById(parentReplyId);
+
+        checkAdultAuthority(userId, readerBoard);
 
         // depth 1 제한 (답댓글에 대한 답댓글 불가)
         if (parentReply.getDepth() >= 1) {
@@ -106,11 +115,22 @@ public class FeedReactionService {
             return readerFeedAdaptor.deleteReaderBoardReplyLike(replyId);
         }
 
-        // like 분기 — 알림 발행을 위해 댓글 작성자 조회
+        // 성인 검증을 위해 게시글을, 알림 발행을 위해 댓글 작성자를 조회
+        checkAdultAuthority(userId, readerFeedAdaptor.findActiveReaderBoardById(boardId));
+
         Long replyOwnerUserId = readerFeedAdaptor.findReplyOwnerUserId(boardId, replyId);
         LikeToggleResponse response = readerFeedAdaptor.insertReaderBoardReplyLike(userId, replyId);
         publishReplyLikeNotification(userId, replyOwnerUserId, boardId, replyId);
         return response;
+    }
+
+    /* ─────────── 성인 인증 헬퍼 ─────────── */
+
+    // 성인 작품 게시글에 반응·댓글을 남기려면 인증이 유효해야 한다. 취소(unlike)는 막지 않는다
+    private void checkAdultAuthority(Long userId, ReaderBoard board) {
+        if (board.isWorksSelected() && board.getWorksId() != null) {
+            adultWorksHelper.CheckUserAuthorityWithWorks(userId, board.getWorksId());
+        }
     }
 
     /* ─────────── 알림 발행 헬퍼 ─────────── */
