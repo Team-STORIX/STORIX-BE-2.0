@@ -39,10 +39,14 @@ public class HotTopicRoomFeatureService {
         List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
         Map<Long, TopicRoomWorksInfo> worksByWorksId = safeLoadWorks(worksIds);
 
-        List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
+        List<TopicRoom> validRooms = rooms.stream()
+                .filter(room -> hasWorks(worksByWorksId, room))
+                .toList();
+
+        List<Long> roomIds = validRooms.stream().map(TopicRoom::getId).toList();
         Map<Long, List<Long>> membersByRoom = safeLoadMembers(roomIds);
 
-        Set<Long> adultRoomMemberIds = rooms.stream()
+        Set<Long> adultRoomMemberIds = validRooms.stream()
                 .filter(room -> isAdultRoom(worksByWorksId, room))
                 .flatMap(room -> membersByRoom.getOrDefault(room.getId(), List.of()).stream())
                 .collect(Collectors.toSet());
@@ -52,7 +56,7 @@ public class HotTopicRoomFeatureService {
 
         LocalDate today = LocalDate.now();
 
-        for (TopicRoom room : rooms) {
+        for (TopicRoom room : validRooms) {
             try {
                 List<Long> members = membersByRoom.getOrDefault(room.getId(), List.of());
                 boolean isAdultRoom = isAdultRoom(worksByWorksId, room);
@@ -71,17 +75,20 @@ public class HotTopicRoomFeatureService {
         }
     }
 
-    // 작품 정보를 못 찾으면 성인 여부를 확신할 수 없으므로 안전하게 성인 방으로 간주한다
-    private boolean isAdultRoom(Map<Long, TopicRoomWorksInfo> worksByWorksId, TopicRoom room) {
-        TopicRoomWorksInfo works = worksByWorksId.get(room.getWorksId());
-        if (works == null) {
-            log.atError()
-                    .addKeyValue("roomId", room.getId())
-                    .addKeyValue("worksId", room.getWorksId())
-                    .log(">>> [HotTopicRoom] 방의 참조 works 정보 없음");
+    private boolean hasWorks(Map<Long, TopicRoomWorksInfo> worksByWorksId, TopicRoom room) {
+        if (worksByWorksId.containsKey(room.getWorksId())) {
             return true;
         }
-        return AdultContentPolicy.isAdultOnly(works.ageClassification());
+        log.atError()
+                .addKeyValue("roomId", room.getId())
+                .addKeyValue("worksId", room.getWorksId())
+                .log(">>> [HotTopicRoom] 방의 참조 works 정보 없음. 알림 대상에서 제외");
+        return false;
+    }
+
+    // hasWorks 로 걸러진 방만 들어온다
+    private boolean isAdultRoom(Map<Long, TopicRoomWorksInfo> worksByWorksId, TopicRoom room) {
+        return AdultContentPolicy.isAdultOnly(worksByWorksId.get(room.getWorksId()).ageClassification());
     }
 
     private Map<Long, TopicRoomWorksInfo> safeLoadWorks(List<Long> worksIds) {

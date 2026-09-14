@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 @Slf4j
 @Service
@@ -163,29 +162,35 @@ public class ReaderBoardHelper {
                 ? Collections.emptyMap()
                 : worksAdaptor.findAllWorksInfoByWorksIds(worksIds);
 
-        Supplier<Boolean> excludeAdult = lazyExcludeAdultFor(userId);
-
-        return boards.stream()
-                .map(board -> {
-                    boolean isAdultOnly = false;
-                    if (Boolean.TRUE.equals(board.isWorksSelected()) && board.worksId() != null) {
-                        WorksInfo works = worksMap.get(board.worksId());
-                        if (works == null) {
-                            log.atError()
-                                    .addKeyValue("worksId", board.worksId())
-                                    .addKeyValue("boardId", board.boardId())
-                                    .log(">>> [ReaderBoard] 오늘의 피드 참조 works 정보 없음");
-                            isAdultOnly = true;
-                        } else {
-                            isAdultOnly = AdultContentPolicy.isAdultOnly(works.ageClassification());
-                        }
+        // 참조 works 가 유실된 게시글은 로그를 남기고 제외한다
+        List<StandardReaderBoardInfo> validBoards = boards.stream()
+                .filter(board -> {
+                    boolean useWorks = Boolean.TRUE.equals(board.isWorksSelected()) && board.worksId() != null;
+                    if (useWorks && !worksMap.containsKey(board.worksId())) {
+                        log.atError()
+                                .addKeyValue("worksId", board.worksId())
+                                .addKeyValue("boardId", board.boardId())
+                                .log(">>> [ReaderBoard] 오늘의 피드 참조 works 정보 없음");
+                        return false;
                     }
+                    return true;
+                })
+                .toList();
+
+        // 성인 게시글이 있을 때만 인증 여부를 한 번 조회한다
+        boolean excludeAdult = validBoards.stream()
+                .anyMatch(board -> isAdultBoard(board.isWorksSelected(), board.worksId(), worksMap))
+                && adultVerificationAdaptor.excludeAdultFor(userId);
+
+        return validBoards.stream()
+                .map(board -> {
+                    boolean isAdultOnly = isAdultBoard(board.isWorksSelected(), board.worksId(), worksMap);
                     ReaderBoardInfo info = ReaderBoardInfo.ofHomeBoard(
                             board,
                             likedBoardIds.contains(board.boardId()),
                             isAdultOnly
                     );
-                    return (isAdultOnly && excludeAdult.get())
+                    return (isAdultOnly && excludeAdult)
                             ? ReaderBoardInfo.ofMaskedAdultBoard(info)
                             : info;
                 })
@@ -226,10 +231,27 @@ public class ReaderBoardHelper {
                 ? Collections.emptyMap()
                 : hashTagAdaptor.findHashTagsByWorksIds(worksIds);
 
-        Supplier<Boolean> excludeAdult = lazyExcludeAdultFor(userId);
+        List<ReaderBoardInfo> validBoards = content.stream()
+                .filter(boardInfo -> {
+                    boolean useWorks = Boolean.TRUE.equals(boardInfo.isWorksSelected()) && boardInfo.worksId() != null;
+                    if (useWorks && !worksMap.containsKey(boardInfo.worksId())) {
+                        log.atError()
+                                .addKeyValue("worksId", boardInfo.worksId())
+                                .addKeyValue("boardId", boardInfo.boardId())
+                                .log(">>> [ReaderBoard] 게시물 참조 works 정보 없음");
+                        return false;
+                    }
+                    return true;
+                })
+                .toList();
+
+        // 성인 게시글이 있을 때만 인증 여부를 한 번 조회한다
+        boolean excludeAdult = validBoards.stream()
+                .anyMatch(boardInfo -> isAdultBoard(boardInfo.isWorksSelected(), boardInfo.worksId(), worksMap))
+                && adultVerificationAdaptor.excludeAdultFor(userId);
 
         // 최종 매핑
-        return boards.map(boardInfo -> {
+        List<ReaderBoardWithProfileInfo> result = validBoards.stream().map(boardInfo -> {
             StandardProfileInfo profile = profileResolver.apply(boardInfo);
             if (profile == null) {
                 log.atWarn().addKeyValue("userId", boardInfo.userId()).addKeyValue("boardId", boardInfo.boardId())
@@ -239,18 +261,10 @@ public class ReaderBoardHelper {
             Long worksId = boardInfo.worksId();
             boolean useWorks = Boolean.TRUE.equals(boardInfo.isWorksSelected()) && worksId != null;
             WorksInfo works = useWorks ? worksMap.get(worksId) : null;
-            if (useWorks && works == null) {
-                log.atError()
-                        .addKeyValue("worksId", worksId)
-                        .addKeyValue("boardId", boardInfo.boardId())
-                        .log(">>> [ReaderBoard] 게시물 참조 works 정보 없음");
-            }
-
-            // works 유실 시 성인 여부를 알 수 없으므로 성인 작품으로 간주한다
-            boolean isAdultOnly = useWorks && (works == null || AdultContentPolicy.isAdultOnly(works.ageClassification()));
+            boolean isAdultOnly = isAdultBoard(boardInfo.isWorksSelected(), worksId, worksMap);
 
             // 인증이 유효하지 않으면 프로필·좋아요·댓글 수만 반환한다.
-            if (isAdultOnly && excludeAdult.get()) {
+            if (isAdultOnly && excludeAdult) {
                 return ReaderBoardWithProfileInfo.of(
                         profile,
                         ReaderBoardInfo.ofMaskedAdultBoard(boardInfo),
@@ -267,18 +281,18 @@ public class ReaderBoardHelper {
                     works,
                     useWorks ? hashtagMap.getOrDefault(worksId, List.of()) : List.of()
             );
-        });
+        }).toList();
+
+        return new SliceImpl<>(result, boards.getPageable(), boards.hasNext());
     }
 
-    // 성인 게시글을 만났을 때 한 번만 인증 여부를 조회하고 그 결과를 재사용한다
-    private Supplier<Boolean> lazyExcludeAdultFor(Long userId) {
-        Boolean[] cached = new Boolean[1];
-        return () -> {
-            if (cached[0] == null) {
-                cached[0] = adultVerificationAdaptor.excludeAdultFor(userId);
-            }
-            return cached[0];
-        };
+    // works 유실 게시글은 호출 전에 걸러지므로, 작품이 선택돼 있고 성인 등급일 때만 true
+    private boolean isAdultBoard(Boolean isWorksSelected, Long worksId, Map<Long, WorksInfo> worksMap) {
+        if (!Boolean.TRUE.equals(isWorksSelected) || worksId == null) {
+            return false;
+        }
+        WorksInfo works = worksMap.get(worksId);
+        return works != null && AdultContentPolicy.isAdultOnly(works.ageClassification());
     }
 
     public ReaderBoardWithProfileInfo mapSingle(
