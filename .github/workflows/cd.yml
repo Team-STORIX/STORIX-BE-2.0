@@ -123,10 +123,25 @@ jobs:
         env:
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          aws lambda invoke \
-            --function-name storix-spec-changelog \
-            --region ap-northeast-2 \
-            --cli-binary-format raw-in-base64-out \
-            --payload "{\"label\":\"dev-${SHA:0:7}\",\"commit\":\"$SHA\",\"env\":\"dev\"}" \
-            /tmp/spec-changelog.json
-          cat /tmp/spec-changelog.json
+          # 배포 직후엔 앱이 아직 기동 중이라 스펙 조회가 502 로 떨어진다.
+          # 기동 시간이 배포마다 달라 고정 대기 대신 재시도로 푼다.
+          for i in $(seq 1 8); do
+            aws lambda invoke \
+              --function-name storix-spec-changelog \
+              --region ap-northeast-2 \
+              --cli-binary-format raw-in-base64-out \
+              --payload "{\"label\":\"dev-${SHA:0:7}\",\"commit\":\"$SHA\",\"env\":\"dev\"}" \
+              /tmp/spec-changelog.json > /tmp/invoke-meta.json
+
+            if ! grep -q FunctionError /tmp/invoke-meta.json; then
+              cat /tmp/spec-changelog.json
+              exit 0
+            fi
+
+            echo "시도 $i 실패 - 앱 기동 대기 후 재시도"
+            cat /tmp/spec-changelog.json
+            sleep 20
+          done
+
+          echo "8회 시도에도 실패했다"
+          exit 1
