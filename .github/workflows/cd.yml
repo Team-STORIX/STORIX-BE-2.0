@@ -113,3 +113,20 @@ jobs:
           STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query Status --output text)
           echo "Status: $STATUS"
           [ "$STATUS" = "Success" ] || { echo "deploy failed"; exit 1; }
+
+      # 배포가 끝난 뒤 스펙 스냅샷을 뜨고 직전 배포와 비교한다.
+      # Lambda 가 dev.storix.kr 을 보므로 dev 배포에서만 돈다.
+      # 배포 자체와 분리돼 있어 이 단계가 실패해도 배포는 이미 끝나 있다.
+      - name: 스펙 변경 알림 (dev)
+        if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' && steps.target.outputs.env_tag == 'dev' }}
+        continue-on-error: true
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          aws lambda invoke \
+            --function-name storix-spec-changelog \
+            --region ap-northeast-2 \
+            --cli-binary-format raw-in-base64-out \
+            --payload "{\"label\":\"dev-${SHA:0:7}\",\"commit\":\"$SHA\",\"env\":\"dev\"}" \
+            /tmp/spec-changelog.json
+          cat /tmp/spec-changelog.json
