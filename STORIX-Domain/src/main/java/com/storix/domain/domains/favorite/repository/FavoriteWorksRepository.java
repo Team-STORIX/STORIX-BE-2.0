@@ -27,9 +27,10 @@ public interface FavoriteWorksRepository extends JpaRepository<FavoriteWorks, Lo
     // 관심 작품 조회용
     int countByUserId(Long userId);
 
+    // 성인작품 포함하여 조회하며 isAdultOnly 필터링은 프론트에서 처리함
     @Query("SELECT f.worksId FROM FavoriteWorks f " +
             "WHERE f.userId = :userId")
-    Slice<Long> findWorksIdsByUserId(Long userId, Pageable pageable);
+    Slice<Long> findWorksIdsByUserId(@Param("userId") Long userId, Pageable pageable);
 
     // 선호 해시태그 용
     @Query("SELECT f.worksId FROM FavoriteWorks f " +

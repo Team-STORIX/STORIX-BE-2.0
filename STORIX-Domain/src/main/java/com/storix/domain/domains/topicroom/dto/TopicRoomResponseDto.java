@@ -1,6 +1,7 @@
 package com.storix.domain.domains.topicroom.dto;
 
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import lombok.*;
@@ -24,9 +25,12 @@ public class TopicRoomResponseDto {
     private Boolean isJoined;
     private Integer unreadCount;
     private Boolean notificationEnabled;
+    private Boolean isAdultOnly;
+    private Boolean isBlinded;
 
     public TopicRoomResponseDto(Long topicRoomId, String topicRoomName, WorksType worksType, String worksName,
-                                String thumbnailUrl, Integer activeUserNumber, LocalDateTime lastChatTime, boolean isJoined) {
+                                String thumbnailUrl, Integer activeUserNumber, LocalDateTime lastChatTime, boolean isJoined,
+                                boolean isAdultOnly) {
         this.topicRoomId = topicRoomId;
         this.topicRoomName = topicRoomName;
         this.worksType = (worksType != null) ? worksType.getDbValue() : null;
@@ -36,6 +40,8 @@ public class TopicRoomResponseDto {
         this.lastChatTime = formatTimeAgo(lastChatTime); // 시간 포맷팅 로직 적용
         this.isJoined = isJoined;
         this.unreadCount = 0;
+        this.isAdultOnly = isAdultOnly;
+        this.isBlinded = false;
     }
 
     public static TopicRoomResponseDto from(TopicRoom room, TopicRoomWorksInfo worksInfo, boolean isJoined) {
@@ -49,7 +55,34 @@ public class TopicRoomResponseDto {
                 .lastChatTime(formatTimeAgo(room.getLastChatTime()))
                 .isJoined(isJoined)
                 .unreadCount(0)
+                .isAdultOnly(AdultContentPolicy.isAdultOnly(worksInfo.ageClassification()))
+                .isBlinded(false)
                 .build();
+    }
+
+    // 캐시에서 온 인스턴스를 그대로 고치면 다른 유저의 응답까지 오염될 수 있으므로, 유저별 가공은 복사본에서 한다
+    public TopicRoomResponseDto copy() {
+        return TopicRoomResponseDto.builder()
+                .topicRoomId(topicRoomId)
+                .topicRoomName(topicRoomName)
+                .worksType(worksType)
+                .worksName(worksName)
+                .thumbnailUrl(thumbnailUrl)
+                .activeUserNumber(activeUserNumber)
+                .lastChatTime(lastChatTime)
+                .isJoined(isJoined)
+                .unreadCount(unreadCount)
+                .notificationEnabled(notificationEnabled)
+                .isAdultOnly(isAdultOnly)
+                .isBlinded(isBlinded)
+                .build();
+    }
+
+    public void maskAdultThumbnail(boolean excludeAdult) {
+        this.isBlinded = excludeAdult && Boolean.TRUE.equals(isAdultOnly);
+        if (isBlinded) {
+            this.thumbnailUrl = null;
+        }
     }
 
     public void markAsJoined(boolean status) {

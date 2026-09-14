@@ -28,7 +28,11 @@ public record ReaderBoardInfo(
         BoardTheme theme,
 
         // 좋아요 여부
-        boolean isLiked
+        boolean isLiked,
+
+        // 참조 작품이 성인 작품인지 여부. 작품 미선택이면 false
+        Boolean isAdultOnly,
+        Boolean isBlinded
 ) {
     // 내 게시글 조회
     public static ReaderBoardInfo ofMyBoard(ReaderBoard board, boolean isLiked) {
@@ -66,12 +70,12 @@ public record ReaderBoardInfo(
     }
 
     // 오늘의 피드 게시글 조회
-    public static ReaderBoardInfo ofHomeBoard(StandardReaderBoardInfo board, boolean isLiked) {
+    public static ReaderBoardInfo ofHomeBoard(StandardReaderBoardInfo board, boolean isLiked, boolean isAdultOnly) {
         return ReaderBoardInfo.builder()
                 .userId(board.userId())
                 .boardId(board.boardId())
-                .isWorksSelected(null)
-                .worksId(null)
+                .isWorksSelected(board.isWorksSelected())
+                .worksId(board.worksId())
                 .lastCreatedTime(null)
                 .content(board.content())
                 .likeCount(board.likeCount())
@@ -79,9 +83,45 @@ public record ReaderBoardInfo(
                 .isSpoiler(board.isSpoiler())
                 .spoilerScript(board.spoilerScript())
                 .isLiked(isLiked)
+                .isAdultOnly(isAdultOnly)
+                .isBlinded(false)
                 .build();
     }
 
+
+    public ReaderBoardInfo withAdultOnly(boolean adultOnly) {
+        return ReaderBoardInfo.builder()
+                .userId(userId)
+                .boardId(boardId)
+                .isWorksSelected(isWorksSelected)
+                .worksId(worksId)
+                .lastCreatedTime(lastCreatedTime)
+                .content(content)
+                .likeCount(likeCount)
+                .replyCount(replyCount)
+                .isSpoiler(isSpoiler)
+                .spoilerScript(spoilerScript)
+                .theme(theme)
+                .isLiked(isLiked)
+                .isAdultOnly(adultOnly)
+                .isBlinded(false)
+                .build();
+    }
+
+    // 성인 인증이 유효하지 않은 유저용
+    // 프로필·게시 시각·좋아요·댓글 수만 남기고 나머지 게시글 정보는 반환하지 않는다
+    public static ReaderBoardInfo ofMaskedAdultBoard(ReaderBoardInfo origin) {
+        return ReaderBoardInfo.builder()
+                .userId(origin.userId())
+                .boardId(origin.boardId())
+                .lastCreatedTime(origin.lastCreatedTime())
+                .likeCount(origin.likeCount())
+                .replyCount(origin.replyCount())
+                .isLiked(origin.isLiked())
+                .isAdultOnly(true)
+                .isBlinded(true)
+                .build();
+    }
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");

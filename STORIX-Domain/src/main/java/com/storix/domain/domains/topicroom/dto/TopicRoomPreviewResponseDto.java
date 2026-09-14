@@ -2,6 +2,7 @@ package com.storix.domain.domains.topicroom.dto;
 
 import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 
 import java.time.Duration;
@@ -19,27 +20,37 @@ public record TopicRoomPreviewResponseDto(
         Long lastMessageSenderId,
         String lastMessageSenderNickname,
         String lastChatTime,
-        Boolean isJoined
+        Boolean isJoined,
+        Boolean isAdultOnly,
+        Boolean isBlinded
 ) {
     public static TopicRoomPreviewResponseDto from(
             TopicRoom room,
             TopicRoomWorksInfo worksInfo,
             String lastMessageSenderNickname,
-            boolean isJoined
+            boolean isJoined,
+            boolean excludeAdult
     ) {
+        boolean isAdultOnly = AdultContentPolicy.isAdultOnly(worksInfo.ageClassification());
+
+        // 미리보기 채팅 마스킹
+        boolean mask = isAdultOnly && excludeAdult;
+
         return new TopicRoomPreviewResponseDto(
                 room.getId(),
                 room.getTopicRoomName(),
                 worksInfo.worksType() != null ? worksInfo.worksType().getDbValue() : null,
                 worksInfo.worksName(),
-                worksInfo.imageUrl(),
+                mask ? null : worksInfo.imageUrl(),
                 room.getActiveUserNumber(),
-                room.getLastMessage(),
-                room.getLastMessageType(),
-                room.getLastMessageSenderId(),
-                lastMessageSenderNickname,
+                mask ? null : room.getLastMessage(),
+                mask ? null : room.getLastMessageType(),
+                mask ? null : room.getLastMessageSenderId(),
+                mask ? null : lastMessageSenderNickname,
                 formatTimeAgo(room.getLastChatTime()),
-                isJoined
+                isJoined,
+                isAdultOnly,
+                mask
         );
     }
 
