@@ -121,8 +121,24 @@ jobs:
         if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' && steps.target.outputs.env_tag == 'dev' }}
         continue-on-error: true
         env:
+          GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
+          # 배포된 커밋에 연결된 PR 을 조회한다. 커밋 제목을 파싱하면 예전 기본 형식
+          # ("Merge pull request #263 from ...") 에서 깨지므로 API 로 받는다.
+          PR_JSON=$(gh api "repos/${{ github.repository }}/commits/${SHA}/pulls" 2>/dev/null || echo '[]')
+          PR=$(printf '%s' "$PR_JSON" | jq -r '.[0].number // empty')
+          TITLE=$(printf '%s' "$PR_JSON" | jq -r '.[0].title // empty')
+          echo "작업: ${TITLE:-없음} / PR: ${PR:-없음}"
+
+          # 제목에 따옴표·대괄호·한글이 들어가 문자열로 이으면 JSON 이 깨진다.
+          PAYLOAD=$(jq -nc \
+            --arg label "dev-${SHA:0:7}" --arg commit "$SHA" --arg env dev \
+            --arg title "$TITLE" --arg pr "$PR" \
+            '{label:$label, commit:$commit, env:$env}
+             + (if $title == "" then {} else {title:$title} end)
+             + (if $pr == "" then {} else {pr:$pr} end)')
+
           # 배포 직후엔 앱이 아직 기동 중이라 스펙 조회가 502 로 떨어진다.
           # 기동 시간이 배포마다 달라 고정 대기 대신 재시도로 푼다.
           for i in $(seq 1 8); do
@@ -130,7 +146,7 @@ jobs:
               --function-name storix-spec-changelog \
               --region ap-northeast-2 \
               --cli-binary-format raw-in-base64-out \
-              --payload "{\"label\":\"dev-${SHA:0:7}\",\"commit\":\"$SHA\",\"env\":\"dev\"}" \
+              --payload "$PAYLOAD" \
               /tmp/spec-changelog.json > /tmp/invoke-meta.json
 
             if ! grep -q FunctionError /tmp/invoke-meta.json; then
