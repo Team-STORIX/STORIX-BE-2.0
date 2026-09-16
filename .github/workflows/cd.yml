@@ -129,15 +129,25 @@ jobs:
           PR_JSON=$(gh api "repos/${{ github.repository }}/commits/${SHA}/pulls" 2>/dev/null || echo '[]')
           PR=$(printf '%s' "$PR_JSON" | jq -r '.[0].number // empty')
           TITLE=$(printf '%s' "$PR_JSON" | jq -r '.[0].title // empty')
-          echo "작업: ${TITLE:-없음} / PR: ${PR:-없음}"
+          LOGIN=$(printf '%s' "$PR_JSON" | jq -r '.[0].user.login // empty')
+
+          # 이름표는 여기서만 둔다. MCP 패키지는 npm 에 공개돼 있어 실명을 싣지 않는다.
+          # 표에 없는 사람은 로그인 아이디를 그대로 쓴다.
+          case "$LOGIN" in
+            Immmii)     AUTHOR="BE 이수아" ;;
+            yooniicode) AUTHOR="BE 이윤지" ;;
+            *)          AUTHOR="$LOGIN" ;;
+          esac
+          echo "작업: ${TITLE:-없음} / PR: ${PR:-없음} / 작업자: ${AUTHOR:-없음}"
 
           # 제목에 따옴표·대괄호·한글이 들어가 문자열로 이으면 JSON 이 깨진다.
           PAYLOAD=$(jq -nc \
             --arg label "dev-${SHA:0:7}" --arg commit "$SHA" --arg env dev \
-            --arg title "$TITLE" --arg pr "$PR" \
+            --arg title "$TITLE" --arg pr "$PR" --arg author "$AUTHOR" \
             '{label:$label, commit:$commit, env:$env}
              + (if $title == "" then {} else {title:$title} end)
-             + (if $pr == "" then {} else {pr:$pr} end)')
+             + (if $pr == "" then {} else {pr:$pr} end)
+             + (if $author == "" then {} else {author:$author} end)')
 
           # 배포 직후엔 앱이 아직 기동 중이라 스펙 조회가 502 로 떨어진다.
           # 기동 시간이 배포마다 달라 고정 대기 대신 재시도로 푼다.
