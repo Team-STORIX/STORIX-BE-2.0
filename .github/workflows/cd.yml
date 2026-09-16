@@ -123,24 +123,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.workflow_run.head_sha }}
+          SLACK_MEMBER_MAP: ${{ secrets.SLACK_MEMBER_MAP }}
         run: |
-          # 배포된 커밋에 연결된 PR 을 조회한다. 커밋 제목을 파싱하면 예전 기본 형식
-          # ("Merge pull request #263 from ...") 에서 깨지므로 API 로 받는다.
+          # 1. 배포된 커밋의 PR 정보 조회
           PR_JSON=$(gh api "repos/${{ github.repository }}/commits/${SHA}/pulls" 2>/dev/null || echo '[]')
           PR=$(printf '%s' "$PR_JSON" | jq -r '.[0].number // empty')
           TITLE=$(printf '%s' "$PR_JSON" | jq -r '.[0].title // empty')
           LOGIN=$(printf '%s' "$PR_JSON" | jq -r '.[0].user.login // empty')
 
-          # 이름표는 여기서만 둔다. MCP 패키지는 npm 에 공개돼 있어 실명을 싣지 않는다.
-          # 표에 없는 사람은 로그인 아이디를 그대로 쓴다.
-          case "$LOGIN" in
-            Immmii)     AUTHOR="BE 이수아" ;;
-            yooniicode) AUTHOR="BE 이윤지" ;;
-            *)          AUTHOR="$LOGIN" ;;
-          esac
-          echo "작업: ${TITLE:-없음} / PR: ${PR:-없음} / 작업자: ${AUTHOR:-없음}"
+          # 2. 작업자 슬랙 멘션 변환
+          SLACK_ID=$(printf '%s' "${SLACK_MEMBER_MAP:-{\}}" | jq -r --arg l "$LOGIN" '.[$l] // empty')
+          AUTHOR="${SLACK_ID:+<@$SLACK_ID>}"
+          AUTHOR="${AUTHOR:-$LOGIN}"
+          echo "작업: ${TITLE:-없음} / PR: ${PR:-없음} / 작업자: ${LOGIN:-없음}"
 
-          # 제목에 따옴표·대괄호·한글이 들어가 문자열로 이으면 JSON 이 깨진다.
+          # 3. Lambda 페이로드 구성
           PAYLOAD=$(jq -nc \
             --arg label "dev-${SHA:0:7}" --arg commit "$SHA" --arg env dev \
             --arg title "$TITLE" --arg pr "$PR" --arg author "$AUTHOR" \
