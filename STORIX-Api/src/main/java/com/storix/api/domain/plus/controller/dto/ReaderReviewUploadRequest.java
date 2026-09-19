@@ -23,4 +23,7 @@ public record ReaderReviewUploadRequest(
         String content
 
 ) {
+    public ReaderReviewUploadRequest {
+        content = content == null ? "" : content;
+    }
 }

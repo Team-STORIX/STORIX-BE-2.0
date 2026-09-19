@@ -4,7 +4,6 @@ import com.storix.api.global.validation.RequiredIf;
 import com.storix.domain.domains.plus.domain.Rating;
 import com.storix.domain.domains.review.dto.ModifyReviewRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -24,11 +23,14 @@ public record ModifyReviewApiRequest(
         String spoilerScript,
 
         @Schema(description = "리뷰 내용")
-        @NotBlank(message = "리뷰 내용을 입력해주세요.")
         @Size(max = 500, message = "리뷰는 500자까지 가능합니다.")
         String content
 
 ) {
+
+    public ModifyReviewApiRequest {
+        content = content == null ? "" : content;
+    }
 
     public ModifyReviewRequest toDto() {
         return new ModifyReviewRequest(rating, Boolean.TRUE.equals(isSpoiler), spoilerScript, content);
