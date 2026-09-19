@@ -2,6 +2,7 @@ package com.storix.api.config.swagger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.storix.common.code.StompErrorReason;
 import com.storix.common.payload.ErrorResponse;
 import jakarta.validation.Constraint;
 import io.swagger.v3.core.converter.AnnotatedType;
@@ -279,26 +280,60 @@ public class SwaggerErrorSpecConfig {
                 .collect(Collectors.joining("\n---\n"));
     }
 
+    private static final Map<String, String> WEBSOCKET_REASON_GUIDE = Map.of(
+            "UNAUTHORIZED", "토큰 문제입니다. 재발급 후 다시 연결하면 풀립니다.",
+            "FORBIDDEN", "성인인증·방 참여 같은 사용자 조치가 필요합니다. 재연결해도 그대로입니다.",
+            "BAD_REQUEST", "보낸 프레임이나 값이 잘못됐습니다. 재연결하지 말고 요청을 고쳐주세요.",
+            "INTERNAL_ERROR", "서버 문제라 재시도로 풀릴 수 있습니다."
+    );
+
     private String websocketTable() {
-        if (websocket == null || websocket.frames() == null || websocket.frames().isEmpty()) return "";
+        if (websocket == null || websocket.codes() == null || websocket.codes().isEmpty()) return "";
 
         StringBuilder sb = new StringBuilder();
         sb.append("\n\n## 웹소켓(STOMP) 에러\n\n");
-        sb.append("REST 와 응답 형식이 다릅니다. `ErrorResponse` 가 아니라 ERROR 프레임의 message 문자열로 옵니다.\n\n");
-        sb.append("| message | 발생 지점 |\n|---|---|\n");
-        for (WebsocketErrorSpec.Frame f : websocket.frames()) {
-            sb.append("| `").append(f.message()).append("` | ").append(f.source()).append(" |\n");
-        }
-        sb.append("\n토큰 만료·잘못된 토큰·권한값 이상이 모두 `UNAUTHORIZED` 하나로 묶여 나갑니다.\n");
+        sb.append("두 갈래로 옵니다. **재연결해야 풀리는 실패는 ERROR 프레임**이고, 다시 보내면 되는 전송 실패만 연결을 유지한 채 개인 큐로 갑니다.\n\n");
+        sb.append("**1) CONNECT 실패·구독 거절 — ERROR 프레임 + 연결 종료(1002)**\n\n");
+        sb.append("```\nERROR\nmessage:UNAUTHORIZED\ncontent-type:application/json\n\n")
+                .append("{\"isSuccess\":false,\"code\":\"TOKEN_ERROR_003\",\"message\":\"...\"}\n```\n\n");
+        sb.append("**2) 전송 실패 — `/user/queue/errors` 로 MESSAGE, 연결 유지**\n\n");
+        sb.append("메시지 하나가 실패한 것이라 연결은 그대로 둡니다. 사유를 받으려면 이 큐를 구독해야 합니다.\n\n");
+        sb.append("```\nMESSAGE\ndestination:/user/queue/errors\ncontent-type:application/json\n\n")
+                .append("{\"isSuccess\":false,\"code\":\"ADULT_VERIFICATION_ERROR_008\",\"message\":\"...\"}\n```\n");
 
-        if (websocket.codes() != null && !websocket.codes().isEmpty()) {
-            sb.append("\n메시지 발행이 실패하면 아래 코드가 서버 로그와 응답에 남습니다.\n\n");
+        sb.append("\n### 목적지\n\n엔드포인트는 `/ws-stomp` 이고, CONNECT 에 `Authorization: Bearer {accessToken}` 를 실어야 합니다.\n\n");
+        sb.append("| 종류 | path | 권한 | 설명 |\n|---|---|---|---|\n");
+        for (Map<String, Object> d : WEBSOCKET_DESTINATIONS) {
+            sb.append("| ").append(d.get("type"))
+                    .append(" | `").append(d.get("path"))
+                    .append("` | ").append(d.get("auth"))
+                    .append(" | ").append(d.get("description")).append(" |\n");
+        }
+
+        for (String reason : reasonsInOrder()) {
+            List<ErrorSpec.Entry> grouped = websocket.codes().stream()
+                    .filter(e -> reason.equals(reasonOf(e.status())))
+                    .toList();
+            if (grouped.isEmpty()) continue;
+
+            sb.append("\n### `").append(reason).append("`\n\n");
+            sb.append(WEBSOCKET_REASON_GUIDE.getOrDefault(reason, "")).append("\n\n");
             sb.append("| status | code | 설명 |\n|---|---|---|\n");
-            for (ErrorSpec.Entry e : websocket.codes()) {
+            for (ErrorSpec.Entry e : grouped) {
                 sb.append("| ").append(e.status()).append(" | `").append(e.code()).append("` | ").append(e.message()).append(" |\n");
             }
         }
         return sb.toString();
+    }
+
+    private List<String> reasonsInOrder() {
+        return websocket.reasons() == null || websocket.reasons().isEmpty()
+                ? List.copyOf(WEBSOCKET_REASON_GUIDE.keySet())
+                : websocket.reasons();
+    }
+
+    private String reasonOf(int status) {
+        return StompErrorReason.from(status).name();
     }
 
     private List<ErrorSpec.Entry> entries(java.util.function.Predicate<ErrorSpec.Entry> filter) {
@@ -323,6 +358,37 @@ public class SwaggerErrorSpecConfig {
         return sb.toString();
     }
 
+    // STOMP 는 OpenAPI 경로에 안 잡힌다. 확장 필드로 심어 스펙 diff 에 태운다
+    private static final List<Map<String, Object>> WEBSOCKET_DESTINATIONS = List.of(
+            Map.of("type", "subscribe", "path", "/sub/chat/room/{roomId}",
+                    "auth", "토픽룸 참여자 + 성인인증", "description", "실시간 채팅 수신"),
+            Map.of("type", "subscribe", "path", "/sub/topic-rooms/{roomId}/active-users",
+                    "auth", "토픽룸 참여자 + 성인인증", "description", "접속자 수 갱신"),
+            Map.of("type", "subscribe", "path", "/user/queue/errors",
+                    "auth", "세션 소유자", "description", "전송 실패 사유. 구독 거절과 토큰 실패는 ERROR 프레임으로 간다"),
+            Map.of("type", "publish", "path", "/pub/chat/message",
+                    "auth", "토픽룸 참여자 + 성인인증", "description", "채팅 메시지 발행")
+    );
+
+    private Map<String, Object> websocketContract() {
+        Map<String, Object> contract = new LinkedHashMap<>();
+        contract.put("endpoint", "/ws-stomp");
+        contract.put("connect", Map.of(
+                "header", "Authorization: Bearer {accessToken}",
+                "onFailure", "ERROR 프레임(message 헤더에 사유, 본문에 ErrorResponse) 후 연결 종료 1002",
+                "subscribeDenied", "구독 인가 실패도 같은 형태의 ERROR 프레임으로 끊는다"));
+        contract.put("destinations", WEBSOCKET_DESTINATIONS);
+        contract.put("errorDestination", "/user/queue/errors");
+        contract.put("errorReasons", reasonsInOrder());
+        contract.put("errorCodes", websocket == null || websocket.codes() == null
+                ? List.of()
+                : websocket.codes().stream()
+                        .map(e -> Map.of("status", e.status(), "code", e.code(), "message", e.message(),
+                                "reason", reasonOf(e.status())))
+                        .toList());
+        return contract;
+    }
+
     /** 에러 응답을 반환하는 핸들러가 없어서 ErrorResponse 스키마가 자동 등록되지 않는다. 직접 넣어준다. */
     @Bean
     public GlobalOpenApiCustomizer errorSchemaRegistrar() {
@@ -331,6 +397,7 @@ public class SwaggerErrorSpecConfig {
                 String base = openApi.getInfo().getDescription() == null ? "" : openApi.getInfo().getDescription();
                 openApi.getInfo().setDescription(base + commonErrorTables());
             }
+            openApi.addExtension("x-websocket", websocketContract());
             ResolvedSchema resolved = ModelConverters.getInstance()
                     .resolveAsResolvedSchema(new AnnotatedType(ErrorResponse.class).resolveAsRef(false));
             if (resolved == null || resolved.schema == null) return;
