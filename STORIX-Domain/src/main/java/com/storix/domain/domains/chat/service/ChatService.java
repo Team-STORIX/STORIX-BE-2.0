@@ -9,7 +9,6 @@ import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
-import com.storix.domain.domains.topicroom.exception.UnknownTopicRoomUserException;
 import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,26 +34,27 @@ public class ChatService {
     @Transactional(readOnly = true)
     public StandardProfileInfo validateRoomMemberAndGetProfile(Long userId, Long roomId) {
 
-        // 토픽룸 존재 여부 검증
-        TopicRoom room = topicRoomAdaptor.findById(roomId);
-
-        // 해당 토픽룸에 참여 중인 유저인지 검증
-        if (!topicRoomAdaptor.existsByUserIdAndRoomId(userId, roomId)) {
-            throw UnknownTopicRoomUserException.EXCEPTION;
-        }
-
-        // 성인인증 유효한지 확인
-        adultWorksHelper.CheckUserAuthorityWithWorks(userId, room.getWorksId());
+        validateRoomMember(userId, roomId);
 
         return userAdaptor.findStandardProfileInfoByUserId(userId);
     }
 
-    // 토픽룸 존재 여부 + 성인 인증 검증
     @Transactional(readOnly = true)
-    public void validateRoomAccess(Long userId, Long roomId) {
+    public void validateRoomMember(Long userId, Long roomId) {
+        validateRoomMemberAndGetJoinedAt(userId, roomId);
+    }
+
+    @Transactional(readOnly = true)
+    public LocalDateTime validateRoomMemberAndGetJoinedAt(Long userId, Long roomId) {
+
         TopicRoom room = topicRoomAdaptor.findById(roomId);
 
+        // 참여자가 아니면 예외
+        TopicRoomUser participation = topicRoomAdaptor.findByUserIdAndRoomId(userId, roomId);
+
         adultWorksHelper.CheckUserAuthorityWithWorks(userId, room.getWorksId());
+
+        return participation.getCreatedAt();
     }
 
     // 발행 전에 저장해야 실시간 메시지에도 실제 id 와 저장 시각이 실린다
@@ -77,8 +77,4 @@ public class ChatService {
         return userBlockAdaptor.findBlockedUserIds(userId);
     }
 
-    public LocalDateTime getRoomJoinedAt(Long userId, Long roomId) {
-        TopicRoomUser participation = topicRoomAdaptor.findByUserIdAndRoomId(userId, roomId);
-        return participation.getCreatedAt();
-    }
 }

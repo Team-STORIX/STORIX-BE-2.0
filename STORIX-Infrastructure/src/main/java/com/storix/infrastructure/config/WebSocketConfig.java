@@ -2,6 +2,7 @@ package com.storix.infrastructure.config;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.storix.infrastructure.external.chat.StompErrorHandler;
 import com.storix.infrastructure.external.chat.StompHandler;
 import com.storix.infrastructure.external.chat.StompMdcInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -32,12 +33,13 @@ import java.util.Map;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final StompHandler stompHandler;
+    private final StompErrorHandler stompErrorHandler;
     private final StompMdcInterceptor stompMdcInterceptor;
     private final ObjectMapper objectMapper;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/sub")
+        registry.enableSimpleBroker("/sub", "/queue")
                 .setHeartbeatValue(new long[]{10000, 10000})
                 .setTaskScheduler(webSocketHeartbeatScheduler());
         registry.setApplicationDestinationPrefixes("/pub");
@@ -68,6 +70,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.setErrorHandler(stompErrorHandler);
+
         registry.addEndpoint("/ws-stomp").setAllowedOriginPatterns(
                 "https://storix.kr",
                 "https://www.storix.kr",

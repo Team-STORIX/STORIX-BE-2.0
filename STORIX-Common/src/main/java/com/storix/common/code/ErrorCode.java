@@ -164,7 +164,7 @@ public enum ErrorCode {
     ALREADY_JOINED_ROOM(HttpStatus.CONFLICT, "TOPIC_ROOM_ERROR_005", "이미 참여 중인 토픽룸입니다."),
     SELF_REPORT_ERROR(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_006", "자기 자신은 신고할 수 없습니다."),
     TOPIC_ROOM_ALREADY_EXISTS(HttpStatus.CONFLICT, "TOPIC_ROOM_ERROR_007", "이미 해당 작품에 대한 토픽룸이 존재합니다."),
-    TOPIC_ROOM_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_008", "해당 토픽룸에 참여하지 않은 유저입니다."),
+    TOPIC_ROOM_USER_NOT_FOUND(HttpStatus.FORBIDDEN, "TOPIC_ROOM_ERROR_008", "해당 토픽룸에 참여하지 않은 유저입니다."),
     TODAY_TOPIC_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "TOPIC_ROOM_ERROR_009", "오늘의 토픽룸이 없습니다."),
     DUPLICATE_TOPIC_ROOM_REPORT(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_010", "이미 신고한 사용자입니다."),
     TOPIC_ROOM_ADMIN_KEYWORD_TITLE(HttpStatus.BAD_REQUEST, "TOPIC_ROOM_ERROR_011", "사용할 수 없는 토픽룸 제목입니다."), // 제목에 관리자/운영 예약 키워드 포함
