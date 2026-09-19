@@ -113,3 +113,58 @@ jobs:
           STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query Status --output text)
           echo "Status: $STATUS"
           [ "$STATUS" = "Success" ] || { echo "deploy failed"; exit 1; }
+
+      # 배포가 끝난 뒤 스펙 스냅샷을 뜨고 직전 배포와 비교한다.
+      # Lambda 가 dev.storix.kr 을 보므로 dev 배포에서만 돈다.
+      # 배포 자체와 분리돼 있어 이 단계가 실패해도 배포는 이미 끝나 있다.
+      - name: 스펙 변경 알림 (dev)
+        if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' && steps.target.outputs.env_tag == 'dev' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          SLACK_MEMBER_MAP: ${{ secrets.SLACK_MEMBER_MAP }}
+        run: |
+          # 1. 배포된 커밋의 PR 정보 조회
+          PR_JSON=$(gh api "repos/${{ github.repository }}/commits/${SHA}/pulls" 2>/dev/null || echo '[]')
+          PR=$(printf '%s' "$PR_JSON" | jq -r '.[0].number // empty')
+          TITLE=$(printf '%s' "$PR_JSON" | jq -r '.[0].title // empty')
+          LOGIN=$(printf '%s' "$PR_JSON" | jq -r '.[0].user.login // empty')
+
+          # 2. 작업자 슬랙 멘션 변환
+          SLACK_ID=$(printf '%s' "${SLACK_MEMBER_MAP:-{\}}" | jq -r --arg l "$LOGIN" '.[$l] // empty')
+          AUTHOR="${SLACK_ID:+<@$SLACK_ID>}"
+          AUTHOR="${AUTHOR:-$LOGIN}"
+          echo "작업: ${TITLE:-없음} / PR: ${PR:-없음} / 작업자: ${LOGIN:-없음}"
+
+          # 3. Lambda 페이로드 구성
+          PAYLOAD=$(jq -nc \
+            --arg label "dev-${SHA:0:7}" --arg commit "$SHA" --arg env dev \
+            --arg title "$TITLE" --arg pr "$PR" --arg author "$AUTHOR" \
+            '{label:$label, commit:$commit, env:$env}
+             + (if $title == "" then {} else {title:$title} end)
+             + (if $pr == "" then {} else {pr:$pr} end)
+             + (if $author == "" then {} else {author:$author} end)')
+
+          # 배포 직후엔 앱이 아직 기동 중이라 스펙 조회가 502 로 떨어진다.
+          # 기동 시간이 배포마다 달라 고정 대기 대신 재시도로 푼다.
+          for i in $(seq 1 8); do
+            aws lambda invoke \
+              --function-name storix-spec-changelog \
+              --region ap-northeast-2 \
+              --cli-binary-format raw-in-base64-out \
+              --payload "$PAYLOAD" \
+              /tmp/spec-changelog.json > /tmp/invoke-meta.json
+
+            if ! grep -q FunctionError /tmp/invoke-meta.json; then
+              cat /tmp/spec-changelog.json
+              exit 0
+            fi
+
+            echo "시도 $i 실패 - 앱 기동 대기 후 재시도"
+            cat /tmp/spec-changelog.json
+            sleep 20
+          done
+
+          echo "8회 시도에도 실패했다"
+          exit 1

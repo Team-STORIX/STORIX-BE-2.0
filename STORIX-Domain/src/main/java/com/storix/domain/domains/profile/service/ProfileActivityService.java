@@ -43,7 +43,7 @@ public class ProfileActivityService {
         Slice<ReaderBoardInfo> boards =
                 readerBoardHelper.findReaderBoardInfo(userId, null, pageable);
 
-        return readerBoardHelper.map(boards, boardInfo -> profileInfo);
+        return readerBoardHelper.map(userId, boards, boardInfo -> profileInfo);
     }
 
     // 내가 쓴 댓글 리스트 조회
@@ -102,6 +102,7 @@ public class ProfileActivityService {
 
         // 4) 최종 매핑
         return readerBoardHelper.map(
+                userId,
                 filteredBoards,
                 boardInfo -> profileMap.get(boardInfo.userId())
         );

@@ -1,6 +1,8 @@
 package com.storix.domain.domains.feed.service;
 
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
+import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
@@ -36,6 +38,8 @@ import java.util.Set;
 public class FeedService {
 
     private final WorksAdaptor worksAdaptor;
+    private final AdultWorksHelper adultWorksHelper;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final UserAdaptor userAdaptor;
     private final UserBlockAdaptor userBlockAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
@@ -75,10 +79,11 @@ public class FeedService {
                 userAdaptor.findStandardProfileInfoByUserIds(writerIds);
 
         // 최종 매핑
-        return readerBoardHelper.map(boardInfos, info ->
+        return readerBoardHelper.map(userId, boardInfos, info ->
                 profileMap.get(info.userId()));
     }
 
+    // 성인 작품도 목록에 노출하되, 인증이 유효하지 않으면 표지를 내리지 않는다
     @Transactional(readOnly = true)
     public Slice<SlicedWorksInfo> findFavoriteWorksList(Long userId, Pageable pageable) {
 
@@ -94,10 +99,17 @@ public class FeedService {
         Map<Long, SlicedWorksInfo> slicedWorksInfoMap =
                 worksAdaptor.findAllSlicedWorksInfoByWorksIds(worksIds);
 
-        // 최종 매핑
-        List<SlicedWorksInfo> result = worksIds.stream()
+        List<SlicedWorksInfo> ordered = worksIds.stream()
                 .map(slicedWorksInfoMap::get)
                 .filter(Objects::nonNull)
+                .toList();
+
+        // 성인 작품이 실제로 섞여 있을 때만 인증 여부를 조회한다
+        boolean excludeAdult = ordered.stream().anyMatch(SlicedWorksInfo::isAdultOnly)
+                && adultVerificationAdaptor.excludeAdultFor(userId);
+
+        List<SlicedWorksInfo> result = ordered.stream()
+                .map(works -> works.maskIfAdult(excludeAdult))
                 .toList();
 
         return new SliceImpl<>(result, pageable, worksIdsSlice.hasNext());
@@ -123,7 +135,7 @@ public class FeedService {
         Map<Long, StandardProfileInfo> profileMap =
                 userAdaptor.findStandardProfileInfoByUserIds(userIds);
 
-        return readerBoardHelper.map(boards, boardInfo ->
+        return readerBoardHelper.map(userId, boards, boardInfo ->
                 profileMap.get(boardInfo.userId())
         );
     }
@@ -138,6 +150,11 @@ public class FeedService {
 
         if (blockedIds.contains(boardInfo.userId())) {
             throw BlockedUserContentException.EXCEPTION;
+        }
+
+        // 상세 조회 시 인증 안되어 있는 경우 예외
+        if (Boolean.TRUE.equals(boardInfo.isWorksSelected()) && boardInfo.worksId() != null) {
+            adultWorksHelper.CheckUserAuthorityWithWorks(userId, boardInfo.worksId());
         }
 
         StandardProfileInfo writerProfile =

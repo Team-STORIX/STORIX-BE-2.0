@@ -236,27 +236,39 @@ if (unknownStatuses.size) console.warn(`매핑 없는 HttpStatus: ${[...unknownS
 console.log(`엔드포인트에 안 붙은 예외 ${orphans.length}개 ${JSON.stringify(byKind)}`);
 
 // ── 웹소켓(STOMP) ────────────────────────────────────────────
-// REST 와 응답 형식이 다르다. ERROR 프레임의 message 문자열로 나가므로 code 가 없다.
-const stompFrames = [];
-for (const src of findSources(/new MessageDeliveryException\(/)) {
-  for (const m of src.text.matchAll(/(\w+)?[\s\S]{0,400}?new MessageDeliveryException\("([^"]+)"\)/g)) {
-    stompFrames.push({ message: m[2], source: src.cls });
-  }
+// REST 그래프에 안 잡혀 프레임을 받는 자리에서 따로 건다
+const STOMP_DEPTH = 4;
+
+// 분류는 HttpStatus 가 정하므로 이름만 읽는다
+const stompReasons = [...sourceOf("StompErrorReason", /enum StompErrorReason\b/)
+  .matchAll(/^\s{4}([A-Z][A-Z0-9_]*)[,;]$/gm)].map((m) => m[1]);
+
+// 인터셉터는 ErrorCode 를 직접 들고 던진다
+const stompDirectNames = directCodesIn("STOMP 인터셉터", /implements\s+ChannelInterceptor/);
+
+// 구독 검증·메시지 처리가 타고 들어가는 도메인 예외
+const stompWalkedNames = [
+  ...exceptionsFrom("StompHandler", "handleConnect", STOMP_DEPTH),
+  ...exceptionsFrom("StompHandler", "validateSubscribe", STOMP_DEPTH),
+  ...exceptionsFrom("ChatController", "message", STOMP_DEPTH),
+];
+
+const stompCodes = new Map();
+for (const name of [...stompDirectNames, ...stompWalkedNames]) {
+  const c = codeOf(name);
+  if (c) stompCodes.set(c.code, { status: c.status, code: c.code, message: c.message });
 }
-const seenFrames = new Set();
+// 발행 실패처럼 REST 응답으로 나가지 않는 에러코드
+for (const o of orphans.filter((o) => o.kind === "웹소켓")) {
+  const c = codeOf(codeOfException(o.exception));
+  if (c) stompCodes.set(c.code, { status: c.status, code: c.code, message: c.message });
+}
+
 out._websocket = {
-  frames: stompFrames.filter((f) => {
-    if (seenFrames.has(f.message)) return false;
-    seenFrames.add(f.message);
-    return true;
-  }),
-  // 발행 실패처럼 REST 응답으로 나가지 않는 에러코드
-  codes: orphans.filter((o) => o.kind === "웹소켓").map((o) => {
-    const c = codeOf(codeOfException(o.exception));
-    return { status: c.status, code: c.code, message: c.message };
-  }),
+  reasons: stompReasons,
+  codes: [...stompCodes.values()].sort((a, b) => a.status - b.status || a.code.localeCompare(b.code)),
 };
-console.log(`웹소켓 ERROR 프레임 ${out._websocket.frames.length}개 · 코드 ${out._websocket.codes.length}개`);
+console.log(`웹소켓 message 어휘 ${stompReasons.length}개 · 코드 ${out._websocket.codes.length}개`);
 
 const dest = process.argv[2];
 mkdirSync(path.dirname(dest), { recursive: true });

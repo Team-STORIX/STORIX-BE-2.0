@@ -1,11 +1,13 @@
 package com.storix.domain.domains.library.service;
 
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.library.dto.StandardLibraryWorksInfo;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.works.application.helper.ArtistNameParseHelper;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class LibraryService {
     private final WorksAdaptor worksAdaptor;
     private final LibraryAdaptor libraryAdaptor;
     private final ReviewAdaptor reviewAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
 
     private final ArtistNameParseHelper artistNameParseHelper;
 
@@ -62,6 +65,8 @@ public class LibraryService {
                         LibraryWorksInfo::worksId,
                         Function.identity()));
 
+        boolean excludeAdult = excludeAdultFor(userId, worksList);
+
         List<StandardLibraryWorksInfo> content = reviewInfo.stream()
                 .map(r -> {
                     LibraryWorksInfo works = worksMap.get(r.worksId());
@@ -75,7 +80,7 @@ public class LibraryService {
                     String artistName = artistNameParseHelper
                             .buildArtistName(works.originalAuthor(), works.author(), works.illustrator());
 
-                    return StandardLibraryWorksInfo.of(works, artistName, r.reviewId(), r.rating());
+                    return StandardLibraryWorksInfo.of(works, artistName, r.reviewId(), r.rating(), excludeAdult);
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -105,6 +110,8 @@ public class LibraryService {
         Map<Long, ReviewedWorksIdAndRatingInfo> reviewMap = reviewInfo.stream()
                 .collect(Collectors.toMap(ReviewedWorksIdAndRatingInfo::worksId, Function.identity()));
 
+        boolean excludeAdult = excludeAdultFor(userId, worksSlice.getContent());
+
         List<StandardLibraryWorksInfo> content = worksSlice.getContent().stream()
                 .map(w -> {
                     ReviewedWorksIdAndRatingInfo r = reviewMap.get(w.worksId());
@@ -118,12 +125,18 @@ public class LibraryService {
                     String artistName = artistNameParseHelper
                             .buildArtistName(w.originalAuthor(), w.author(), w.illustrator());
 
-                    return StandardLibraryWorksInfo.of(w, artistName, r.reviewId(), r.rating());
+                    return StandardLibraryWorksInfo.of(w, artistName, r.reviewId(), r.rating(), excludeAdult);
                 })
                 .filter(Objects::nonNull)
                 .toList();
 
         return new SliceImpl<>(content, pageable, worksSlice.hasNext());
+    }
+
+    // 성인 작품이 실제로 섞여 있을 때만 인증 여부를 조회한다
+    private boolean excludeAdultFor(Long userId, List<LibraryWorksInfo> worksList) {
+        return worksList.stream().anyMatch(works -> AdultContentPolicy.isAdultOnly(works.ageClassification()))
+                && adultVerificationAdaptor.excludeAdultFor(userId);
     }
 
 }

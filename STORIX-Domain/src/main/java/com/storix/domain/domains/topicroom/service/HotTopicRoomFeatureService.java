@@ -1,14 +1,24 @@
 package com.storix.domain.domains.topicroom.service;
 
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
+import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
 import com.storix.domain.domains.notification.service.FeaturedNotificationService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
+import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -16,6 +26,8 @@ import java.util.Map;
 public class HotTopicRoomFeatureService {
 
     private final TopicRoomAdaptor topicRoomAdaptor;
+    private final WorksAdaptor worksAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final FeaturedNotificationService featuredNotificationService;
 
     public void selectAndNotify() {
@@ -24,16 +36,85 @@ public class HotTopicRoomFeatureService {
             return;
         }
 
-        List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
-        Map<Long, List<Long>> membersByRoom = topicRoomAdaptor.loadMembersByRoomIds(roomIds);
+        List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
+        Map<Long, TopicRoomWorksInfo> worksByWorksId = safeLoadWorks(worksIds);
 
-        for (TopicRoom room : rooms) {
+        List<TopicRoom> validRooms = rooms.stream()
+                .filter(room -> hasWorks(worksByWorksId, room))
+                .toList();
+
+        List<Long> roomIds = validRooms.stream().map(TopicRoom::getId).toList();
+        Map<Long, List<Long>> membersByRoom = safeLoadMembers(roomIds);
+
+        Set<Long> adultRoomMemberIds = validRooms.stream()
+                .filter(room -> isAdultRoom(worksByWorksId, room))
+                .flatMap(room -> membersByRoom.getOrDefault(room.getId(), List.of()).stream())
+                .collect(Collectors.toSet());
+        Map<Long, LocalDateTime> verifiedAtByUserId = adultRoomMemberIds.isEmpty()
+                ? Collections.emptyMap()
+                : safeLoadVerifiedAt(adultRoomMemberIds.stream().toList());
+
+        LocalDate today = LocalDate.now();
+
+        for (TopicRoom room : validRooms) {
             try {
-                featuredNotificationService.notifyHotTopicRoomIfFirst(room.getId(), room.getTopicRoomName(),
-                        membersByRoom.getOrDefault(room.getId(), List.of()));
+                List<Long> members = membersByRoom.getOrDefault(room.getId(), List.of());
+                boolean isAdultRoom = isAdultRoom(worksByWorksId, room);
+
+                List<Long> targetMembers = isAdultRoom
+                        ? members.stream()
+                                .filter(memberId -> AdultVerificationPolicy.isValidOn(
+                                        verifiedAtByUserId.get(memberId), today))
+                                .toList()
+                        : members;
+
+                featuredNotificationService.notifyHotTopicRoomIfFirst(room.getId(), room.getTopicRoomName(), targetMembers);
             } catch (Exception e) {
                 log.error(">>> [HotTopicRoom] 룸 선정 알림 실패 roomId={}", room.getId(), e);
             }
+        }
+    }
+
+    private boolean hasWorks(Map<Long, TopicRoomWorksInfo> worksByWorksId, TopicRoom room) {
+        if (worksByWorksId.containsKey(room.getWorksId())) {
+            return true;
+        }
+        log.atError()
+                .addKeyValue("roomId", room.getId())
+                .addKeyValue("worksId", room.getWorksId())
+                .log(">>> [HotTopicRoom] 방의 참조 works 정보 없음. 알림 대상에서 제외");
+        return false;
+    }
+
+    // hasWorks 로 걸러진 방만 들어온다
+    private boolean isAdultRoom(Map<Long, TopicRoomWorksInfo> worksByWorksId, TopicRoom room) {
+        return AdultContentPolicy.isAdultOnly(worksByWorksId.get(room.getWorksId()).ageClassification());
+    }
+
+    private Map<Long, TopicRoomWorksInfo> safeLoadWorks(List<Long> worksIds) {
+        try {
+            return worksAdaptor.loadWorksMapByIds(worksIds);
+        } catch (Exception e) {
+            log.error(">>> [HotTopicRoom] 작품 정보 배치 조회 실패", e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private Map<Long, List<Long>> safeLoadMembers(List<Long> roomIds) {
+        try {
+            return topicRoomAdaptor.loadMembersByRoomIds(roomIds);
+        } catch (Exception e) {
+            log.error(">>> [HotTopicRoom] 방별 멤버 조회 실패", e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private Map<Long, LocalDateTime> safeLoadVerifiedAt(List<Long> memberIds) {
+        try {
+            return adultVerificationAdaptor.findLatestVerifiedAtByUserIds(memberIds);
+        } catch (Exception e) {
+            log.error(">>> [HotTopicRoom] 성인 인증 배치 조회 실패", e);
+            return Collections.emptyMap();
         }
     }
 }

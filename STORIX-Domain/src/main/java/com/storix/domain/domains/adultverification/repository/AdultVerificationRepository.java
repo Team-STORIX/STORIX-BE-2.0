@@ -2,6 +2,7 @@ package com.storix.domain.domains.adultverification.repository;
 
 import com.storix.domain.domains.adultverification.domain.AdultVerification;
 import com.storix.domain.domains.adultverification.domain.AdultVerificationStatus;
+import com.storix.domain.domains.adultverification.dto.LatestVerifiedAt;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,6 +22,14 @@ public interface AdultVerificationRepository extends JpaRepository<AdultVerifica
     @Query("SELECT MAX(av.verifiedAt) FROM AdultVerification av WHERE av.userId = :userId AND av.status = :verified")
     LocalDateTime findLatestVerifiedAtByUserId(@Param("userId") Long userId,
                                                @Param("verified") AdultVerificationStatus verified);
+
+    // 여러 유저의 최신 인증 시각을 조회
+    @Query("SELECT new com.storix.domain.domains.adultverification.dto.LatestVerifiedAt(av.userId, MAX(av.verifiedAt)) " +
+            "FROM AdultVerification av " +
+            "WHERE av.userId IN :userIds AND av.status = :verified " +
+            "GROUP BY av.userId")
+    List<LatestVerifiedAt> findLatestVerifiedAtByUserIds(@Param("userIds") List<Long> userIds,
+                                                         @Param("verified") AdultVerificationStatus verified);
 
     // 아직 확정을 기다리는 티켓. 새로 만들지 않고 이걸 다시 내준다
     Optional<AdultVerification> findFirstByUserIdAndStatusOrderByIdDesc(Long userId, AdultVerificationStatus status);

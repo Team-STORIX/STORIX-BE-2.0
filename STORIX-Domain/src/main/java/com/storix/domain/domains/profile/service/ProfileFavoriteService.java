@@ -1,5 +1,6 @@
 package com.storix.domain.domains.profile.service;
 
+import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.hashtag.adaptor.HashtagAdaptor;
@@ -10,6 +11,7 @@ import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.profile.dto.FavoriteHashtagsResponse;
 import com.storix.domain.domains.profile.dto.FavoriteWorksWithReviewInfo;
 import com.storix.domain.domains.profile.dto.RatingCountResponse;
+import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class ProfileFavoriteService {
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final HashtagAdaptor hashtagAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
 
 
     // 관심 작품 등록수 조회
@@ -57,7 +60,12 @@ public class ProfileFavoriteService {
         Map<Long, WorksInfo> worksMap =
                 worksAdaptor.findAllWorksInfoByWorksIds(worksIds);
 
-        // 2) 리뷰 관련 정보 조회
+        // 2) 성인 작품이 섞여 있을 때만 인증 여부를 조회한다. 미인증·만료면 표지를 내리지 않는다
+        boolean excludeAdult = worksMap.values().stream()
+                .anyMatch(works -> AdultContentPolicy.isAdultOnly(works.ageClassification()))
+                && adultVerificationAdaptor.excludeAdultFor(userId);
+
+        // 3) 리뷰 관련 정보 조회
         List<ReviewedWorksIdAndRatingInfo> reviewedList =
                 reviewAdaptor.findAllReviewInfoByFavoriteWorks(userId, worksIds);
 
@@ -84,7 +92,7 @@ public class ProfileFavoriteService {
                     boolean isReviewed = ratingEnum != null;
                     String rating = isReviewed ? ratingEnum.getDbValue() : null;
 
-                    return FavoriteWorksWithReviewInfo.of(worksInfo, isReviewed, rating);
+                    return FavoriteWorksWithReviewInfo.of(worksInfo, isReviewed, rating, excludeAdult);
                 })
                 .filter(Objects::nonNull)
                 .toList();
