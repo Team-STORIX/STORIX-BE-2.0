@@ -1,7 +1,10 @@
 package com.storix.infrastructure.external.chat;
 import com.storix.domain.domains.user.exception.token.InvalidTokenException;
+import com.storix.common.code.ErrorCode;
+import com.storix.common.exception.STORIXCodeException;
 import com.storix.common.utils.RedisKeyStatic;
 
+import com.storix.domain.domains.chat.service.ChatService;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.domain.Role;
 import com.storix.infrastructure.external.topicroom.RedisTopicRoomActiveUserNumberAdapter;
@@ -31,12 +34,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 @Slf4j
 public class StompHandler implements ChannelInterceptor {
+
+    private static final String USER_DESTINATION_PREFIX = "/user/";
+
     private final TokenProvider tokenProvider;
     private final RedisMessageListenerContainer container;
     private final RedisSubscriber subscriber;
     private final TopicRoomActiveUserNumberRedisSubscriber activeUserNumberSubscriber;
     private final RedisTopicRoomPresenceAdapter redisTopicRoomPresenceAdapter;
     private final TopicRoomReadMarker topicRoomReadMarker;
+    private final ChatService chatService;
 
     private final Map<String, ChannelTopic> chatTopics = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> chatRoomSubscriberCounts = new ConcurrentHashMap<>();
@@ -50,7 +57,8 @@ public class StompHandler implements ChannelInterceptor {
             @Lazy RedisSubscriber s,
             @Lazy TopicRoomActiveUserNumberRedisSubscriber activeUserNumberSubscriber,
             RedisTopicRoomPresenceAdapter redisTopicRoomPresenceAdapter,
-            TopicRoomReadMarker topicRoomReadMarker
+            TopicRoomReadMarker topicRoomReadMarker,
+            ChatService chatService
     ) {
         this.tokenProvider = tp;
         this.container = c;
@@ -58,6 +66,7 @@ public class StompHandler implements ChannelInterceptor {
         this.activeUserNumberSubscriber = activeUserNumberSubscriber;
         this.redisTopicRoomPresenceAdapter = redisTopicRoomPresenceAdapter;
         this.topicRoomReadMarker = topicRoomReadMarker;
+        this.chatService = chatService;
     }
 
     @Override
@@ -80,7 +89,10 @@ public class StompHandler implements ChannelInterceptor {
         if (StompCommand.CONNECT.equals(command)) {
             handleConnect(accessor);
         } else if (StompCommand.SUBSCRIBE.equals(command)) {
-            handleSubscribe(accessor);
+            // 모르는 목적지는 버리기만 한다. 배포 순서가 어긋나도 연결은 살려둔다
+            if (!handleSubscribe(accessor)) {
+                return null;
+            }
         } else if (StompCommand.UNSUBSCRIBE.equals(command)) {
             handleUnsubscribe(accessor);
         } else if (StompCommand.DISCONNECT.equals(command)) {
@@ -105,27 +117,37 @@ public class StompHandler implements ChannelInterceptor {
                 accessor.setUser(auth);
 
                 log.debug(">>>> [STOMP] 인증 성공: UserID {}", info.userId());
+            } catch (STORIXCodeException e) {
+                // 만료·위조 구분을 살린다
+                throw e;
             } catch (Exception e) {
                 log.warn(">>>> [STOMP] 인증 실패: sessionId={}, exceptionType={}, message={}",
                         accessor.getSessionId(),
                         e.getClass().getSimpleName(),
                         e.getMessage());
-                throw new MessageDeliveryException("UNAUTHORIZED");
+                throw new STORIXCodeException(ErrorCode.INVALID_TOKEN);
             }
         } else {
-            log.warn(">>>> [STOMP] 인증 실패: sessionId={}, reason=NO_TOKEN_OR_INVALID_BEARER", accessor.getSessionId());
-            throw new MessageDeliveryException("NO_TOKEN");
+            throw new STORIXCodeException(ErrorCode.TOKEN_NOT_EXIST);
         }
     }
 
-    private void handleSubscribe(StompHeaderAccessor accessor) {
+    private boolean handleSubscribe(StompHeaderAccessor accessor) {
         String destination = accessor.getDestination();
+
+        // 유저 목적지는 세션 소유자에게만 풀린다
+        if (destination != null && destination.startsWith(USER_DESTINATION_PREFIX)) {
+            return true;
+        }
+
         if (destination != null && destination.startsWith("/sub/chat/room/")) {
             String roomId = destination.substring(destination.lastIndexOf('/') + 1);
             String sessionId = accessor.getSessionId();
             String subId = accessor.getSubscriptionId();
 
-            if (subId == null) return;
+            if (subId == null) throw new STORIXCodeException(ErrorCode.INVALID_REQUEST);
+
+            validateSubscribe(accessor, roomId);
 
             Long userId = extractUserId(accessor);
 
@@ -148,13 +170,36 @@ public class StompHandler implements ChannelInterceptor {
             String sessionId = accessor.getSessionId();
             String subId = accessor.getSubscriptionId();
 
-            if (roomId == null || subId == null) return;
+            if (roomId == null || subId == null) throw new STORIXCodeException(ErrorCode.INVALID_REQUEST);
+
+            validateSubscribe(accessor, roomId);
 
             sessionSubscriptionMap
                     .computeIfAbsent(sessionId, k -> new ConcurrentHashMap<>())
                     .put(subId, SubscriptionTarget.activeUsers(roomId));
 
             increaseActiveUserNumberCounter(roomId);
+        } else {
+            log.warn(">>>> [STOMP] 구독 거절 sessionId={}, destination={}, reason=UNKNOWN_DESTINATION",
+                    accessor.getSessionId(), destination);
+            return false;
+        }
+
+        return true;
+    }
+
+    // 복구하려면 재연결이 필요해 ERROR 프레임으로 끊는다
+    private void validateSubscribe(StompHeaderAccessor accessor, String roomId) {
+        Long userId = extractUserId(accessor);
+
+        if (userId == null) {
+            throw new STORIXCodeException(ErrorCode.TOKEN_NOT_EXIST);
+        }
+
+        try {
+            chatService.validateRoomMember(userId, Long.parseLong(roomId));
+        } catch (NumberFormatException e) {
+            throw new STORIXCodeException(ErrorCode.INVALID_REQUEST);
         }
     }
 
