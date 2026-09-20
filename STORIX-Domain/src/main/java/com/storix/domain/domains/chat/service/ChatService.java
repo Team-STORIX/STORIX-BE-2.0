@@ -49,10 +49,11 @@ public class ChatService {
 
         TopicRoom room = topicRoomAdaptor.findById(roomId);
 
+        // 참여도 성인인증부터 통과해야 하므로 joinRoom 과 같은 순서로 본다
+        adultWorksHelper.CheckUserAuthorityWithWorks(userId, room.getWorksId());
+
         // 참여자가 아니면 예외
         TopicRoomUser participation = topicRoomAdaptor.findByUserIdAndRoomId(userId, roomId);
-
-        adultWorksHelper.CheckUserAuthorityWithWorks(userId, room.getWorksId());
 
         return participation.getCreatedAt();
     }
