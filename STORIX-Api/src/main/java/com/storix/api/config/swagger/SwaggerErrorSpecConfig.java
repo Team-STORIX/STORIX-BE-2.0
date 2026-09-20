@@ -100,7 +100,8 @@ public class SwaggerErrorSpecConfig {
                 pool.computeIfAbsent(entry.message(), k -> k),
                 entry.reason() == null ? null : pool.computeIfAbsent(entry.reason(), k -> k),
                 entry.fieldErrors(),
-                entry.scope() == null ? null : pool.computeIfAbsent(entry.scope(), k -> k));
+                entry.scope() == null ? null : pool.computeIfAbsent(entry.scope(), k -> k),
+                entry.frames());
     }
 
     @Bean
@@ -292,14 +293,19 @@ public class SwaggerErrorSpecConfig {
 
         StringBuilder sb = new StringBuilder();
         sb.append("\n\n## 웹소켓(STOMP) 에러\n\n");
-        sb.append("두 갈래로 옵니다. **재연결해야 풀리는 실패는 ERROR 프레임**이고, 다시 보내면 되는 전송 실패만 연결을 유지한 채 개인 큐로 갑니다.\n\n");
-        sb.append("**1) CONNECT 실패·구독 거절 — ERROR 프레임 + 연결 종료(1002)**\n\n");
+        sb.append("어느 프레임에서 걸렸느냐에 따라 오는 곳이 다릅니다.\n\n");
+        sb.append("| 프레임 | 실패하면 | 연결 |\n|---|---|---|\n");
+        sb.append("| `CONNECT` · `SUBSCRIBE` | ERROR 프레임 | 종료 (1002) |\n");
+        sb.append("| `SEND` | `/user/queue/errors` 로 MESSAGE | 유지 |\n\n");
+        sb.append("**`CONNECT` · `SUBSCRIBE` 실패**\n\n");
         sb.append("```\nERROR\nmessage:UNAUTHORIZED\ncontent-type:application/json\n\n")
                 .append("{\"isSuccess\":false,\"code\":\"TOKEN_ERROR_003\",\"message\":\"...\"}\n```\n\n");
-        sb.append("**2) 전송 실패 — `/user/queue/errors` 로 MESSAGE, 연결 유지**\n\n");
-        sb.append("메시지 하나가 실패한 것이라 연결은 그대로 둡니다. 사유를 받으려면 이 큐를 구독해야 합니다.\n\n");
+        sb.append("**`SEND` 실패**\n\n");
+        sb.append("메시지 하나가 실패한 것이라 연결은 그대로 둡니다. 사유를 받으려면 연결 직후 `/user/queue/errors` 를 구독해야 합니다.\n\n");
         sb.append("```\nMESSAGE\ndestination:/user/queue/errors\ncontent-type:application/json\n\n")
-                .append("{\"isSuccess\":false,\"code\":\"ADULT_VERIFICATION_ERROR_008\",\"message\":\"...\"}\n```\n");
+                .append("{\"isSuccess\":false,\"code\":\"CHAT_ERROR_002\",\"message\":\"...\"}\n```\n\n");
+        sb.append("같은 코드라도 `SUBSCRIBE` 에서 걸리면 ERROR 로, `SEND` 에서 걸리면 큐로 옵니다. ")
+                .append("아래 표의 프레임을 보고 분기해주세요.\n");
 
         sb.append("\n### 목적지\n\n엔드포인트는 `/ws-stomp` 이고, CONNECT 에 `Authorization: Bearer {accessToken}` 를 실어야 합니다.\n\n");
         sb.append("| 종류 | path | 권한 | 설명 |\n|---|---|---|---|\n");
@@ -318,9 +324,12 @@ public class SwaggerErrorSpecConfig {
 
             sb.append("\n### `").append(reason).append("`\n\n");
             sb.append(WEBSOCKET_REASON_GUIDE.getOrDefault(reason, "")).append("\n\n");
-            sb.append("| status | code | 설명 |\n|---|---|---|\n");
+            sb.append("| status | code | 프레임 | 설명 |\n|---|---|---|---|\n");
             for (ErrorSpec.Entry e : grouped) {
-                sb.append("| ").append(e.status()).append(" | `").append(e.code()).append("` | ").append(e.message()).append(" |\n");
+                sb.append("| ").append(e.status())
+                        .append(" | `").append(e.code())
+                        .append("` | ").append(frameLabel(e.frames()))
+                        .append(" | ").append(e.message()).append(" |\n");
             }
         }
         return sb.toString();
@@ -330,6 +339,13 @@ public class SwaggerErrorSpecConfig {
         return websocket.reasons() == null || websocket.reasons().isEmpty()
                 ? List.copyOf(WEBSOCKET_REASON_GUIDE.keySet())
                 : websocket.reasons();
+    }
+
+    private static final List<String> FRAME_ORDER = List.of("CONNECT", "SUBSCRIBE", "SEND");
+
+    private String frameLabel(List<String> frames) {
+        if (frames == null || frames.isEmpty()) return "-";
+        return FRAME_ORDER.stream().filter(frames::contains).map(f -> "`" + f + "`").collect(Collectors.joining(" · "));
     }
 
     private String reasonOf(int status) {
@@ -384,7 +400,7 @@ public class SwaggerErrorSpecConfig {
                 ? List.of()
                 : websocket.codes().stream()
                         .map(e -> Map.of("status", e.status(), "code", e.code(), "message", e.message(),
-                                "reason", reasonOf(e.status())))
+                                "reason", reasonOf(e.status()), "frames", e.frames() == null ? List.of() : e.frames()))
                         .toList());
         return contract;
     }

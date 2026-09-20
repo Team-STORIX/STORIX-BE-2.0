@@ -238,30 +238,53 @@ console.log(`엔드포인트에 안 붙은 예외 ${orphans.length}개 ${JSON.st
 // ── 웹소켓(STOMP) ────────────────────────────────────────────
 // REST 그래프에 안 잡혀 프레임을 받는 자리에서 따로 건다
 const STOMP_DEPTH = 4;
+// SEND 는 컨트롤러 → 유스케이스 → 서비스 → 어댑터로 한 단계 더 내려간다
+const SEND_DEPTH = 6;
 
 // 분류는 HttpStatus 가 정하므로 이름만 읽는다
 const stompReasons = [...sourceOf("StompErrorReason", /enum StompErrorReason\b/)
   .matchAll(/^\s{4}([A-Z][A-Z0-9_]*)[,;]$/gm)].map((m) => m[1]);
 
-// 인터셉터는 ErrorCode 를 직접 들고 던진다
-const stompDirectNames = directCodesIn("STOMP 인터셉터", /implements\s+ChannelInterceptor/);
+// 프론트는 CONNECT / SUBSCRIBE / SEND 로 코드를 짠다. 어느 프레임에서 나는지로 묶어야 쓸모가 있다.
+// CONNECT·SUBSCRIBE 는 인터셉터라 예외가 ERROR 프레임이 되고, SEND 는 핸들러 안에서 잡혀 개인 큐로 간다.
+const stompSource = sourceOf("StompHandler", /implements\s+ChannelInterceptor/);
 
-// 구독 검증·메시지 처리가 타고 들어가는 도메인 예외
-const stompWalkedNames = [
-  ...exceptionsFrom("StompHandler", "handleConnect", STOMP_DEPTH),
-  ...exceptionsFrom("StompHandler", "validateSubscribe", STOMP_DEPTH),
-  ...exceptionsFrom("ChatController", "message", STOMP_DEPTH),
-];
+// exceptionsFrom 은 XxxException 형태만 잡는다. new STORIXCodeException(ErrorCode.X) 는 직접 긁는다.
+function directCodesInMethod(name) {
+  const at = stompSource.indexOf(`private ${name}(`) >= 0
+    ? stompSource.indexOf(`private ${name}(`)
+    : stompSource.search(new RegExp(`private\\s+\\S+\\s+${name}\\(`));
+  if (at < 0) return [];
+  const rest = stompSource.slice(at);
+  const next = rest.slice(1).search(/\n    private /);
+  const body = next < 0 ? rest : rest.slice(0, next + 1);
+  return [...body.matchAll(/ErrorCode\.([A-Z][A-Z0-9_]*)/g)].map((m) => m[1]);
+}
+
+const byFrame = {
+  CONNECT: [...directCodesInMethod("handleConnect"), ...exceptionsFrom("StompHandler", "handleConnect", STOMP_DEPTH)],
+  SUBSCRIBE: [
+    ...directCodesInMethod("handleSubscribe"),
+    ...directCodesInMethod("validateSubscribe"),
+    ...exceptionsFrom("StompHandler", "validateSubscribe", STOMP_DEPTH),
+  ],
+  SEND: [
+    ...exceptionsFrom("ChatController", "message", SEND_DEPTH),
+    // 발행 실패처럼 REST 응답으로 나가지 않는 에러코드
+    ...orphans.filter((o) => o.kind === "웹소켓").map((o) => codeOfException(o.exception)),
+  ],
+};
 
 const stompCodes = new Map();
-for (const name of [...stompDirectNames, ...stompWalkedNames]) {
-  const c = codeOf(name);
-  if (c) stompCodes.set(c.code, { status: c.status, code: c.code, message: c.message });
-}
-// 발행 실패처럼 REST 응답으로 나가지 않는 에러코드
-for (const o of orphans.filter((o) => o.kind === "웹소켓")) {
-  const c = codeOf(codeOfException(o.exception));
-  if (c) stompCodes.set(c.code, { status: c.status, code: c.code, message: c.message });
+for (const [frame, names] of Object.entries(byFrame)) {
+  for (const name of names) {
+    const c = codeOf(name);
+    if (!c) continue;
+    const prev = stompCodes.get(c.code);
+    const frames = new Set(prev?.frames ?? []);
+    frames.add(frame);
+    stompCodes.set(c.code, { status: c.status, code: c.code, message: c.message, frames: [...frames] });
+  }
 }
 
 out._websocket = {
