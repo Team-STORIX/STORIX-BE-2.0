@@ -15,7 +15,8 @@ import java.util.List;
         name = "reader_board",
         indexes = {
                 @Index(name = "idx_reader_board_user_id", columnList = "user_id"),
-                @Index(name = "idx_reader_board_popularity", columnList = "popularity_score")
+                // 오늘의 피드 후보 조회용
+                @Index(name = "idx_reader_board_deleted_created", columnList = "deleted, created_at")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,9 +36,6 @@ public class ReaderBoard extends Board {
     @Enumerated(EnumType.STRING)
     @Column(name = "theme")
     private BoardTheme theme;
-
-    @Column(name = "popularity_score")
-    private int popularityScore = 0;
 
     @ToString.Exclude
     @OneToMany(mappedBy = "readerBoard", cascade = CascadeType.ALL, orphanRemoval = true)

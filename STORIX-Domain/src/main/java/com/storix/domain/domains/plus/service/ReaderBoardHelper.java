@@ -27,9 +27,9 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -118,25 +118,20 @@ public class ReaderBoardHelper {
     }
 
     // 오늘의 피드 조회
-    public List<ReaderBoardInfo> findTop3TrendingFeedInfo(Long userId, LocalDateTime threshold) {
+    public List<ReaderBoardInfo> findTop3TrendingFeedInfo(Long userId, List<Long> selectedBoardIds) {
 
-        // 1) 오늘의 피드 (최대 3개)
-        List<StandardReaderBoardInfo> boards = new ArrayList<>(readerFeedAdaptor.findTop3TrendingFeed(threshold));
-
-        if (boards.size() < 3) {
-            int needed = 3 - boards.size();
-
-            // 오늘의 피드 게시글 Ids
-            List<Long> excludeIds = boards.stream()
-                    .map(StandardReaderBoardInfo::boardId)
-                    .toList();
-
-            // 부족한 개수만큼만 7일 내 인기순 적용
-            LocalDateTime weekThreshold = LocalDateTime.now().minusDays(7);
-            List<StandardReaderBoardInfo> fallbackBoards = readerFeedAdaptor.findSteadyTrendingFeedNotToday(excludeIds, needed, weekThreshold);
-
-            boards.addAll(fallbackBoards);
+        if (selectedBoardIds.isEmpty()) {
+            throw TodayFeedNotFoundException.EXCEPTION;
         }
+
+        // 1) 선정 스냅샷 순서 유지, 선정 이후 삭제된 게시글은 제외
+        Map<Long, StandardReaderBoardInfo> boardMap = readerFeedAdaptor.findStandardInfoByIds(selectedBoardIds).stream()
+                .collect(Collectors.toMap(StandardReaderBoardInfo::boardId, Function.identity()));
+
+        List<StandardReaderBoardInfo> boards = selectedBoardIds.stream()
+                .map(boardMap::get)
+                .filter(Objects::nonNull)
+                .toList();
 
         if (boards.isEmpty()) {
             throw TodayFeedNotFoundException.EXCEPTION;
@@ -148,7 +143,7 @@ public class ReaderBoardHelper {
                 .toList();
 
         // 2) 좋아요 여부 조회 - 비로그인 유저의 경우 empty
-        Set<Long> likedBoardIds = (userId != null && !boardIds.isEmpty())
+        Set<Long> likedBoardIds = userId != null
                 ? readerFeedAdaptor.findLikedBoardIds(userId, boardIds)
                 : Collections.emptySet();
 

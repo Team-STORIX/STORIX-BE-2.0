@@ -11,7 +11,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class FeaturedNotificationService {
+public class FeaturedNotificationHelper {
 
     private final FeaturedNotificationDedupAdaptor dedupAdaptor;
     private final NotificationPublisher notificationPublisher;
