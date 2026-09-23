@@ -108,13 +108,12 @@ public record ReaderBoardInfo(
                 .build();
     }
 
-    // 성인 인증이 유효하지 않은 유저용
-    // 프로필·게시 시각·좋아요·댓글 수만 남기고 나머지 게시글 정보는 반환하지 않는다
     public static ReaderBoardInfo ofMaskedAdultBoard(ReaderBoardInfo origin) {
         return ReaderBoardInfo.builder()
                 .userId(origin.userId())
                 .boardId(origin.boardId())
                 .lastCreatedTime(origin.lastCreatedTime())
+                .content("")
                 .likeCount(origin.likeCount())
                 .replyCount(origin.replyCount())
                 .isLiked(origin.isLiked())
