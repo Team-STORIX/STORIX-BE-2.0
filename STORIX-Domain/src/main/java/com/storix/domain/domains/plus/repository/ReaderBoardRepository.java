@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 
-public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>, ReaderBoardRankingRepository {
+public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long> {
 
     // 작성자 userId 단건 조회
     @Query("SELECT rb.userId FROM ReaderBoard rb WHERE rb.id = :boardId")
@@ -79,24 +79,22 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long>,
     Slice<ReaderBoard> findAllLikedReaderBoards(@Param("userId") Long userId, Pageable pageable);
 
     // 홈 관련
-    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.isWorksSelected, rb.worksId, rb.popularityScore) " +
-            "FROM ReaderBoard rb " +
-            "WHERE rb.createdAt > :threshold AND rb.deleted = false " +
-            "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
-    List<StandardReaderBoardInfo> findTop3TrendingFeed(@Param("threshold") LocalDateTime threshold, Pageable pageable);
+    // 인기도순, 동점은 날짜 시드로 섞는다. 어느 서버가 언제 계산해도 같은 결과가 나온다
+    @Query(value = """
+            SELECT reader_board_id
+            FROM reader_board
+            WHERE created_at > :threshold AND deleted = false
+            ORDER BY (like_count * 4 + reply_count * 3) DESC, MD5(CONCAT(reader_board_id, :seed))
+            """, nativeQuery = true)
+    List<Long> findTodayFeedCandidateIds(@Param("threshold") LocalDateTime threshold,
+                                         @Param("seed") String seed,
+                                         Pageable pageable);
 
-    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.isWorksSelected, rb.worksId, rb.popularityScore) " +
+    // 선정된 게시글 상세 - 하트·댓글 수는 캐시하지 않고 매 조회 시점 값을 읽는다
+    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.isWorksSelected, rb.worksId) " +
             "FROM ReaderBoard rb " +
-            "WHERE rb.createdAt > :threshold AND rb.deleted = false " +
-            "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
-    List<StandardReaderBoardInfo> findSteadyTrendingFeed(@Param("threshold") LocalDateTime threshold, Pageable pageable);
-
-    @Query("SELECT new com.storix.domain.domains.plus.dto.StandardReaderBoardInfo(rb.userId, rb.id, rb.content, rb.likeCount, rb.replyCount, rb.isSpoiler, rb.spoilerScript, rb.isWorksSelected, rb.worksId, rb.popularityScore) " +
-            "FROM ReaderBoard rb " +
-            "WHERE rb.id NOT IN :excludeIds " +
-            "AND rb.createdAt > :threshold AND rb.deleted = false " +
-            "ORDER BY COALESCE(rb.popularityScore, 0) DESC, rb.id DESC ")
-    List<StandardReaderBoardInfo> findSteadyTrendingFeedNotToday(@Param("excludeIds") List<Long> excludeIds, @Param("threshold") LocalDateTime threshold, Pageable pageable);
+            "WHERE rb.id IN :boardIds AND rb.deleted = false ")
+    List<StandardReaderBoardInfo> findStandardInfoByIds(@Param("boardIds") List<Long> boardIds);
 
     // 피드 관련
     @Query("SELECT rb " +

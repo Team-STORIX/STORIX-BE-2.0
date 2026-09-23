@@ -15,8 +15,8 @@ public class FeaturedContentNotificationScheduler {
     private final TodayFeedFeatureService todayFeedFeatureService;
     private final HotTopicRoomFeatureService hotTopicRoomFeatureService;
 
-    // 피드 랭킹 20분 갱신 직후 실행
-    @Scheduled(cron = "0 5/20 * * * *", zone = "Asia/Seoul")
+    // 오늘의 피드 선정과 함께 하루 1회 실행
+    @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Seoul")
     public void notifyTodayFeed() {
         try {
             todayFeedFeatureService.selectAndNotify();

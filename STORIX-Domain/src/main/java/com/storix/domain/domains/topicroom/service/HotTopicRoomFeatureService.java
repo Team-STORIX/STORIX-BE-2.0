@@ -2,7 +2,7 @@ package com.storix.domain.domains.topicroom.service;
 
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.adultverification.domain.AdultVerificationPolicy;
-import com.storix.domain.domains.notification.service.FeaturedNotificationService;
+import com.storix.domain.domains.notification.service.FeaturedNotificationHelper;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
@@ -28,7 +28,7 @@ public class HotTopicRoomFeatureService {
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
-    private final FeaturedNotificationService featuredNotificationService;
+    private final FeaturedNotificationHelper featuredNotificationHelper;
 
     public void selectAndNotify() {
         List<TopicRoom> rooms = topicRoomAdaptor.loadHotTopicRooms();
@@ -68,7 +68,7 @@ public class HotTopicRoomFeatureService {
                                 .toList()
                         : members;
 
-                featuredNotificationService.notifyHotTopicRoomIfFirst(room.getId(), room.getTopicRoomName(), targetMembers);
+                featuredNotificationHelper.notifyHotTopicRoomIfFirst(room.getId(), room.getTopicRoomName(), targetMembers);
             } catch (Exception e) {
                 log.error(">>> [HotTopicRoom] 룸 선정 알림 실패 roomId={}", room.getId(), e);
             }
