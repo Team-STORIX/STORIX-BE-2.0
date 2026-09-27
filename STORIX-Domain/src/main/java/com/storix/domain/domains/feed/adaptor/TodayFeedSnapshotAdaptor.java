@@ -40,10 +40,19 @@ public class TodayFeedSnapshotAdaptor {
     }
 
     public void save(LocalDate selectionDate, List<Long> boardIds) {
-        String raw = boardIds.stream()
+        redisTemplate.opsForValue().set(key(selectionDate), raw(boardIds), TTL);
+    }
+
+    // SETNX -> 이미 저장된 선정이 있으면 덮어쓰지 않고 false
+    public boolean saveIfAbsent(LocalDate selectionDate, List<Long> boardIds) {
+        Boolean saved = redisTemplate.opsForValue().setIfAbsent(key(selectionDate), raw(boardIds), TTL);
+        return Boolean.TRUE.equals(saved);
+    }
+
+    private String raw(List<Long> boardIds) {
+        return boardIds.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(DELIMITER));
-        redisTemplate.opsForValue().set(key(selectionDate), raw, TTL);
     }
 
     private String key(LocalDate selectionDate) {

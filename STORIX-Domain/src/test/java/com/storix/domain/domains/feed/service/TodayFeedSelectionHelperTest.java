@@ -19,6 +19,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -83,7 +84,7 @@ class TodayFeedSelectionHelperTest {
             List<Long> selected = todayFeedSelectionHelper.loadOrSelect(atSelectionTime());
 
             assertThat(selected).containsExactly(7L, 8L, 9L);
-            verify(readerFeedAdaptor, never()).findTodayFeedCandidateIds(any(), any(), anyInt());
+            verify(readerFeedAdaptor, never()).findTodayFeedCandidateIds(any(), any(), any(), anyInt());
         }
 
         @Test
@@ -94,19 +95,35 @@ class TodayFeedSelectionHelperTest {
             List<Long> selected = todayFeedSelectionHelper.loadOrSelect(atSelectionTime());
 
             assertThat(selected).isEmpty();
-            verify(readerFeedAdaptor, never()).findTodayFeedCandidateIds(any(), any(), anyInt());
+            verify(readerFeedAdaptor, never()).findTodayFeedCandidateIds(any(), any(), any(), anyInt());
         }
 
         @Test
         @DisplayName("스냅샷이 없으면 선정 후 저장한다")
         void selects_and_saves_when_absent() {
             given(snapshotAdaptor.find(SELECTION_DATE)).willReturn(Optional.empty());
+            given(snapshotAdaptor.saveIfAbsent(any(LocalDate.class), anyList())).willReturn(true);
             givenCandidates(List.of(10L, 11L, 12L));
 
             List<Long> selected = todayFeedSelectionHelper.loadOrSelect(atSelectionTime());
 
             assertThat(selected).containsExactly(10L, 11L, 12L);
-            verify(snapshotAdaptor).save(SELECTION_DATE, List.of(10L, 11L, 12L));
+            verify(snapshotAdaptor).saveIfAbsent(SELECTION_DATE, List.of(10L, 11L, 12L));
+        }
+
+        @Test
+        @DisplayName("조회 경로는 다른 서버가 먼저 저장한 선정을 덮어쓰지 않고 그대로 쓴다")
+        void loses_race_and_reads_saved_snapshot() {
+            given(snapshotAdaptor.find(SELECTION_DATE))
+                    .willReturn(Optional.empty())
+                    .willReturn(Optional.of(List.of(1L, 2L, 3L)));
+            given(snapshotAdaptor.saveIfAbsent(any(LocalDate.class), anyList())).willReturn(false);
+            givenCandidates(List.of(10L, 11L, 12L));
+
+            List<Long> selected = todayFeedSelectionHelper.loadOrSelect(atSelectionTime());
+
+            assertThat(selected).containsExactly(1L, 2L, 3L);
+            verify(snapshotAdaptor, never()).save(any(), any());
         }
 
         @Test
@@ -121,16 +138,19 @@ class TodayFeedSelectionHelperTest {
         }
 
         @Test
-        @DisplayName("후보 조회 기준 시각은 now 가 아니라 선정일 08시에서 24시간 전이다")
+        @DisplayName("후보 구간은 now 가 아니라 선정일 08시 직전까지의 24시간이다")
         void window_is_anchored_to_selection_time() {
             givenCandidates(List.of());
 
             todayFeedSelectionHelper.reselect(LocalDateTime.of(2026, 7, 31, 14, 30));
 
-            ArgumentCaptor<LocalDateTime> captor = ArgumentCaptor.forClass(LocalDateTime.class);
-            verify(readerFeedAdaptor).findTodayFeedCandidateIds(captor.capture(), any(), anyInt());
+            ArgumentCaptor<LocalDateTime> start = ArgumentCaptor.forClass(LocalDateTime.class);
+            ArgumentCaptor<LocalDateTime> selectionAt = ArgumentCaptor.forClass(LocalDateTime.class);
+            verify(readerFeedAdaptor)
+                    .findTodayFeedCandidateIds(start.capture(), selectionAt.capture(), any(), anyInt());
 
-            assertThat(captor.getValue()).isEqualTo(LocalDateTime.of(2026, 7, 30, 8, 0));
+            assertThat(start.getValue()).isEqualTo(LocalDateTime.of(2026, 7, 30, 8, 0));
+            assertThat(selectionAt.getValue()).isEqualTo(LocalDateTime.of(2026, 7, 31, 8, 0));
         }
     }
 
@@ -148,7 +168,7 @@ class TodayFeedSelectionHelperTest {
 
             ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
             verify(readerFeedAdaptor, times(2))
-                    .findTodayFeedCandidateIds(any(), captor.capture(), anyInt());
+                    .findTodayFeedCandidateIds(any(), any(), captor.capture(), anyInt());
 
             assertThat(captor.getAllValues()).containsExactly("20260731", "20260731");
         }
@@ -163,7 +183,7 @@ class TodayFeedSelectionHelperTest {
 
             ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
             verify(readerFeedAdaptor, times(2))
-                    .findTodayFeedCandidateIds(any(), captor.capture(), anyInt());
+                    .findTodayFeedCandidateIds(any(), any(), captor.capture(), anyInt());
 
             assertThat(captor.getAllValues()).containsExactly("20260731", "20260801");
         }
@@ -171,7 +191,7 @@ class TodayFeedSelectionHelperTest {
 
     private void givenCandidates(List<Long> boardIds) {
         given(readerFeedAdaptor.findTodayFeedCandidateIds(
-                any(LocalDateTime.class), any(String.class), anyInt()))
+                any(LocalDateTime.class), any(LocalDateTime.class), any(String.class), anyInt()))
                 .willReturn(boardIds);
     }
 

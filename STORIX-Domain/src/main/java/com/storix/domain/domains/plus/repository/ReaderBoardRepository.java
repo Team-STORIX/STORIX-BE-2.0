@@ -83,10 +83,11 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long> 
     @Query(value = """
             SELECT reader_board_id
             FROM reader_board
-            WHERE created_at > :threshold AND deleted = false
+            WHERE created_at >= :start AND created_at < :selectionAt AND deleted = false
             ORDER BY (like_count * 4 + reply_count * 3) DESC, MD5(CONCAT(reader_board_id, :seed))
             """, nativeQuery = true)
-    List<Long> findTodayFeedCandidateIds(@Param("threshold") LocalDateTime threshold,
+    List<Long> findTodayFeedCandidateIds(@Param("start") LocalDateTime start,
+                                         @Param("selectionAt") LocalDateTime selectionAt,
                                          @Param("seed") String seed,
                                          Pageable pageable);
 

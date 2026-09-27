@@ -314,8 +314,8 @@ public class ReaderFeedAdaptor {
     }
 
     // 오늘의 피드
-    public List<Long> findTodayFeedCandidateIds(LocalDateTime threshold, String seed, int size) {
-        return readerBoardRepository.findTodayFeedCandidateIds(threshold, seed, PageRequest.of(0, size));
+    public List<Long> findTodayFeedCandidateIds(LocalDateTime start, LocalDateTime selectionAt, String seed, int size) {
+        return readerBoardRepository.findTodayFeedCandidateIds(start, selectionAt, seed, PageRequest.of(0, size));
     }
 
     public List<StandardReaderBoardInfo> findStandardInfoByIds(List<Long> boardIds) {
