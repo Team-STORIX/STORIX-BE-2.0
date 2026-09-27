@@ -38,30 +38,47 @@ public class TodayFeedSelectionHelper {
     // 조회 경로. 오늘 선정이 남아있으면 그대로 쓴다
     public List<Long> loadOrSelect(LocalDateTime now) {
         LocalDate selectionDate = selectionDateOf(now);
-        return snapshotAdaptor.find(selectionDate)
-                .orElseGet(() -> selectAndSave(selectionDate));
+        List<Long> saved = snapshotAdaptor.find(selectionDate).orElse(null);
+        if (saved != null) {
+            return saved;
+        }
+
+        List<Long> boardIds = select(selectionDate);
+
+        // 여러 서버가 동시에 들어와도 먼저 저장된 선정 하나로 모인다
+        if (!snapshotAdaptor.saveIfAbsent(selectionDate, boardIds)) {
+            return snapshotAdaptor.find(selectionDate).orElse(boardIds);
+        }
+
+        log.atInfo()
+                .addKeyValue("selectionDate", selectionDate.format(SELECTION_DATE))
+                .addKeyValue("boardIds", boardIds)
+                .log(">>> [TodayFeed] 선정 완료");
+        return boardIds;
     }
 
     // 08시 배치. 남아있던 선정을 덮어쓴다
     public List<Long> reselect(LocalDateTime now) {
-        return selectAndSave(selectionDateOf(now));
-    }
-
-    private List<Long> selectAndSave(LocalDate selectionDate) {
-        LocalDateTime threshold = LocalDateTime.of(selectionDate, SELECTION_TIME)
-                .minusHours(CANDIDATE_WINDOW_HOURS);
-        String seed = selectionDate.format(SELECTION_DATE);
-
-        List<Long> boardIds = readerFeedAdaptor.findTodayFeedCandidateIds(
-                threshold, seed, SELECTION_SIZE);
+        LocalDate selectionDate = selectionDateOf(now);
+        List<Long> boardIds = select(selectionDate);
 
         snapshotAdaptor.save(selectionDate, boardIds);
-
         log.atInfo()
-                .addKeyValue("selectionDate", seed)
+                .addKeyValue("selectionDate", selectionDate.format(SELECTION_DATE))
                 .addKeyValue("boardIds", boardIds)
                 .log(">>> [TodayFeed] 선정 완료");
 
         return boardIds;
+    }
+
+    // 후보 구간은 선정 시각까지로
+    private List<Long> select(LocalDate selectionDate) {
+        LocalDateTime selectionAt = LocalDateTime.of(selectionDate, SELECTION_TIME);
+
+        return readerFeedAdaptor.findTodayFeedCandidateIds(
+                selectionAt.minusHours(CANDIDATE_WINDOW_HOURS),
+                selectionAt,
+                selectionDate.format(SELECTION_DATE),
+                SELECTION_SIZE);
     }
 }
