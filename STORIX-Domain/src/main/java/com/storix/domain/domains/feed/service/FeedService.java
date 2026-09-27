@@ -37,15 +37,19 @@ import java.util.Set;
 @Slf4j
 public class FeedService {
 
-    private final WorksAdaptor worksAdaptor;
-    private final AdultWorksHelper adultWorksHelper;
-    private final AdultVerificationAdaptor adultVerificationAdaptor;
+
     private final UserAdaptor userAdaptor;
     private final UserBlockAdaptor userBlockAdaptor;
+    private final AdultVerificationAdaptor adultVerificationAdaptor;
+
+    private final WorksAdaptor worksAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
 
     private final ReaderFeedAdaptor readerFeedAdaptor;
+
     private final ReaderBoardHelper readerBoardHelper;
+    private final TodayFeedSelectionHelper todayFeedSelectionHelper;
+    private final AdultWorksHelper adultWorksHelper;
 
 
     @Transactional(readOnly = true)
@@ -179,12 +183,12 @@ public class FeedService {
     public List<SlicedReaderBoardWithProfileInfo> findTodayTrendingFeeds(Long userId) {
 
         // 1) 오늘의 피드 추천
-        LocalDateTime threshold = LocalDateTime.now().minusHours(24);
+        List<Long> selectedBoardIds = todayFeedSelectionHelper.loadOrSelect(LocalDateTime.now());
 
         List<ReaderBoardInfo> boards =
-                readerBoardHelper.findTop3TrendingFeedInfo(userId, threshold);
+                readerBoardHelper.findTop3TrendingFeedInfo(userId, selectedBoardIds);
 
-        // 2) 차단 유저 게시글 제외 (캐시된 쿼리라 앱 레벨 필터링)
+        // 2) 차단 유저 게시글 제외. 선정은 전체 기준이라 유저별 필터는 앱에서 건다
         Set<Long> blockedSet = userId != null
                 ? new java.util.HashSet<>(userBlockAdaptor.findBlockedUserIds(userId))
                 : java.util.Collections.emptySet();

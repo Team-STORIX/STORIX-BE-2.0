@@ -107,11 +107,6 @@ public class BoardAdaptor {
                 .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
     }
 
-    // 홈 오늘의 토픽룸 점수 갱신
-    public int updateAllPopularityScoresRecentDays(LocalDateTime threshold) {
-        return readerBoardRepository.updatePopularityScoresRecentDays(threshold);
-    }
-
     // 하드 삭제 대상 정리 : 댓글 좋아요 → 댓글 → 좋아요 → 이미지
     public BoardHardDeleteResult hardDeleteBoardsBefore(LocalDateTime cutoff) {
         TransactionTemplate chunkTx = new TransactionTemplate(transactionManager);

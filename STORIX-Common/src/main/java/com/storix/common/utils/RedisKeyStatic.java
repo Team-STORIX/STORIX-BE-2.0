@@ -45,6 +45,13 @@ public final class RedisKeyStatic {
         }
     }
 
+    public static final class Feed {
+        public static final String TODAY_SELECTION_PREFIX = "feed:today:";
+
+        private Feed() {
+        }
+    }
+
     public static final class Library {
         public static final String RECENT_PREFIX = "library:recent:";
 
