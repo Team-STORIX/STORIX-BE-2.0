@@ -4,7 +4,7 @@ import java.util.List;
 
 public record ErrorSpec(String path, String security, List<Entry> own, List<Entry> common) {
 
-    public record Entry(int status, String code, String message, String reason, boolean fieldErrors, String scope) {
+    public record Entry(int status, String code, String message, String reason, boolean fieldErrors, String scope, java.util.List<String> frames) {
 
         public boolean isAuth() {
             return "auth".equals(scope);
