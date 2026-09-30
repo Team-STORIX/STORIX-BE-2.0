@@ -67,9 +67,11 @@ public class ReaderBoardHelper {
                 .map(ReaderBoard::getId)
                 .toList();
 
-        // 좋아요 여부 정보 조회
+        // 좋아요·북마크 여부 정보 조회
         Set<Long> likedBoardIds =
                 readerFeedAdaptor.findLikedBoardIds(userId, boardIds);
+        Set<Long> bookmarkedBoardIds =
+                readerFeedAdaptor.findBookmarkedBoardIds(userId, boardIds);
 
         // 작품 정보 매핑
         if (worksId != null) {
@@ -77,7 +79,8 @@ public class ReaderBoardHelper {
             return boards.map(board ->
                     ReaderBoardInfo.ofFeedBoard(
                             board,
-                            likedBoardIds.contains(board.getId())
+                            likedBoardIds.contains(board.getId()),
+                            bookmarkedBoardIds.contains(board.getId())
                     )
             );
         } else {
@@ -85,7 +88,8 @@ public class ReaderBoardHelper {
             return boards.map(board ->
                     ReaderBoardInfo.ofMyBoard(
                             board,
-                            likedBoardIds.contains(board.getId())
+                            likedBoardIds.contains(board.getId()),
+                            bookmarkedBoardIds.contains(board.getId())
                     )
             );
         }
@@ -97,23 +101,41 @@ public class ReaderBoardHelper {
         ReaderBoard board = boardAdaptor.findReaderBoard(boardId);
 
         boolean isLiked = false;
+        boolean isBookmarked = false;
         if (userId != null) {
             isLiked = readerFeedAdaptor.isBoardLiked(userId, boardId);
+            isBookmarked = readerFeedAdaptor.isBoardBookmarked(userId, boardId);
         }
 
         return isFeed
-                ? ReaderBoardInfo.ofFeedBoard(board, isLiked)
-                : ReaderBoardInfo.ofMyBoard(board, isLiked);
+                ? ReaderBoardInfo.ofFeedBoard(board, isLiked, isBookmarked)
+                : ReaderBoardInfo.ofMyBoard(board, isLiked, isBookmarked);
     }
 
     // 좋아요 누른 게시글 조회
-    public Slice<ReaderBoardInfo> findLikedReaderBoardInfo(Long userId, Pageable pageable) {
+    public Slice<ReaderBoardInfo> findLikedReaderBoardInfo(Long userId, List<Long> blockedIds, Pageable pageable) {
 
         Slice<ReaderBoard> boardsEntity =
-                readerFeedAdaptor.findAllLikedReaderBoards(userId, pageable);
+                readerFeedAdaptor.findAllLikedReaderBoards(userId, blockedIds, pageable);
+
+        Set<Long> bookmarkedBoardIds = readerFeedAdaptor.findBookmarkedBoardIds(
+                userId, boardsEntity.getContent().stream().map(ReaderBoard::getId).toList());
 
         return boardsEntity.map(board ->
-                ReaderBoardInfo.ofFeedBoard(board, true)
+                ReaderBoardInfo.ofFeedBoard(board, true, bookmarkedBoardIds.contains(board.getId()))
+        );
+    }
+
+    public Slice<ReaderBoardInfo> findBookmarkedReaderBoardInfo(Long userId, List<Long> blockedIds, Pageable pageable) {
+
+        Slice<ReaderBoard> boardsEntity =
+                readerFeedAdaptor.findAllBookmarkedReaderBoards(userId, blockedIds, pageable);
+
+        Set<Long> likedBoardIds = readerFeedAdaptor.findLikedBoardIds(
+                userId, boardsEntity.getContent().stream().map(ReaderBoard::getId).toList());
+
+        return boardsEntity.map(board ->
+                ReaderBoardInfo.ofFeedBoard(board, likedBoardIds.contains(board.getId()), true)
         );
     }
 
@@ -143,9 +165,7 @@ public class ReaderBoardHelper {
                 .toList();
 
         // 2) 좋아요 여부 조회 - 비로그인 유저의 경우 empty
-        Set<Long> likedBoardIds = userId != null
-                ? readerFeedAdaptor.findLikedBoardIds(userId, boardIds)
-                : Collections.emptySet();
+        Set<Long> likedBoardIds = readerFeedAdaptor.findLikedBoardIds(userId, boardIds);
 
         // 3) 참조 작품의 성인 여부 조회. 프론트에서 이 플래그로 블러 등 필터링 처리한다
         List<Long> worksIds = boards.stream()

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -30,6 +31,10 @@ public abstract class Board extends BaseTimeEntity {
 
     @Column(name = "reply_count", nullable = false)
     protected int replyCount = 0;
+
+    @ColumnDefault("0")
+    @Column(name = "bookmark_count", nullable = false)
+    protected int bookmarkCount = 0;
 
     @Column(nullable = false)
     protected boolean deleted = false;

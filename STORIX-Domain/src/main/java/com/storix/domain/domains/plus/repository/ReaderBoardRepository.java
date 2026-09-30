@@ -78,6 +78,31 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long> 
             "ORDER BY rl.id DESC ")
     Slice<ReaderBoard> findAllLikedReaderBoards(@Param("userId") Long userId, Pageable pageable);
 
+    @Query("SELECT rb " +
+            "FROM ReaderBoardLike rl " +
+            "JOIN rl.board rb " +
+            "WHERE rl.userId = :userId AND rb.userId NOT IN :blockedIds AND rb.deleted = false " +
+            "ORDER BY rl.id DESC ")
+    Slice<ReaderBoard> findAllLikedReaderBoardsExcludingBlocked(@Param("userId") Long userId,
+                                                               @Param("blockedIds") List<Long> blockedIds,
+                                                               Pageable pageable);
+
+    @Query("SELECT rb " +
+            "FROM ReaderBoardBookmark bm " +
+            "JOIN bm.board rb " +
+            "WHERE bm.userId = :userId AND rb.deleted = false " +
+            "ORDER BY bm.id DESC ")
+    Slice<ReaderBoard> findAllBookmarkedReaderBoards(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT rb " +
+            "FROM ReaderBoardBookmark bm " +
+            "JOIN bm.board rb " +
+            "WHERE bm.userId = :userId AND rb.userId NOT IN :blockedIds AND rb.deleted = false " +
+            "ORDER BY bm.id DESC ")
+    Slice<ReaderBoard> findAllBookmarkedReaderBoardsExcludingBlocked(@Param("userId") Long userId,
+                                                                    @Param("blockedIds") List<Long> blockedIds,
+                                                                    Pageable pageable);
+
     // 홈 관련
     // 인기도순, 동점은 날짜 시드로 섞는다. 어느 서버가 언제 계산해도 같은 결과가 나온다
     @Query(value = """
@@ -153,6 +178,23 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long> 
             "SET r.likeCount = r.likeCount - 1 " +
             "WHERE r.id = :id AND r.likeCount > 0")
     void decrementLikeCount(@Param("id") Long id);
+
+    @Query("SELECT r.bookmarkCount " +
+            "FROM ReaderBoard r " +
+            "WHERE r.id = :boardId")
+    int findBookmarkCountById(@Param("boardId") Long boardId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ReaderBoard r " +
+            "SET r.bookmarkCount = r.bookmarkCount + 1 " +
+            "WHERE r.id = :id")
+    void incrementBookmarkCount(@Param("id") Long id);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ReaderBoard r " +
+            "SET r.bookmarkCount = r.bookmarkCount - 1 " +
+            "WHERE r.id = :id AND r.bookmarkCount > 0")
+    void decrementBookmarkCount(@Param("id") Long id);
 
     Optional<ReaderBoard> findByIdAndDeletedFalse(Long id);
 

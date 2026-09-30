@@ -64,3 +64,4 @@ application-*.yml
 
 ### nginx basic auth
 monitoring/nginx/.htpasswd
+.storix-mcp.json

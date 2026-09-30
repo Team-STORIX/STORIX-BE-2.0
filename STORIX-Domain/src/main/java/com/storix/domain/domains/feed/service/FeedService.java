@@ -64,12 +64,16 @@ public class FeedService {
                 .map(ReaderBoard::getId)
                 .toList();
 
-        // 2) 좋아요 여부
+        // 2) 좋아요·북마크 여부
         Set<Long> likedBoardIds = readerFeedAdaptor.findLikedBoardIds(userId, boardIds);
+        Set<Long> bookmarkedBoardIds = readerFeedAdaptor.findBookmarkedBoardIds(userId, boardIds);
 
 
         Slice<ReaderBoardInfo> boardInfos = boards.map(board ->
-                ReaderBoardInfo.ofFeedBoard(board, likedBoardIds.contains(board.getId()))
+                ReaderBoardInfo.ofFeedBoard(
+                        board,
+                        likedBoardIds.contains(board.getId()),
+                        bookmarkedBoardIds.contains(board.getId()))
         );
 
         // 3) 프로필 매핑

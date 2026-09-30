@@ -172,18 +172,25 @@ class SpoilerCustomE2ETest {
         }
 
         @Test
-        @DisplayName("실패: 리뷰 내용이 비어있으면 422 에러")
-        void modifyReview_emptyContent_fail() throws Exception {
+        @DisplayName("성공: 리뷰 내용은 선택 입력이라 비어있어도 수정된다")
+        void modifyReview_emptyContent_success() throws Exception {
             // given
             ModifyReviewRequest request = new ModifyReviewRequest(
                     Rating.FOUR, true, "스포일러 문구", ""
             );
 
+            CustomResponse<Long> customResponse =
+                    CustomResponse.onSuccess(SuccessCode.WORKS_DETAIL_REVIEW_UPDATE_SUCCESS, REVIEW_ID);
+
+            given(worksDetailKebabUseCase.modifyMyReview(eq(USER_ID), eq(REVIEW_ID), any()))
+                    .willReturn(customResponse);
+
             // when & then
             mockMvc.perform(patch("/api/v1/works/review/{reviewId}", REVIEW_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isUnprocessableEntity());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.isSuccess").value(true));
         }
 
         @Test

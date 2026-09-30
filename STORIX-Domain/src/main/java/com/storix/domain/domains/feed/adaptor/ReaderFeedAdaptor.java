@@ -1,12 +1,12 @@
 package com.storix.domain.domains.feed.adaptor;
 
 import com.storix.common.utils.STORIXStatic;
-import com.storix.domain.domains.feed.domain.ReaderBoardLike;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
-import com.storix.domain.domains.feed.domain.ReaderBoardReplyLike;
+import com.storix.domain.domains.feed.dto.BookmarkToggleResponse;
 import com.storix.domain.domains.feed.dto.CreateFeedReplyCommand;
 import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.StandardReplyInfo;
+import com.storix.domain.domains.feed.repository.ReaderBoardBookmarkRepository;
 import com.storix.domain.domains.feed.repository.ReaderBoardLikeRepository;
 import com.storix.domain.domains.feed.repository.ReaderBoardReplyLikeRepository;
 import com.storix.domain.domains.feed.repository.ReaderBoardReplyRepository;
@@ -18,7 +18,6 @@ import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
 import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +38,7 @@ public class ReaderFeedAdaptor {
     private final ReaderBoardLikeRepository readerBoardLikeRepository;
     private final ReaderBoardReplyRepository readerBoardReplyRepository;
     private final ReaderBoardReplyLikeRepository readerBoardReplyLikeRepository;
+    private final ReaderBoardBookmarkRepository readerBoardBookmarkRepository;
     private final PlatformTransactionManager transactionManager;
 
     // 게시물 존재 여부 확인 (삭제된 게시글 차단)
@@ -114,22 +114,50 @@ public class ReaderFeedAdaptor {
     }
 
     public LikeToggleResponse insertReaderBoardLike(Long userId, Long boardId) {
-        try {
-            ReaderBoard boardRef = readerBoardRepository.getReferenceById(boardId);
-
-            ReaderBoardLike like = ReaderBoardLike.of(boardRef, userId);
-            readerBoardLikeRepository.saveAndFlush(like);
-
+        if (readerBoardLikeRepository.insertLike(userId, boardId) == 1) {
             readerBoardRepository.incrementLikeCount(boardId);
-
-            int likeCount = readerBoardRepository.findLikeCountById(boardId);
-            return new LikeToggleResponse(true, likeCount);
-
-        } catch (DataIntegrityViolationException e) {
-
-            int likeCount = readerBoardRepository.findLikeCountById(boardId);
-            return new LikeToggleResponse(true, likeCount);
         }
+
+        int likeCount = readerBoardRepository.findLikeCountById(boardId);
+        return new LikeToggleResponse(true, likeCount);
+    }
+
+
+    // 북마크된 게시글 리스트 정보 확인
+    public Set<Long> findBookmarkedBoardIds(Long userId, List<Long> boardIds) {
+        if (userId == null || boardIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(
+                readerBoardBookmarkRepository.findBookmarkedBoardIds(userId, boardIds)
+        );
+    }
+
+    // 게시글 북마크 여부 확인
+    public boolean isBoardBookmarked(Long userId, Long boardId) {
+        return readerBoardBookmarkRepository.existsByUserIdAndBoard_Id(userId, boardId);
+    }
+
+
+    // 게시글 북마크 관련
+    public int isBoardBookmarkDeleted(Long userId, Long boardId) {
+        return readerBoardBookmarkRepository.deleteBookmark(userId, boardId);
+    }
+
+    public BookmarkToggleResponse deleteReaderBoardBookmark(Long boardId) {
+        readerBoardRepository.decrementBookmarkCount(boardId);
+
+        int bookmarkCount = readerBoardRepository.findBookmarkCountById(boardId);
+        return new BookmarkToggleResponse(false, bookmarkCount);
+    }
+
+    public BookmarkToggleResponse insertReaderBoardBookmark(Long userId, Long boardId) {
+        if (readerBoardBookmarkRepository.insertBookmark(userId, boardId) == 1) {
+            readerBoardRepository.incrementBookmarkCount(boardId);
+        }
+
+        int bookmarkCount = readerBoardRepository.findBookmarkCountById(boardId);
+        return new BookmarkToggleResponse(true, bookmarkCount);
     }
 
     // 댓글 생성
@@ -205,22 +233,12 @@ public class ReaderFeedAdaptor {
     }
 
     public LikeToggleResponse insertReaderBoardReplyLike(Long userId, Long replyId) {
-        try {
-            ReaderBoardReply replyRef = readerBoardReplyRepository.getReferenceById(replyId);
-
-            ReaderBoardReplyLike like = ReaderBoardReplyLike.of(replyRef, userId);
-            readerBoardReplyLikeRepository.saveAndFlush(like);
-
+        if (readerBoardReplyLikeRepository.insertLike(userId, replyId) == 1) {
             readerBoardReplyRepository.incrementLikeCount(replyId);
-
-            int likeCount = readerBoardReplyRepository.findLikeCountById(replyId);
-            return new LikeToggleResponse(true, likeCount);
-
-        } catch (DataIntegrityViolationException e) {
-
-            int likeCount = readerBoardReplyRepository.findLikeCountById(replyId);
-            return new LikeToggleResponse(true, likeCount);
         }
+
+        int likeCount = readerBoardReplyRepository.findLikeCountById(replyId);
+        return new LikeToggleResponse(true, likeCount);
     }
 
     // 댓글 삭제
@@ -309,8 +327,19 @@ public class ReaderFeedAdaptor {
     }
 
     // 프로필 좋아요한 게시글 정보 확인
-    public Slice<ReaderBoard> findAllLikedReaderBoards(Long userId, Pageable pageable) {
-        return readerBoardRepository.findAllLikedReaderBoards(userId, pageable);
+    public Slice<ReaderBoard> findAllLikedReaderBoards(Long userId, List<Long> blockedIds, Pageable pageable) {
+        if (blockedIds.isEmpty()) {
+            return readerBoardRepository.findAllLikedReaderBoards(userId, pageable);
+        }
+        return readerBoardRepository.findAllLikedReaderBoardsExcludingBlocked(userId, blockedIds, pageable);
+    }
+
+    // 프로필 북마크한 게시글 정보 확인
+    public Slice<ReaderBoard> findAllBookmarkedReaderBoards(Long userId, List<Long> blockedIds, Pageable pageable) {
+        if (blockedIds.isEmpty()) {
+            return readerBoardRepository.findAllBookmarkedReaderBoards(userId, pageable);
+        }
+        return readerBoardRepository.findAllBookmarkedReaderBoardsExcludingBlocked(userId, blockedIds, pageable);
     }
 
     // 오늘의 피드

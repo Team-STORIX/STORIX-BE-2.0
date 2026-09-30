@@ -2,6 +2,7 @@ package com.storix.domain.domains.feed.service;
 
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
+import com.storix.domain.domains.feed.dto.BookmarkToggleResponse;
 import com.storix.domain.domains.feed.dto.CreateFeedReplyCommand;
 import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyResponse;
@@ -46,6 +47,22 @@ public class FeedReactionService {
         LikeToggleResponse response = readerFeedAdaptor.insertReaderBoardLike(userId, boardId);
         publishFeedLikeNotification(userId, board.getUserId(), boardId);
         return response;
+    }
+
+    // 게시글 북마크
+    @Transactional
+    public BookmarkToggleResponse toggleReaderBoardBookmark(Long userId, Long boardId) {
+
+        checkAdultAuthority(userId, readerFeedAdaptor.findReaderBoardById(boardId));
+
+        int isDeleted = readerFeedAdaptor.isBoardBookmarkDeleted(userId, boardId);
+        if (isDeleted == 1) {
+            return readerFeedAdaptor.deleteReaderBoardBookmark(boardId);
+        }
+
+        readerFeedAdaptor.findActiveReaderBoardById(boardId);
+
+        return readerFeedAdaptor.insertReaderBoardBookmark(userId, boardId);
     }
 
     // 게시물 댓글 등록
