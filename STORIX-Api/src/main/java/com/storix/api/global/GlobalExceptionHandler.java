@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -335,6 +337,21 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
+                .body(response);
+    }
+
+    /** 경로는 있지만 메서드가 다른 요청 */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+
+        ErrorCode errorCode = ErrorCode.METHOD_NOT_ALLOWED;
+        ErrorResponse response = new ErrorResponse(errorCode);
+
+        warnFailure(errorCode);
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .allow(e.getSupportedHttpMethods() == null ? new HttpMethod[0] : e.getSupportedHttpMethods().toArray(HttpMethod[]::new))
                 .body(response);
     }
 
