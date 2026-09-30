@@ -6,6 +6,7 @@ import com.storix.domain.domains.feed.dto.ReaderBoardReplyResponse;
 import com.storix.domain.domains.feed.domain.FeedSortType;
 import com.storix.domain.domains.feed.domain.ReplySortType;
 import com.storix.domain.domains.feed.dto.BoardWrapperDto;
+import com.storix.domain.domains.feed.dto.BookmarkToggleResponse;
 import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyInfoWithProfile;
 import com.storix.api.domain.feed.usecase.FeedKebabUseCase;
@@ -39,7 +40,7 @@ public class FeedController {
     private final FeedReactionUseCase feedReactionUseCase;
     private final FeedKebabUseCase feedKebabUseCase;
 
-    @Operation(summary = "[관심 작품] 전체 게시물 확인", description = "전체 게시물을 확인하는 api 입니다. 무한 스크롤로 구성됩니다.")
+    @Operation(summary = "전체 게시물 리스트 조회", description = "전체 게시물 리스트를 조회하는 api 입니다. 무한 스크롤로 구성됩니다.")
     @GetMapping("/reader/board")
     public ResponseEntity<CustomResponse<Slice<ReaderBoardWithProfileInfo>>> getAllReaderBoard(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -51,7 +52,7 @@ public class FeedController {
                 .body(feedUseCase.getAllReaderBoard(authUserDetails.getUserId(), pageable));
     }
 
-    @Operation(summary = "[관심 작품] 관심 작품 리스트 조회", description = "관심 작품 리스트를 조회하는 api 입니다. 무한스크롤 형식입니다.")
+    @Operation(summary = "관심 작품 리스트 조회", description = "관심 작품 리스트를 조회하는 api 입니다. 무한스크롤 형식입니다.")
     @GetMapping("/reader/board/favorite/works")
     public ResponseEntity<CustomResponse<Slice<SlicedWorksInfo>>> getFavoriteWorksList(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -63,7 +64,7 @@ public class FeedController {
                 .body( feedUseCase.getSlicedFavoriteWorksInfo(authUserDetails.getUserId(), pageable));
     }
 
-    @Operation(summary = "[관심 작품] 게시글 리스트 조회", description = "관심 작품 id로 관련 게시글을 조회합니다. 무한 스크롤로 구성됩니다.")
+    @Operation(summary = "관심 작품 관련 게시물 리스트 조회", description = "관심 작품 id로 관련 게시글을 조회합니다. 무한 스크롤로 구성됩니다.")
     @GetMapping("/reader/board/works/{worksId}")
     public ResponseEntity<CustomResponse<Slice<ReaderBoardWithProfileInfo>>> getReaderBoard(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -76,7 +77,7 @@ public class FeedController {
                 .body(feedUseCase.getReaderBoard(authUserDetails.getUserId(), worksId, pageable));
     }
 
-    @Operation(summary = "[관심 작품] 게시글 상세 조회", description = "게시글 id로 상세 페이지를 조회합니다.")
+    @Operation(summary = "게시글 상세 조회", description = "게시글 id로 상세 페이지를 조회합니다.")
     @GetMapping("/reader/board/{boardId}")
     public ResponseEntity<CustomResponse<BoardWrapperDto<ReaderBoardReplyInfoWithProfile>>> getReaderBoardDetail(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -89,7 +90,7 @@ public class FeedController {
                 .body(feedUseCase.getReaderBoardDetail(authUserDetails.getUserId(), boardId, pageable));
     }
 
-    @Operation(summary = "[관심 작품] 게시글 좋아요", description = "게시글 id로 좋아요를 토글링하는 api 입니다. 좋아요 여부와 최신 좋아요 수가 반환됩니다.")
+    @Operation(summary = "게시글 좋아요", description = "게시글 id로 좋아요를 토글링하는 api 입니다. 좋아요 여부와 최신 좋아요 수가 반환됩니다.")
     @PostMapping("/reader/board/{boardId}/like")
     public ResponseEntity<CustomResponse<LikeToggleResponse>> toggleReaderBoardLike(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -99,7 +100,17 @@ public class FeedController {
                 .body(feedReactionUseCase.toggleReaderBoardLike(authUserDetails.getUserId(), boardId));
     }
 
-    @Operation(summary = "[관심 작품] 댓글 좋아요", description = "댓글 id로 좋아요를 토글링하는 api 입니다. 좋아요 여부와 최신 좋아요 수가 반환됩니다.")
+    @Operation(summary = "게시글 북마크", description = "게시글 id로 북마크를 토글링하는 api 입니다. 북마크 여부와 최신 북마크 수가 반환됩니다.")
+    @PostMapping("/reader/board/{boardId}/bookmark")
+    public ResponseEntity<CustomResponse<BookmarkToggleResponse>> toggleReaderBoardBookmark(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @PathVariable @NotNull Long boardId
+    ) {
+        return ResponseEntity.ok()
+                .body(feedReactionUseCase.toggleReaderBoardBookmark(authUserDetails.getUserId(), boardId));
+    }
+
+    @Operation(summary = "댓글 좋아요", description = "댓글 id로 좋아요를 토글링하는 api 입니다. 좋아요 여부와 최신 좋아요 수가 반환됩니다.")
     @PostMapping("/reader/board/{boardId}/reply/{replyId}/like")
     public ResponseEntity<CustomResponse<LikeToggleResponse>> toggleReaderBoardReplyLike(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -110,7 +121,7 @@ public class FeedController {
                 .body(feedReactionUseCase.toggleReaderBoardReplyLike(authUserDetails.getUserId(), boardId, replyId));
     }
 
-    @Operation(summary = "[관심 작품] 댓글 작성", description = "댓글을 작성하는 api 입니다.")
+    @Operation(summary = "댓글 작성", description = "댓글을 작성하는 api 입니다.")
     @PostMapping("/reader/board/{boardId}/reply")
     public ResponseEntity<CustomResponse<ReaderBoardReplyResponse>> writeReaderBoardReply(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -121,7 +132,7 @@ public class FeedController {
                 .body(feedReactionUseCase.writeReaderBoardReply(authUserDetails.getUserId(), boardId, req));
     }
 
-    @Operation(summary = "[관심 작품] 답댓글 작성", description = "댓글에 대한 답댓글을 작성하는 api 입니다. depth 1까지만 허용됩니다 (답댓글에 답댓글 불가).")
+    @Operation(summary = "답댓글 작성", description = "댓글에 대한 답댓글을 작성하는 api 입니다. depth 1까지만 허용됩니다 (답댓글에 답댓글 불가).")
     @PostMapping("/reader/board/{boardId}/reply/{replyId}/reply")
     public ResponseEntity<CustomResponse<ReaderBoardReplyResponse>> writeReaderBoardChildReply(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -133,7 +144,7 @@ public class FeedController {
                 .body(feedReactionUseCase.writeReaderBoardChildReply(authUserDetails.getUserId(), boardId, replyId, req));
     }
 
-    @Operation(summary = "[케밥 메뉴] 독자 게시물 삭제", description = "독자 게시물을 삭제하는 api 입니다.")
+    @Operation(summary = "[케밥 메뉴] 게시물 삭제", description = "게시물을 삭제하는 api 입니다.")
     @DeleteMapping("/reader/board/{boardId}")
     public ResponseEntity<CustomResponse<Void>> deleteOwnBoard(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -143,7 +154,7 @@ public class FeedController {
                 .body(feedKebabUseCase.deleteOwnBoard(authUserDetails.getUserId(), boardId));
     }
 
-    @Operation(summary = "[케밥 메뉴] 독자 댓글 삭제", description = "독자 댓글을 삭제하는 api 입니다.")
+    @Operation(summary = "[케밥 메뉴] 댓글 삭제", description = "댓글을 삭제하는 api 입니다.")
     @DeleteMapping("/reader/board/{boardId}/reply/{replyId}")
     public ResponseEntity<CustomResponse<Void>> deleteOwnReply(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -154,7 +165,7 @@ public class FeedController {
                 .body(feedKebabUseCase.deleteOwnReply(authUserDetails.getUserId(), boardId, replyId));
     }
 
-    @Operation(summary = "[케밥 메뉴] 독자 게시물 신고", description = "독자 게시물을 신고하는 api 입니다.")
+    @Operation(summary = "[케밥 메뉴] 게시물 신고", description = "게시물을 신고하는 api 입니다.")
     @PostMapping("/reader/board/{boardId}/report")
     public ResponseEntity<CustomResponse<Void>> report(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
@@ -165,7 +176,7 @@ public class FeedController {
                 .body(feedKebabUseCase.reportFeed(authUserDetails.getUserId(), boardId, req));
     }
 
-    @Operation(summary = "[케밥 메뉴] 독자 댓글 신고", description = "독자 댓글을 신고하는 api 입니다.")
+    @Operation(summary = "[케밥 메뉴] 댓글 신고", description = "댓글을 신고하는 api 입니다.")
     @PostMapping("/reader/board/{boardId}/reply/{replyId}/report")
     public ResponseEntity<CustomResponse<Void>> reportReply(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,

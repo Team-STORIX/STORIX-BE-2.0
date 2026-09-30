@@ -20,6 +20,10 @@ public interface ReaderBoardLikeRepository extends JpaRepository<ReaderBoardLike
                                  @Param("boardIds") List<Long> boardIds);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "INSERT IGNORE INTO reader_board_like (user_id, reader_board_id) VALUES (:userId, :boardId)", nativeQuery = true)
+    int insertLike(@Param("userId") Long userId, @Param("boardId") Long boardId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ReaderBoardLike rl " +
             "WHERE rl.userId = :userId AND rl.board.id = :boardId ")
     int deleteLike(@Param("userId") Long userId, @Param("boardId") Long boardId);
@@ -27,5 +31,4 @@ public interface ReaderBoardLikeRepository extends JpaRepository<ReaderBoardLike
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ReaderBoardLike rl WHERE rl.board.id IN :boardIds")
     int hardDeleteByBoardIds(@Param("boardIds") List<Long> boardIds);
-
 }
