@@ -130,7 +130,8 @@ public enum SuccessCode {
     FEED_READER_BOARD_REPLY_REPORT_SUCCESS(HttpStatus.CREATED, "FEED_SUCCESS_010", "관심 작품 피드 댓글 신고에 성공했습니다."),
     FEED_READER_BOARD_CHILD_REPLY_LOAD_SUCCESS(HttpStatus.OK, "FEED_SUCCESS_012", "관심 작품 피드 답댓글 조회에 성공했습니다."),
     FEED_FAVORITE_WORKS_INFO_LOAD_SUCCESS(HttpStatus.OK, "FEED_SUCCESS_011", "관심 작품 피드 리스트 조회에 성공했습니다."),
-    FEED_READER_BOARD_BOOKMARK_SUCCESS(HttpStatus.CREATED, "FEED_SUCCESS_013", "관심 작품 피드 게시글 북마크 토글링에 성공했습니다."),
+    FEED_READER_BOARD_BOOKMARK_SUCCESS(HttpStatus.CREATED, "FEED_SUCCESS_013", "관심 작품 피드 게시글 북마크에 성공했습니다."),
+    FEED_READER_BOARD_UNBOOKMARK_SUCCESS(HttpStatus.OK, "FEED_SUCCESS_014", "관심 작품 피드 게시글 북마크 해제에 성공했습니다."),
 
     // Favorite success
     FAVORITE_WORKS_LOAD_SUCCESS(HttpStatus.OK, "FAVORITE_SUCCESS_001", "관심 작품 등록 여부 조회에 성공했습니다."),

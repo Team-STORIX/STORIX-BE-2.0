@@ -6,7 +6,7 @@ import com.storix.domain.domains.feed.dto.ReaderBoardReplyResponse;
 import com.storix.domain.domains.feed.domain.FeedSortType;
 import com.storix.domain.domains.feed.domain.ReplySortType;
 import com.storix.domain.domains.feed.dto.BoardWrapperDto;
-import com.storix.domain.domains.feed.dto.BookmarkToggleResponse;
+import com.storix.domain.domains.feed.dto.BookmarkResponse;
 import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyInfoWithProfile;
 import com.storix.api.domain.feed.usecase.FeedKebabUseCase;
@@ -100,14 +100,24 @@ public class FeedController {
                 .body(feedReactionUseCase.toggleReaderBoardLike(authUserDetails.getUserId(), boardId));
     }
 
-    @Operation(summary = "게시글 북마크", description = "게시글 id로 북마크를 토글링하는 api 입니다. 북마크 여부와 최신 북마크 수가 반환됩니다.")
-    @PostMapping("/reader/board/{boardId}/bookmark")
-    public ResponseEntity<CustomResponse<BookmarkToggleResponse>> toggleReaderBoardBookmark(
+    @Operation(summary = "게시글 북마크 등록", description = "게시글 id로 북마크를 등록 api 입니다. 이미 북마크한 게시글이면 그대로 두고 북마크 여부와 최신 북마크 수가 반환됩니다.")
+    @PutMapping("/reader/board/{boardId}/bookmark")
+    public ResponseEntity<CustomResponse<BookmarkResponse>> bookmarkReaderBoard(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @PathVariable @NotNull Long boardId
     ) {
         return ResponseEntity.ok()
-                .body(feedReactionUseCase.toggleReaderBoardBookmark(authUserDetails.getUserId(), boardId));
+                .body(feedReactionUseCase.bookmarkReaderBoard(authUserDetails.getUserId(), boardId));
+    }
+
+    @Operation(summary = "게시글 북마크 해제", description = "게시글 id로 북마크를 해제하는 api 입니다. 북마크하지 않은 게시글이면 그대로 두고 북마크 여부와 최신 북마크 수가 반환됩니다.")
+    @DeleteMapping("/reader/board/{boardId}/bookmark")
+    public ResponseEntity<CustomResponse<BookmarkResponse>> unbookmarkReaderBoard(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @PathVariable @NotNull Long boardId
+    ) {
+        return ResponseEntity.ok()
+                .body(feedReactionUseCase.unbookmarkReaderBoard(authUserDetails.getUserId(), boardId));
     }
 
     @Operation(summary = "댓글 좋아요", description = "댓글 id로 좋아요를 토글링하는 api 입니다. 좋아요 여부와 최신 좋아요 수가 반환됩니다.")

@@ -2,7 +2,7 @@ package com.storix.domain.domains.feed.adaptor;
 
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
-import com.storix.domain.domains.feed.dto.BookmarkToggleResponse;
+import com.storix.domain.domains.feed.dto.BookmarkResponse;
 import com.storix.domain.domains.feed.dto.CreateFeedReplyCommand;
 import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.StandardReplyInfo;
@@ -140,24 +140,22 @@ public class ReaderFeedAdaptor {
 
 
     // 게시글 북마크 관련
-    public int isBoardBookmarkDeleted(Long userId, Long boardId) {
-        return readerBoardBookmarkRepository.deleteBookmark(userId, boardId);
-    }
-
-    public BookmarkToggleResponse deleteReaderBoardBookmark(Long boardId) {
-        readerBoardRepository.decrementBookmarkCount(boardId);
+    public BookmarkResponse deleteReaderBoardBookmark(Long userId, Long boardId) {
+        if (readerBoardBookmarkRepository.deleteBookmark(userId, boardId) == 1) {
+            readerBoardRepository.decrementBookmarkCount(boardId);
+        }
 
         int bookmarkCount = readerBoardRepository.findBookmarkCountById(boardId);
-        return new BookmarkToggleResponse(false, bookmarkCount);
+        return new BookmarkResponse(false, bookmarkCount);
     }
 
-    public BookmarkToggleResponse insertReaderBoardBookmark(Long userId, Long boardId) {
+    public BookmarkResponse insertReaderBoardBookmark(Long userId, Long boardId) {
         if (readerBoardBookmarkRepository.insertBookmark(userId, boardId) == 1) {
             readerBoardRepository.incrementBookmarkCount(boardId);
         }
 
         int bookmarkCount = readerBoardRepository.findBookmarkCountById(boardId);
-        return new BookmarkToggleResponse(true, bookmarkCount);
+        return new BookmarkResponse(true, bookmarkCount);
     }
 
     // 댓글 생성

@@ -2,7 +2,7 @@ package com.storix.domain.domains.feed.service;
 
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
-import com.storix.domain.domains.feed.dto.BookmarkToggleResponse;
+import com.storix.domain.domains.feed.dto.BookmarkResponse;
 import com.storix.domain.domains.feed.dto.CreateFeedReplyCommand;
 import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyResponse;
@@ -16,6 +16,7 @@ import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import com.storix.domain.domains.works.application.helper.AdultWorksHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -29,7 +30,7 @@ public class FeedReactionService {
     private final NotificationPublisher notificationPublisher;
 
     // 게시글 좋아요
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public LikeToggleResponse toggleReaderBoardLike(Long userId, Long boardId) {
 
         // like·unlike 모두 성인 인증 검증. 삭제된 게시글의 취소는 허용해야 하므로 삭제 여부는 보지 않는다
@@ -50,19 +51,21 @@ public class FeedReactionService {
     }
 
     // 게시글 북마크
-    @Transactional
-    public BookmarkToggleResponse toggleReaderBoardBookmark(Long userId, Long boardId) {
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public BookmarkResponse bookmarkReaderBoard(Long userId, Long boardId) {
+
+        checkAdultAuthority(userId, readerFeedAdaptor.findActiveReaderBoardById(boardId));
+
+        return readerFeedAdaptor.insertReaderBoardBookmark(userId, boardId);
+    }
+
+    // 게시글 북마크 해제
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public BookmarkResponse unbookmarkReaderBoard(Long userId, Long boardId) {
 
         checkAdultAuthority(userId, readerFeedAdaptor.findReaderBoardById(boardId));
 
-        int isDeleted = readerFeedAdaptor.isBoardBookmarkDeleted(userId, boardId);
-        if (isDeleted == 1) {
-            return readerFeedAdaptor.deleteReaderBoardBookmark(boardId);
-        }
-
-        readerFeedAdaptor.findActiveReaderBoardById(boardId);
-
-        return readerFeedAdaptor.insertReaderBoardBookmark(userId, boardId);
+        return readerFeedAdaptor.deleteReaderBoardBookmark(userId, boardId);
     }
 
     // 게시물 댓글 등록
@@ -124,7 +127,7 @@ public class FeedReactionService {
     }
 
     // 게시글 댓글 좋아요
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public LikeToggleResponse toggleReaderBoardReplyLike(Long userId, Long boardId, Long replyId) {
 
         // like·unlike 모두 성인 인증 검증. 삭제된 게시글의 취소는 허용해야 하므로 삭제 여부는 보지 않는다
