@@ -62,6 +62,35 @@ jobs:
           role-to-assume: ${{ secrets.APP_DEPLOY_ROLE_ARN }}
           aws-region: ap-northeast-2
 
+      - name: Start instance if stopped (dev)
+        if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' && steps.target.outputs.env_tag == 'dev' }}
+        env:
+          INSTANCE_ID: ${{ steps.target.outputs.instance_id }}
+        run: |
+          STATE=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].State.Name" --output text)
+          echo "State: $STATE"
+
+          if [ "$STATE" = "stopping" ]; then
+            aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
+            STATE=stopped
+          fi
+          if [ "$STATE" = "stopped" ]; then
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" > /dev/null
+          fi
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+
+          for i in $(seq 1 30); do
+            PING=$(aws ssm describe-instance-information \
+              --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+              --query "InstanceInformationList[0].PingStatus" --output text)
+            if [ "$PING" = "Online" ]; then exit 0; fi
+            sleep 5
+          done
+
+          echo "SSM agent not online"
+          exit 1
+
       - name: Deploy via SSM
         if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' }}
         env:
