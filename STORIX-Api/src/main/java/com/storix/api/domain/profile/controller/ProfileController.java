@@ -155,7 +155,7 @@ public class ProfileController {
     public ResponseEntity<CustomResponse<Slice<ReaderBoardReplyInfoWithProfile>>> getReviewList(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
-            @RequestParam(defaultValue = "0") int page
+            @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
         return ResponseEntity.ok()
@@ -168,11 +168,23 @@ public class ProfileController {
     public ResponseEntity<CustomResponse<Slice<ReaderBoardWithProfileInfo>>> getLikeList(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
-            @RequestParam(defaultValue = "0") int page
+            @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
         return ResponseEntity.ok()
                 .body(profileActivityUseCase.getReaderBoardLikeList(authUserDetails.getUserId(), pageable));
+    }
+
+    @Operation(summary = "[독자] 내가 북마크한 게시글 조회", description = "프로필 내가 북마크한 게시글을 조회하는 api 입니다. 무한스크롤 형식입니다.")
+    @GetMapping("/reader/activity/bookmark")
+    public ResponseEntity<CustomResponse<Slice<ReaderBoardWithProfileInfo>>> getBookmarkList(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
+            @RequestParam(defaultValue = "0") @Min(0) int page
+    ) {
+        Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
+        return ResponseEntity.ok()
+                .body(profileActivityUseCase.getReaderBoardBookmarkList(authUserDetails.getUserId(), pageable));
     }
 
 

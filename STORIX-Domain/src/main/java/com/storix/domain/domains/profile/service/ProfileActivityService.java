@@ -6,6 +6,7 @@ import com.storix.domain.domains.plus.service.ReaderBoardHelper;
 import com.storix.domain.domains.plus.dto.ReaderBoardInfo;
 import com.storix.domain.domains.profile.dto.ReaderBoardWithProfileInfo;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import com.storix.domain.domains.user.dto.StandardProfileInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import java.util.Objects;
 public class ProfileActivityService {
 
     private final UserAdaptor userAdaptor;
+    private final UserBlockAdaptor userBlockAdaptor;
 
     private final ReaderBoardHelper readerBoardHelper;
 
@@ -65,9 +67,10 @@ public class ProfileActivityService {
     @Transactional(readOnly = true)
     public Slice<ReaderBoardWithProfileInfo> findAllReaderBoardsLikeList(Long userId, Pageable pageable) {
 
-        // 1) 좋아요 누른 게시글 정보
+        // 1) 좋아요 누른 게시글 정보 (차단 유저 글 제외)
+        List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
         Slice<ReaderBoardInfo> boards =
-                readerBoardHelper.findLikedReaderBoardInfo(userId, pageable);
+                readerBoardHelper.findLikedReaderBoardInfo(userId, blockedIds, pageable);
 
         List<ReaderBoardInfo> content = boards.getContent();
         if (content.isEmpty()) {
@@ -76,6 +79,53 @@ public class ProfileActivityService {
 
         // 2) 유저 id 리스트
         List<Long> userIds = boards.getContent().stream()
+                .map(ReaderBoardInfo::userId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        // 3) 프로필 정보
+        Map<Long, StandardProfileInfo> profileMap =
+                userAdaptor.findStandardProfileInfoByUserIds(userIds);
+
+        // 3-1) 프로필이 없을 경우 필터링
+        List<ReaderBoardInfo> filtered = content.stream()
+                .filter(b -> {
+                    if (profileMap.get(b.userId()) == null) {
+                        log.atWarn().addKeyValue("userId", b.userId())
+                                .log(">>> [ProfileActivity] 프로필 정보 없음");
+                        return false;
+                    }
+                    return true;
+                })
+                .toList();
+
+        Slice<ReaderBoardInfo> filteredBoards =
+                new SliceImpl<>(filtered, pageable, boards.hasNext());
+
+        // 4) 최종 매핑
+        return readerBoardHelper.map(
+                userId,
+                filteredBoards,
+                boardInfo -> profileMap.get(boardInfo.userId())
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public Slice<ReaderBoardWithProfileInfo> findAllReaderBoardsBookmarkList(Long userId, Pageable pageable) {
+
+        // 1) 북마크한 게시글 정보, 차단 유저 글은 제외
+        List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
+        Slice<ReaderBoardInfo> boards =
+                readerBoardHelper.findBookmarkedReaderBoardInfo(userId, blockedIds, pageable);
+
+        List<ReaderBoardInfo> content = boards.getContent();
+        if (content.isEmpty()) {
+            return new SliceImpl<>(List.of(), pageable, boards.hasNext());
+        }
+
+        // 2) 유저 id 리스트
+        List<Long> userIds = content.stream()
                 .map(ReaderBoardInfo::userId)
                 .filter(Objects::nonNull)
                 .distinct()
