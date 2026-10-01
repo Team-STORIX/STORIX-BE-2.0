@@ -77,6 +77,9 @@ jobs:
           fi
           if [ "$STATE" = "stopped" ]; then
             aws ec2 start-instances --instance-ids "$INSTANCE_ID" > /dev/null
+            aws ec2 create-tags --resources "$INSTANCE_ID" \
+              --tags "Key=deploy-started-at,Value=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              || echo "deploy-started-at 태그를 적지 못했다"
           fi
           aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
 
