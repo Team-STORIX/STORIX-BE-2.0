@@ -155,7 +155,7 @@ public class ProfileController {
     public ResponseEntity<CustomResponse<Slice<ReaderBoardReplyInfoWithProfile>>> getReviewList(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
-            @RequestParam(defaultValue = "0") int page
+            @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
         return ResponseEntity.ok()
@@ -168,7 +168,7 @@ public class ProfileController {
     public ResponseEntity<CustomResponse<Slice<ReaderBoardWithProfileInfo>>> getLikeList(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
-            @RequestParam(defaultValue = "0") int page
+            @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
         return ResponseEntity.ok()
@@ -180,7 +180,7 @@ public class ProfileController {
     public ResponseEntity<CustomResponse<Slice<ReaderBoardWithProfileInfo>>> getBookmarkList(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
-            @RequestParam(defaultValue = "0") int page
+            @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
         return ResponseEntity.ok()

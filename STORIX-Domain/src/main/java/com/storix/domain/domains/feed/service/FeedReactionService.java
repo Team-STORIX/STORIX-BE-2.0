@@ -54,7 +54,7 @@ public class FeedReactionService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public BookmarkResponse bookmarkReaderBoard(Long userId, Long boardId) {
 
-        checkAdultAuthority(userId, readerFeedAdaptor.findActiveReaderBoardById(boardId));
+        checkAdultAuthority(userId, readerFeedAdaptor.findActiveReaderBoardByIdForUpdate(boardId));
 
         return readerFeedAdaptor.insertReaderBoardBookmark(userId, boardId);
     }
@@ -63,7 +63,7 @@ public class FeedReactionService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public BookmarkResponse unbookmarkReaderBoard(Long userId, Long boardId) {
 
-        checkAdultAuthority(userId, readerFeedAdaptor.findReaderBoardById(boardId));
+        checkAdultAuthority(userId, readerFeedAdaptor.findReaderBoardByIdForUpdate(boardId));
 
         return readerFeedAdaptor.deleteReaderBoardBookmark(userId, boardId);
     }
