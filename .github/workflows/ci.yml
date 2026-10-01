@@ -38,8 +38,10 @@ jobs:
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
             echo "ENV_TAG=prod" >> "$GITHUB_ENV"
+            echo "IMAGE_PLATFORM=${{ vars.PROD_IMAGE_PLATFORM || 'linux/amd64' }}" >> "$GITHUB_ENV"
           else
             echo "ENV_TAG=dev" >> "$GITHUB_ENV"
+            echo "IMAGE_PLATFORM=${{ vars.DEV_IMAGE_PLATFORM || 'linux/amd64' }}" >> "$GITHUB_ENV"
           fi
 
       - name: Build bootJar (Api + Batch)
@@ -60,7 +62,7 @@ jobs:
         env:
           IMAGE_NAME: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_API_REPOSITORY }}
         run: |
-          docker build -f STORIX-Api/Dockerfile -t $IMAGE_NAME:$ENV_TAG -t $IMAGE_NAME:$ENV_TAG-${{ github.sha }} .
+          docker build --platform "$IMAGE_PLATFORM" -f STORIX-Api/Dockerfile -t $IMAGE_NAME:$ENV_TAG -t $IMAGE_NAME:$ENV_TAG-${{ github.sha }} .
           docker push $IMAGE_NAME:$ENV_TAG
           docker push $IMAGE_NAME:$ENV_TAG-${{ github.sha }}
 
@@ -68,6 +70,6 @@ jobs:
         env:
           IMAGE_NAME: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_BATCH_REPOSITORY }}
         run: |
-          docker build -f STORIX-Batch/Dockerfile -t $IMAGE_NAME:$ENV_TAG -t $IMAGE_NAME:$ENV_TAG-${{ github.sha }} .
+          docker build --platform "$IMAGE_PLATFORM" -f STORIX-Batch/Dockerfile -t $IMAGE_NAME:$ENV_TAG -t $IMAGE_NAME:$ENV_TAG-${{ github.sha }} .
           docker push $IMAGE_NAME:$ENV_TAG
           docker push $IMAGE_NAME:$ENV_TAG-${{ github.sha }}
