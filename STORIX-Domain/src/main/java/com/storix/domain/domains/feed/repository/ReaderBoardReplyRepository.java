@@ -2,10 +2,12 @@ package com.storix.domain.domains.feed.repository;
 
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
 import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,6 +22,10 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
     boolean existsByIdAndBoard_Id(Long replyId, Long boardId);
 
     Optional<ReaderBoardReply> findByIdAndBoard_Id(Long replyId, Long boardId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM ReaderBoardReply r WHERE r.id = :id")
+    Optional<ReaderBoardReply> findByIdForUpdate(@Param("id") Long id);
 
     // 댓글 작성자 userId 단건 조회 (boardId 일치 검증 포함)
     @Query("SELECT r.userId FROM ReaderBoardReply r WHERE r.id = :replyId AND r.board.id = :boardId")

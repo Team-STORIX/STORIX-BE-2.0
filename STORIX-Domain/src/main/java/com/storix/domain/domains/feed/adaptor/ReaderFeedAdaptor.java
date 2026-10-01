@@ -208,6 +208,11 @@ public class ReaderFeedAdaptor {
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
     }
 
+    public ReaderBoardReply findReplyByIdForUpdate(Long replyId) {
+        return readerBoardReplyRepository.findByIdForUpdate(replyId)
+                .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
+    }
+
     // 댓글 존재 여부 확인 (삭제된 댓글 차단)
     public void checkReplyExist(Long boardId, Long replyId) {
         if (!readerBoardReplyRepository.existsByIdAndBoard_IdAndDeletedFalse(replyId, boardId)) {
@@ -255,6 +260,8 @@ public class ReaderFeedAdaptor {
     // 댓글 삭제
     public void deleteReaderBoardReply(Long userId, Long boardId, Long replyId) {
 
+        findReaderBoardByIdForUpdate(boardId);
+
         Optional<ReaderBoardReply> readerBoardReply = readerBoardReplyRepository.findById(replyId);
         if (readerBoardReply.isPresent()) {
             ReaderBoardReply reply = readerBoardReply.get();
@@ -288,6 +295,8 @@ public class ReaderFeedAdaptor {
     public void adminDeleteReaderBoardReply(Long replyId) {
         ReaderBoardReply reply = readerBoardReplyRepository.findById(replyId)
                 .orElseThrow(() -> BoardReplyNotFoundException.EXCEPTION);
+
+        findReaderBoardByIdForUpdate(reply.getBoardId());
 
         if (readerBoardReplyRepository.softDeleteByAdminIfNotDeleted(replyId, LocalDateTime.now()) > 0) {
             readerBoardRepository.decrementReplyCount(reply.getBoardId());
