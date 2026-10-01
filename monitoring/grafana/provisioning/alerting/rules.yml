@@ -25,7 +25,7 @@ groups:
             model:
               refId: A
               instant: true
-              expr: 'up{job=~"storix-.*"}'
+              expr: 'up{job=~"storix-.*", env="prod"}'
           - refId: B
             datasourceUid: __expr__
             model:
