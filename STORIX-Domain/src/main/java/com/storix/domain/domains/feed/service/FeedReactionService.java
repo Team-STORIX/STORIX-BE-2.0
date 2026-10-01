@@ -34,7 +34,7 @@ public class FeedReactionService {
     public LikeToggleResponse toggleReaderBoardLike(Long userId, Long boardId) {
 
         // like·unlike 모두 성인 인증 검증. 삭제된 게시글의 취소는 허용해야 하므로 삭제 여부는 보지 않는다
-        checkAdultAuthority(userId, readerFeedAdaptor.findReaderBoardById(boardId));
+        checkAdultAuthority(userId, readerFeedAdaptor.findReaderBoardByIdForUpdate(boardId));
 
         // unlike > 작성자 조회 불필요
         int isDeleted = readerFeedAdaptor.isBoardLikeDeleted(userId, boardId);
@@ -72,7 +72,7 @@ public class FeedReactionService {
     @Transactional
     public ReaderBoardReplyResponse uploadReaderBoardReply(Long userId, Long boardId, String comment) {
 
-        ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardById(boardId);
+        ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardByIdForUpdate(boardId);
 
         checkAdultAuthority(userId, readerBoard);
 
@@ -98,8 +98,8 @@ public class FeedReactionService {
     @Transactional
     public ReaderBoardReplyResponse uploadReaderBoardChildReply(Long userId, Long boardId, Long parentReplyId, String comment) {
 
-        ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardById(boardId);
-        ReaderBoardReply parentReply = readerFeedAdaptor.findReplyById(parentReplyId);
+        ReaderBoard readerBoard = readerFeedAdaptor.findActiveReaderBoardByIdForUpdate(boardId);
+        ReaderBoardReply parentReply = readerFeedAdaptor.findReplyByIdForUpdate(parentReplyId);
 
         checkAdultAuthority(userId, readerBoard);
 
@@ -132,6 +132,7 @@ public class FeedReactionService {
 
         // like·unlike 모두 성인 인증 검증. 삭제된 게시글의 취소는 허용해야 하므로 삭제 여부는 보지 않는다
         checkAdultAuthority(userId, readerFeedAdaptor.findReaderBoardById(boardId));
+        readerFeedAdaptor.findReplyByIdForUpdate(replyId);
 
         // unlike(취소) 분기 — 작성자 조회 불필요
         int isDeleted = readerFeedAdaptor.isReplyLikeDeleted(userId, replyId);
