@@ -3,10 +3,12 @@ package com.storix.domain.domains.plus.repository;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.plus.dto.StandardReaderBoardInfo;
 import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -197,6 +199,10 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long> 
     void decrementBookmarkCount(@Param("id") Long id);
 
     Optional<ReaderBoard> findByIdAndDeletedFalse(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT rb FROM ReaderBoard rb WHERE rb.id = :id")
+    Optional<ReaderBoard> findByIdForUpdate(@Param("id") Long id);
 
     boolean existsByIdAndDeletedFalse(Long id);
 

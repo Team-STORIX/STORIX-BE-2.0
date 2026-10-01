@@ -67,6 +67,19 @@ public class ReaderFeedAdaptor {
         return readerBoard;
     }
 
+    public ReaderBoard findReaderBoardByIdForUpdate(Long boardId) {
+        return readerBoardRepository.findByIdForUpdate(boardId)
+                .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
+    }
+
+    public ReaderBoard findActiveReaderBoardByIdForUpdate(Long boardId) {
+        ReaderBoard readerBoard = findReaderBoardByIdForUpdate(boardId);
+        if (readerBoard.isDeleted()) {
+            throw InvalidBoardRequestException.EXCEPTION;
+        }
+        return readerBoard;
+    }
+
     // 게시글 작성자 userId 조회
     public Long findBoardOwnerUserId(Long boardId) {
         return readerBoardRepository.findUserIdById(boardId)

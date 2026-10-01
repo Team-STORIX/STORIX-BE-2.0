@@ -62,7 +62,7 @@ public class BoardAdaptor {
 
     // 독자 게시글 삭제
     public void deleteSingleReaderBoard(Long userId, Long boardId) {
-        ReaderBoard board = readerBoardRepository.findById(boardId)
+        ReaderBoard board = readerBoardRepository.findByIdForUpdate(boardId)
                 .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
 
         if (!board.getUserId().equals(userId)) {
