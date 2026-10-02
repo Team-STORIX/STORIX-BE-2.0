@@ -60,7 +60,6 @@ application-*.yml
 /tools
 *.sql
 
-/docker-compose.yml
 
 ### nginx basic auth
 monitoring/nginx/.htpasswd
