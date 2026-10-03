@@ -149,6 +149,7 @@ public enum SuccessCode {
 
     // Block success
     USER_BLOCK_SUCCESS(HttpStatus.CREATED, "BLOCK_SUCCESS_001", "사용자 차단에 성공했습니다."),
+    USER_UNBLOCK_SUCCESS(HttpStatus.OK, "BLOCK_SUCCESS_002", "사용자 차단 해제에 성공했습니다."),
 
     // App version success
     APP_VERSION_CHECK_SUCCESS(HttpStatus.OK, "APP_VERSION_SUCCESS_001", "앱 버전 확인에 성공했습니다."),
