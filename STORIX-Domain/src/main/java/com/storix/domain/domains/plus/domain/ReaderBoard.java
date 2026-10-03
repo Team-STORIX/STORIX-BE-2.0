@@ -1,6 +1,7 @@
 package com.storix.domain.domains.plus.domain;
 
 import com.storix.domain.domains.feed.domain.BoardTheme;
+import com.storix.domain.domains.feed.domain.ReaderBoardBookmark;
 import com.storix.domain.domains.feed.domain.ReaderBoardLike;
 import com.storix.domain.domains.feed.domain.ReaderBoardReply;
 import jakarta.persistence.*;
@@ -48,6 +49,10 @@ public class ReaderBoard extends Board {
     @ToString.Exclude
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReaderBoardLike> likes = new ArrayList<>();
+
+    @ToString.Exclude
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReaderBoardBookmark> bookmarks = new ArrayList<>();
 
 
     @Builder

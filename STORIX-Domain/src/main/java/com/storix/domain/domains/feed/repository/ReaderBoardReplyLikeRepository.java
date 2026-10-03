@@ -10,16 +10,20 @@ import java.util.List;
 
 public interface ReaderBoardReplyLikeRepository extends JpaRepository<ReaderBoardReplyLike, Long> {
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM ReaderBoardReplyLike rpl " +
-            "WHERE rpl.userId = :userId AND rpl.reply.id = :replyId ")
-    int deleteLike(@Param("userId") Long userId, @Param("replyId") Long replyId);
-
     @Query("SELECT l.reply.id " +
             "FROM ReaderBoardReplyLike l " +
             "WHERE l.userId = :userId AND l.reply.id IN :replyIds")
     List<Long> findLikedReplyIds(@Param("userId") Long userId,
                                  @Param("replyIds") List<Long> replyIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "INSERT IGNORE INTO reader_board_reply_like (user_id, reader_board_reply_id) VALUES (:userId, :replyId)", nativeQuery = true)
+    int insertLike(@Param("userId") Long userId, @Param("replyId") Long replyId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ReaderBoardReplyLike rpl " +
+            "WHERE rpl.userId = :userId AND rpl.reply.id = :replyId ")
+    int deleteLike(@Param("userId") Long userId, @Param("replyId") Long replyId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ReaderBoardReplyLike l WHERE l.reply.id IN :replyIds")
@@ -29,5 +33,4 @@ public interface ReaderBoardReplyLikeRepository extends JpaRepository<ReaderBoar
     @Query("DELETE FROM ReaderBoardReplyLike l WHERE l.reply.id IN " +
             "(SELECT r.id FROM ReaderBoardReply r WHERE r.board.id IN :boardIds)")
     int hardDeleteByBoardIds(@Param("boardIds") List<Long> boardIds);
-
 }

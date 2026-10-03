@@ -1,5 +1,6 @@
 package com.storix.domain.domains.plus.adaptor;
 
+import com.storix.domain.domains.feed.repository.ReaderBoardBookmarkRepository;
 import com.storix.domain.domains.feed.repository.ReaderBoardLikeRepository;
 import com.storix.domain.domains.feed.repository.ReaderBoardReplyLikeRepository;
 import com.storix.domain.domains.feed.repository.ReaderBoardReplyRepository;
@@ -35,6 +36,7 @@ public class BoardAdaptor {
     private final ReaderBoardRepository readerBoardRepository;
     private final BoardImageAdaptor boardImageAdaptor;
     private final ReaderBoardLikeRepository readerBoardLikeRepository;
+    private final ReaderBoardBookmarkRepository readerBoardBookmarkRepository;
     private final ReaderBoardReplyRepository readerBoardReplyRepository;
     private final ReaderBoardReplyLikeRepository readerBoardReplyLikeRepository;
     private final S3CleanupPublisher s3CleanupPublisher;
@@ -60,7 +62,7 @@ public class BoardAdaptor {
 
     // 독자 게시글 삭제
     public void deleteSingleReaderBoard(Long userId, Long boardId) {
-        ReaderBoard board = readerBoardRepository.findById(boardId)
+        ReaderBoard board = readerBoardRepository.findByIdForUpdate(boardId)
                 .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
 
         if (!board.getUserId().equals(userId)) {
@@ -129,6 +131,7 @@ public class BoardAdaptor {
                 readerBoardReplyRepository.detachChildRepliesByBoardIds(boardIds);
                 readerBoardReplyRepository.hardDeleteByBoardIds(boardIds);
                 readerBoardLikeRepository.hardDeleteByBoardIds(boardIds);
+                readerBoardBookmarkRepository.hardDeleteByBoardIds(boardIds);
                 boardImageAdaptor.hardDeleteByBoardIds(boardIds);
                 int deleted = readerBoardRepository.hardDeleteByIds(boardIds);
 

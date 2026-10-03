@@ -16,6 +16,7 @@ public enum ErrorCode {
     INVALID_JSON_REQUEST(HttpStatus.BAD_REQUEST, "COMMON_ERROR_008", "요청 JSON 형식이 잘못되었습니다. 백엔드에게 문의주세요."),
     UNHANDLED_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_ERROR_009", "(내부) 핸들링하지 않은 에러입니다. 백엔드에게 연락주세요."),
     ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON_ERROR_010", "존재하지 않는 경로입니다."),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "COMMON_ERROR_011", "지원하지 않는 요청 메서드입니다."),
 
     // Token error
     TOKEN_NOT_EXIST(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_001", "인가가 필요한 경로로 토큰이 전달되지 않았습니다."),
@@ -39,6 +40,7 @@ public enum ErrorCode {
 
     // Profile error
     PROFILE_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "PROFILE_ERROR_001", "업로드한 프로필 사진의 objectKey값을 보내주세요."),
+    PROFILE_SELF_REQUEST(HttpStatus.BAD_REQUEST, "PROFILE_ERROR_002", "본인 프로필은 내 프로필 API로 조회해주세요."),
 
     // Image error
     IMAGE_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "IMAGE_ERROR_001", "지원하지 않는 Content Type입니다."),

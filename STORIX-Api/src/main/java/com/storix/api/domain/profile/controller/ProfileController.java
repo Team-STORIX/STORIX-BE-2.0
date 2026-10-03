@@ -93,6 +93,16 @@ public class ProfileController {
                 .body(profileUseCase.changeImage(req.objectKey(), authUserDetails.getUserId()));
     }
 
+    @Operation(summary = "서재 공개 여부 변경", description = "내 서재를 타 사용자에게 공개할지 설정하는 api 입니다. 본인은 공개 여부와 관계없이 서재를 이용할 수 있습니다.")
+    @PutMapping("/library/visibility")
+    public ResponseEntity<CustomResponse<Boolean>> updateLibraryVisibility(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @Valid @RequestBody UpdateLibraryVisibilityRequest req
+    ) {
+        return ResponseEntity.ok()
+                .body(profileUseCase.changeLibraryVisibility(req.isPublic(), authUserDetails.getUserId()));
+    }
+
     // 관심 작품 조회
     @Operation(summary = "[독자] 관심 작품 리스트 조회", description = "프로필 관심 작품 리스트를 조회하는 api 입니다. 무한스크롤 형식입니다.")
     @GetMapping("/reader/favorite/works")
@@ -155,7 +165,7 @@ public class ProfileController {
     public ResponseEntity<CustomResponse<Slice<ReaderBoardReplyInfoWithProfile>>> getReviewList(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
-            @RequestParam(defaultValue = "0") int page
+            @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
         return ResponseEntity.ok()
@@ -168,11 +178,23 @@ public class ProfileController {
     public ResponseEntity<CustomResponse<Slice<ReaderBoardWithProfileInfo>>> getLikeList(
             @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
-            @RequestParam(defaultValue = "0") int page
+            @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
         return ResponseEntity.ok()
                 .body(profileActivityUseCase.getReaderBoardLikeList(authUserDetails.getUserId(), pageable));
+    }
+
+    @Operation(summary = "[독자] 내가 북마크한 게시글 조회", description = "프로필 내가 북마크한 게시글을 조회하는 api 입니다. 무한스크롤 형식입니다.")
+    @GetMapping("/reader/activity/bookmark")
+    public ResponseEntity<CustomResponse<Slice<ReaderBoardWithProfileInfo>>> getBookmarkList(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @RequestParam(defaultValue = "LATEST") ProfileSortType sort,
+            @RequestParam(defaultValue = "0") @Min(0) int page
+    ) {
+        Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
+        return ResponseEntity.ok()
+                .body(profileActivityUseCase.getReaderBoardBookmarkList(authUserDetails.getUserId(), pageable));
     }
 
 

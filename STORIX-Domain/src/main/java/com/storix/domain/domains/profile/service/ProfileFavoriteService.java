@@ -10,6 +10,7 @@ import com.storix.domain.domains.plus.dto.RatingCountInfo;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
 import com.storix.domain.domains.profile.dto.FavoriteHashtagsResponse;
 import com.storix.domain.domains.profile.dto.FavoriteWorksWithReviewInfo;
+import com.storix.domain.domains.profile.dto.OtherUserFavoriteWorksInfo;
 import com.storix.domain.domains.profile.dto.RatingCountResponse;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Genre;
@@ -98,6 +99,34 @@ public class ProfileFavoriteService {
                 .toList();
 
         // 관심 작품 정보 리스트
+        return new SliceImpl<>(ordered, pageable, worksIdsSlice.hasNext());
+    }
+
+    // 타 사용자 관심 작품 정보 조회
+    @Transactional(readOnly = true)
+    public Slice<OtherUserFavoriteWorksInfo> findAllOtherUserFavoriteWorksInfo(Long userId, Long viewerId, Pageable pageable) {
+
+        Slice<Long> worksIdsSlice = favoriteWorksAdaptor.findSliceFavoriteWorksId(userId, pageable);
+        List<Long> worksIds = worksIdsSlice.getContent();
+
+        if (worksIds.isEmpty()) {
+            return new SliceImpl<>(List.of(), pageable, worksIdsSlice.hasNext());
+        }
+
+        Map<Long, WorksInfo> worksMap =
+                worksAdaptor.findAllWorksInfoByWorksIds(worksIds);
+
+        // 성인 작품 가림은 조회자 기준
+        boolean excludeAdult = worksMap.values().stream()
+                .anyMatch(works -> AdultContentPolicy.isAdultOnly(works.ageClassification()))
+                && adultVerificationAdaptor.excludeAdultFor(viewerId);
+
+        List<OtherUserFavoriteWorksInfo> ordered = worksIds.stream()
+                .map(worksMap::get)
+                .filter(Objects::nonNull)
+                .map(worksInfo -> OtherUserFavoriteWorksInfo.of(worksInfo, excludeAdult))
+                .toList();
+
         return new SliceImpl<>(ordered, pageable, worksIdsSlice.hasNext());
     }
 

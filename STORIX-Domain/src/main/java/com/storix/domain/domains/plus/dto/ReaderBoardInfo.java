@@ -23,19 +23,21 @@ public record ReaderBoardInfo(
         String content,
         int likeCount,
         int replyCount,
+        Integer bookmarkCount,
         boolean isSpoiler,
         String spoilerScript,
         BoardTheme theme,
 
         // 좋아요 여부
         boolean isLiked,
+        Boolean isBookmarked,
 
         // 참조 작품이 성인 작품인지 여부. 작품 미선택이면 false
         Boolean isAdultOnly,
         Boolean isBlinded
 ) {
     // 내 게시글 조회
-    public static ReaderBoardInfo ofMyBoard(ReaderBoard board, boolean isLiked) {
+    public static ReaderBoardInfo ofMyBoard(ReaderBoard board, boolean isLiked, boolean isBookmarked) {
         return ReaderBoardInfo.builder()
                 .userId(null)
                 .boardId(board.getId())
@@ -45,14 +47,16 @@ public record ReaderBoardInfo(
                 .content(board.getContent())
                 .likeCount(board.getLikeCount())
                 .replyCount(board.getReplyCount())
+                .bookmarkCount(board.getBookmarkCount())
                 .isSpoiler(board.isSpoiler())
                 .spoilerScript(board.getSpoilerScript())
                 .isLiked(isLiked)
+                .isBookmarked(isBookmarked)
                 .build();
     }
 
     // 피드 게시글 조회
-    public static ReaderBoardInfo ofFeedBoard(ReaderBoard board, boolean isLiked) {
+    public static ReaderBoardInfo ofFeedBoard(ReaderBoard board, boolean isLiked, boolean isBookmarked) {
         return ReaderBoardInfo.builder()
                 .userId(board.getUserId())
                 .boardId(board.getId())
@@ -62,9 +66,11 @@ public record ReaderBoardInfo(
                 .content(board.getContent())
                 .likeCount(board.getLikeCount())
                 .replyCount(board.getReplyCount())
+                .bookmarkCount(board.getBookmarkCount())
                 .isSpoiler(board.isSpoiler())
                 .spoilerScript(board.getSpoilerScript())
                 .isLiked(isLiked)
+                .isBookmarked(isBookmarked)
                 .theme(board.getTheme())
                 .build();
     }
@@ -99,10 +105,12 @@ public record ReaderBoardInfo(
                 .content(content)
                 .likeCount(likeCount)
                 .replyCount(replyCount)
+                .bookmarkCount(bookmarkCount)
                 .isSpoiler(isSpoiler)
                 .spoilerScript(spoilerScript)
                 .theme(theme)
                 .isLiked(isLiked)
+                .isBookmarked(isBookmarked)
                 .isAdultOnly(adultOnly)
                 .isBlinded(false)
                 .build();
@@ -116,7 +124,9 @@ public record ReaderBoardInfo(
                 .content("")
                 .likeCount(origin.likeCount())
                 .replyCount(origin.replyCount())
+                .bookmarkCount(origin.bookmarkCount())
                 .isLiked(origin.isLiked())
+                .isBookmarked(origin.isBookmarked())
                 .isAdultOnly(true)
                 .isBlinded(true)
                 .build();

@@ -96,6 +96,10 @@ public enum SuccessCode {
     PROFILE_RATING_DISTRIBUTION_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_011", "프로필 리뷰 별점 분포 조회에 성공했습니다."),
     PROFILE_FAVORITE_HASHTAGS_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_012", "프로필 선호 해시태그 조회에 성공했습니다."),
     PROFILE_GENRE_STATS_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_013", "프로필 선호 장르 통계 조회에 성공했습니다."),
+    PROFILE_MY_BOARDS_BOOKMARK_LIST_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_014", "프로필 내 활동 북마크 리스트 조회에 성공했습니다."),
+    PROFILE_LIBRARY_VISIBILITY_UPDATE_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_015", "서재 공개 여부 변경에 성공했습니다."),
+    PROFILE_OTHER_USER_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_016", "타 사용자 프로필 조회에 성공했습니다."),
+    PROFILE_OTHER_USER_LIBRARY_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_017", "타 사용자 서재 조회에 성공했습니다."),
 
     // Image success
     IMAGE_ISSUE_PRESIGNED_URL_SUCCESS(HttpStatus.OK, "IMAGE_SUCCESS_001", "이미지를 업로드할 Presigned Url 발급에 성공했습니다."),
@@ -129,6 +133,8 @@ public enum SuccessCode {
     FEED_READER_BOARD_REPLY_REPORT_SUCCESS(HttpStatus.CREATED, "FEED_SUCCESS_010", "관심 작품 피드 댓글 신고에 성공했습니다."),
     FEED_READER_BOARD_CHILD_REPLY_LOAD_SUCCESS(HttpStatus.OK, "FEED_SUCCESS_012", "관심 작품 피드 답댓글 조회에 성공했습니다."),
     FEED_FAVORITE_WORKS_INFO_LOAD_SUCCESS(HttpStatus.OK, "FEED_SUCCESS_011", "관심 작품 피드 리스트 조회에 성공했습니다."),
+    FEED_READER_BOARD_BOOKMARK_SUCCESS(HttpStatus.CREATED, "FEED_SUCCESS_013", "관심 작품 피드 게시글 북마크에 성공했습니다."),
+    FEED_READER_BOARD_UNBOOKMARK_SUCCESS(HttpStatus.OK, "FEED_SUCCESS_014", "관심 작품 피드 게시글 북마크 해제에 성공했습니다."),
 
     // Favorite success
     FAVORITE_WORKS_LOAD_SUCCESS(HttpStatus.OK, "FAVORITE_SUCCESS_001", "관심 작품 등록 여부 조회에 성공했습니다."),
@@ -143,6 +149,7 @@ public enum SuccessCode {
 
     // Block success
     USER_BLOCK_SUCCESS(HttpStatus.CREATED, "BLOCK_SUCCESS_001", "사용자 차단에 성공했습니다."),
+    USER_UNBLOCK_SUCCESS(HttpStatus.OK, "BLOCK_SUCCESS_002", "사용자 차단 해제에 성공했습니다."),
 
     // App version success
     APP_VERSION_CHECK_SUCCESS(HttpStatus.OK, "APP_VERSION_SUCCESS_001", "앱 버전 확인에 성공했습니다."),

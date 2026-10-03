@@ -36,4 +36,11 @@ public class ProfileActivityUseCase {
         Slice<ReaderBoardWithProfileInfo> result = profileActivityService.findAllReaderBoardsLikeList(userId, pageable);
         return CustomResponse.onSuccess(SuccessCode.PROFILE_MY_BOARDS_LIKE_LIST_LOAD_SUCCESS, result);
     }
+
+    // 내가 누른 북마크 게시글 조회
+    public CustomResponse<Slice<ReaderBoardWithProfileInfo>> getReaderBoardBookmarkList(Long userId, Pageable pageable) {
+
+        Slice<ReaderBoardWithProfileInfo> result = profileActivityService.findAllReaderBoardsBookmarkList(userId, pageable);
+        return CustomResponse.onSuccess(SuccessCode.PROFILE_MY_BOARDS_BOOKMARK_LIST_LOAD_SUCCESS, result);
+    }
 }

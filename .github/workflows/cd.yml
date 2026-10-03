@@ -62,6 +62,38 @@ jobs:
           role-to-assume: ${{ secrets.APP_DEPLOY_ROLE_ARN }}
           aws-region: ap-northeast-2
 
+      - name: Start instance if stopped (dev)
+        if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' && steps.target.outputs.env_tag == 'dev' }}
+        env:
+          INSTANCE_ID: ${{ steps.target.outputs.instance_id }}
+        run: |
+          STATE=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].State.Name" --output text)
+          echo "State: $STATE"
+
+          if [ "$STATE" = "stopping" ]; then
+            aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
+            STATE=stopped
+          fi
+          if [ "$STATE" = "stopped" ]; then
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" > /dev/null
+            aws ec2 create-tags --resources "$INSTANCE_ID" \
+              --tags "Key=deploy-started-at,Value=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              || echo "deploy-started-at 태그를 적지 못했다"
+          fi
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+
+          for i in $(seq 1 30); do
+            PING=$(aws ssm describe-instance-information \
+              --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+              --query "InstanceInformationList[0].PingStatus" --output text)
+            if [ "$PING" = "Online" ]; then exit 0; fi
+            sleep 5
+          done
+
+          echo "SSM agent not online"
+          exit 1
+
       - name: Deploy via SSM
         if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' }}
         env:
@@ -82,8 +114,13 @@ jobs:
               "export HOME=/root",
               "export IMAGE_TAG=${ENV_TAG}-${SHA}",
               "cd /home/ubuntu/storix",
-              "test -f docker-compose.yml || { echo 'compose missing'; exit 1; }",
-              "test -f .env || { echo 'env missing'; exit 1; }",
+              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/.env.example -o .env.example",
+              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/deploy/render-env.py -o render-env.py",
+              "python3 render-env.py ${ENV_TAG}",
+              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/docker-compose.yml -o docker-compose.yml.new",
+              "docker compose -f docker-compose.yml.new config -q",
+              "test ! -f docker-compose.yml || cp docker-compose.yml docker-compose.yml.prev",
+              "mv docker-compose.yml.new docker-compose.yml",
               "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}",
               "mkdir -p alloy",
               "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/monitoring/app-side/config.alloy -o alloy/config.alloy",
