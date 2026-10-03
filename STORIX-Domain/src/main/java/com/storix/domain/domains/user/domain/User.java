@@ -198,7 +198,7 @@ public class User extends BaseTimeEntity {
         favoriteGenreList = null;
         profileObjectKey = null;
         profileDescription = null;
-        nickName = STORIXStatic.WITHDRAW_PREFIX + UUID.randomUUID() + ":" + nickName;
+        nickName = STORIXStatic.WITHDRAW_PREFIX + UUID.randomUUID() + ":" + getDisplayNickName();
         oauthInfo = oauthInfo.withDrawOauthInfo();
         ageOver14 = null;
         deletedAt = LocalDateTime.now();
