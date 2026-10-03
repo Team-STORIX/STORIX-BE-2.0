@@ -44,6 +44,11 @@ public class LibraryService {
     // 서재 내 리뷰한 작품 정보 조회
     @Transactional(readOnly = true)
     public Slice<StandardLibraryWorksInfo> getReviewedWorksInfo(Long userId, Pageable pageable) {
+        return getReviewedWorksInfo(userId, userId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Slice<StandardLibraryWorksInfo> getReviewedWorksInfo(Long userId, Long viewerId, Pageable pageable) {
 
         // 리뷰 정보 조회
         Slice<ReviewedWorksIdAndRatingInfo> reviewInfo = reviewAdaptor.getWorksListByUserId(userId, pageable);
@@ -65,7 +70,7 @@ public class LibraryService {
                         LibraryWorksInfo::worksId,
                         Function.identity()));
 
-        boolean excludeAdult = excludeAdultFor(userId, worksList);
+        boolean excludeAdult = excludeAdultFor(viewerId, worksList);
 
         List<StandardLibraryWorksInfo> content = reviewInfo.stream()
                 .map(r -> {

@@ -93,6 +93,16 @@ public class ProfileController {
                 .body(profileUseCase.changeImage(req.objectKey(), authUserDetails.getUserId()));
     }
 
+    @Operation(summary = "서재 공개 여부 변경", description = "내 서재를 타 사용자에게 공개할지 설정하는 api 입니다. 본인은 공개 여부와 관계없이 서재를 이용할 수 있습니다.")
+    @PutMapping("/library/visibility")
+    public ResponseEntity<CustomResponse<Boolean>> updateLibraryVisibility(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @Valid @RequestBody UpdateLibraryVisibilityRequest req
+    ) {
+        return ResponseEntity.ok()
+                .body(profileUseCase.changeLibraryVisibility(req.isPublic(), authUserDetails.getUserId()));
+    }
+
     // 관심 작품 조회
     @Operation(summary = "[독자] 관심 작품 리스트 조회", description = "프로필 관심 작품 리스트를 조회하는 api 입니다. 무한스크롤 형식입니다.")
     @GetMapping("/reader/favorite/works")

@@ -1,5 +1,9 @@
 package com.storix.domain.domains.profile.dto;
 
+import com.storix.domain.domains.user.domain.Title;
+import com.storix.domain.domains.user.domain.TitleStage;
+import com.storix.domain.domains.user.domain.User;
+import com.storix.domain.domains.works.domain.Genre;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -18,9 +22,6 @@ public record UserInfoV2(
 
         @Schema(description = "닉네임", example = "스토릭스독자")
         String nickName,
-
-        @Schema(description = "포인트", example = "120")
-        Integer point,
 
         @Schema(description = "한 줄 소개", example = "로맨스 정주행 중")
         String profileDescription,
@@ -47,6 +48,33 @@ public record UserInfoV2(
         Integer remainingScore,
 
         @Schema(description = "현재 단계 진행률 (0~100). 최고 단계면 100.", example = "20.0")
-        double progressPercentage
+        double progressPercentage,
+
+        @Schema(description = "서재 공개 여부", example = "true")
+        boolean isLibraryPublic
 ) {
+    public static UserInfoV2 of(User user, long topGenreScore, String baseUrl) {
+        Title title = user.getTitle();
+        Genre topGenre = title == null ? null : title.getGenre();
+        TitleStage stage = title == null ? TitleStage.NONE : title.getStage();
+
+        return UserInfoV2.builder()
+                .userId(user.getId())
+                .role(user.getRole().toString())
+                .nickName(user.getDisplayNickName())
+                .profileDescription(user.getProfileDescription())
+                .profileImageUrl(user.getProfileObjectKey() == null
+                        ? null : baseUrl + "/" + user.getProfileObjectKey())
+                .oauthProvider(user.getOauthInfo() == null
+                        ? null : user.getOauthInfo().getProvider().getDbValue())
+                .topGenre(topGenre == null ? null : topGenre.getDbValue())
+                .title(title == null ? null : title.getDisplayName())
+                .stage(stage.getLabel())
+                .nextStage(title == null ? null : stage.next().map(TitleStage::getLabel).orElse(null))
+                .topGenreScore(topGenreScore)
+                .remainingScore(title == null || stage.isMax() ? null : stage.getNextScore() - (int) topGenreScore)
+                .progressPercentage(title == null ? 0.0 : stage.progressPercentage(topGenreScore))
+                .isLibraryPublic(user.isLibraryPublic())
+                .build();
+    }
 }
