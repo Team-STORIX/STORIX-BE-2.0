@@ -7,6 +7,7 @@
 값은 화면에 찍지 않는다. 필요한 키 이름은 .env.example 에서 읽는다.
 """
 import json, os, subprocess, sys, urllib.request
+from concurrent.futures import ThreadPoolExecutor
 
 REGION = "ap-northeast-2"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -25,21 +26,25 @@ def instance_id():
         headers={"X-aws-ec2-metadata-token": token}), timeout=3).read().decode()
 
 
+def fetch_batch(names):
+    out = subprocess.run(
+        ["aws", "ssm", "get-parameters", "--region", REGION, "--with-decryption",
+         "--names", *names, "--output", "json"],
+        capture_output=True, text=True)
+    if out.returncode != 0:
+        sys.exit("Parameter Store 를 읽지 못했다: " + (out.stderr.strip().splitlines() or ["?"])[-1][:160])
+    return json.loads(out.stdout)
+
+
 def fetch(env, keys):
     values, missing = {}, []
     names = [f"/storix/{env}/env/{k}" for k in keys]
-    # GetParameters 는 한 번에 10개까지 받는다
-    for i in range(0, len(names), 10):
-        out = subprocess.run(
-            ["aws", "ssm", "get-parameters", "--region", REGION, "--with-decryption",
-             "--names", *names[i:i + 10], "--output", "json"],
-            capture_output=True, text=True)
-        if out.returncode != 0:
-            sys.exit("Parameter Store 를 읽지 못했다: " + (out.stderr.strip().splitlines() or ["?"])[-1][:160])
-        data = json.loads(out.stdout)
-        for p in data["Parameters"]:
-            values[p["Name"].rsplit("/", 1)[1]] = p["Value"]
-        missing += [n.rsplit("/", 1)[1] for n in data.get("InvalidParameters", [])]
+    batches = [names[i:i + 10] for i in range(0, len(names), 10)]
+    with ThreadPoolExecutor(len(batches)) as pool:
+        for data in pool.map(fetch_batch, batches):
+            for p in data["Parameters"]:
+                values[p["Name"].rsplit("/", 1)[1]] = p["Value"]
+            missing += [n.rsplit("/", 1)[1] for n in data.get("InvalidParameters", [])]
     return values, missing
 
 
