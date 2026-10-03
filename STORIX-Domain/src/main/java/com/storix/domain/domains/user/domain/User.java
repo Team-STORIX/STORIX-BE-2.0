@@ -6,7 +6,6 @@ import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.common.model.BaseTimeEntity;
 import com.storix.common.utils.STORIXStatic;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -70,10 +69,6 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "title", length = 40)
     private Title title;
-
-    @Min(0)
-    @Column(nullable = false)
-    private int point = 0;
 
     // 만 14세 이상 동의 여부
     @Column(name = "age_over_14")
@@ -174,17 +169,6 @@ public class User extends BaseTimeEntity {
 
     public void changeTitle(Title title) {
         this.title = title;
-    }
-
-    public void increasePoint(int point) {
-        this.point += point;
-    }
-
-    public void decreasePoint(int point) {
-//        if (this.point < point) {
-//            throw new IllegalArgumentException("포인트 부족"); -> 커스텀 에러
-//        }
-        this.point -= point;
     }
 
     // 계정 정지 (기간 지정)
