@@ -40,6 +40,7 @@ public enum ErrorCode {
 
     // Profile error
     PROFILE_IMAGE_NOT_EXIST(HttpStatus.BAD_REQUEST, "PROFILE_ERROR_001", "업로드한 프로필 사진의 objectKey값을 보내주세요."),
+    PROFILE_SELF_REQUEST(HttpStatus.BAD_REQUEST, "PROFILE_ERROR_002", "본인 프로필은 내 프로필 API로 조회해주세요."),
 
     // Image error
     IMAGE_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "IMAGE_ERROR_001", "지원하지 않는 Content Type입니다."),
