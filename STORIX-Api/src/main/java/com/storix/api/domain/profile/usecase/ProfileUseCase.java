@@ -51,6 +51,12 @@ public class ProfileUseCase {
         return CustomResponse.onSuccess(SuccessCode.PROFILE_UPDATE_DESCRIPTION_SUCCESS, newProfileDescription);
     }
 
+    // 서재 공개 여부 변경
+    public CustomResponse<Boolean> changeLibraryVisibility(boolean isPublic, Long userId) {
+        boolean result = profileService.changeLibraryVisibility(isPublic, userId);
+        return CustomResponse.onSuccess(SuccessCode.PROFILE_LIBRARY_VISIBILITY_UPDATE_SUCCESS, result);
+    }
+
     // 프로필 사진 변경
     public CustomResponse<String> changeImage (String objectKey, Long userId) {
         if (!s3CacheHelper.isValidProfileKey(userId, objectKey)) {

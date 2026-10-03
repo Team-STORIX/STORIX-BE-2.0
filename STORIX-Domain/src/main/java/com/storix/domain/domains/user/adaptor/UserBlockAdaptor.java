@@ -25,6 +25,10 @@ public class UserBlockAdaptor {
         }
     }
 
+    public int deleteBlock(Long blockerId, Long blockedUserId) {
+        return userBlockRepository.deleteByBlockerIdAndBlockedUserId(blockerId, blockedUserId);
+    }
+
     public boolean isBlocked(Long blockerId, Long blockedUserId) {
         return userBlockRepository.existsByBlockerIdAndBlockedUserId(blockerId, blockedUserId);
     }

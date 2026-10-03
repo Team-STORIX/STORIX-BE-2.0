@@ -97,6 +97,9 @@ public enum SuccessCode {
     PROFILE_FAVORITE_HASHTAGS_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_012", "프로필 선호 해시태그 조회에 성공했습니다."),
     PROFILE_GENRE_STATS_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_013", "프로필 선호 장르 통계 조회에 성공했습니다."),
     PROFILE_MY_BOARDS_BOOKMARK_LIST_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_014", "프로필 내 활동 북마크 리스트 조회에 성공했습니다."),
+    PROFILE_LIBRARY_VISIBILITY_UPDATE_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_015", "서재 공개 여부 변경에 성공했습니다."),
+    PROFILE_OTHER_USER_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_016", "타 사용자 프로필 조회에 성공했습니다."),
+    PROFILE_OTHER_USER_LIBRARY_LOAD_SUCCESS(HttpStatus.OK, "PROFILE_SUCCESS_017", "타 사용자 서재 조회에 성공했습니다."),
 
     // Image success
     IMAGE_ISSUE_PRESIGNED_URL_SUCCESS(HttpStatus.OK, "IMAGE_SUCCESS_001", "이미지를 업로드할 Presigned Url 발급에 성공했습니다."),
@@ -146,6 +149,7 @@ public enum SuccessCode {
 
     // Block success
     USER_BLOCK_SUCCESS(HttpStatus.CREATED, "BLOCK_SUCCESS_001", "사용자 차단에 성공했습니다."),
+    USER_UNBLOCK_SUCCESS(HttpStatus.OK, "BLOCK_SUCCESS_002", "사용자 차단 해제에 성공했습니다."),
 
     // App version success
     APP_VERSION_CHECK_SUCCESS(HttpStatus.OK, "APP_VERSION_SUCCESS_001", "앱 버전 확인에 성공했습니다."),
