@@ -1,0 +1,18 @@
+[Unit]
+Description=Parameter Store 값으로 .env 재생성
+Wants=network-online.target
+After=network-online.target docker.service snapd.seeded.service
+Requires=docker.service
+StartLimitIntervalSec=600
+StartLimitBurst=4
+
+[Service]
+Type=oneshot
+Environment=HOME=/root
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
+ExecStart=/bin/sh /home/ubuntu/storix/boot-refresh.sh
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
