@@ -18,6 +18,8 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
       AWS_REGION: ap-northeast-2
+    outputs:
+      notify: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' && steps.target.outputs.env_tag == 'dev' }}
 
     steps:
       - name: Resolve target by branch
@@ -81,14 +83,20 @@ jobs:
               --tags "Key=deploy-started-at,Value=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
               || echo "deploy-started-at 태그를 적지 못했다"
           fi
-          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          # aws ec2 wait 는 15초 간격이라 직접 짧게 확인한다
+          for i in $(seq 1 60); do
+            STATE=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+              --query "Reservations[0].Instances[0].State.Name" --output text)
+            if [ "$STATE" = "running" ]; then break; fi
+            sleep 3
+          done
 
-          for i in $(seq 1 30); do
+          for i in $(seq 1 75); do
             PING=$(aws ssm describe-instance-information \
               --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
               --query "InstanceInformationList[0].PingStatus" --output text)
             if [ "$PING" = "Online" ]; then exit 0; fi
-            sleep 5
+            sleep 2
           done
 
           echo "SSM agent not online"
@@ -147,23 +155,40 @@ jobs:
             --query "Command.CommandId" --output text)
           echo "CommandId: $CMD_ID"
 
-          aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" || true
+          # aws ssm wait 는 5초 간격에 100초면 포기해서 직접 확인한다
+          for i in $(seq 1 300); do
+            STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo Pending)
+            case "$STATUS" in Pending|InProgress|Delayed) sleep 2 ;; *) break ;; esac
+          done
 
           echo "===== STDOUT ====="
           aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query StandardOutputContent --output text
           echo "===== STDERR ====="
           aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query StandardErrorContent --output text
 
-          STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query Status --output text)
           echo "Status: $STATUS"
           [ "$STATUS" = "Success" ] || { echo "deploy failed"; exit 1; }
 
-      # 배포가 끝난 뒤 스펙 스냅샷을 뜨고 직전 배포와 비교한다.
-      # Lambda 가 dev.storix.kr 을 보므로 dev 배포에서만 돈다.
-      # 배포 자체와 분리돼 있어 이 단계가 실패해도 배포는 이미 끝나 있다.
-      - name: 스펙 변경 알림 (dev)
-        if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' && steps.target.outputs.env_tag == 'dev' }}
-        continue-on-error: true
+  # 배포가 끝난 뒤 스펙 스냅샷을 뜨고 직전 배포와 비교한다.
+  # Lambda 가 dev.storix.kr 을 보므로 dev 배포에서만 돈다.
+  # 앱 기동을 기다리는 동안 배포 결과가 늦게 보이지 않게 잡을 나눴다.
+  spec-changelog:
+    name: 스펙 변경 알림 (dev)
+    needs: deploy
+    if: ${{ needs.deploy.outputs.notify == 'true' }}
+    runs-on: ubuntu-latest
+    # 알림이 실패해도 배포는 이미 끝나 있다
+    continue-on-error: true
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.APP_DEPLOY_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
+      - name: 스펙 변경 알림
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.workflow_run.head_sha }}
@@ -192,7 +217,7 @@ jobs:
 
           # 배포 직후엔 앱이 아직 기동 중이라 스펙 조회가 502 로 떨어진다.
           # 기동 시간이 배포마다 달라 고정 대기 대신 재시도로 푼다.
-          for i in $(seq 1 8); do
+          for i in $(seq 1 36); do
             aws lambda invoke \
               --function-name storix-spec-changelog \
               --region ap-northeast-2 \
@@ -207,8 +232,8 @@ jobs:
 
             echo "시도 $i 실패 - 앱 기동 대기 후 재시도"
             cat /tmp/spec-changelog.json
-            sleep 20
+            sleep 5
           done
 
-          echo "8회 시도에도 실패했다"
+          echo "36회 시도에도 실패했다"
           exit 1
