@@ -114,6 +114,8 @@ jobs:
               "export HOME=/root",
               "export IMAGE_TAG=${ENV_TAG}-${SHA}",
               "cd /home/ubuntu/storix",
+              "exec 9>.deploy.lock",
+              "flock 9",
               "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/.env.example -o .env.example",
               "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/deploy/render-env.py -o render-env.py",
               "python3 render-env.py ${ENV_TAG}",
@@ -127,6 +129,11 @@ jobs:
               "docker compose pull app",
               "${BATCH_LINE}",
               "docker compose up -d",
+              "printf 'DEPLOY_ENV=%s\\\\nIMAGE_TAG=%s\\\\n' ${ENV_TAG} ${ENV_TAG}-${SHA} > deploy.state",
+              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/deploy/boot-refresh.sh -o boot-refresh.sh",
+              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/deploy/storix-env.service -o /etc/systemd/system/storix-env.service",
+              "systemctl daemon-reload",
+              "systemctl enable storix-env.service",
               "docker image prune -af"
             ]
           }
