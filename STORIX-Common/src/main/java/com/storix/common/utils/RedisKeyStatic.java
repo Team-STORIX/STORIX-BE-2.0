@@ -53,6 +53,13 @@ public final class RedisKeyStatic {
         }
     }
 
+    public static final class Works {
+        public static final String IMPORT_LOCK = "works:import:lock";
+
+        private Works() {
+        }
+    }
+
     public static final class Library {
         public static final String RECENT_PREFIX = "library:recent:";
 
