@@ -28,15 +28,18 @@ public record WorksImportCommand(
 ) {
 
     public static WorksImportCommand from(WorksImportItem item) {
-        String worksName = requireText(item.worksName(), "worksName");
-        String artistName = WorksIdentity.dedupeArtistName(requireText(item.artistName(), "artistName"));
+        // 대상 작품을 지정하면 판정을 안 하므로 보낸 필드만 갱신
+        boolean targeted = item.targetWorksId() != null;
+        String worksName = targeted ? item.worksName() : requireText(item.worksName(), "worksName");
+        String artistName = targeted ? item.artistName() : WorksIdentity.dedupeArtistName(requireText(item.artistName(), "artistName"));
+        WorksType worksType = parse(WorksType.class, item.worksType(), "worksType");
         return new WorksImportCommand(
                 item,
                 worksName,
                 artistName,
                 parse(AgeClassification.class, item.ageClassification(), "ageClassification"),
                 parse(Genre.class, item.genre(), "genre"),
-                require(parse(WorksType.class, item.worksType(), "worksType"), "worksType"),
+                targeted ? worksType : require(worksType, "worksType"),
                 parse(Platform.class, item.platform(), "platform"),
                 WorksIdentity.artistNames(artistName, item.author(), item.illustrator(), item.originalAuthor())
         );

@@ -48,7 +48,7 @@ public record WorksImportRequest(
             String thumbnailUrl,
             @Schema(description = "비우면 기존 해시태그를 그대로 둔다")
             List<String> hashtags,
-            @Schema(description = "사람이 같은 작품이라고 판단한 기존 작품 id. 있으면 판정 없이 이 작품을 갱신한다", example = "2782")
+            @Schema(description = "갱신할 기존 작품 id. 있으면 판정 없이 이 작품의 보낸 필드만 갱신한다. 이때 작품명 · 작가 · 작품 유형도 생략할 수 있다", example = "2782")
             Long targetWorksId,
             @Schema(description = "사람이 중복 의심 후보와 다른 작품이라고 판단했으면 true. 중복 의심 판정 없이 새로 만든다", example = "false")
             Boolean createNew
