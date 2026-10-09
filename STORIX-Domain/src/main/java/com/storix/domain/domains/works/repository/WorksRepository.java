@@ -14,10 +14,14 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface WorksRepository extends JpaRepository<Works, Long>, WorksRepositoryCustom {
+
+    @Query("SELECT w.id FROM Works w WHERE w.id IN :worksIds")
+    List<Long> findExistingIds(@Param("worksIds") Collection<Long> worksIds);
 
     @Query("SELECT w FROM Works w " +
             "WHERE w.worksName LIKE %:keyword% " +

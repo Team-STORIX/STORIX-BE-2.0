@@ -70,6 +70,7 @@ public class WorksSearchAdaptor {
         BoolQuery.Builder bool = new BoolQuery.Builder()
                 .should(q -> q.wildcard(w -> w.field("worksName").value(pattern)))
                 .should(q -> q.wildcard(w -> w.field("authors").value(pattern)))
+                .should(q -> q.term(t -> t.field("nicknames").value(normalized)))
                 .minimumShouldMatch("1");
         if (chosungOnly) {
             bool.should(q -> q.wildcard(w -> w.field("worksNameChosung").value(pattern)));

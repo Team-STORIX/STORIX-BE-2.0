@@ -13,11 +13,12 @@ public record WorksDocument(
         String worksNameChosung,
         String worksNameJamo,
         List<String> authors,
+        List<String> nicknames,
         String worksType,
         String genre
 ) {
 
-    public static WorksDocument from(Works works) {
+    public static WorksDocument of(Works works, List<String> nicknames) {
         List<String> authors = Stream.of(works.getAuthor(), works.getIllustrator(), works.getOriginalAuthor())
                 .filter(Objects::nonNull)
                 .map(HangulTextHelper::normalize)
@@ -31,6 +32,7 @@ public record WorksDocument(
                 HangulTextHelper.chosung(works.getWorksName()),
                 HangulTextHelper.jamo(works.getWorksName()),
                 authors,
+                nicknames,
                 works.getWorksType() != null ? works.getWorksType().name() : null,
                 works.getGenre() != null ? works.getGenre().name() : null
         );

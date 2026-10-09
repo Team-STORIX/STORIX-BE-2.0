@@ -3,6 +3,7 @@ package com.storix.domain.domains.search.service;
 import static com.storix.common.utils.RedisKeyStatic.Search.WORKS_REINDEX_LOCK;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
@@ -27,6 +28,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -52,6 +54,24 @@ public class WorksIndexService {
 
     public boolean isAliasMissing() throws IOException {
         return !client.indices().existsAlias(a -> a.name(worksIndexProperties.alias())).value();
+    }
+
+    // 재색인 도중 바뀐 별칭은 새 인덱스에 빠질 수 있어 그동안은 별칭을 못 바꾸게 한다
+    public void checkNotReindexing() {
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(WORKS_REINDEX_LOCK))) throw SearchReindexInProgressException.EXCEPTION;
+    }
+
+    // 실패해도 DB 는 이미 바뀌었으니 다음 재색인 때 맞춰진다
+    public void indexWorks(Long worksId) {
+        try {
+            Works works = worksAdaptor.findById(worksId);
+            List<String> nicknames = worksAdaptor.loadNicknamesByWorksIds(List.of(worksId)).getOrDefault(worksId, List.of());
+            WorksDocument document = WorksDocument.of(works, nicknames);
+            // 응답 직후 어드민이 바로 검색해 볼 수 있게 반영될 때까지 기다린다
+            client.index(i -> i.index(worksIndexProperties.alias()).id(String.valueOf(worksId)).document(document).refresh(Refresh.WaitFor));
+        } catch (Exception e) {
+            log.warn(">>> [WorksIndex] 작품 색인 실패 worksId={}, cause={}", worksId, e.getMessage());
+        }
     }
 
     public WorksReindexResponse reindexAll() {
@@ -108,9 +128,11 @@ public class WorksIndexService {
             List<Works> chunk = worksAdaptor.findWorksChunkAfter(lastWorksId, CHUNK_SIZE);
             if (chunk.isEmpty()) return count;
 
+            Map<Long, List<String>> nicknames = worksAdaptor.loadNicknamesByWorksIds(chunk.stream().map(Works::getId).toList());
+
             BulkRequest.Builder bulk = new BulkRequest.Builder().index(index);
             for (Works works : chunk) {
-                WorksDocument document = WorksDocument.from(works);
+                WorksDocument document = WorksDocument.of(works, nicknames.getOrDefault(works.getId(), List.of()));
                 bulk.operations(op -> op.index(i -> i.id(String.valueOf(document.worksId())).document(document)));
             }
 

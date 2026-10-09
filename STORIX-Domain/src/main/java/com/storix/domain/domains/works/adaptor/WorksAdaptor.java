@@ -4,12 +4,14 @@ import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
 import com.storix.domain.domains.plus.exception.WorksNotExistException;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksNickname;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import com.storix.domain.domains.works.exception.UnknownWorksException;
+import com.storix.domain.domains.works.repository.WorksNicknameRepository;
 import com.storix.domain.domains.works.repository.WorksRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 public class WorksAdaptor {
 
     private final WorksRepository worksRepository;
+    private final WorksNicknameRepository worksNicknameRepository;
 
     public long countAllWorks() {
         return worksRepository.count();
@@ -214,6 +217,20 @@ public class WorksAdaptor {
 
     public List<Works> findWorksChunkAfter(Long lastWorksId, int size) {
         return worksRepository.findByIdGreaterThanOrderByIdAsc(lastWorksId, Limit.of(size));
+    }
+
+    public List<Long> findExistingWorksIds(List<Long> worksIds) {
+        if (worksIds.isEmpty()) return Collections.emptyList();
+        return worksRepository.findExistingIds(worksIds);
+    }
+
+    public Map<Long, List<String>> loadNicknamesByWorksIds(List<Long> worksIds) {
+        if (worksIds.isEmpty()) return Collections.emptyMap();
+
+        return worksNicknameRepository.findByWorksIdIn(worksIds).stream()
+                .collect(Collectors.groupingBy(
+                        WorksNickname::getWorksId,
+                        Collectors.mapping(WorksNickname::getNormalized, Collectors.toList())));
     }
 
     public List<Works> findWorksByIds(List<Long> worksIds) {

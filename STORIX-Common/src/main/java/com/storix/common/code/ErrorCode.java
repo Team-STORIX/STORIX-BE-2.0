@@ -175,6 +175,10 @@ public enum ErrorCode {
     SEARCH_NO_TOPIC_ROOM_FOUND(HttpStatus.NOT_FOUND, "SEARCH_ERROR_001", "검색한 키워드로 조회되는 토픽룸이 없습니다."),
     SEARCH_REINDEX_IN_PROGRESS(HttpStatus.CONFLICT, "SEARCH_ERROR_002", "작품 검색 재색인이 이미 진행 중입니다."),
     SEARCH_REINDEX_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SEARCH_ERROR_003", "(내부) 작품 검색 재색인에 실패했습니다."),
+    WORKS_NICKNAME_NOT_FOUND(HttpStatus.NOT_FOUND, "SEARCH_ERROR_004", "해당 작품 별칭을 찾을 수 없습니다."),
+    DUPLICATE_WORKS_NICKNAME(HttpStatus.CONFLICT, "SEARCH_ERROR_005", "이미 등록된 작품 별칭입니다."),
+    INVALID_WORKS_NICKNAME(HttpStatus.BAD_REQUEST, "SEARCH_ERROR_006", "별칭에는 글자나 숫자가 하나 이상 있어야 합니다."),
+    WORKS_NICKNAME_CSV_PARSE_ERROR(HttpStatus.BAD_REQUEST, "SEARCH_ERROR_007", "작품 별칭 CSV 파일을 읽을 수 없습니다."),
 
     // Chat error
     CHAT_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT_ERROR_001", "(내부) 채팅 메시지 발행 중 서버 관리자에게 문의 바랍니다."),
