@@ -14,7 +14,7 @@ services:
       - cache
     networks:
       - storix-net
-    mem_limit: 2048m
+    mem_limit: 1536m
     logging:
       driver: json-file
       options:
@@ -53,6 +53,26 @@ services:
     networks:
       - storix-net
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.8
+    container_name: storix-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - TZ=Asia/Seoul
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    mem_limit: 1g
+    networks:
+      - storix-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
   alloy:
     image: grafana/alloy:v1.4.2
     container_name: storix-alloy
@@ -71,12 +91,13 @@ services:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - alloy-data:/var/lib/alloy/data
-    mem_limit: 96m
+    mem_limit: 128m
     networks:
       - storix-net
 
 volumes:
   alloy-data:
+  es-data:
   redis-data:
 
 networks:
