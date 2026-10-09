@@ -23,6 +23,10 @@ public class Hashtag {
     @Column(nullable = false, unique = true)
     private String name;
 
+    public Hashtag(String name) {
+        this.name = name;
+    }
+
     @ToString.Exclude
     @ManyToMany(mappedBy = "hashtags")
     private Set<Works> works = new HashSet<>();
