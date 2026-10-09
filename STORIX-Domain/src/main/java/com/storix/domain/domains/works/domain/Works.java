@@ -18,7 +18,8 @@ import java.util.stream.Collectors;
         indexes = {
                 @Index(name = "idx_works_author", columnList = "author"),
                 @Index(name = "idx_works_illustrator", columnList = "illustrator"),
-                @Index(name = "idx_works_original_author", columnList = "original_author")
+                @Index(name = "idx_works_original_author", columnList = "original_author"),
+                @Index(name = "idx_works_normalized_name_type", columnList = "normalized_name, works_type")
         }
 )
 @Getter
@@ -35,6 +36,9 @@ public class Works {
     // 작품명
     @Column(name = "works_name", nullable = false)
     private String worksName;
+
+    @Column(name = "normalized_name")
+    private String normalizedName;
 
     // 전체 작가
     @Column(name = "artist_name", nullable = false)
@@ -98,6 +102,7 @@ public class Works {
                   WorksType worksType) {
 
         this.worksName = worksName;
+        this.normalizedName = WorksIdentity.titleKey(worksName);
         this.artistName = artistName;
         this.author = author;
         this.illustrator = illustrator;
@@ -114,6 +119,10 @@ public class Works {
         this.hashtags = new HashSet<>();
     }
 
+    public void refreshNormalizedName() {
+        this.normalizedName = WorksIdentity.titleKey(worksName);
+    }
+
     public void addPlatform(Platform platform) {
         addPlatform(platform, null);
     }
@@ -124,7 +133,6 @@ public class Works {
     }
 
     // 플랫폼에서 표지 · 연령가 등이 바뀌므로 새 값이 있으면 덮어쓰고, 비어 있으면 기존 값을 둔다
-    // 바뀐 내용은 이전값->새값 으로 돌려주고, 소개글은 길어서 필드명만 남긴다
     public List<String> updateFromImport(String author, String illustrator, String originalAuthor,
                                          AgeClassification ageClassification, Genre genre, WorksType worksType,
                                          String description, String thumbnailUrl) {

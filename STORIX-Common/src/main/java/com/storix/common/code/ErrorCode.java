@@ -193,6 +193,8 @@ public enum ErrorCode {
     DUPLICATE_REVIEW_USER_REPORT(HttpStatus.BAD_REQUEST, "WORKS_ERROR_005", "이미 신고가 완료된 리뷰입니다."),
     INVALID_REVIEW_USER_REPORT(HttpStatus.BAD_REQUEST, "WORKS_ERROR_006", "신고 정보가 올바르지 않습니다."),
     WORKS_IMPORT_IN_PROGRESS(HttpStatus.CONFLICT, "WORKS_ERROR_007", "작품 적재가 이미 진행 중입니다."),
+    WORKS_IMPORT_REQUIRED_VALUE(HttpStatus.BAD_REQUEST, "WORKS_ERROR_008", "작품 적재에 필요한 값이 비어 있습니다."),
+    WORKS_IMPORT_UNKNOWN_ENUM(HttpStatus.BAD_REQUEST, "WORKS_ERROR_009", "enum 카탈로그에 없는 값입니다."),
 
     // Favorite error
     FAVORITE_WORKS_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "FAVORITE_ERROR_001", "이미 관심 작품 해제가 되었거나, 관심 작품으로 등록한 적 없는 작품입니다."),

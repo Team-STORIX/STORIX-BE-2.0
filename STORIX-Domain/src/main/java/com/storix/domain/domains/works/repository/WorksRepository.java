@@ -2,6 +2,7 @@ package com.storix.domain.domains.works.repository;
 
 import com.storix.domain.domains.onboarding.dto.OnboardingWorksInfo;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
@@ -20,7 +21,9 @@ import java.util.Optional;
 
 public interface WorksRepository extends JpaRepository<Works, Long>, WorksRepositoryCustom {
 
-    Optional<Works> findFirstByWorksNameAndArtistNameOrderByIdAsc(String worksName, String artistName);
+    List<Works> findByNormalizedNameAndWorksTypeOrderByIdAsc(String normalizedName, WorksType worksType);
+
+    List<Works> findByNormalizedNameIsNullAndIdGreaterThanOrderByIdAsc(Long id, Limit limit);
 
     @Query("SELECT w.id FROM Works w WHERE w.id IN :worksIds")
     List<Long> findExistingIds(@Param("worksIds") Collection<Long> worksIds);

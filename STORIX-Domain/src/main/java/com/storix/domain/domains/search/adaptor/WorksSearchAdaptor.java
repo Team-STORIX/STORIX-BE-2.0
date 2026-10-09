@@ -51,6 +51,27 @@ public class WorksSearchAdaptor {
         }
     }
 
+    // 적재 중복 의심 후보 조회
+    public Optional<List<Long>> findSimilarIds(String titleKey, WorksType worksType, int size) {
+        if (titleKey == null || titleKey.isEmpty()) return Optional.of(List.of());
+
+        BoolQuery.Builder bool = new BoolQuery.Builder()
+                .should(q -> q.wildcard(w -> w.field("worksName").value("*" + titleKey + "*")))
+                .should(q -> q.match(m -> m
+                        .field("worksNameJamo")
+                        .query(HangulTextHelper.jamo(titleKey))
+                        .minimumShouldMatch(FUZZY_MINIMUM_MATCH)))
+                .minimumShouldMatch("1");
+        addFilters(bool, List.of(worksType), null);
+
+        try {
+            return Optional.of(search(bool.build()._toQuery(), size));
+        } catch (Exception e) {
+            log.warn(">>> [WorksSearch] 중복 후보 조회 실패 titleKey={}, cause={}", titleKey, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
     private List<Long> search(Query query, int size) throws IOException {
         SearchResponse<Void> response = client.search(s -> s
                 .index(worksIndexProperties.alias())
