@@ -20,6 +20,8 @@ import java.util.Optional;
 
 public interface WorksRepository extends JpaRepository<Works, Long>, WorksRepositoryCustom {
 
+    Optional<Works> findFirstByWorksNameAndArtistNameOrderByIdAsc(String worksName, String artistName);
+
     @Query("SELECT w.id FROM Works w WHERE w.id IN :worksIds")
     List<Long> findExistingIds(@Param("worksIds") Collection<Long> worksIds);
 

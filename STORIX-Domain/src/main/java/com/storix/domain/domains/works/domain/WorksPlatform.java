@@ -27,6 +27,12 @@ public class WorksPlatform {
     @Column(name = "landing_url", length = 500)
     private String landingUrl;
 
+    public boolean updateLandingUrl(String landingUrl) {
+        if (landingUrl == null || landingUrl.isBlank() || landingUrl.equals(this.landingUrl)) return false;
+        this.landingUrl = landingUrl;
+        return true;
+    }
+
     public WorksPlatform(Works works, Platform platform) {
         this(works, platform, null);
     }

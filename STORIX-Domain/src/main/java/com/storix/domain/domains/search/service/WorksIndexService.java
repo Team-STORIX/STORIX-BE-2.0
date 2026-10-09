@@ -74,6 +74,25 @@ public class WorksIndexService {
         }
     }
 
+    // 실패해도 다음 재색인 때 맞춰진다
+    public void indexWorksBulk(List<Long> worksIds) {
+        try {
+            List<Works> works = worksAdaptor.findWorksByIds(worksIds);
+            Map<Long, List<String>> nicknames = worksAdaptor.loadNicknamesByWorksIds(worksIds);
+
+            BulkRequest.Builder bulk = new BulkRequest.Builder().index(worksIndexProperties.alias());
+            for (Works each : works) {
+                WorksDocument document = WorksDocument.of(each, nicknames.getOrDefault(each.getId(), List.of()));
+                bulk.operations(op -> op.index(i -> i.id(String.valueOf(document.worksId())).document(document)));
+            }
+
+            BulkResponse response = client.bulk(bulk.build());
+            if (response.errors()) log.warn(">>> [WorksIndex] 작품 일부 색인 실패 count={}", worksIds.size());
+        } catch (Exception e) {
+            log.warn(">>> [WorksIndex] 작품 색인 실패 count={}, cause={}", worksIds.size(), e.getMessage());
+        }
+    }
+
     public WorksReindexResponse reindexAll() {
         String token = UUID.randomUUID().toString();
         Boolean locked = redisTemplate.opsForValue().setIfAbsent(WORKS_REINDEX_LOCK, token, LOCK_TTL);

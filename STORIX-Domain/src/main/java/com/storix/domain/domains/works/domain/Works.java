@@ -105,6 +105,7 @@ public class Works {
         this.worksType = worksType;
         this.reviewsCount = 0;
         this.avgRating = 0.0;
+        this.isOnboarding = false;
         this.platforms = new HashSet<>();
         this.hashtags = new HashSet<>();
     }
@@ -116,6 +117,44 @@ public class Works {
     // landingUrl은 해당 플랫폼의 작품 페이지 외부 링크 (미확보 시 null)
     public void addPlatform(Platform platform, String landingUrl) {
         this.platforms.add(new WorksPlatform(this, platform, landingUrl));
+    }
+
+    // 플랫폼에서 표지 · 연령가 등이 바뀌므로 새 값이 있으면 덮어쓰고, 비어 있으면 기존 값을 둔다
+    public boolean updateFromImport(String author, String illustrator, String originalAuthor,
+                                    AgeClassification ageClassification, Genre genre, WorksType worksType,
+                                    String description, String thumbnailUrl) {
+        boolean changed = false;
+        if (hasText(author) && !author.equals(this.author)) { this.author = author; changed = true; }
+        if (hasText(illustrator) && !illustrator.equals(this.illustrator)) { this.illustrator = illustrator; changed = true; }
+        if (hasText(originalAuthor) && !originalAuthor.equals(this.originalAuthor)) { this.originalAuthor = originalAuthor; changed = true; }
+        if (ageClassification != null && ageClassification != this.ageClassification) { this.ageClassification = ageClassification; changed = true; }
+        if (genre != null && genre != this.genre) { this.genre = genre; changed = true; }
+        if (worksType != null && worksType != this.worksType) { this.worksType = worksType; changed = true; }
+        if (hasText(description) && !description.equals(this.description)) { this.description = description; changed = true; }
+        if (hasText(thumbnailUrl) && !thumbnailUrl.equals(this.thumbnailUrl)) { this.thumbnailUrl = thumbnailUrl; changed = true; }
+        return changed;
+    }
+
+    public boolean putPlatform(Platform platform, String landingUrl) {
+        return platforms.stream()
+                .filter(worksPlatform -> worksPlatform.getPlatform() == platform)
+                .findFirst()
+                .map(worksPlatform -> worksPlatform.updateLandingUrl(landingUrl))
+                .orElseGet(() -> {
+                    addPlatform(platform, hasText(landingUrl) ? landingUrl : null);
+                    return true;
+                });
+    }
+
+    public boolean replaceHashtags(Set<Hashtag> newHashtags) {
+        if (hashtags.equals(newHashtags)) return false;
+        hashtags.clear();
+        hashtags.addAll(newHashtags);
+        return true;
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     public Set<Hashtag> getHashtags() {
