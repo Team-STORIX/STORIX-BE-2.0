@@ -24,7 +24,7 @@ public class LibrarySearchUseCase {
         // 검색어 저장 (최근 검색어 + 인기 검색어 집계 반영)
         if (keyword != null && pageable.getPageNumber() == 0) {
             searchHistoryService.addLibrarySearchLog(userId, keyword);
-            searchHistoryService.addTrendingScore(keyword);
+            searchHistoryService.addTrendingScore(keyword, null, null);
         }
 
         // 리뷰한 작품 중 검색어와 관련된 작품 정보 조회
