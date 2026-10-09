@@ -14,6 +14,10 @@ spring:
     redis:
       host: storix-redis
       port: 6379
+  elasticsearch:
+    uris: http://storix-elasticsearch:9200
+    connection-timeout: 1s
+    socket-timeout: 5s
 
 logging:
   pattern:
@@ -30,6 +34,10 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+  # ES 가 죽어도 검색은 MySQL 로 돌기 때문에 앱 헬스체크에 넣지 않는다
+  health:
+    elasticsearch:
+      enabled: false
 
 oauth:
   kakao:

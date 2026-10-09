@@ -114,6 +114,36 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
 
 
     @Override
+    public Slice<Works> findByIdsWithFilters(
+            List<Long> worksIds,
+            List<WorksType> worksTypes,
+            List<Genre> genres,
+            Pageable pageable
+    ) {
+        if (worksIds.isEmpty()) {
+            return new SliceImpl<>(List.of(), pageable, false);
+        }
+
+        BooleanBuilder builder = buildFilterCondition(worksTypes, genres);
+        builder.and(works.id.in(worksIds));
+
+        List<Works> results = queryFactory
+                .selectFrom(works)
+                .where(builder)
+                .orderBy(getOrderSpecifiers(pageable.getSort()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize() + 1)
+                .fetch();
+
+        boolean hasNext = results.size() > pageable.getPageSize();
+        if (hasNext) {
+            results.remove(results.size() - 1);
+        }
+
+        return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    @Override
     public List<Long> findCandidateIds(List<Long> excludedIds, boolean excludeAdult) {
         BooleanBuilder builder = new BooleanBuilder();
 
