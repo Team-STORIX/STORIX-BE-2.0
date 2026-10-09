@@ -10,6 +10,7 @@ import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
 import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
+import com.storix.domain.domains.search.adaptor.WorksSearchAdaptor;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.TrendingItem;
@@ -66,6 +67,7 @@ public class TopicRoomService {
     private final UserAdaptor userAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final WorksAdaptor worksAdaptor;
+    private final WorksSearchAdaptor worksSearchAdaptor;
     private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
     private final NotificationPublisher notificationPublisher;
     private final TopicRoomUnreadService topicRoomUnreadService;
@@ -215,7 +217,9 @@ public class TopicRoomService {
     public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable
     ) {
-        List<Long> worksIds = worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
+        // 작품 탭과 같은 ES 검색으로 작품을 찾아 초성·별칭으로도 토픽룸이 걸리게 한다
+        List<Long> worksIds = worksSearchAdaptor.searchIds(keyword, worksTypes, genres)
+                .orElseGet(() -> worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres));
 
         Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
