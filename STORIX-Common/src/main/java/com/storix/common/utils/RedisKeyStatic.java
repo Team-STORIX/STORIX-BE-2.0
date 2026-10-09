@@ -22,6 +22,7 @@ public final class RedisKeyStatic {
         public static final String TRENDING_AGGREGATED = "search:trending:aggregated";
         public static final String TRENDING_PREV_AGGREGATED = "search:trending:aggregated:prev";
         public static final String RECENT_PREFIX = "search:recent:";
+        public static final String WORKS_REINDEX_LOCK = "search:works:reindex:lock";
 
         private Search() {
         }
