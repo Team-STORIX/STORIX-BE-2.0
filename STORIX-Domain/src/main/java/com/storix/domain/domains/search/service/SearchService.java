@@ -1,6 +1,7 @@
 package com.storix.domain.domains.search.service;
 
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
+import com.storix.domain.domains.search.adaptor.WorksSearchAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.search.dto.WorksSearchResponseDto;
@@ -23,6 +24,7 @@ import java.util.List;
 public class SearchService {
 
     private final WorksAdaptor worksAdaptor;
+    private final WorksSearchAdaptor worksSearchAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
 
     // 작품 탭 검색
@@ -43,7 +45,7 @@ public class SearchService {
             worksSlice = worksAdaptor.searchWorksByHashtagWithFilters(hashtagKeyword, worksTypes, genres, pageable);
         } else {
             // 2-2. 작품명 검색
-            worksSlice = worksAdaptor.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
+            worksSlice = searchByKeyword(keyword, worksTypes, genres, pageable);
         }
 
         return toWorkDtos(userId, worksSlice);
@@ -54,11 +56,18 @@ public class SearchService {
     public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(Long userId, String keyword, Pageable pageable) {
 
         // 작품 검색
-        Slice<Works> worksSlice = worksAdaptor.searchWorks(keyword, pageable);
+        Slice<Works> worksSlice = searchByKeyword(keyword, null, null, pageable);
 
         return PlusSearchResponseWrapperDto.<WorksSearchResponseDto>builder()
                 .result(toWorkDtos(userId, worksSlice))
                 .build();
+    }
+
+    // ES 는 매칭되는 작품 ID 만 주고 필터·정렬·페이징은 기존처럼 MySQL 에서 한다
+    private Slice<Works> searchByKeyword(String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        return worksSearchAdaptor.searchIds(keyword, worksTypes, genres)
+                .map(ids -> worksAdaptor.findByIdsWithFilters(ids, worksTypes, genres, pageable))
+                .orElseGet(() -> worksAdaptor.searchWorksWithFilters(keyword, worksTypes, genres, pageable));
     }
 
     private Slice<WorksSearchResponseDto> toWorkDtos(Long userId, Slice<Works> worksSlice) {

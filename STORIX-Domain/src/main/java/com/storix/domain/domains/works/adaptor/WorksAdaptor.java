@@ -13,6 +13,7 @@ import com.storix.domain.domains.works.exception.UnknownWorksException;
 import com.storix.domain.domains.works.repository.WorksRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -205,6 +206,14 @@ public class WorksAdaptor {
                 .toList();
 
         return worksRepository.findAllByIdWithHashtags(targetIds);
+    }
+
+    public Slice<Works> findByIdsWithFilters(List<Long> worksIds, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+        return worksRepository.findByIdsWithFilters(worksIds, worksTypes, genres, pageable);
+    }
+
+    public List<Works> findWorksChunkAfter(Long lastWorksId, int size) {
+        return worksRepository.findByIdGreaterThanOrderByIdAsc(lastWorksId, Limit.of(size));
     }
 
     public List<Works> findWorksByIds(List<Long> worksIds) {

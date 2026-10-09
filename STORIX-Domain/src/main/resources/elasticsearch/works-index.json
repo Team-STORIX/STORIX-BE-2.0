@@ -1,0 +1,48 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "tokenizer": {
+        "jamo_ngram": {
+          "type": "ngram",
+          "min_gram": 2,
+          "max_gram": 3
+        }
+      },
+      "analyzer": {
+        "jamo_ngram": {
+          "type": "custom",
+          "tokenizer": "jamo_ngram"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "worksId": {
+        "type": "long"
+      },
+      "worksName": {
+        "type": "wildcard"
+      },
+      "worksNameChosung": {
+        "type": "wildcard"
+      },
+      "worksNameJamo": {
+        "type": "text",
+        "analyzer": "jamo_ngram"
+      },
+      "authors": {
+        "type": "wildcard"
+      },
+      "worksType": {
+        "type": "keyword"
+      },
+      "genre": {
+        "type": "keyword"
+      }
+    }
+  }
+}

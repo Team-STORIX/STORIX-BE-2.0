@@ -6,6 +6,7 @@ import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,6 +43,8 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
             "LEFT JOIN FETCH w.hashtags " +
             "WHERE w.id = :worksId")
     Optional<Works> findByIdWithHashtags(@Param("worksId") Long worksId);
+
+    List<Works> findByIdGreaterThanOrderByIdAsc(Long id, Limit limit);
 
     @Query("SELECT (w.ageClassification = com.storix.domain.domains.works.domain.AgeClassification.AGE_18) " +
             "FROM Works w " +
