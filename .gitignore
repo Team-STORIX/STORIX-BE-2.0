@@ -41,8 +41,9 @@ out/
 *.env
 
 ### 추가가 필요한 파일은 예외로 추가하기 ###
-application.yml
 application-*.yml
+!application-dev.yml
+!application-prod.yml
 *.properties
 
 !gradle/wrapper/gradle-wrapper.jar
