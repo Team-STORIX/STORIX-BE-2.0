@@ -40,7 +40,7 @@ public class WorksService {
         // 18세 이용가 작품인지 확인
         AdultContentPolicy.check(
                 works.getAgeClassification(),
-                () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId)
+                () -> !adultVerificationAdaptor.excludeAdultFor(userId)
         );
 
         long reviewCount = reviewAdaptor.getReviewCount(worksId);

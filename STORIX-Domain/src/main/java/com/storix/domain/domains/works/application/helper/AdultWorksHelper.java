@@ -26,7 +26,7 @@ public class AdultWorksHelper {
 
         AdultContentPolicy.check(
                 isWorksForAdult,
-                () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(userId)
+                () -> !adultVerificationAdaptor.excludeAdultFor(userId)
         );
     }
 
