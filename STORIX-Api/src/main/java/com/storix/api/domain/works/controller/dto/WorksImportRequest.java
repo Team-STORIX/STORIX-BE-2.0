@@ -3,6 +3,7 @@ package com.storix.api.domain.works.controller.dto;
 import com.storix.domain.domains.works.dto.WorksImportItem;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -11,7 +12,7 @@ public record WorksImportRequest(
         @Schema(description = "적재할 작품. 한 번에 최대 100건")
         @NotEmpty(message = "적재할 작품이 없습니다.")
         @Size(max = 100, message = "한 번에 100건까지 적재할 수 있습니다.")
-        List<Item> items
+        List<@NotNull(message = "작품 항목이 비어 있습니다.") Item> items
 ) {
 
     public List<WorksImportItem> toItems() {

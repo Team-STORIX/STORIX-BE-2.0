@@ -58,27 +58,28 @@ public class WorksImportService {
         Boolean locked = redisTemplate.opsForValue().setIfAbsent(RedisKeyStatic.Works.IMPORT_LOCK, token, LOCK_TTL);
         if (!Boolean.TRUE.equals(locked)) throw WorksImportInProgressException.EXCEPTION;
 
-        List<WorksImportResult> results = new ArrayList<>();
         try {
             TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+            List<WorksImportResult> results = new ArrayList<>();
             for (WorksImportItem item : items) {
                 results.add(importOne(transaction, item));
             }
+
+            // 잠금을 쥔 채 색인해야 다음 적재가 같은 작품을 바꾼 뒤 이전 값으로 덮어쓰지 않는다
+            List<Long> changedWorksIds = results.stream()
+                    .filter(WorksImportResult::changed)
+                    .map(WorksImportResult::worksId)
+                    .distinct()
+                    .toList();
+            if (!changedWorksIds.isEmpty()) {
+                hashtagCacheHelper.evictGlobalMeta();
+                worksIndexService.indexWorksBulk(changedWorksIds);
+            }
+            log.info(">>> [WorksImport] 적재 완료 total={}, changed={}", items.size(), changedWorksIds.size());
+            return results;
         } finally {
             redisTemplate.execute(UNLOCK_SCRIPT, List.of(RedisKeyStatic.Works.IMPORT_LOCK), token);
         }
-
-        List<Long> changedWorksIds = results.stream()
-                .filter(WorksImportResult::changed)
-                .map(WorksImportResult::worksId)
-                .distinct()
-                .toList();
-        if (!changedWorksIds.isEmpty()) {
-            hashtagCacheHelper.evictGlobalMeta();
-            worksIndexService.indexWorksBulk(changedWorksIds);
-        }
-        log.info(">>> [WorksImport] 적재 완료 total={}, changed={}", items.size(), changedWorksIds.size());
-        return results;
     }
 
     // 건마다 트랜잭션을 나눠서 한 건이 실패해도 나머지는 저장된다
