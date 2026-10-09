@@ -217,7 +217,6 @@ public class TopicRoomService {
     public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable
     ) {
-        // 작품 탭과 같은 ES 검색으로 작품을 찾아 초성·별칭으로도 토픽룸이 걸리게 한다
         List<Long> worksIds = worksSearchAdaptor.searchIds(keyword, worksTypes, genres)
                 .orElseGet(() -> worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres));
 
