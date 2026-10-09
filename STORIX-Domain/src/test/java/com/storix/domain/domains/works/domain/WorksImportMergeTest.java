@@ -4,6 +4,7 @@ import com.storix.domain.domains.hashtag.domain.Hashtag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,9 +30,9 @@ class WorksImportMergeTest {
     void overwriteWithNewValues() {
         Works works = works();
 
-        boolean changed = works.updateFromImport(null, "장성락", null, AgeClassification.AGE_18, null, null, null, "https://new.png");
+        List<String> changes = works.updateFromImport(null, "장성락", null, AgeClassification.AGE_18, null, null, null, "https://new.png");
 
-        assertThat(changed).isTrue();
+        assertThat(changes).containsExactly("illustrator:null->장성락", "ageClassification:AGE_15->AGE_18", "thumbnailUrl:https://old.png->https://new.png");
         assertThat(works.getIllustrator()).isEqualTo("장성락");
         assertThat(works.getAgeClassification()).isEqualTo(AgeClassification.AGE_18);
         assertThat(works.getThumbnailUrl()).isEqualTo("https://new.png");
@@ -42,9 +43,9 @@ class WorksImportMergeTest {
     void keepWhenBlank() {
         Works works = works();
 
-        boolean changed = works.updateFromImport(" ", null, "", null, null, null, null, null);
+        List<String> changes = works.updateFromImport(" ", null, "", null, null, null, null, null);
 
-        assertThat(changed).isFalse();
+        assertThat(changes).isEmpty();
         assertThat(works.getAuthor()).isEqualTo("추공");
         assertThat(works.getGenre()).isEqualTo(Genre.FANTASY);
         assertThat(works.getDescription()).isEqualTo("기존 소개");
@@ -56,7 +57,7 @@ class WorksImportMergeTest {
         Works works = works();
 
         assertThat(works.updateFromImport("추공", null, null, AgeClassification.AGE_15, Genre.FANTASY, WorksType.WEBTOON, "기존 소개", "https://old.png"))
-                .isFalse();
+                .isEmpty();
     }
 
     @Test
@@ -64,9 +65,9 @@ class WorksImportMergeTest {
     void putPlatform() {
         Works works = works();
 
-        assertThat(works.putPlatform(Platform.KAKAO_PAGE, null)).isTrue();
-        assertThat(works.putPlatform(Platform.KAKAO_PAGE, null)).isFalse();
-        assertThat(works.putPlatform(Platform.KAKAO_PAGE, "https://page.kakao.com/1")).isTrue();
+        assertThat(works.putPlatform(Platform.KAKAO_PAGE, null)).isEqualTo("platform:+KAKAO_PAGE");
+        assertThat(works.putPlatform(Platform.KAKAO_PAGE, null)).isNull();
+        assertThat(works.putPlatform(Platform.KAKAO_PAGE, "https://page.kakao.com/1")).isEqualTo("landingUrl:KAKAO_PAGE:null->https://page.kakao.com/1");
         assertThat(works.getPlatforms()).hasSize(1);
         assertThat(works.getPlatforms().iterator().next().getLandingUrl()).isEqualTo("https://page.kakao.com/1");
     }
@@ -76,10 +77,12 @@ class WorksImportMergeTest {
     void replaceHashtags() {
         Works works = works();
         Hashtag hunter = new Hashtag("헌터");
+        Hashtag fantasy = new Hashtag("판타지");
 
-        assertThat(works.replaceHashtags(Set.of(hunter))).isTrue();
-        assertThat(works.replaceHashtags(Set.of(hunter))).isFalse();
-        assertThat(works.getHashtags()).containsExactly(hunter);
+        assertThat(works.replaceHashtags(Set.of(hunter))).isEqualTo("hashtags:+헌터");
+        assertThat(works.replaceHashtags(Set.of(hunter))).isNull();
+        assertThat(works.replaceHashtags(Set.of(fantasy))).isEqualTo("hashtags:+판타지,-헌터");
+        assertThat(works.getHashtags()).containsExactly(fantasy);
     }
 
     @Test
