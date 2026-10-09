@@ -31,6 +31,13 @@ public interface WorksRepositoryCustom {
             List<Genre> genres
     );
 
+    Slice<Works> findByIdsWithFilters(
+            List<Long> worksIds,
+            List<WorksType> worksTypes,
+            List<Genre> genres,
+            Pageable pageable
+    );
+
     List<Long> findCandidateIds(List<Long> excludedIds, boolean excludeAdult);
 
     List<StoryCardLuckyWorkPick> findStoryCardLuckyWorks(Genre genre, boolean excludeAdult);

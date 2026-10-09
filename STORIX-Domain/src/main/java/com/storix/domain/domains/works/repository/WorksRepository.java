@@ -6,6 +6,7 @@ import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,10 +14,14 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface WorksRepository extends JpaRepository<Works, Long>, WorksRepositoryCustom {
+
+    @Query("SELECT w.id FROM Works w WHERE w.id IN :worksIds")
+    List<Long> findExistingIds(@Param("worksIds") Collection<Long> worksIds);
 
     @Query("SELECT w FROM Works w " +
             "WHERE w.worksName LIKE %:keyword% " +
@@ -42,6 +47,8 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
             "LEFT JOIN FETCH w.hashtags " +
             "WHERE w.id = :worksId")
     Optional<Works> findByIdWithHashtags(@Param("worksId") Long worksId);
+
+    List<Works> findByIdGreaterThanOrderByIdAsc(Long id, Limit limit);
 
     @Query("SELECT (w.ageClassification = com.storix.domain.domains.works.domain.AgeClassification.AGE_18) " +
             "FROM Works w " +
