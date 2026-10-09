@@ -37,6 +37,9 @@
       "authors": {
         "type": "wildcard"
       },
+      "nicknames": {
+        "type": "keyword"
+      },
       "worksType": {
         "type": "keyword"
       },
