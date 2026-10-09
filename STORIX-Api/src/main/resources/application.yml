@@ -53,9 +53,6 @@ oauth:
     clientSecret: ${X_AUTH_SECRET}
 
 aws:
-  credentials:
-    access-key: ${AWS_CREDENTIALS_ACCESS_KEY}
-    secret-key: ${AWS_CREDENTIALS_SECRET_KEY}
   s3:
     bucket: ${AWS_S3_BUCKET_NAME}
 
