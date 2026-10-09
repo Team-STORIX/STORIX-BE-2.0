@@ -1,5 +1,6 @@
 package com.storix.infrastructure.external.notification.listener;
 
+import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.notification.dto.DispatchResult;
 import com.storix.domain.domains.notification.event.NotificationEvent;
 import com.storix.domain.domains.notification.service.NotificationDispatchService;
@@ -36,7 +37,7 @@ public class NotificationEventListener {
             fcmPushExecutor.sendWithRetry(
                     result.tokens(),
                     buildData(event, result.notificationId(), result.unreadCount()),
-                    null,
+                    STORIXStatic.Notification.PUSH_COLLAPSE_KEY_PREFIX + result.notificationId(),
                     "notificationId=" + result.notificationId());
         } catch (Exception e) {
             log.error(">>> [Notification] dispatch failed event={}, cause={}", event, e.getMessage(), e);

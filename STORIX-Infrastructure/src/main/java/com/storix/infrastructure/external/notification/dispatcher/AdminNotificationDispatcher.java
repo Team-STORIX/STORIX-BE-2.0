@@ -99,11 +99,13 @@ public class AdminNotificationDispatcher {
                     continue;
                 }
                 try {
+                    Long notificationId = notificationIdByUser.get(userId);
                     MulticastResult result = fcmPushExecutor.sendAndApply(
                             tokens, buildData(userId, notificationType, targetType, eventTargetId, targetLink,
-                                    event.title(), event.content(), notificationIdByUser.get(userId),
+                                    event.title(), event.content(), notificationId,
                                     inboxUnread.getOrDefault(userId, 0)
-                                            + chatUnread.getOrDefault(userId, 0L).intValue()));
+                                            + chatUnread.getOrDefault(userId, 0L).intValue()),
+                            STORIXStatic.Notification.PUSH_COLLAPSE_KEY_PREFIX + notificationId);
                     if (!result.successTokens().isEmpty()) {
                         outcomes.put(userId, AdminNotificationDeliveryOutcome.SENT);
                     } else if (result.hasTransientFailure()) {

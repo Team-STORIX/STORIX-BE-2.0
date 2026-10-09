@@ -97,6 +97,8 @@ public class STORIXStatic {
         // Android 헤드업 표시용 채널 id
         public static final String ANDROID_CHANNEL_ID = "storix_default_high";
 
+        public static final String PUSH_COLLAPSE_KEY_PREFIX = "notification-";
+
         // 타이틀 — 서비스
         public static final String TITLE_FEED       = "피드";
         public static final String TITLE_REVIEW     = "리뷰";

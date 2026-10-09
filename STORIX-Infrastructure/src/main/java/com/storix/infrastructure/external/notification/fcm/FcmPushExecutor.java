@@ -24,10 +24,6 @@ public class FcmPushExecutor {
     private final FcmSender fcmSender;
     private final PushDispatchService pushDispatchService;
 
-    public MulticastResult sendAndApply(List<String> tokens, Map<String, String> data) {
-        return sendAndApply(tokens, data, null);
-    }
-
     public MulticastResult sendAndApply(List<String> tokens, Map<String, String> data, String collapseKey) {
         MulticastResult result = fcmSender.sendMulticast(tokens, data, collapseKey);
         if (!result.invalidTokens().isEmpty()) {
