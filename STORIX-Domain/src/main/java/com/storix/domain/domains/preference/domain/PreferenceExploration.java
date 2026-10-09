@@ -10,7 +10,6 @@ import lombok.*;
 @Table(name = "taste_exploration",
         indexes = {
             @Index(name = "idx_user_liked", columnList = "user_id, is_liked"),
-            // 작품 병합·삭제처럼 작품 기준으로 옮기거나 지울 때 풀스캔을 막는다
             @Index(name = "idx_taste_exploration_works", columnList = "works_id")
         },
         uniqueConstraints = {
