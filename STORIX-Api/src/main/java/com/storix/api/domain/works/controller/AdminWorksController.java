@@ -35,9 +35,12 @@ public class AdminWorksController {
     @PostMapping("/import")
     @Operation(
             summary = "작품 적재",
-            description = "검수를 통과한 작품을 최대 100건씩 적재합니다. 작품명 + 작가명이 같은 작품이 있으면 갱신하고, 없으면 새로 만듭니다. "
-                    + "갱신할 때 새 값이 있으면 덮어쓰고 비어 있으면 기존 값을 둡니다. enum 은 카탈로그의 name 으로 보냅니다. "
-                    + "한 건이 실패해도 나머지는 저장되고, 건마다 CREATED · UPDATED · UNCHANGED · FAILED 를 돌려줍니다. "
+            description = "검수를 통과한 작품을 최대 100건씩 적재합니다. 라벨 · 띄어쓰기 · 기호를 뺀 제목과 작품 유형이 같고 작가가 한 명이라도 겹치면 같은 작품으로 보고 갱신합니다. "
+                    + "개정판 · 완전판 · 외전 · 시즌 같은 판본 표기는 다른 작품입니다. "
+                    + "같은 작품이 없지만 제목이 비슷하고 작가가 겹치는 작품이 있으면 만들지 않고 SUSPECTED_DUPLICATE 와 candidateWorksIds 를 돌려줍니다. "
+                    + "같은 웹소설이 있는 단행본은 만들지 않고 SKIPPED 와 그 웹소설 id 를 돌려줍니다. "
+                    + "갱신할 때 새 값이 있으면 덮어쓰고 비어 있으면 기존 값을 둡니다. enum 은 카탈로그의 name 으로 보내고 worksType 은 필수입니다. "
+                    + "한 건이 실패해도 나머지는 저장되고, 건마다 CREATED · UPDATED · UNCHANGED · SUSPECTED_DUPLICATE · SKIPPED · FAILED 를 돌려줍니다. "
                     + "바뀐 작품은 작품 검색에 바로 반영됩니다. 동시에 두 번 호출하면 409 입니다."
     )
     public CustomResponse<List<WorksImportResult>> importWorks(@Valid @RequestBody WorksImportRequest request) {

@@ -241,4 +241,17 @@ public class WorksAdaptor {
 
         return worksRepository.findAllById(worksIds);
     }
+
+    /** 작품 적재 */
+    public List<Works> findByNormalizedNameAndWorksType(String normalizedName, WorksType worksType) {
+        return worksRepository.findByNormalizedNameAndWorksTypeOrderByIdAsc(normalizedName, worksType);
+    }
+
+    public List<Works> findWithoutNormalizedNameAfter(Long lastWorksId, int size) {
+        return worksRepository.findByNormalizedNameIsNullAndIdGreaterThanOrderByIdAsc(lastWorksId, Limit.of(size));
+    }
+
+    public Works save(Works works) {
+        return worksRepository.save(works);
+    }
 }
