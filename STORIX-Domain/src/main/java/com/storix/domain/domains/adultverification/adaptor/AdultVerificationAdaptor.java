@@ -6,9 +6,13 @@ import com.storix.domain.domains.adultverification.domain.AdultVerificationStatu
 import com.storix.domain.domains.adultverification.dto.LatestVerifiedAt;
 import com.storix.domain.domains.adultverification.exception.UnknownAdultVerificationException;
 import com.storix.domain.domains.adultverification.repository.AdultVerificationRepository;
+import com.storix.domain.domains.user.adaptor.AuthUserDetails;
+import com.storix.domain.domains.user.domain.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -44,7 +48,21 @@ public class AdultVerificationAdaptor {
         if (userId == null) {
             return true;
         }
+
+        // 관리자 제외
+        if (isAdminRequest(userId)) {
+            return false;
+        }
+
         return !AdultVerificationPolicy.isValidOn(findLatestVerifiedAtByUserId(userId), LocalDate.now());
+    }
+
+    private boolean isAdminRequest(Long userId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.getPrincipal() instanceof AuthUserDetails details
+                && userId.equals(details.getUserId())
+                && details.getRole() == Role.ADMIN;
     }
 
     public Map<Long, LocalDateTime> findLatestVerifiedAtByUserIds(List<Long> userIds) {

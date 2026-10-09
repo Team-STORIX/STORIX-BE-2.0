@@ -253,7 +253,7 @@ public class TopicRoomService {
             throw MaxLimitException.EXCEPTION;
         }
 
-        AdultContentPolicy.check(works.getAgeClassification(), () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(user.getId()));
+        AdultContentPolicy.check(works.getAgeClassification(), () -> !adultVerificationAdaptor.excludeAdultFor(user.getId()));
 
         TopicRoom room = TopicRoom.builder()
                 .topicRoomName(request.getTopicRoomName())
@@ -282,7 +282,7 @@ public class TopicRoomService {
         TopicRoom room = topicRoomAdaptor.findById(roomId);
         Works works = worksAdaptor.findById(room.getWorksId());
 
-        AdultContentPolicy.check(works.getAgeClassification(), () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(user.getId()));
+        AdultContentPolicy.check(works.getAgeClassification(), () -> !adultVerificationAdaptor.excludeAdultFor(user.getId()));
         if (topicRoomAdaptor.countJoinedRooms(userId) >= 9)
             throw MaxLimitException.EXCEPTION;
 
