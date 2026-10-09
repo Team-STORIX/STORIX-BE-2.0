@@ -1,0 +1,91 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+  data:
+    redis:
+      host: storix-redis
+      port: 6379
+
+logging:
+  pattern:
+    level: "%5p [trace:%X{traceId:-}]"
+
+management:
+  server:
+    port: 9100
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+oauth:
+  kakao:
+    baseUri: "https://kauth.kakao.com"
+    clientId: ${KAKAO_AUTH_CLIENT}
+    clientSecret: ${KAKAO_AUTH_SECRET}
+    adminKey: ${KAKAO_AUTH_ADMIN}
+    nativeAppKey: ${KAKAO_AUTH_NATIVE}
+  naver:
+    baseUri: "https://nid.naver.com"
+    clientId: ${NAVER_AUTH_CLIENT}
+    clientSecret: ${NAVER_AUTH_SECRET}
+  apple:
+    baseUri: "https://appleid.apple.com"
+    clientId: ${APPLE_AUTH_CLIENT}
+    teamId: ${APPLE_TEAM_ID}
+    keyId: ${APPLE_KEY_ID}
+    privateKey: ${APPLE_PRIVATE_KEY}
+  x:
+    clientId: ${X_AUTH_CLIENT}
+    clientSecret: ${X_AUTH_SECRET}
+
+aws:
+  credentials:
+    access-key: ${AWS_CREDENTIALS_ACCESS_KEY}
+    secret-key: ${AWS_CREDENTIALS_SECRET_KEY}
+  s3:
+    bucket: ${AWS_S3_BUCKET_NAME}
+
+swagger:
+  user: ${SWAGGER_USER}
+  password: ${SWAGGER_PASSWORD}
+
+admin:
+  identifier: ${ADMIN_IDENTIFIER}
+
+slack:
+  bot-token: ${SLACK_BOT_TOKEN}
+  channel-id: ${SLACK_CHANNEL_ID}
+  signing-secret: ${SLACK_SIGNING_SECRET}
+
+portone:
+  store-id: ${PORTONE_STORE_ID}
+  channel-key: ${PORTONE_CHANNEL_KEY}
+  api-secret: ${PORTONE_API_SECRET}
+
+app-version:
+  ios:
+    min-supported: ${APP_VERSION_IOS_MIN_SUPPORTED}
+    latest: ${APP_VERSION_IOS_LATEST}
+    release-date: ${APP_VERSION_IOS_RELEASE_DATE}
+  android:
+    min-supported: ${APP_VERSION_ANDROID_MIN_SUPPORTED}
+    latest: ${APP_VERSION_ANDROID_LATEST}
+    release-date: ${APP_VERSION_ANDROID_RELEASE_DATE}
+
+firebase:
+  project-id: ${FIREBASE_PROJECT_ID}
+  credentials-base64: ${FIREBASE_CREDENTIALS_BASE64}
