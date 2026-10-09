@@ -5,6 +5,11 @@ import static com.storix.common.utils.RedisKeyStatic.Search.TRENDING_AGGREGATED;
 import static com.storix.common.utils.RedisKeyStatic.Search.TRENDING_PREV_AGGREGATED;
 
 import com.storix.domain.domains.search.dto.TrendingItem;
+import com.storix.domain.domains.search.adaptor.WorksSearchAdaptor;
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
+import com.storix.domain.domains.works.domain.Genre;
+import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -25,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 public class SearchHistoryService {
 
     private final StringRedisTemplate redisTemplate;
+    private final WorksSearchAdaptor worksSearchAdaptor;
+    private final WorksAdaptor worksAdaptor;
 
     // 날짜별 키 접두사
     private static final String TRENDING_KEY_PREFIX = RedisKeyStatic.Search.TRENDING_PREFIX;
@@ -56,13 +63,11 @@ public class SearchHistoryService {
                     "return 1;";
 
     // 홈
-    /** 1-1. 검색어 저장 (인기 + 최근 검색어) */
+    /** 1-1. 검색어 저장 (최근 검색어) */
     @Async("logThreadPool")
     public void addSearchLog(Long userId, String keyword) {
         try {
             if (keyword == null || keyword.isBlank()) return;
-
-            addTrendingScore(keyword);
 
             // 로그인한 유저: 최근 검색어 저장
             if (userId != null) {
@@ -87,10 +92,19 @@ public class SearchHistoryService {
     }
 
     /** 1-2. 검색어 저장 (인기 검색어) */
+    // 해시태그는 검색어 그대로, 그 외는 가장 관련 높은 작품명
     @Async("logThreadPool")
-    public void addTrendingScore(String keyword) {
+    public void addTrendingScore(String searchKeyword, List<WorksType> worksTypes, List<Genre> genres) {
         try {
-            if (keyword == null || keyword.isBlank()) return;
+            if (searchKeyword == null || searchKeyword.isBlank()) return;
+
+            String keyword = searchKeyword.startsWith("#")
+                    ? searchKeyword
+                    : worksSearchAdaptor.findBestMatchId(searchKeyword, worksTypes, genres)
+                            .flatMap(worksId -> worksAdaptor.findWorksByIds(List.of(worksId)).stream().findFirst())
+                            .map(Works::getWorksName)
+                            .orElse(null);
+            if (keyword == null) return;
 
             String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
             String todayKey = TRENDING_KEY_PREFIX + today;

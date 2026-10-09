@@ -30,6 +30,7 @@ public class SearchUseCase {
     public CustomResponse<SearchResponseWrapperDto<WorksSearchResponseDto>> searchWorks(Long userId, String keyword, Pageable pageable) {
         if (keyword != null && pageable.getPageNumber() == 0) {
             searchHistoryService.addSearchLog(userId, keyword);
+            searchHistoryService.addTrendingScore(keyword, null, null);
         }
 
         Slice<WorksSearchResponseDto> result = searchService.searchWorks(userId, keyword, pageable);
@@ -42,6 +43,7 @@ public class SearchUseCase {
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
         if (keyword != null && pageable.getPageNumber() == 0) {
             searchHistoryService.addSearchLog(userId, keyword);
+            searchHistoryService.addTrendingScore(keyword, worksTypes, genres);
         }
 
         Slice<WorksSearchResponseDto> result =
@@ -53,7 +55,7 @@ public class SearchUseCase {
     // [+] 탭 검색
     public CustomResponse<PlusSearchResponseWrapperDto<WorksSearchResponseDto>> searchWorksForWriting(Long userId, String keyword, Pageable pageable) {
         if (pageable.getPageNumber() == 0) {
-            searchHistoryService.addTrendingScore(keyword);
+            searchHistoryService.addTrendingScore(keyword, null, null);
         }
 
         PlusSearchResponseWrapperDto<WorksSearchResponseDto> result = searchService.searchWorksForWriting(userId, keyword, pageable);
@@ -65,7 +67,7 @@ public class SearchUseCase {
     public CustomResponse<PlusSearchResponseWrapperDto<TopicRoomResponseDto>> searchTopicRooms(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
         if (pageable.getPageNumber() == 0) {
-            searchHistoryService.addTrendingScore(keyword);
+            searchHistoryService.addTrendingScore(keyword, worksTypes, genres);
         }
 
         PlusSearchResponseWrapperDto<TopicRoomResponseDto> result =
