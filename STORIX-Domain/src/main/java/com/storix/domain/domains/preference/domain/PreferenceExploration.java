@@ -9,7 +9,8 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "taste_exploration",
         indexes = {
-            @Index(name = "idx_user_liked", columnList = "user_id, is_liked")
+            @Index(name = "idx_user_liked", columnList = "user_id, is_liked"),
+            @Index(name = "idx_taste_exploration_works", columnList = "works_id")
         },
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_user_works", columnNames = {"user_id", "works_id"})

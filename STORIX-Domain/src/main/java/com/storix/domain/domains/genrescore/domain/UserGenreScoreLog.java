@@ -19,7 +19,8 @@ import java.time.LocalDateTime;
         indexes = {
                 @Index(name = "idx_unprocessed", columnList = "processed_at, created_at"),
                 @Index(name = "idx_user_event", columnList = "user_id, event_type, works_id"),
-                @Index(name = "idx_user_genre_created", columnList = "user_id, genre, created_at")
+                @Index(name = "idx_user_genre_created", columnList = "user_id, genre, created_at"),
+                @Index(name = "idx_user_genre_score_log_works", columnList = "works_id")
         }
 )
 public class UserGenreScoreLog extends BaseTimeEntity {
