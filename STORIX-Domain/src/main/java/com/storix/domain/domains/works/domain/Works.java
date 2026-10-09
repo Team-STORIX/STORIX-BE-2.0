@@ -5,8 +5,12 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(
@@ -120,37 +124,57 @@ public class Works {
     }
 
     // 플랫폼에서 표지 · 연령가 등이 바뀌므로 새 값이 있으면 덮어쓰고, 비어 있으면 기존 값을 둔다
-    public boolean updateFromImport(String author, String illustrator, String originalAuthor,
-                                    AgeClassification ageClassification, Genre genre, WorksType worksType,
-                                    String description, String thumbnailUrl) {
-        boolean changed = false;
-        if (hasText(author) && !author.equals(this.author)) { this.author = author; changed = true; }
-        if (hasText(illustrator) && !illustrator.equals(this.illustrator)) { this.illustrator = illustrator; changed = true; }
-        if (hasText(originalAuthor) && !originalAuthor.equals(this.originalAuthor)) { this.originalAuthor = originalAuthor; changed = true; }
-        if (ageClassification != null && ageClassification != this.ageClassification) { this.ageClassification = ageClassification; changed = true; }
-        if (genre != null && genre != this.genre) { this.genre = genre; changed = true; }
-        if (worksType != null && worksType != this.worksType) { this.worksType = worksType; changed = true; }
-        if (hasText(description) && !description.equals(this.description)) { this.description = description; changed = true; }
-        if (hasText(thumbnailUrl) && !thumbnailUrl.equals(this.thumbnailUrl)) { this.thumbnailUrl = thumbnailUrl; changed = true; }
-        return changed;
+    // 바뀐 내용은 이전값->새값 으로 돌려주고, 소개글은 길어서 필드명만 남긴다
+    public List<String> updateFromImport(String author, String illustrator, String originalAuthor,
+                                         AgeClassification ageClassification, Genre genre, WorksType worksType,
+                                         String description, String thumbnailUrl) {
+        List<String> changes = new ArrayList<>();
+        this.author = merge("author", author, this.author, changes, true);
+        this.illustrator = merge("illustrator", illustrator, this.illustrator, changes, true);
+        this.originalAuthor = merge("originalAuthor", originalAuthor, this.originalAuthor, changes, true);
+        this.ageClassification = merge("ageClassification", ageClassification, this.ageClassification, changes, true);
+        this.genre = merge("genre", genre, this.genre, changes, true);
+        this.worksType = merge("worksType", worksType, this.worksType, changes, true);
+        this.description = merge("description", description, this.description, changes, false);
+        this.thumbnailUrl = merge("thumbnailUrl", thumbnailUrl, this.thumbnailUrl, changes, true);
+        return changes;
     }
 
-    public boolean putPlatform(Platform platform, String landingUrl) {
-        return platforms.stream()
+    private static <T> T merge(String field, T incoming, T current, List<String> changes, boolean withValue) {
+        if (incoming == null || (incoming instanceof String text && text.isBlank()) || incoming.equals(current)) {
+            return current;
+        }
+        changes.add(withValue ? field + ":" + current + "->" + incoming : field);
+        return incoming;
+    }
+
+    // 새로 붙으면 platform:+이름(링크), 링크만 바뀌면 landingUrl:이름:이전->새링크, 그대로면 null
+    public String putPlatform(Platform platform, String landingUrl) {
+        WorksPlatform existing = platforms.stream()
                 .filter(worksPlatform -> worksPlatform.getPlatform() == platform)
                 .findFirst()
-                .map(worksPlatform -> worksPlatform.updateLandingUrl(landingUrl))
-                .orElseGet(() -> {
-                    addPlatform(platform, hasText(landingUrl) ? landingUrl : null);
-                    return true;
-                });
+                .orElse(null);
+        if (existing == null) {
+            String url = hasText(landingUrl) ? landingUrl : null;
+            addPlatform(platform, url);
+            return "platform:+" + platform.name() + (url == null ? "" : "(" + url + ")");
+        }
+        String before = existing.getLandingUrl();
+        return existing.updateLandingUrl(landingUrl) ? "landingUrl:" + platform.name() + ":" + before + "->" + landingUrl : null;
     }
 
-    public boolean replaceHashtags(Set<Hashtag> newHashtags) {
-        if (hashtags.equals(newHashtags)) return false;
+    // 붙은 태그는 +, 빠진 태그는 - 로 돌려준다. 그대로면 null
+    public String replaceHashtags(Set<Hashtag> newHashtags) {
+        if (hashtags.equals(newHashtags)) return null;
+        Set<String> before = hashtags.stream().map(Hashtag::getName).collect(Collectors.toCollection(TreeSet::new));
+        Set<String> after = newHashtags.stream().map(Hashtag::getName).collect(Collectors.toCollection(TreeSet::new));
         hashtags.clear();
         hashtags.addAll(newHashtags);
-        return true;
+
+        List<String> diff = new ArrayList<>();
+        after.stream().filter(name -> !before.contains(name)).forEach(name -> diff.add("+" + name));
+        before.stream().filter(name -> !after.contains(name)).forEach(name -> diff.add("-" + name));
+        return "hashtags:" + String.join(",", diff);
     }
 
     private static boolean hasText(String value) {
