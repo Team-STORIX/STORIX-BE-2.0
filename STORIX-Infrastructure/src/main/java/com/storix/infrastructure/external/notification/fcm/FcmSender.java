@@ -71,11 +71,6 @@ public class FcmSender {
         }
     }
 
-    // 멀티캐스트 발송 (한 유저의 여러 디바이스 동시 발송)
-    public MulticastResult sendMulticast(List<String> tokens, Map<String, String> data) {
-        return sendMulticast(tokens, data, null);
-    }
-
     // collapseKey 를 주면 같은 키의 이전 알림을 덮어써 트레이에 하나만 남는다
     public MulticastResult sendMulticast(List<String> tokens, Map<String, String> data, String collapseKey) {
         // 1. 빈 토큰 short-circuit
@@ -87,7 +82,7 @@ public class FcmSender {
         MulticastMessage.Builder builder = MulticastMessage.builder()
                 .addAllTokens(tokens)
                 .setNotification(displayNotification(data))
-                .setAndroidConfig(highPriorityAndroid(collapseKey, data, false))
+                .setAndroidConfig(highPriorityAndroid(collapseKey, false))
                 .setApnsConfig(apnsConfig(data, collapseKey));
         putData(builder::putData, data);
 
@@ -166,7 +161,7 @@ public class FcmSender {
     private Message buildMessage(String token, Map<String, String> data, String collapseKey, boolean androidDataOnly) {
         Message.Builder builder = Message.builder()
                 .setToken(token)
-                .setAndroidConfig(highPriorityAndroid(collapseKey, data, androidDataOnly))
+                .setAndroidConfig(highPriorityAndroid(collapseKey, androidDataOnly))
                 .setApnsConfig(apnsConfig(data, collapseKey));
         if (!androidDataOnly) {
             builder.setNotification(displayNotification(data));
@@ -198,13 +193,13 @@ public class FcmSender {
     }
 
     // Android HIGH 전송 우선순위 + 알림 표시 우선순위 MAX(헤드업 유도) + 기본 사운드
-    private AndroidConfig highPriorityAndroid(String collapseKey, Map<String, String> data, boolean dataOnly) {
+    private AndroidConfig highPriorityAndroid(String collapseKey, boolean dataOnly) {
         AndroidConfig.Builder builder = AndroidConfig.builder()
                 .setPriority(AndroidConfig.Priority.HIGH);
-        if (collapseKey != null) {
-            builder.setCollapseKey(collapseKey);
-        }
         if (dataOnly) {
+            if (collapseKey != null) {
+                builder.setCollapseKey(collapseKey);
+            }
             return builder.build();
         }
 
@@ -214,6 +209,9 @@ public class FcmSender {
                 .setChannelId(STORIXStatic.Notification.ANDROID_CHANNEL_ID)
                 .setDefaultSound(true)
                 .setPriority(AndroidNotification.Priority.MAX);
+        if (collapseKey != null) {
+            notification.setTag(collapseKey);
+        }
 
         return builder.setNotification(notification.build()).build();
     }
