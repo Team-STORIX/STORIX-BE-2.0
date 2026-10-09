@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
                 )
         },
         indexes = {
-                // 작품 상세 리뷰 수·목록용
                 @Index(name = "idx_review_works_deleted", columnList = "works_id, deleted")
         }
 )
