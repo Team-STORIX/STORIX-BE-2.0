@@ -17,7 +17,9 @@ import java.util.List;
         indexes = {
                 @Index(name = "idx_reader_board_user_id", columnList = "user_id"),
                 // 오늘의 피드 후보 조회용
-                @Index(name = "idx_reader_board_deleted_created", columnList = "deleted, created_at")
+                @Index(name = "idx_reader_board_deleted_created", columnList = "deleted, created_at"),
+                // 작품 상세 피드글 목록용. PK 가 뒤에 붙어 id 최신순 정렬도 인덱스로 끝난다
+                @Index(name = "idx_reader_board_works_deleted", columnList = "works_id, deleted")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

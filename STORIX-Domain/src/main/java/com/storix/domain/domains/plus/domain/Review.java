@@ -20,6 +20,10 @@ import java.time.LocalDateTime;
                         name = "uk_review_library_works",
                         columnNames = {"library_user_id", "works_id"}
                 )
+        },
+        indexes = {
+                // 작품 상세 리뷰 수·목록용
+                @Index(name = "idx_review_works_deleted", columnList = "works_id, deleted")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
