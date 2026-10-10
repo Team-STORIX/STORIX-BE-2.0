@@ -6,6 +6,7 @@ import com.storix.domain.domains.event.exception.StoryCardDrawFailedException;
 import com.storix.domain.domains.event.repository.StoryCardDrawRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -46,6 +47,7 @@ public class StoryCardDrawAdaptor {
         return new StoryCardDrawResult(saved, saved.isSameCardAs(candidate));
     }
 
+    @Transactional
     public int deleteDrawnBefore(LocalDate cutoff) {
         return storyCardDrawRepository.deleteAllDrawnBefore(cutoff);
     }

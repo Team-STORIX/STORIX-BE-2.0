@@ -6,6 +6,7 @@ import com.storix.common.code.ErrorCode;
 import com.storix.common.payload.ErrorResponse;
 import com.storix.common.payload.FieldErrorResponse;
 import com.storix.common.exception.STORIXCodeException;
+import com.storix.common.exception.STORIXDynamicException;
 import com.storix.common.exception.STORIXCookieException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,16 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ex.getErrorCode();
         ErrorResponse response = new ErrorResponse(errorCode);
 
-        warnFailure(errorCode);
+        // 5xx 는 알림이 가도록 ERROR · 스택 · 상세 메시지
+        if (errorCode.getHttpStatus().is5xxServerError()) {
+            log.error(">>> [Http] 처리 실패 code={} status={} message={}",
+                    errorCode.getCode(), errorCode.getHttpStatus().value(), ex.getMessage(), ex);
+        } else if (ex instanceof STORIXDynamicException) {
+            log.warn(">>> [Http] 처리 실패 code={} status={} message={}",
+                    errorCode.getCode(), errorCode.getHttpStatus().value(), ex.getMessage());
+        } else {
+            warnFailure(errorCode);
+        }
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())

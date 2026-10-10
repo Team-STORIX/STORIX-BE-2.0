@@ -5,7 +5,6 @@ import com.storix.domain.domains.hashtag.dto.HashtagRecommendationContext;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
 import com.storix.domain.domains.hashtag.service.HashtagRecommendService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,7 +16,6 @@ public class HashtagUseCase {
 
     private final HashtagRecommendService hashtagRecommendService;
 
-    @Transactional(readOnly = true)
     public List<HashtagRecommendResponseDto> getHashtagRecommendation(Long userId) {
 
         // 사용자 데이터 수집

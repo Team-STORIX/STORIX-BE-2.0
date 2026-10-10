@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -26,7 +25,6 @@ public class PrivacyRetentionScheduler {
 
     // 탈퇴 후 1년 경과한 소셜 식별자 파기
     @Scheduled(cron = "0 10 4 * * *")
-    @Transactional
     public void purgeExpiredOauthOid() {
         LocalDateTime cutoff = LocalDateTime.now().minusYears(OAUTH_OID_RETENTION_YEARS);
         int purged = userAdaptor.purgeOauthOidBefore(cutoff);
@@ -47,7 +45,6 @@ public class PrivacyRetentionScheduler {
 
     // 제재 종료 또는 탈퇴 후 1년 경과한 제재 기록 파기
     @Scheduled(cron = "0 30 4 * * *")
-    @Transactional
     public void purgeExpiredSanctions() {
         LocalDateTime cutoff = LocalDateTime.now().minusYears(SANCTION_RETENTION_YEARS);
         int purged = userSanctionHistoryAdaptor.deleteExpiredBefore(cutoff);

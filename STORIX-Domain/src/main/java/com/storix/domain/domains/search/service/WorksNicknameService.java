@@ -5,10 +5,8 @@ import com.storix.domain.domains.search.dto.WorksNicknameEntry;
 import com.storix.domain.domains.search.dto.WorksNicknameResponse;
 import com.storix.domain.domains.search.exception.DuplicateWorksNicknameException;
 import com.storix.domain.domains.search.exception.InvalidWorksNicknameException;
-import com.storix.domain.domains.search.exception.WorksNicknameNotFoundException;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.WorksNickname;
-import com.storix.domain.domains.works.repository.WorksNicknameRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -28,13 +26,12 @@ public class WorksNicknameService {
 
     private static final int MAX_NICKNAME_LENGTH = 100;
 
-    private final WorksNicknameRepository worksNicknameRepository;
     private final WorksAdaptor worksAdaptor;
 
     @Transactional(readOnly = true)
     public List<WorksNicknameResponse> findNicknames(Long worksId) {
         worksAdaptor.findById(worksId);
-        return worksNicknameRepository.findByWorksIdOrderByIdAsc(worksId).stream()
+        return worksAdaptor.findNicknames(worksId).stream()
                 .map(WorksNicknameResponse::from)
                 .toList();
     }
@@ -44,12 +41,12 @@ public class WorksNicknameService {
 
         WorksNickname worksNickname = new WorksNickname(worksId, nickname.trim());
         if (worksNickname.getNormalized().isEmpty()) throw InvalidWorksNicknameException.EXCEPTION;
-        if (worksNicknameRepository.existsByWorksIdAndNormalized(worksId, worksNickname.getNormalized())) {
+        if (worksAdaptor.existsNickname(worksId, worksNickname.getNormalized())) {
             throw DuplicateWorksNicknameException.EXCEPTION;
         }
 
         try {
-            return WorksNicknameResponse.from(worksNicknameRepository.saveAndFlush(worksNickname));
+            return WorksNicknameResponse.from(worksAdaptor.saveNicknameAndFlush(worksNickname));
         } catch (DataIntegrityViolationException e) {
             throw DuplicateWorksNicknameException.EXCEPTION;
         }
@@ -58,7 +55,7 @@ public class WorksNicknameService {
     public WorksNicknameBulkResponse addNicknames(List<WorksNicknameEntry> entries) {
         List<Long> worksIds = entries.stream().map(WorksNicknameEntry::worksId).filter(Objects::nonNull).distinct().toList();
         Set<Long> existingWorksIds = new HashSet<>(worksAdaptor.findExistingWorksIds(worksIds));
-        Set<String> registered = worksNicknameRepository.findByWorksIdIn(existingWorksIds).stream()
+        Set<String> registered = worksAdaptor.findNicknamesByWorksIds(existingWorksIds).stream()
                 .map(nickname -> nickname.getWorksId() + ":" + nickname.getNormalized())
                 .collect(Collectors.toCollection(HashSet::new));
 
@@ -84,13 +81,11 @@ public class WorksNicknameService {
             }
         }
 
-        worksNicknameRepository.saveAll(newNicknames);
+        worksAdaptor.saveNicknames(newNicknames);
         return new WorksNicknameBulkResponse(newNicknames.size(), duplicateCount, unknownWorksCount, invalidCount);
     }
 
     public void deleteNickname(Long worksId, Long nicknameId) {
-        WorksNickname worksNickname = worksNicknameRepository.findByIdAndWorksId(nicknameId, worksId)
-                .orElseThrow(() -> WorksNicknameNotFoundException.EXCEPTION);
-        worksNicknameRepository.delete(worksNickname);
+        worksAdaptor.deleteNickname(worksAdaptor.findNickname(nicknameId, worksId));
     }
 }

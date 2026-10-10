@@ -237,6 +237,7 @@ public enum ErrorCode {
     USER_NOT_SUSPENDED(HttpStatus.BAD_REQUEST, "USER_ERROR_005", "정지 상태가 아닌 유저입니다."),
     USER_ALREADY_SUSPENDED(HttpStatus.CONFLICT, "USER_ERROR_006", "이미 정지 처리된 유저입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_ERROR_007", "계정이 유효하지 않습니다."),
+    INVALID_SUSPENSION_PERIOD(HttpStatus.BAD_REQUEST, "USER_ERROR_008", "정지 만료 시각은 현재 이후여야 합니다."),
 
     // Terms error
     DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다."),

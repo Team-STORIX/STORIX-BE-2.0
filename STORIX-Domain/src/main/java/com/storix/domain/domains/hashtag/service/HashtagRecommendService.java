@@ -3,9 +3,12 @@ package com.storix.domain.domains.hashtag.service;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.favorite.dto.FavoriteWorksWithCreatedAt;
 import com.storix.domain.domains.hashtag.dto.HashtagInfo;
+import com.storix.domain.domains.hashtag.dto.HashtagRank;
 import com.storix.domain.domains.hashtag.adaptor.HashtagAdaptor;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendationContext;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
+import com.storix.domain.domains.hashtag.dto.HashtagRecommendationAction;
+import com.storix.domain.domains.hashtag.dto.HashtagScore;
 import com.storix.domain.domains.preference.adaptor.ExplorationAdaptor;
 import com.storix.domain.domains.preference.dto.ExplorationReactionWithCreatedAt;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
@@ -14,6 +17,7 @@ import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.Genre;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -44,6 +48,7 @@ public class HashtagRecommendService {
     private final WorksAdaptor workAdaptor;
     private final HashtagCacheHelper hashtagCacheHelper;
 
+    @Transactional(readOnly = true)
     public HashtagRecommendationContext collectRecommendationContext(Long userId) {
 
         User user = userAdaptor.findUserById(userId);
@@ -57,6 +62,7 @@ public class HashtagRecommendService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<HashtagRecommendResponseDto> calculatePersonalizedHashtags(
             HashtagRecommendationContext context,
             int recommendationLimit
@@ -174,21 +180,21 @@ public class HashtagRecommendService {
 
         return scoreMap.values().stream()
                 // 싫어요가 더 많아 음수가 된 태그는 추천 대상에서 제외
-                .filter(score -> score.rawScore > 0)
+                .filter(score -> score.getRawScore() > 0)
                 // 이름이 없는 태그는 노출 불가
-                .filter(score -> score.name != null && !score.name.isBlank())
+                .filter(score -> score.getName() != null && !score.getName().isBlank())
                 // 장르명과 동일한 태그는 너무 포괄적이어서 제외 (예: "로맨스", "스릴러")
-                .filter(score -> !genreNames.contains(score.name.trim()))
+                .filter(score -> !genreNames.contains(score.getName().trim()))
                 .map(score -> new HashtagRank(
-                        score.id,
-                        score.name,
+                        score.getId(),
+                        score.getName(),
                         // IDF 보정: 흔한 태그의 점수를 낮춰 다양한 추천 유도
                         calculateFinalScore(
-                                score.rawScore,
+                                score.getRawScore(),
                                 totalWorksCount,
-                                documentFrequencyMap.getOrDefault(score.id, 0L)
+                                documentFrequencyMap.getOrDefault(score.getId(), 0L)
                         ),
-                        score.positiveCount
+                        score.getPositiveCount()
                 ))
                 // IDF 보정 후에도 0 이하가 된 태그는 제외
                 .filter(rank -> rank.finalScore() > 0)
@@ -226,6 +232,7 @@ public class HashtagRecommendService {
         return Math.pow(0.5, ageDays / HALF_LIFE_DAYS);
     }
 
+    @Transactional(readOnly = true)
     public List<HashtagRecommendResponseDto> fillWithFallback(
             List<HashtagRecommendResponseDto> personalized,
             Set<Genre> favoriteGenres,
@@ -291,44 +298,5 @@ public class HashtagRecommendService {
         return Arrays.stream(Genre.values())
                 .map(Genre::getDbValue)
                 .collect(Collectors.toCollection(HashSet::new));
-    }
-
-    private record HashtagRank(
-            Long id,
-            String name,
-            double finalScore,
-            int positiveCount
-    ) {
-        private HashtagRecommendResponseDto toResponse() {
-            return new HashtagRecommendResponseDto(id, name, Math.round(finalScore));
-        }
-    }
-
-    private record HashtagRecommendationAction(
-            Long worksId,
-            double baseScore,
-            LocalDateTime createdAt
-    ) {
-    }
-
-    private static class HashtagScore {
-        private final Long id;
-        private final String name;
-        private double rawScore;
-        private int positiveCount;
-
-        private HashtagScore(Long id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        private void addRawScore(double score) {
-            this.rawScore += score;
-        }
-
-        private void increasePositiveCount() {
-            this.positiveCount++;
-        }
-
     }
 }

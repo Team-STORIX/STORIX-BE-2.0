@@ -3,6 +3,7 @@ package com.storix.domain.domains.works.adaptor;
 import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
 import com.storix.domain.domains.plus.exception.WorksNotExistException;
 import com.storix.domain.domains.works.domain.Genre;
+import com.storix.domain.domains.search.exception.WorksNicknameNotFoundException;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksNickname;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -253,5 +255,35 @@ public class WorksAdaptor {
 
     public Works save(Works works) {
         return worksRepository.save(works);
+    }
+
+    /** 작품 별칭 */
+    public List<WorksNickname> findNicknames(Long worksId) {
+        return worksNicknameRepository.findByWorksIdOrderByIdAsc(worksId);
+    }
+
+    public List<WorksNickname> findNicknamesByWorksIds(Collection<Long> worksIds) {
+        return worksNicknameRepository.findByWorksIdIn(worksIds);
+    }
+
+    public boolean existsNickname(Long worksId, String normalized) {
+        return worksNicknameRepository.existsByWorksIdAndNormalized(worksId, normalized);
+    }
+
+    public WorksNickname findNickname(Long nicknameId, Long worksId) {
+        return worksNicknameRepository.findByIdAndWorksId(nicknameId, worksId)
+                .orElseThrow(() -> WorksNicknameNotFoundException.EXCEPTION);
+    }
+
+    public WorksNickname saveNicknameAndFlush(WorksNickname worksNickname) {
+        return worksNicknameRepository.saveAndFlush(worksNickname);
+    }
+
+    public void saveNicknames(List<WorksNickname> worksNicknames) {
+        worksNicknameRepository.saveAll(worksNicknames);
+    }
+
+    public void deleteNickname(WorksNickname worksNickname) {
+        worksNicknameRepository.delete(worksNickname);
     }
 }

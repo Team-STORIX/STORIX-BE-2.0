@@ -9,6 +9,9 @@ import com.storix.domain.domains.event.exception.AppEventInvalidWinnerCountExcep
 import com.storix.domain.domains.event.exception.AppEventNoWinnerException;
 import com.storix.domain.domains.event.exception.AppEventNotEndedException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.event.adaptor.AppEventWinnerAdaptor;
+import com.storix.common.code.ErrorCode;
+import com.storix.common.exception.STORIXDynamicException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +28,7 @@ public class AppEventFinalizeService {
 
     // 구현체 없으면 Spring이 빈 리스트 주입
     private final List<EventWinnerFinalizer> finalizers;
-    private final AppEventWinnerService appEventWinnerService;
+    private final AppEventWinnerAdaptor appEventWinnerAdaptor;
     private final AppEventAdaptor appEventAdaptor;
     private final UserAdaptor userAdaptor;
 
@@ -42,7 +45,7 @@ public class AppEventFinalizeService {
             throw AppEventNoWinnerException.EXCEPTION;
         }
         // 확정된 결과는 다시 뽑지 않는다
-        List<EventWinner> confirmed = appEventWinnerService.findWinners(appEventId);
+        List<EventWinner> confirmed = appEventWinnerAdaptor.findWinners(appEventId);
         if (!confirmed.isEmpty()) {
             log.atInfo()
                     .addKeyValue("appEventId", appEventId)
@@ -63,11 +66,11 @@ public class AppEventFinalizeService {
                 .findFirst()
                 // 이벤트 종류에 맞는 확정 구현이 없다는 뜻이라 클라이언트가 할 수 있는 게 없다.
                 // 전용 에러코드 대신 폴백으로 보내 500 과 스택트레이스를 남긴다
-                .orElseThrow(() -> new IllegalStateException(
-                        "당첨자 확정 구현이 없습니다. eventType=" + event.getEventType()));
+                .orElseThrow(() -> new STORIXDynamicException(
+                        ErrorCode.INTERNAL_SERVER_ERROR, "당첨자 확정 구현이 없습니다. eventType=" + event.getEventType(), null));
 
         List<EventWinner> winners = finalizer.resolveWinners(event, winnerCount);
-        appEventWinnerService.saveWinners(appEventId, winners);
+        winners.forEach(winner -> appEventWinnerAdaptor.insertWinnerIfAbsent(appEventId, winner.userId(), winner.drawOrder()));
         log.atInfo()
                 .addKeyValue("appEventId", appEventId)
                 .addKeyValue("appEventType", event.getEventType())

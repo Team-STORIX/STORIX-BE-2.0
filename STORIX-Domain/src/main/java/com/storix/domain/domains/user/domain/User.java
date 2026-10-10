@@ -1,6 +1,7 @@
 package com.storix.domain.domains.user.domain;
 
 import com.storix.domain.domains.works.domain.Genre;
+import com.storix.domain.domains.user.exception.admin.InvalidSuspensionPeriodException;
 import com.storix.domain.domains.user.exception.auth.AlreadyWithDrawUserException;
 import com.storix.domain.domains.user.exception.auth.SuspendedUserException;
 import com.storix.common.model.BaseTimeEntity;
@@ -177,7 +178,7 @@ public class User extends BaseTimeEntity {
             throw AlreadyWithDrawUserException.EXCEPTION;
         }
         if (until == null || !until.isAfter(LocalDateTime.now())) {
-            throw new IllegalArgumentException("정지 만료 시각은 현재 이후여야 합니다");
+            throw InvalidSuspensionPeriodException.EXCEPTION;
         }
         this.accountState = AccountState.SUSPENDED;
         this.suspendedUntil = until;
