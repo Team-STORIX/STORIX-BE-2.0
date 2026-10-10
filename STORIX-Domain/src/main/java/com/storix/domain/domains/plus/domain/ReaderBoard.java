@@ -17,7 +17,8 @@ import java.util.List;
         indexes = {
                 @Index(name = "idx_reader_board_user_id", columnList = "user_id"),
                 // 오늘의 피드 후보 조회용
-                @Index(name = "idx_reader_board_deleted_created", columnList = "deleted, created_at")
+                @Index(name = "idx_reader_board_deleted_created", columnList = "deleted, created_at"),
+                @Index(name = "idx_reader_board_works_deleted", columnList = "works_id, deleted")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

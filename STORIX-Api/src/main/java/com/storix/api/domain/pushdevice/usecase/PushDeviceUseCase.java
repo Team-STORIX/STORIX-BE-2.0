@@ -5,6 +5,7 @@ import com.storix.api.domain.pushdevice.controller.dto.RefreshFcmTokenRequest;
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.appversion.exception.BlockedAppVersionException;
 import com.storix.domain.domains.appversion.service.AppVersionService;
+import com.storix.domain.domains.pushdevice.domain.PushDevice;
 import com.storix.domain.domains.pushdevice.service.PushDeviceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,12 @@ public class PushDeviceUseCase {
 
     // 3. FCM 토큰 갱신
     public void refreshFcmToken(Long userId, RefreshFcmTokenRequest request) {
+        PushDevice device = pushDeviceService.getDevice(userId, request.installationId());
+        if (appVersionService.isBlocked(device.getOsPlatform(), device.getAppVersion())) {
+            log.warn(">>> [PushDevice] 차단 버전 토큰 갱신 거부 installationId={}, platform={}, appVersion={}",
+                    request.installationId(), device.getOsPlatform(), device.getAppVersion());
+            throw BlockedAppVersionException.EXCEPTION;
+        }
         pushDeviceService.refreshFcmToken(userId, request.installationId(), request.fcmToken());
         log.info(">>> [PushDevice] FCM 토큰 갱신 installationId={}", request.installationId());
     }

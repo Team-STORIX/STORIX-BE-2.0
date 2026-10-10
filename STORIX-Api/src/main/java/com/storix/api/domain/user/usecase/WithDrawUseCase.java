@@ -4,6 +4,7 @@ import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.WithdrawReason;
 import com.storix.domain.domains.user.service.AuthService;
+import com.storix.domain.domains.user.service.UserWithdrawalHelper;
 import com.storix.api.domain.user.helper.OAuthHelper;
 import com.storix.api.domain.user.helper.CookieHelper;
 import com.storix.common.payload.CustomResponse;
@@ -20,6 +21,7 @@ import java.util.Set;
 public class WithDrawUseCase {
 
     private final AuthService authService;
+    private final UserWithdrawalHelper userWithdrawalHelper;
 
     private final OAuthHelper oauthHelper;
     private final CookieHelper cookieHelper;
@@ -43,7 +45,7 @@ public class WithDrawUseCase {
         }
 
         // 2. 유저 탈퇴 처리 (RefreshToken / 관심작품 / 서재 삭제 + 푸시 알림 발송 대상 제외 + 탈퇴 사유 로그)
-        authService.withDrawUser(userId, reasons, detail);
+        userWithdrawalHelper.withdraw(userId, reasons, detail);
         log.info(">>> [Withdraw] 탈퇴 완료 reasons={}", reasons);
 
         return ResponseEntity.ok()

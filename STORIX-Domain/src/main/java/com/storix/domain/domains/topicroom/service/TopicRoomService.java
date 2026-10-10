@@ -12,9 +12,6 @@ import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
 import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
 import com.storix.domain.domains.search.adaptor.WorksSearchAdaptor;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
-import com.storix.domain.domains.search.dto.SearchResponseWrapperDto;
-import com.storix.domain.domains.search.dto.TrendingItem;
-import com.storix.domain.domains.search.service.SearchHistoryService;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
@@ -36,6 +33,7 @@ import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
+import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -58,19 +56,18 @@ import java.util.Set;
 @Slf4j
 public class TopicRoomService {
 
-    private final SearchHistoryService searchHistoryService;
     private final BannedWordAdaptor bannedWordAdaptor;
     private final GenreScorePublisher genreScorePublisher;
     private final ReportCaseAdaptor reportCaseAdaptor;
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
+    private final ChatAdaptor chatAdaptor;
     private final UserAdaptor userAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final WorksAdaptor worksAdaptor;
     private final WorksSearchAdaptor worksSearchAdaptor;
     private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
     private final NotificationPublisher notificationPublisher;
-    private final TopicRoomUnreadService topicRoomUnreadService;
 
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
 
@@ -88,7 +85,7 @@ public class TopicRoomService {
         List<Long> roomIds = participations.stream()
                 .map(p -> p.getTopicRoom().getId())
                 .toList();
-        Map<Long, Integer> unreadMap = topicRoomUnreadService.getUnreadCounts(userId, roomIds);
+        Map<Long, Integer> unreadMap = chatAdaptor.findUnreadCountMap(userId, roomIds);
 
         boolean excludeAdult = excludeAdultFor(userId, worksMap.values());
 
@@ -188,28 +185,14 @@ public class TopicRoomService {
                 .toList();
     }
 
-    public SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable) {
+    public Slice<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable) {
 
         List<Long> worksIds = worksAdaptor.findAllIdsByKeyword(keyword);
 
         Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchBySearchCondition(worksIds, keyword, pageable);
         applyMembershipStatus(rooms.getContent(), userId);
         maskAdultThumbnails(rooms.getContent(), userId);
-
-        String fallback = null;
-
-        if (rooms.isEmpty()) {
-            List<TrendingItem> trending = searchHistoryService.getTrendingKeywords();
-            if (!trending.isEmpty()) {
-                Collections.shuffle(trending);
-                fallback = trending.get(0).getKeyword();
-            }
-        }
-
-        return SearchResponseWrapperDto.<TopicRoomResponseDto>builder()
-                .result(rooms)
-                .fallbackRecommendation(fallback)
-                .build();
+        return rooms;
     }
 
     // 토픽룸 다중 필터 검색
@@ -253,7 +236,7 @@ public class TopicRoomService {
             throw MaxLimitException.EXCEPTION;
         }
 
-        AdultContentPolicy.check(works.getAgeClassification(), () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(user.getId()));
+        AdultContentPolicy.check(works.getAgeClassification(), () -> !adultVerificationAdaptor.excludeAdultFor(user.getId()));
 
         TopicRoom room = TopicRoom.builder()
                 .topicRoomName(request.getTopicRoomName())
@@ -282,7 +265,7 @@ public class TopicRoomService {
         TopicRoom room = topicRoomAdaptor.findById(roomId);
         Works works = worksAdaptor.findById(room.getWorksId());
 
-        AdultContentPolicy.check(works.getAgeClassification(), () -> adultVerificationAdaptor.findLatestVerifiedAtByUserId(user.getId()));
+        AdultContentPolicy.check(works.getAgeClassification(), () -> !adultVerificationAdaptor.excludeAdultFor(user.getId()));
         if (topicRoomAdaptor.countJoinedRooms(userId) >= 9)
             throw MaxLimitException.EXCEPTION;
 

@@ -5,6 +5,8 @@ import com.storix.domain.domains.notification.adaptor.NotificationAdaptor;
 import com.storix.domain.domains.notification.domain.Notification;
 import com.storix.domain.domains.notification.dto.NotificationResponseDto;
 import com.storix.domain.domains.notification.exception.UnauthorizedNotificationException;
+import com.storix.domain.domains.notification.publisher.NotificationPublisher;
+import com.storix.domain.domains.notification.event.NotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,7 @@ public class NotificationService {
 
     private final NotificationAdaptor notificationAdaptor;
     private final ChatAdaptor chatAdaptor;
+    private final NotificationPublisher notificationPublisher;
 
     // 1. 전체 알림 목록 조회 (커서 기반)
     @Transactional(readOnly = true)
@@ -66,5 +69,11 @@ public class NotificationService {
     @Transactional
     public void readAllNotifications(Long userId) {
         notificationAdaptor.bulkMarkAsRead(userId);
+    }
+
+    // 커밋 후 발송 리스너가 돌도록 트랜잭션 안에서 발행
+    @Transactional
+    public void publishTest(NotificationEvent event) {
+        notificationPublisher.publish(event);
     }
 }

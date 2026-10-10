@@ -10,7 +10,7 @@ import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -19,9 +19,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class AdminNotificationTargetService {
+public class AdminNotificationTargetHelper {
 
     private final AdminNotificationAdaptor adminNotificationAdaptor;
     private final AdminNotificationLogAdaptor adminNotificationLogAdaptor;

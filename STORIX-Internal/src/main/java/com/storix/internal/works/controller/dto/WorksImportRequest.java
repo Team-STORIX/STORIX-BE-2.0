@@ -1,4 +1,4 @@
-package com.storix.api.domain.works.controller.dto;
+package com.storix.internal.works.controller.dto;
 
 import com.storix.domain.domains.works.dto.WorksImportItem;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,14 +20,14 @@ public record WorksImportRequest(
                 .map(item -> new WorksImportItem(item.stagingId(), item.worksName(), item.artistName(),
                         item.author(), item.illustrator(), item.originalAuthor(),
                         item.ageClassification(), item.genre(), item.worksType(), item.platform(), item.landingUrl(),
-                        item.description(), item.thumbnailUrl(), item.hashtags()))
+                        item.description(), item.thumbnailUrl(), item.hashtags(), item.targetWorksId(), Boolean.TRUE.equals(item.createNew())))
                 .toList();
     }
 
     public record Item(
             @Schema(description = "검수 서비스의 staging ID. 결과를 맞춰 보는 데만 쓴다", example = "123")
             Long stagingId,
-            @Schema(description = "작품명. 작가명과 함께 기존 작품 판별 기준", example = "나 혼자만 레벨업")
+            @Schema(description = "작품명. 작가 · 작품 유형과 함께 기존 작품 판별 기준", example = "나 혼자만 레벨업")
             String worksName,
             @Schema(description = "전체 작가", example = "추공, 장성락")
             String artistName,
@@ -47,7 +47,11 @@ public record WorksImportRequest(
             String description,
             String thumbnailUrl,
             @Schema(description = "비우면 기존 해시태그를 그대로 둔다")
-            List<String> hashtags
+            List<String> hashtags,
+            @Schema(description = "갱신할 기존 작품 id. 있으면 판정 없이 이 작품의 보낸 필드만 갱신한다. 이때 작품명 · 작가 · 작품 유형도 생략할 수 있다", example = "2782")
+            Long targetWorksId,
+            @Schema(description = "사람이 중복 의심 후보와 다른 작품이라고 판단했으면 true. 중복 의심 판정 없이 새로 만든다", example = "false")
+            Boolean createNew
     ) {
     }
 }

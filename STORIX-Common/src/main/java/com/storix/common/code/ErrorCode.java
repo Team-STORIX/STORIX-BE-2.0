@@ -24,6 +24,7 @@ public enum ErrorCode {
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_003", "토큰이 만료되었습니다. 토큰을 재 발급 해주세요."),
     REFRESH_TOKEN_EXPIRED(HttpStatus.FORBIDDEN, "TOKEN_ERROR_004", "토큰이 만료되었습니다. 재로그인 해주세요."),
     ONBOARDING_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_005", "온보딩 토큰이 만료되었습니다. 소셜 로그인 재시도 해주세요."),
+    INVALID_INTERNAL_API_KEY(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_006", "내부 API 키가 없거나 올바르지 않습니다."),
     REFRESH_TOKEN_NOT_EXIST(HttpStatus.UNAUTHORIZED, "COOKIE_ERROR_001", "쿠키가 만료되었거나 저장되지 않았습니다. 로그인 해주세요."),
 
     // Auth error
@@ -192,7 +193,11 @@ public enum ErrorCode {
     REVIEW_DELETE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "WORKS_ERROR_004", "리뷰 삭제 요청 처리 중 문제가 발생하였습니다."),
     DUPLICATE_REVIEW_USER_REPORT(HttpStatus.BAD_REQUEST, "WORKS_ERROR_005", "이미 신고가 완료된 리뷰입니다."),
     INVALID_REVIEW_USER_REPORT(HttpStatus.BAD_REQUEST, "WORKS_ERROR_006", "신고 정보가 올바르지 않습니다."),
-    WORKS_IMPORT_IN_PROGRESS(HttpStatus.CONFLICT, "WORKS_ERROR_007", "작품 적재가 이미 진행 중입니다."),
+    WORKS_IMPORT_IN_PROGRESS(HttpStatus.CONFLICT, "WORKS_ERROR_007", "작품 적재 · 병합이 이미 진행 중입니다."),
+    WORKS_IMPORT_REQUIRED_VALUE(HttpStatus.BAD_REQUEST, "WORKS_ERROR_008", "작품 적재에 필요한 값이 비어 있습니다."),
+    WORKS_IMPORT_UNKNOWN_ENUM(HttpStatus.BAD_REQUEST, "WORKS_ERROR_009", "enum 카탈로그에 없는 값입니다."),
+    WORKS_MERGE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "WORKS_ERROR_010", "작품 병합 요청이 올바르지 않습니다."),
+    WORKS_MERGE_CONFLICT(HttpStatus.CONFLICT, "WORKS_ERROR_011", "합칠 수 없는 데이터가 있어 작품 병합을 거절했습니다."),
 
     // Favorite error
     FAVORITE_WORKS_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "FAVORITE_ERROR_001", "이미 관심 작품 해제가 되었거나, 관심 작품으로 등록한 적 없는 작품입니다."),
@@ -235,6 +240,7 @@ public enum ErrorCode {
     USER_NOT_SUSPENDED(HttpStatus.BAD_REQUEST, "USER_ERROR_005", "정지 상태가 아닌 유저입니다."),
     USER_ALREADY_SUSPENDED(HttpStatus.CONFLICT, "USER_ERROR_006", "이미 정지 처리된 유저입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_ERROR_007", "계정이 유효하지 않습니다."),
+    INVALID_SUSPENSION_PERIOD(HttpStatus.BAD_REQUEST, "USER_ERROR_008", "정지 만료 시각은 현재 이후여야 합니다."),
 
     // Terms error
     DUPLICATE_TERMS_VERSION(HttpStatus.CONFLICT, "TERMS_ERROR_001", "이미 등록된 약관 종류/버전입니다."),

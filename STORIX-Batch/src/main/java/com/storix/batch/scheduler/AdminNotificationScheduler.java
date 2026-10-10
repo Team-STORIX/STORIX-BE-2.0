@@ -2,7 +2,7 @@ package com.storix.batch.scheduler;
 
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.notification.service.AdminNotificationBroadcastService;
-import com.storix.domain.domains.notification.service.AdminNotificationLifecycleService;
+import com.storix.domain.domains.notification.service.AdminNotificationLifecycleHelper;
 import com.storix.infrastructure.external.notification.dispatcher.AdminNotificationRetryer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +25,14 @@ public class AdminNotificationScheduler {
 
     private static final String MDC_KEY = STORIXStatic.Mdc.ADMIN_NOTIFICATION_ID;
 
-    private final AdminNotificationLifecycleService adminNotificationLifecycleService;
+    private final AdminNotificationLifecycleHelper adminNotificationLifecycleHelper;
     private final AdminNotificationBroadcastService adminNotificationBroadcastService;
     private final AdminNotificationRetryer adminNotificationRetryer;
 
     // 예약 시각이 된 발송 실행
     @Scheduled(cron = "0 0/5 * * * *", zone = "Asia/Seoul")
     public void broadcastDueNotifications() {
-        adminNotificationLifecycleService.findDueNotifications(LocalDateTime.now())
+        adminNotificationLifecycleHelper.findDueNotifications(LocalDateTime.now())
                 .forEach(notification -> {
                     log.info(">>> [AdminNotificationScheduler] broadcast 예약 발송 id={}", notification.getId());
                     adminNotificationBroadcastService.broadcast(notification.getId());
@@ -46,24 +46,24 @@ public class AdminNotificationScheduler {
         LocalDateTime now = LocalDateTime.now();
 
         // 0. 전송 중(SENDING)으로 멈춘 로그 회수
-        int recoveredLogs = adminNotificationLifecycleService.resetStaleSendingLogs(now.minusMinutes(SENDING_LOG_STALE_MINUTES));
+        int recoveredLogs = adminNotificationLifecycleHelper.resetStaleSendingLogs(now.minusMinutes(SENDING_LOG_STALE_MINUTES));
 
         // 1. 전체 청크 발행 완료이지만, SENDING 인 발송 종료
-        List<Long> completable = adminNotificationLifecycleService.findCompletableSendingIds();
-        reconcileEach(completable, "완료 종료", id -> withMdc(id, adminNotificationLifecycleService::tryFinalize));
+        List<Long> completable = adminNotificationLifecycleHelper.findCompletableSendingIds();
+        reconcileEach(completable, "완료 종료", id -> withMdc(id, adminNotificationLifecycleHelper::tryFinalize));
 
         // 2. 2시간 넘게 진행 없는 발행 중단 건 강제 마감
-        List<Long> abandoned = adminNotificationLifecycleService.findStaleIncompleteSendingIds(now.minusHours(RESUME_GIVEUP_HOURS));
-        reconcileEach(abandoned, "발행 중단 강제 마감", id -> withMdc(id, adminNotificationLifecycleService::forceFinalize));
+        List<Long> abandoned = adminNotificationLifecycleHelper.findStaleIncompleteSendingIds(now.minusHours(RESUME_GIVEUP_HOURS));
+        reconcileEach(abandoned, "발행 중단 강제 마감", id -> withMdc(id, adminNotificationLifecycleHelper::forceFinalize));
 
         // 3. 발행 도중 멈춘 발송 -> 커서부터 재개
         LocalDateTime resumeCutoff = now.minusMinutes(STALE_MINUTES);
-        List<Long> resumable = adminNotificationLifecycleService.findStaleIncompleteSendingIds(resumeCutoff);
+        List<Long> resumable = adminNotificationLifecycleHelper.findStaleIncompleteSendingIds(resumeCutoff);
         reconcileEach(resumable, "재개", id -> adminNotificationBroadcastService.resumeBroadcast(id, resumeCutoff));
 
         // 4. 발행은 끝났는데 멈춘 발송 -> 강제 종료
-        List<Long> stale = adminNotificationLifecycleService.findStaleCompletedSendingIds(now.minusMinutes(STALE_MINUTES));
-        reconcileEach(stale, "완료 정체 강제 종료", id -> withMdc(id, adminNotificationLifecycleService::forceFinalize));
+        List<Long> stale = adminNotificationLifecycleHelper.findStaleCompletedSendingIds(now.minusMinutes(STALE_MINUTES));
+        reconcileEach(stale, "완료 정체 강제 종료", id -> withMdc(id, adminNotificationLifecycleHelper::forceFinalize));
 
         if (recoveredLogs > 0 || !completable.isEmpty() || !abandoned.isEmpty() || !resumable.isEmpty() || !stale.isEmpty()) {
             log.info(">>> [AdminNotificationScheduler] 상태 보정 recoveredLogs={} completable={} abandoned={} resumed={} stale={}",

@@ -22,7 +22,9 @@ public class SecurityEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        ErrorCode code = ErrorCode.TOKEN_NOT_EXIST;
+        ErrorCode code = InternalApiKeyFilter.isInternalRequest(request)
+                ? ErrorCode.INVALID_INTERNAL_API_KEY
+                : ErrorCode.TOKEN_NOT_EXIST;
 
         log.warn(">>> [Http] 인증 실패 code={} status={} message={}",
                 code.getCode(), code.getHttpStatus().value(), code.getMessage());

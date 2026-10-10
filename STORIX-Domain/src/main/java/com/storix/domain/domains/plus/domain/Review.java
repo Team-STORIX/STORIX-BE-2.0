@@ -20,6 +20,9 @@ import java.time.LocalDateTime;
                         name = "uk_review_library_works",
                         columnNames = {"library_user_id", "works_id"}
                 )
+        },
+        indexes = {
+                @Index(name = "idx_review_works_deleted", columnList = "works_id, deleted")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

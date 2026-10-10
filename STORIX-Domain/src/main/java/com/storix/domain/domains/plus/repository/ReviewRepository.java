@@ -144,9 +144,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     int deleteByIdAndUserId(@Param("reviewId") Long reviewId,
                             @Param("userId") Long userId);
 
+    // 하드 delete 대상 선정 — id 정렬로 청크 반복 시 반환 순서를 결정적으로 유지
+    @Query("SELECT r.id FROM Review r WHERE r.deleted = true AND r.deletedAt < :cutoff ORDER BY r.id ASC")
+    List<Long> findIdsForHardDelete(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM Review r WHERE r.deleted = true AND r.deletedAt < :cutoff")
-    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
+    @Query("DELETE FROM Review r WHERE r.id IN :ids")
+    int hardDeleteByIds(@Param("ids") List<Long> ids);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Review r " +
@@ -179,4 +183,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Long> findWorksIdsByRatings(@Param("userId") Long userId,
                                      @Param("ratings") List<Rating> ratings);
 
+    /** 작품 병합 — 삭제된 리뷰도 고유 제약에 걸려 함께 조회 */
+    @Query("SELECT r.libraryUserId FROM Review r WHERE r.worksId = :worksId")
+    List<Long> findLibraryUserIdsByWorksId(@Param("worksId") Long worksId);
+
+    @Query("SELECT r.rating FROM Review r WHERE r.worksId = :worksId AND r.deleted = false")
+    List<Rating> findActiveRatingsByWorksId(@Param("worksId") Long worksId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Review e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
+    int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
 }

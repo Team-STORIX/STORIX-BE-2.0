@@ -1,6 +1,7 @@
 package com.storix.domain.domains.event.service;
 
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
+import com.storix.domain.domains.event.adaptor.AppEventWinnerAdaptor;
 import com.storix.domain.domains.event.adaptor.AttendanceCheckAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventType;
@@ -9,7 +10,6 @@ import com.storix.domain.domains.event.dto.AttendanceDrawResponse;
 import com.storix.domain.domains.event.dto.AttendanceDrawWinner;
 import com.storix.domain.domains.event.dto.EventWinner;
 import com.storix.domain.domains.event.exception.AttendanceEventNotFoundException;
-import com.storix.domain.domains.event.service.winner.AppEventWinnerService;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ class AttendanceDrawServiceTest {
     private AttendanceCheckAdaptor attendanceCheckAdaptor;
 
     @Mock
-    private AppEventWinnerService appEventWinnerService;
+    private AppEventWinnerAdaptor appEventWinnerAdaptor;
 
     @Mock
     private UserAdaptor userAdaptor;
@@ -76,7 +76,7 @@ class AttendanceDrawServiceTest {
     }
 
     private void givenConfirmedWinners(EventWinner... winners) {
-        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of(winners));
+        given(appEventWinnerAdaptor.findWinners(EVENT_ID)).willReturn(List.of(winners));
     }
 
     @Test
@@ -179,7 +179,7 @@ class AttendanceDrawServiceTest {
         assertThatThrownBy(() -> attendanceDrawService.findWinners(EVENT_ID))
                 .isInstanceOf(AttendanceEventNotFoundException.class);
 
-        verify(appEventWinnerService, never()).findWinners(EVENT_ID);
+        verify(appEventWinnerAdaptor, never()).findWinners(EVENT_ID);
     }
 
     @Test
@@ -192,6 +192,6 @@ class AttendanceDrawServiceTest {
                 .isInstanceOf(AttendanceEventNotFoundException.class);
 
         verify(attendanceCheckAdaptor, never()).findAttendeeCounts(EVENT_ID);
-        verify(appEventWinnerService, never()).findWinners(EVENT_ID);
+        verify(appEventWinnerAdaptor, never()).findWinners(EVENT_ID);
     }
 }

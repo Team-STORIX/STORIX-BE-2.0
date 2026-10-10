@@ -8,6 +8,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.storix.domain.domains.search.helper.HangulTextHelper;
 import com.storix.domain.domains.search.config.WorksIndexProperties;
+import com.storix.domain.domains.search.dto.WorksDocument;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.WorksType;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +29,7 @@ public class WorksSearchAdaptor {
     private static final int MAX_FUZZY_IDS = 100;
     private static final String FUZZY_MINIMUM_MATCH = "70%";
     private static final int MIN_FUZZY_LENGTH = 4;
+    private static final int BEST_MATCH_CANDIDATES = 10;
 
     private final ElasticsearchClient client;
     private final WorksIndexProperties worksIndexProperties;
@@ -47,6 +50,62 @@ public class WorksSearchAdaptor {
             return Optional.of(ids);
         } catch (Exception e) {
             log.warn(">>> [WorksSearch] ES 검색 실패 keyword={}, cause={}", keyword, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    // 적재 중복 의심 후보 조회
+    public Optional<List<Long>> findSimilarIds(String titleKey, WorksType worksType, int size) {
+        if (titleKey == null || titleKey.isEmpty()) return Optional.of(List.of());
+
+        BoolQuery.Builder bool = new BoolQuery.Builder()
+                .should(q -> q.wildcard(w -> w.field("worksName").value("*" + titleKey + "*")))
+                .should(q -> q.match(m -> m
+                        .field("worksNameJamo")
+                        .query(HangulTextHelper.jamo(titleKey))
+                        .minimumShouldMatch(FUZZY_MINIMUM_MATCH)))
+                .minimumShouldMatch("1");
+        addFilters(bool, List.of(worksType), null);
+
+        try {
+            return Optional.of(search(bool.build()._toQuery(), size));
+        } catch (Exception e) {
+            log.warn(">>> [WorksSearch] 중복 후보 조회 실패 titleKey={}, cause={}", titleKey, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    // 인기 검색어에 올릴 작품. 제목 일치 > 제목 앞부분 > 제목 포함 > 초성 > 별칭 · 작가 순, 같으면 짧은 제목
+    public Optional<Long> findBestMatchId(String keyword, List<WorksType> worksTypes, List<Genre> genres) {
+        String normalized = HangulTextHelper.normalize(keyword);
+        if (normalized.isEmpty()) return Optional.empty();
+
+        String pattern = "*" + normalized + "*";
+        BoolQuery.Builder bool = new BoolQuery.Builder()
+                .should(q -> q.term(t -> t.field("worksName").value(normalized).boost(16f)))
+                .should(q -> q.prefix(p -> p.field("worksName").value(normalized).boost(8f)))
+                .should(q -> q.wildcard(w -> w.field("worksName").value(pattern).boost(4f)))
+                .should(q -> q.term(t -> t.field("worksNameChosung").value(normalized).boost(3f)))
+                .should(q -> q.wildcard(w -> w.field("worksNameChosung").value(pattern).boost(2f)))
+                .should(q -> q.wildcard(w -> w.field("nicknames").value(pattern)))
+                .should(q -> q.wildcard(w -> w.field("authors").value(pattern)))
+                .minimumShouldMatch("1");
+        addFilters(bool, worksTypes, genres);
+
+        try {
+            SearchResponse<WorksDocument> response = client.search(s -> s
+                    .index(worksIndexProperties.alias())
+                    .query(bool.build()._toQuery())
+                    .size(BEST_MATCH_CANDIDATES)
+                    .source(src -> src.filter(f -> f.includes("worksId", "worksName"))), WorksDocument.class);
+            return response.hits().hits().stream()
+                    .filter(hit -> hit.source() != null)
+                    .min(Comparator.comparing((Hit<WorksDocument> hit) -> -hit.score())
+                            .thenComparingInt(hit -> hit.source().worksName().length())
+                            .thenComparing(hit -> hit.source().worksId()))
+                    .map(hit -> hit.source().worksId());
+        } catch (Exception e) {
+            log.warn(">>> [WorksSearch] 인기 검색어 작품 조회 실패 keyword={}, cause={}", keyword, e.getMessage());
             return Optional.empty();
         }
     }

@@ -3,6 +3,7 @@ package com.storix.domain.domains.works.adaptor;
 import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
 import com.storix.domain.domains.plus.exception.WorksNotExistException;
 import com.storix.domain.domains.works.domain.Genre;
+import com.storix.domain.domains.search.exception.WorksNicknameNotFoundException;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksNickname;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -13,6 +14,7 @@ import com.storix.domain.domains.works.dto.WorksInfo;
 import com.storix.domain.domains.works.exception.UnknownWorksException;
 import com.storix.domain.domains.works.repository.WorksNicknameRepository;
 import com.storix.domain.domains.works.repository.WorksRepository;
+import com.storix.domain.domains.works.dto.WorksMoveCount;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Limit;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -240,5 +243,59 @@ public class WorksAdaptor {
         }
 
         return worksRepository.findAllById(worksIds);
+    }
+
+    /** 작품 적재 */
+    public List<Works> findByNormalizedNameAndWorksType(String normalizedName, WorksType worksType) {
+        return worksRepository.findByNormalizedNameAndWorksTypeOrderByIdAsc(normalizedName, worksType);
+    }
+
+    public List<Works> findWithoutNormalizedNameAfter(Long lastWorksId, int size) {
+        return worksRepository.findByNormalizedNameIsNullAndIdGreaterThanOrderByIdAsc(lastWorksId, Limit.of(size));
+    }
+
+    public Works save(Works works) {
+        return worksRepository.save(works);
+    }
+
+    /** 작품 별칭 */
+    public List<WorksNickname> findNicknames(Long worksId) {
+        return worksNicknameRepository.findByWorksIdOrderByIdAsc(worksId);
+    }
+
+    public List<WorksNickname> findNicknamesByWorksIds(Collection<Long> worksIds) {
+        return worksNicknameRepository.findByWorksIdIn(worksIds);
+    }
+
+    public boolean existsNickname(Long worksId, String normalized) {
+        return worksNicknameRepository.existsByWorksIdAndNormalized(worksId, normalized);
+    }
+
+    public WorksNickname findNickname(Long nicknameId, Long worksId) {
+        return worksNicknameRepository.findByIdAndWorksId(nicknameId, worksId)
+                .orElseThrow(() -> WorksNicknameNotFoundException.EXCEPTION);
+    }
+
+    public WorksNickname saveNicknameAndFlush(WorksNickname worksNickname) {
+        return worksNicknameRepository.saveAndFlush(worksNickname);
+    }
+
+    public void saveNicknames(List<WorksNickname> worksNicknames) {
+        worksNicknameRepository.saveAll(worksNicknames);
+    }
+
+    public void deleteNickname(WorksNickname worksNickname) {
+        worksNicknameRepository.delete(worksNickname);
+    }
+
+    /** 작품 병합 — 중복 별칭은 삭제 후 이동 */
+    public WorksMoveCount moveNicknames(Long fromWorksId, Long toWorksId) {
+        List<String> existing = worksNicknameRepository.findNormalizedByWorksId(toWorksId);
+        int removed = existing.isEmpty() ? 0 : worksNicknameRepository.deleteByWorksIdAndNormalized(fromWorksId, existing);
+        return new WorksMoveCount(worksNicknameRepository.moveWorks(fromWorksId, toWorksId), removed);
+    }
+
+    public void delete(Works works) {
+        worksRepository.delete(works);
     }
 }

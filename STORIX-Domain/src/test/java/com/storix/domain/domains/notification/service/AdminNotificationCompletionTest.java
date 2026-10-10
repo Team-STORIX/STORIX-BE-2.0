@@ -48,15 +48,15 @@ class AdminNotificationCompletionTest {
     @Mock
     private NotificationAdaptor notificationAdaptor;
 
-    private AdminNotificationLifecycleService lifecycleService;
+    private AdminNotificationLifecycleHelper lifecycleHelper;
     private AdminNotificationDeliveryResultService deliveryResultService;
 
     @BeforeEach
     void setUp() {
-        lifecycleService = new AdminNotificationLifecycleService(
+        lifecycleHelper = new AdminNotificationLifecycleHelper(
                 adminNotificationAdaptor, adminNotificationLogAdaptor, new SimpleMeterRegistry());
         deliveryResultService = new AdminNotificationDeliveryResultService(
-                adminNotificationAdaptor, adminNotificationLogAdaptor, notificationAdaptor, lifecycleService);
+                adminNotificationAdaptor, adminNotificationLogAdaptor, notificationAdaptor, lifecycleHelper);
     }
 
     private AdminNotification notification(AdminNotificationStatus status, boolean allChunkPublished,
@@ -103,7 +103,7 @@ class AdminNotificationCompletionTest {
         void transition_wins() {
             given(adminNotificationAdaptor.startSending(eq(ID), any(LocalDateTime.class))).willReturn(1);
 
-            AdminNotificationStartResult result = lifecycleService.startSending(ID);
+            AdminNotificationStartResult result = lifecycleHelper.startSending(ID);
 
             assertThat(result.started()).isTrue();
             assertThat(result.status()).isEqualTo(AdminNotificationStatus.SENDING);
@@ -117,7 +117,7 @@ class AdminNotificationCompletionTest {
             given(adminNotificationAdaptor.findById(ID))
                     .willReturn(notification(AdminNotificationStatus.SENT, false, 0, 0, 0));
 
-            AdminNotificationStartResult result = lifecycleService.startSending(ID);
+            AdminNotificationStartResult result = lifecycleHelper.startSending(ID);
 
             assertThat(result.started()).isFalse();
             assertThat(result.status()).isEqualTo(AdminNotificationStatus.SENT);
@@ -134,7 +134,7 @@ class AdminNotificationCompletionTest {
             given(adminNotificationAdaptor.findById(ID))
                     .willReturn(notification(AdminNotificationStatus.SENT, true, 0, 0, 0));
 
-            lifecycleService.tryFinalize(ID);
+            lifecycleHelper.tryFinalize(ID);
 
             verify(adminNotificationAdaptor, never())
                     .finalizeIfSending(any(), any(), anyInt(), anyInt(), anyInt(), any());
@@ -146,7 +146,7 @@ class AdminNotificationCompletionTest {
             given(adminNotificationAdaptor.findById(ID))
                     .willReturn(notification(AdminNotificationStatus.SENDING, false, 0, 0, 0));
 
-            lifecycleService.tryFinalize(ID);
+            lifecycleHelper.tryFinalize(ID);
 
             verify(adminNotificationAdaptor, never())
                     .finalizeIfSending(any(), any(), anyInt(), anyInt(), anyInt(), any());
@@ -160,7 +160,7 @@ class AdminNotificationCompletionTest {
             given(adminNotificationLogAdaptor.existsIncomplete(eq(ID)))
                     .willReturn(true);
 
-            lifecycleService.tryFinalize(ID);
+            lifecycleHelper.tryFinalize(ID);
 
             verify(adminNotificationAdaptor, never())
                     .finalizeIfSending(any(), any(), anyInt(), anyInt(), anyInt(), any());
@@ -173,7 +173,7 @@ class AdminNotificationCompletionTest {
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
             stubLogCounts(0, 10, 0, 0);
 
-            lifecycleService.tryFinalize(ID);
+            lifecycleHelper.tryFinalize(ID);
 
             verify(adminNotificationAdaptor).finalizeIfSending(
                     eq(ID), eq(AdminNotificationStatus.SENT), eq(10), eq(0), eq(0), any(LocalDateTime.class));
@@ -186,7 +186,7 @@ class AdminNotificationCompletionTest {
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
             stubLogCounts(0, 7, 3, 0);
 
-            lifecycleService.tryFinalize(ID);
+            lifecycleHelper.tryFinalize(ID);
 
             verify(adminNotificationAdaptor).finalizeIfSending(
                     eq(ID), eq(AdminNotificationStatus.FAILED), eq(7), eq(3), eq(0), any(LocalDateTime.class));
@@ -199,7 +199,7 @@ class AdminNotificationCompletionTest {
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
             stubLogCounts(0, 7, 0, 3);
 
-            lifecycleService.tryFinalize(ID);
+            lifecycleHelper.tryFinalize(ID);
 
             verify(adminNotificationAdaptor).finalizeIfSending(
                     eq(ID), eq(AdminNotificationStatus.SENT), eq(7), eq(0), eq(3), any(LocalDateTime.class));
@@ -212,7 +212,7 @@ class AdminNotificationCompletionTest {
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
             stubLogCounts(0, 7, 2, 1);
 
-            lifecycleService.tryFinalize(ID);
+            lifecycleHelper.tryFinalize(ID);
 
             verify(adminNotificationAdaptor).finalizeIfSending(
                     eq(ID), eq(AdminNotificationStatus.FAILED), eq(7), eq(2), eq(1), any(LocalDateTime.class));
@@ -225,7 +225,7 @@ class AdminNotificationCompletionTest {
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
             stubLogCounts(0, 0, 0, 0);
 
-            lifecycleService.tryFinalize(ID);
+            lifecycleHelper.tryFinalize(ID);
 
             verify(adminNotificationAdaptor).finalizeIfSending(
                     eq(ID), eq(AdminNotificationStatus.SENT), eq(0), eq(0), eq(0), any(LocalDateTime.class));
@@ -243,7 +243,7 @@ class AdminNotificationCompletionTest {
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
             given(adminNotificationLogAdaptor.countGroupByStatus(eq(ID))).willReturn(logCounts(4, 2, 0));
 
-            lifecycleService.forceFinalize(ID);
+            lifecycleHelper.forceFinalize(ID);
 
             verify(adminNotificationAdaptor).finalizeIfSending(
                     eq(ID), eq(AdminNotificationStatus.FAILED), eq(4), eq(2), eq(0), any(LocalDateTime.class));
@@ -256,7 +256,7 @@ class AdminNotificationCompletionTest {
                     .willReturn(notification(AdminNotificationStatus.SENDING, false, 0, 0, 0));
             given(adminNotificationLogAdaptor.countGroupByStatus(eq(ID))).willReturn(logCounts(0, 0, 0));
 
-            lifecycleService.forceFinalize(ID);
+            lifecycleHelper.forceFinalize(ID);
 
             verify(adminNotificationAdaptor).finalizeIfSending(
                     eq(ID), eq(AdminNotificationStatus.FAILED), eq(0), eq(0), eq(0), any(LocalDateTime.class));
@@ -268,7 +268,7 @@ class AdminNotificationCompletionTest {
             given(adminNotificationAdaptor.findById(ID))
                     .willReturn(notification(AdminNotificationStatus.FAILED, true, 0, 0, 0));
 
-            lifecycleService.forceFinalize(ID);
+            lifecycleHelper.forceFinalize(ID);
 
             verify(adminNotificationAdaptor, never())
                     .finalizeIfSending(any(), any(), anyInt(), anyInt(), anyInt(), any());
@@ -281,7 +281,7 @@ class AdminNotificationCompletionTest {
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
             given(adminNotificationLogAdaptor.countGroupByStatus(eq(ID))).willReturn(logCounts(3, 2, 0));
 
-            lifecycleService.forceFinalize(ID);
+            lifecycleHelper.forceFinalize(ID);
 
             verify(adminNotificationLogAdaptor).failIncompleteLogs(ID);
             verify(adminNotificationAdaptor).finalizeIfSending(
@@ -299,7 +299,7 @@ class AdminNotificationCompletionTest {
             given(adminNotificationAdaptor.startRebroadcast(eq(ID), any(LocalDateTime.class))).willReturn(1);
             given(adminNotificationLogAdaptor.reviveFailedLogs(eq(ID), any(LocalDateTime.class))).willReturn(5);
 
-            lifecycleService.prepareRebroadcast(ID);
+            lifecycleHelper.prepareRebroadcast(ID);
 
             verify(adminNotificationAdaptor).startRebroadcast(eq(ID), any(LocalDateTime.class));
             verify(adminNotificationLogAdaptor).reviveFailedLogs(eq(ID), any(LocalDateTime.class));
@@ -310,7 +310,7 @@ class AdminNotificationCompletionTest {
         void reject_when_transition_loses() {
             given(adminNotificationAdaptor.startRebroadcast(eq(ID), any(LocalDateTime.class))).willReturn(0);
 
-            assertThatThrownBy(() -> lifecycleService.prepareRebroadcast(ID))
+            assertThatThrownBy(() -> lifecycleHelper.prepareRebroadcast(ID))
                     .isInstanceOf(AdminNotificationNotRebroadcastableException.class);
 
             verify(adminNotificationLogAdaptor, never()).reviveFailedLogs(any(), any(LocalDateTime.class));
@@ -324,7 +324,7 @@ class AdminNotificationCompletionTest {
         @Test
         @DisplayName("부모 updatedAt touch 를 위임한다 (발행완료 SENDING 조건은 쿼리 WHERE 가 담당)")
         void delegates_touch() {
-            lifecycleService.touchProgress(ID);
+            lifecycleHelper.touchProgress(ID);
 
             verify(adminNotificationAdaptor).touchProgress(eq(ID), any(LocalDateTime.class));
         }
@@ -355,7 +355,7 @@ class AdminNotificationCompletionTest {
                     .willReturn(notification(AdminNotificationStatus.SENDING, true, 0, 0, 0));
             stubLogCounts(0, 7, 3, 0); // PENDING 0, 실패 존재 → FAILED
 
-            lifecycleService.markAllChunkPublished(ID, 10);
+            lifecycleHelper.markAllChunkPublished(ID, 10);
 
             verify(adminNotificationAdaptor).markAllChunkPublished(eq(ID), eq(10), any(LocalDateTime.class));
             verify(adminNotificationAdaptor).finalizeIfSending(

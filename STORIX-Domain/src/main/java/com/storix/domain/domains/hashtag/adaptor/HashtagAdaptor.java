@@ -1,5 +1,6 @@
 package com.storix.domain.domains.hashtag.adaptor;
 
+import com.storix.domain.domains.hashtag.domain.Hashtag;
 import com.storix.domain.domains.hashtag.dto.HashtagDocumentFrequency;
 import com.storix.domain.domains.hashtag.dto.HashtagInfo;
 import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
@@ -64,5 +65,11 @@ public class HashtagAdaptor {
 
     public List<HashtagRecommendResponseDto> recommendGlobalPopular(int limit) {
         return hashtagRepository.findGlobalPopular(PageRequest.of(0, limit));
+    }
+
+    public Set<Hashtag> findOrCreateAll(List<String> names) {
+        return names.stream()
+                .map(name -> hashtagRepository.findByName(name).orElseGet(() -> hashtagRepository.save(new Hashtag(name))))
+                .collect(Collectors.toSet());
     }
 }

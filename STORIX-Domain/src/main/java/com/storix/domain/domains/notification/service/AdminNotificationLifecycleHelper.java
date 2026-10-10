@@ -12,7 +12,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class AdminNotificationLifecycleService {
+public class AdminNotificationLifecycleHelper {
 
     private static final int DUE_NOTIFICATION_SIZE = 20;
     private static final int RECONCILE_BATCH_SIZE = 20;

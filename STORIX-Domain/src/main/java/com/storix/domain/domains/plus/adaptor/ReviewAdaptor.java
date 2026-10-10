@@ -10,7 +10,12 @@ import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import com.storix.domain.domains.works.exception.InvalidReviewDeleteRequestException;
 import com.storix.domain.domains.works.exception.InvalidReviewUpdateRequestException;
 import com.storix.domain.domains.works.exception.UnknownReviewException;
+import com.storix.common.utils.STORIXStatic;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +31,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ReviewAdaptor {
 
+    private final PlatformTransactionManager transactionManager;
     private final ReviewRepository reviewRepository;
 
     // 플러스탭
@@ -159,8 +165,33 @@ public class ReviewAdaptor {
                 userId, List.of(Rating.FIVE, Rating.FOUR_POINT_FIVE));
     }
 
+    // 청크 단위 트랜잭션으로 삭제
     public int hardDeleteBefore(LocalDateTime cutoff) {
-        return reviewRepository.hardDeleteBefore(cutoff);
+        TransactionTemplate chunkTx = new TransactionTemplate(transactionManager);
+        chunkTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        int total = 0;
+        while (true) {
+            Integer deleted = chunkTx.execute(status -> {
+                List<Long> ids = reviewRepository.findIdsForHardDelete(
+                        cutoff, PageRequest.of(0, STORIXStatic.HARD_DELETE_CHUNK_SIZE));
+                return ids.isEmpty() ? 0 : reviewRepository.hardDeleteByIds(ids);
+            });
+            if (deleted == null || deleted == 0) return total;
+            total += deleted;
+        }
     }
 
+    /** 작품 병합 */
+    public List<Long> findLibraryUserIdsByWorksId(Long worksId) {
+        return reviewRepository.findLibraryUserIdsByWorksId(worksId);
+    }
+
+    public List<Rating> findActiveRatingsByWorksId(Long worksId) {
+        return reviewRepository.findActiveRatingsByWorksId(worksId);
+    }
+
+    public int moveWorks(Long fromWorksId, Long toWorksId) {
+        return reviewRepository.moveWorks(fromWorksId, toWorksId);
+    }
 }

@@ -1,6 +1,8 @@
 package com.storix.domain.domains.event.service.winner;
 
+import com.storix.common.exception.STORIXDynamicException;
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
+import com.storix.domain.domains.event.adaptor.AppEventWinnerAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventType;
 import com.storix.domain.domains.event.dto.AppEventDrawWinner;
@@ -46,7 +48,7 @@ class AppEventFinalizeServiceTest {
     private EventWinnerFinalizer finalizer;
 
     @Mock
-    private AppEventWinnerService appEventWinnerService;
+    private AppEventWinnerAdaptor appEventWinnerAdaptor;
 
     @Mock
     private AppEventAdaptor appEventAdaptor;
@@ -59,7 +61,7 @@ class AppEventFinalizeServiceTest {
     @BeforeEach
     void setUp() {
         appEventFinalizeService = new AppEventFinalizeService(
-                List.of(finalizer), appEventWinnerService, appEventAdaptor, userAdaptor);
+                List.of(finalizer), appEventWinnerAdaptor, appEventAdaptor, userAdaptor);
     }
 
     private AppEvent event(boolean hasWinner, LocalDateTime endAt) {
@@ -87,7 +89,7 @@ class AppEventFinalizeServiceTest {
     void finalizes_on_first_call() {
         List<EventWinner> drawn = List.of(new EventWinner(1L, 1), new EventWinner(2L, 2));
         givenEvent(true);
-        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of());
+        given(appEventWinnerAdaptor.findWinners(EVENT_ID)).willReturn(List.of());
         given(finalizer.supports(any(AppEvent.class))).willReturn(true);
         given(finalizer.resolveWinners(any(AppEvent.class), eq(2))).willReturn(drawn);
         given(userAdaptor.findNicknameMapByUserIds(anyList()))
@@ -101,7 +103,7 @@ class AppEventFinalizeServiceTest {
         assertThat(response.winners()).extracting(AppEventDrawWinner::userId).containsExactly(1L, 2L);
         assertThat(response.winners()).extracting(AppEventDrawWinner::nickName).containsExactly("닉네임1", "닉네임2");
 
-        verify(appEventWinnerService).saveWinners(EVENT_ID, drawn);
+        drawn.forEach(winner -> verify(appEventWinnerAdaptor).insertWinnerIfAbsent(EVENT_ID, winner.userId(), winner.drawOrder()));
     }
 
     // 공정성·감사 근거를 위해 확정된 결과는 다시 뽑지 않는다
@@ -109,7 +111,7 @@ class AppEventFinalizeServiceTest {
     @DisplayName("이미 확정된 이벤트는 재추첨하지 않고 저장된 당첨자를 alreadyFinalized=true 로 반환한다")
     void returns_confirmed_winners_without_redrawing() {
         givenEvent(true);
-        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of(new EventWinner(7L, 1)));
+        given(appEventWinnerAdaptor.findWinners(EVENT_ID)).willReturn(List.of(new EventWinner(7L, 1)));
         given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of(7L, "닉네임7"));
 
         AppEventWinnerDrawResponse response = appEventFinalizeService.finalizeWinners(EVENT_ID, 10);
@@ -118,7 +120,7 @@ class AppEventFinalizeServiceTest {
         assertThat(response.winners()).extracting(AppEventDrawWinner::userId).containsExactly(7L);
 
         verify(finalizer, never()).resolveWinners(any(AppEvent.class), anyInt());
-        verify(appEventWinnerService, never()).saveWinners(anyLong(), anyList());
+        verify(appEventWinnerAdaptor, never()).insertWinnerIfAbsent(anyLong(), anyLong(), anyInt());
     }
 
     // 당첨자가 이미 탈퇴한 경우 등
@@ -126,7 +128,7 @@ class AppEventFinalizeServiceTest {
     @DisplayName("닉네임을 찾지 못한 당첨자도 순서·userId 는 그대로 반환한다")
     void tolerates_missing_nickname() {
         givenEvent(true);
-        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of(new EventWinner(7L, 1)));
+        given(appEventWinnerAdaptor.findWinners(EVENT_ID)).willReturn(List.of(new EventWinner(7L, 1)));
         given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of());
 
         AppEventDrawWinner winner = appEventFinalizeService.finalizeWinners(EVENT_ID, 10).winners().get(0);
@@ -144,7 +146,7 @@ class AppEventFinalizeServiceTest {
                 .isInstanceOf(AppEventInvalidWinnerCountException.class);
 
         verify(appEventAdaptor, never()).findByIdForUpdate(anyLong());
-        verify(appEventWinnerService, never()).saveWinners(anyLong(), anyList());
+        verify(appEventWinnerAdaptor, never()).insertWinnerIfAbsent(anyLong(), anyLong(), anyInt());
     }
 
     @Test
@@ -155,7 +157,7 @@ class AppEventFinalizeServiceTest {
         assertThatThrownBy(() -> appEventFinalizeService.finalizeWinners(EVENT_ID, 3))
                 .isInstanceOf(AppEventNoWinnerException.class);
 
-        verify(appEventWinnerService, never()).saveWinners(anyLong(), anyList());
+        verify(appEventWinnerAdaptor, never()).insertWinnerIfAbsent(anyLong(), anyLong(), anyInt());
     }
 
     // 추첨은 되돌릴 수 없어 진행 중 확정은 남은 기간 참여자를 영구 제외시킨다
@@ -163,13 +165,13 @@ class AppEventFinalizeServiceTest {
     @DisplayName("아직 종료되지 않은 이벤트면 400을 던지고 추첨하지 않는다")
     void rejects_not_ended_event() {
         givenOngoingEvent();
-        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of());
+        given(appEventWinnerAdaptor.findWinners(EVENT_ID)).willReturn(List.of());
 
         assertThatThrownBy(() -> appEventFinalizeService.finalizeWinners(EVENT_ID, 3))
                 .isInstanceOf(AppEventNotEndedException.class);
 
         verify(finalizer, never()).resolveWinners(any(AppEvent.class), anyInt());
-        verify(appEventWinnerService, never()).saveWinners(anyLong(), anyList());
+        verify(appEventWinnerAdaptor, never()).insertWinnerIfAbsent(anyLong(), anyLong(), anyInt());
     }
 
     // 확정 이력 조회까지 막으면 당첨자 알림 발송이 끊긴다
@@ -177,7 +179,7 @@ class AppEventFinalizeServiceTest {
     @DisplayName("종료 전이라도 이미 확정된 이벤트면 저장된 당첨자를 그대로 반환한다")
     void returns_confirmed_winners_even_before_end() {
         givenOngoingEvent();
-        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of(new EventWinner(7L, 1)));
+        given(appEventWinnerAdaptor.findWinners(EVENT_ID)).willReturn(List.of(new EventWinner(7L, 1)));
         given(userAdaptor.findNicknameMapByUserIds(anyList())).willReturn(Map.of(7L, "닉네임7"));
 
         AppEventWinnerDrawResponse response = appEventFinalizeService.finalizeWinners(EVENT_ID, 3);
@@ -190,10 +192,10 @@ class AppEventFinalizeServiceTest {
     @DisplayName("이벤트 유형을 지원하는 finalizer가 없으면 500을 던진다")
     void rejects_unsupported_event_type() {
         givenEvent(true);
-        given(appEventWinnerService.findWinners(EVENT_ID)).willReturn(List.of());
+        given(appEventWinnerAdaptor.findWinners(EVENT_ID)).willReturn(List.of());
         given(finalizer.supports(any(AppEvent.class))).willReturn(false);
 
         assertThatThrownBy(() -> appEventFinalizeService.finalizeWinners(EVENT_ID, 3))
-                .isInstanceOf(IllegalStateException.class);   // 미구현은 백엔드 문제라 폴백 500 으로 나간다
+                .isInstanceOf(STORIXDynamicException.class);   // 미구현은 백엔드 문제라 500 으로 나간다
     }
 }

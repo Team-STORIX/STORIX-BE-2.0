@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,7 @@ public class UserSanctionHistoryAdaptor {
         return userSanctionHistoryRepository.findPageByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
+    @Transactional
     public int deleteExpiredBefore(LocalDateTime cutoff) {
         return userSanctionHistoryRepository.deleteExpiredBefore(cutoff);
     }

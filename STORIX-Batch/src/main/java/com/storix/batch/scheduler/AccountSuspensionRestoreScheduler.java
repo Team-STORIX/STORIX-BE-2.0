@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +22,6 @@ public class AccountSuspensionRestoreScheduler {
      * restore()는 단순 필드 변경 외 부수효과가 없어 엔티티 로딩 없이 벌크 UPDATE로 처리한다.
      */
     @Scheduled(cron = "0 0 3 * * *")
-    @Transactional
     public void restoreExpiredSuspensions() {
         int restoredCount = userAdaptor.restoreExpiredSuspensions(LocalDateTime.now());
         log.info(">>>> [Scheduler] 계정 정지 해제 완료: {}건", restoredCount);

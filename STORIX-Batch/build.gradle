@@ -7,4 +7,5 @@ dependencies {
     implementation project(':STORIX-Infrastructure')
 
     implementation 'org.springframework.boot:spring-boot-starter'
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.3.0'
 }

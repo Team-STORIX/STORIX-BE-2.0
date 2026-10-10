@@ -5,8 +5,12 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(
@@ -14,7 +18,8 @@ import java.util.Set;
         indexes = {
                 @Index(name = "idx_works_author", columnList = "author"),
                 @Index(name = "idx_works_illustrator", columnList = "illustrator"),
-                @Index(name = "idx_works_original_author", columnList = "original_author")
+                @Index(name = "idx_works_original_author", columnList = "original_author"),
+                @Index(name = "idx_works_normalized_name_type", columnList = "normalized_name, works_type")
         }
 )
 @Getter
@@ -31,6 +36,9 @@ public class Works {
     // 작품명
     @Column(name = "works_name", nullable = false)
     private String worksName;
+
+    @Column(name = "normalized_name")
+    private String normalizedName;
 
     // 전체 작가
     @Column(name = "artist_name", nullable = false)
@@ -94,6 +102,7 @@ public class Works {
                   WorksType worksType) {
 
         this.worksName = worksName;
+        this.normalizedName = WorksIdentity.titleKey(worksName);
         this.artistName = artistName;
         this.author = author;
         this.illustrator = illustrator;
@@ -110,6 +119,10 @@ public class Works {
         this.hashtags = new HashSet<>();
     }
 
+    public void refreshNormalizedName() {
+        this.normalizedName = WorksIdentity.titleKey(worksName);
+    }
+
     public void addPlatform(Platform platform) {
         addPlatform(platform, null);
     }
@@ -120,37 +133,85 @@ public class Works {
     }
 
     // 플랫폼에서 표지 · 연령가 등이 바뀌므로 새 값이 있으면 덮어쓰고, 비어 있으면 기존 값을 둔다
-    public boolean updateFromImport(String author, String illustrator, String originalAuthor,
-                                    AgeClassification ageClassification, Genre genre, WorksType worksType,
-                                    String description, String thumbnailUrl) {
-        boolean changed = false;
-        if (hasText(author) && !author.equals(this.author)) { this.author = author; changed = true; }
-        if (hasText(illustrator) && !illustrator.equals(this.illustrator)) { this.illustrator = illustrator; changed = true; }
-        if (hasText(originalAuthor) && !originalAuthor.equals(this.originalAuthor)) { this.originalAuthor = originalAuthor; changed = true; }
-        if (ageClassification != null && ageClassification != this.ageClassification) { this.ageClassification = ageClassification; changed = true; }
-        if (genre != null && genre != this.genre) { this.genre = genre; changed = true; }
-        if (worksType != null && worksType != this.worksType) { this.worksType = worksType; changed = true; }
-        if (hasText(description) && !description.equals(this.description)) { this.description = description; changed = true; }
-        if (hasText(thumbnailUrl) && !thumbnailUrl.equals(this.thumbnailUrl)) { this.thumbnailUrl = thumbnailUrl; changed = true; }
-        return changed;
+    public List<String> updateFromImport(String author, String illustrator, String originalAuthor,
+                                         AgeClassification ageClassification, Genre genre, WorksType worksType,
+                                         String description, String thumbnailUrl) {
+        List<String> changes = new ArrayList<>();
+        this.author = merge("author", author, this.author, changes, true);
+        this.illustrator = merge("illustrator", illustrator, this.illustrator, changes, true);
+        this.originalAuthor = merge("originalAuthor", originalAuthor, this.originalAuthor, changes, true);
+        this.ageClassification = merge("ageClassification", ageClassification, this.ageClassification, changes, true);
+        this.genre = merge("genre", genre, this.genre, changes, true);
+        this.worksType = merge("worksType", worksType, this.worksType, changes, true);
+        this.description = merge("description", description, this.description, changes, false);
+        this.thumbnailUrl = merge("thumbnailUrl", thumbnailUrl, this.thumbnailUrl, changes, true);
+        return changes;
     }
 
-    public boolean putPlatform(Platform platform, String landingUrl) {
-        return platforms.stream()
+    private static <T> T merge(String field, T incoming, T current, List<String> changes, boolean withValue) {
+        if (incoming == null || (incoming instanceof String text && text.isBlank()) || incoming.equals(current)) {
+            return current;
+        }
+        changes.add(withValue ? field + ":" + current + "->" + incoming : field);
+        return incoming;
+    }
+
+    // 새로 붙으면 platform:+이름(링크), 링크만 바뀌면 landingUrl:이름:이전->새링크, 그대로면 null
+    public String putPlatform(Platform platform, String landingUrl) {
+        WorksPlatform existing = platforms.stream()
                 .filter(worksPlatform -> worksPlatform.getPlatform() == platform)
                 .findFirst()
-                .map(worksPlatform -> worksPlatform.updateLandingUrl(landingUrl))
-                .orElseGet(() -> {
-                    addPlatform(platform, hasText(landingUrl) ? landingUrl : null);
-                    return true;
-                });
+                .orElse(null);
+        if (existing == null) {
+            String url = hasText(landingUrl) ? landingUrl : null;
+            addPlatform(platform, url);
+            return "platform:+" + platform.name() + (url == null ? "" : "(" + url + ")");
+        }
+        String before = existing.getLandingUrl();
+        return existing.updateLandingUrl(landingUrl) ? "landingUrl:" + platform.name() + ":" + before + "->" + landingUrl : null;
     }
 
-    public boolean replaceHashtags(Set<Hashtag> newHashtags) {
-        if (hashtags.equals(newHashtags)) return false;
+    // 붙은 태그는 +, 빠진 태그는 - 로 돌려준다. 그대로면 null
+    public String replaceHashtags(Set<Hashtag> newHashtags) {
+        if (hashtags.equals(newHashtags)) return null;
+        Set<String> before = hashtags.stream().map(Hashtag::getName).collect(Collectors.toCollection(TreeSet::new));
+        Set<String> after = newHashtags.stream().map(Hashtag::getName).collect(Collectors.toCollection(TreeSet::new));
         hashtags.clear();
         hashtags.addAll(newHashtags);
-        return true;
+
+        List<String> diff = new ArrayList<>();
+        after.stream().filter(name -> !before.contains(name)).forEach(name -> diff.add("+" + name));
+        before.stream().filter(name -> !after.contains(name)).forEach(name -> diff.add("-" + name));
+        return "hashtags:" + String.join(",", diff);
+    }
+
+    // 병합: keep 값을 우선하고 비어 있는 필드 · 없는 플랫폼 링크만 drop 값으로 채움
+    public void mergeFrom(Works drop) {
+        if (!hasText(artistName)) this.artistName = drop.artistName;
+        if (!hasText(author)) this.author = drop.author;
+        if (!hasText(illustrator)) this.illustrator = drop.illustrator;
+        if (!hasText(originalAuthor)) this.originalAuthor = drop.originalAuthor;
+        if (!hasText(description)) this.description = drop.description;
+        if (!hasText(thumbnailUrl)) this.thumbnailUrl = drop.thumbnailUrl;
+        if (ageClassification == null) this.ageClassification = drop.ageClassification;
+        if (genre == null) this.genre = drop.genre;
+        if (worksType == null) this.worksType = drop.worksType;
+        if (Boolean.TRUE.equals(drop.isOnboarding)) this.isOnboarding = true;
+
+        drop.platforms.forEach(dropPlatform -> platforms.stream()
+                .filter(platform -> platform.getPlatform() == dropPlatform.getPlatform())
+                .findFirst()
+                .ifPresentOrElse(
+                        platform -> {
+                            if (!hasText(platform.getLandingUrl())) platform.updateLandingUrl(dropPlatform.getLandingUrl());
+                        },
+                        () -> addPlatform(dropPlatform.getPlatform(), dropPlatform.getLandingUrl())));
+        hashtags.addAll(drop.hashtags);
+    }
+
+    public void applyReviewStats(int reviewsCount, double avgRating) {
+        this.reviewsCount = reviewsCount;
+        this.avgRating = avgRating;
     }
 
     private static boolean hasText(String value) {
