@@ -25,7 +25,6 @@ public record StandardLibraryWorksInfo(
 ) {
     public static StandardLibraryWorksInfo of(
             LibraryWorksInfo worksInfo,
-            String artistName,
             Long reviewId,
             Rating rating,
             boolean excludeAdult
@@ -37,7 +36,7 @@ public record StandardLibraryWorksInfo(
                 // 작품 정보
                 worksInfo.worksId(),
                 worksInfo.worksName(),
-                artistName,
+                worksInfo.artistName(),
                 isBlinded ? null : worksInfo.thumbnailUrl(),
                 worksInfo.worksType() != null ? worksInfo.worksType().getDbValue() : null,
                 worksInfo.genre() != null ? worksInfo.genre().getDbValue() : null,

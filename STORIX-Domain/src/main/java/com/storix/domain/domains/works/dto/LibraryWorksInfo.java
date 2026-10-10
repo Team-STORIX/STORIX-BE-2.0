@@ -8,6 +8,7 @@ public record LibraryWorksInfo(
         // 작품 정보
         Long worksId,
         String worksName,
+        String artistName,
         String author,
         String illustrator,
         String originalAuthor,

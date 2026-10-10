@@ -6,7 +6,6 @@ import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.library.dto.StandardLibraryWorksInfo;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
-import com.storix.domain.domains.works.application.helper.ArtistNameParseHelper;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +31,6 @@ public class LibraryService {
     private final LibraryAdaptor libraryAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
-
-    private final ArtistNameParseHelper artistNameParseHelper;
 
     // 총 리뷰 개수 정보 조회
     @Transactional(readOnly = true)
@@ -82,10 +79,7 @@ public class LibraryService {
                         return null;
                     }
 
-                    String artistName = artistNameParseHelper
-                            .buildArtistName(works.originalAuthor(), works.author(), works.illustrator());
-
-                    return StandardLibraryWorksInfo.of(works, artistName, r.reviewId(), r.rating(), excludeAdult);
+                    return StandardLibraryWorksInfo.of(works, r.reviewId(), r.rating(), excludeAdult);
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -127,10 +121,7 @@ public class LibraryService {
                         return null;
                     }
 
-                    String artistName = artistNameParseHelper
-                            .buildArtistName(w.originalAuthor(), w.author(), w.illustrator());
-
-                    return StandardLibraryWorksInfo.of(w, artistName, r.reviewId(), r.rating(), excludeAdult);
+                    return StandardLibraryWorksInfo.of(w, r.reviewId(), r.rating(), excludeAdult);
                 })
                 .filter(Objects::nonNull)
                 .toList();

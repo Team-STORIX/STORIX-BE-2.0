@@ -24,15 +24,12 @@ public class StandardOnboardingWorksInfo {
         this.artistName = artistName;
     }
 
-    public static StandardOnboardingWorksInfo of(
-            OnboardingWorksInfo raw,
-            String artistName
-    ) {
+    public static StandardOnboardingWorksInfo of(OnboardingWorksInfo raw) {
         return new StandardOnboardingWorksInfo(
                 raw.getWorksId(),
                 raw.getWorksName(),
                 raw.getThumbnailUrl(),
-                artistName
+                raw.getArtistName()
         );
     }
 }
