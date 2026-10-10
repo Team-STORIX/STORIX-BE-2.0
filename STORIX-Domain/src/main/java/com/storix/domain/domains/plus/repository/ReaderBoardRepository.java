@@ -159,12 +159,12 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long> 
     List<ReaderBoard> findByWorksIdInAndIdGreaterThanAndDeletedFalseOrderByIdAsc(Collection<Long> worksIds, Long id, Limit limit);
 
     @Query("SELECT rb FROM ReaderBoard rb " +
-            "WHERE rb.content LIKE %:keyword% AND rb.deleted = false " +
+            "WHERE rb.content LIKE CONCAT('%', :keyword, '%') ESCAPE '!' AND rb.deleted = false " +
             "ORDER BY rb.createdAt DESC")
     Slice<ReaderBoard> searchByContent(@Param("keyword") String keyword, Pageable pageable);
 
     @Query("SELECT rb FROM ReaderBoard rb " +
-            "WHERE rb.content LIKE %:keyword% AND rb.userId NOT IN :blockedIds AND rb.deleted = false " +
+            "WHERE rb.content LIKE CONCAT('%', :keyword, '%') ESCAPE '!' AND rb.userId NOT IN :blockedIds AND rb.deleted = false " +
             "ORDER BY rb.createdAt DESC")
     Slice<ReaderBoard> searchByContentExcludingBlocked(
             @Param("keyword") String keyword,
