@@ -28,7 +28,13 @@ public class InternalApiKeyFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().startsWith(STORIXStatic.Internal.URI_PREFIX);
+        return !isInternalRequest(request);
+    }
+
+    // context-path 뺀 경로 기준. SecurityConfig requestMatchers 와 동일
+    static boolean isInternalRequest(HttpServletRequest request) {
+        return request.getRequestURI().substring(request.getContextPath().length())
+                .startsWith(STORIXStatic.Internal.URI_PREFIX);
     }
 
     // 키가 맞으면 INTERNAL 권한만 준다. 틀리면 인증 없이 넘겨 SecurityEntryPoint 가 401 로 막음
