@@ -152,7 +152,6 @@ public class Works {
         this.author = merge("author", author, this.author, changes, true);
         this.illustrator = merge("illustrator", illustrator, this.illustrator, changes, true);
         this.originalAuthor = merge("originalAuthor", originalAuthor, this.originalAuthor, changes, true);
-        // 연령은 올리기만. 플랫폼마다 표기가 달라 낮은 값으로 덮이지 않게
         this.ageClassification = merge("ageClassification", AgeClassification.higher(this.ageClassification, ageClassification), this.ageClassification, changes, true);
         this.genre = merge("genre", genre, this.genre, changes, true);
         this.worksType = merge("worksType", worksType, this.worksType, changes, true);
