@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @Builder
 public record WorksDetailResponseDto(
@@ -34,13 +36,17 @@ public record WorksDetailResponseDto(
                 .filter(worksPlatform -> worksPlatform.getPlatform() != null)
                 .sorted(Comparator.comparing(WorksPlatform::getPlatform))
                 .toList();
+        List<String> writers = splitNames(works.getOriginalAuthor(), works.getAuthor());
+        List<String> illustrators = splitNames(works.getIllustrator()).stream()
+                .filter(name -> !writers.contains(name))
+                .toList();
         return WorksDetailResponseDto.builder()
                 .worksId(works.getId())
                 .worksName(works.getWorksName())
                 .worksType(works.getWorksType() != null ? works.getWorksType().getDbValue() : null)
                 .thumbnailUrl(works.getThumbnailUrl())
-                .author(works.getAuthor())
-                .illustrator(resolveIllustrator(works.getAuthor(), works.getIllustrator()))
+                .author(joinNames(writers))
+                .illustrator(joinNames(illustrators))
                 .originalAuthor(works.getOriginalAuthor())
                 .genre(works.getGenre() != null ? works.getGenre().getDbValue() : null)
                 .platforms(worksPlatforms.stream()
@@ -60,12 +66,19 @@ public record WorksDetailResponseDto(
                 .build();
     }
 
-    // 그림 작가와 글 작가가 동일하면 그림 작가를 내려주지 않아 하나만 표시되도록 한다.
-    private static String resolveIllustrator(String author, String illustrator) {
-        if (author != null && author.equals(illustrator)) {
-            return null;
-        }
-        return illustrator;
+    // 원작 · 글 · 그림 순으로 이름 단위 중복 제거. 검색 · 피드의 작가 표기와 같은 순서
+    private static List<String> splitNames(String... values) {
+        return Stream.of(values)
+                .filter(Objects::nonNull)
+                .flatMap(value -> Stream.of(value.split(",")))
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .distinct()
+                .toList();
+    }
+
+    private static String joinNames(List<String> names) {
+        return names.isEmpty() ? null : String.join(", ", names);
     }
 
     public static Double roundAvgRating(Double avgRating) {

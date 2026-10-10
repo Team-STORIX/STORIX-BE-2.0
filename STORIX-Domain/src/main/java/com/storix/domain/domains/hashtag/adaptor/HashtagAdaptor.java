@@ -34,6 +34,15 @@ public class HashtagAdaptor {
                 ));
     }
 
+    public Map<String, List<Long>> findWorksIdsByNames(Collection<String> names) {
+        return hashtagRepository.findAllByNames(names).stream()
+                .collect(Collectors.groupingBy(
+                        HashtagInfo::hashtagName,
+                        LinkedHashMap::new,
+                        Collectors.mapping(HashtagInfo::worksId, Collectors.toList())
+                ));
+    }
+
     public Map<Long, List<HashtagInfo>> findHashtagInfosByWorksIds(List<Long> worksIds) {
         if (worksIds == null || worksIds.isEmpty()) {
             return Collections.emptyMap();

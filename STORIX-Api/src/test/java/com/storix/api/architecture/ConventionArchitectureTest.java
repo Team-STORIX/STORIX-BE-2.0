@@ -39,6 +39,14 @@ class ConventionArchitectureTest {
     }
 
     @Test
+    @DisplayName("Helper 도 Repository 를 직접 쓰지 않고 Adaptor 를 거친다")
+    void helperDoesNotUseRepository() {
+        ArchRule rule = noClasses().that().resideInAPackage("..domains..").and().haveSimpleNameEndingWith("Helper")
+                .should().dependOnClassesThat().haveSimpleNameEndingWith("Repository");
+        rule.check(classes);
+    }
+
+    @Test
     @DisplayName("Service 는 다른 Service 를 부르지 않는다. 여러 Service 조합은 UseCase 에서")
     void serviceDoesNotUseOtherService() {
         ArchRule rule = noClasses().that().resideInAPackage("..domains..service..").and().haveSimpleNameEndingWith("Service")

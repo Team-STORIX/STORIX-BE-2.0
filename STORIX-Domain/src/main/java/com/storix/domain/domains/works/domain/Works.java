@@ -8,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -143,14 +144,14 @@ public class Works {
     }
 
     // 플랫폼에서 표지 · 연령가 등이 바뀌므로 새 값이 있으면 덮어쓰고, 비어 있으면 기존 값을 둔다
-    public List<String> updateFromImport(String author, String illustrator, String originalAuthor,
+    public List<String> updateFromImport(String artistName, String author, String illustrator, String originalAuthor,
                                          AgeClassification ageClassification, Genre genre, WorksType worksType,
                                          String description, String thumbnailUrl) {
         List<String> changes = new ArrayList<>();
+        this.artistName = merge("artistName", artistName, this.artistName, changes, true);
         this.author = merge("author", author, this.author, changes, true);
         this.illustrator = merge("illustrator", illustrator, this.illustrator, changes, true);
         this.originalAuthor = merge("originalAuthor", originalAuthor, this.originalAuthor, changes, true);
-        // 연령은 올리기만. 플랫폼마다 표기가 달라 낮은 값으로 덮이지 않게
         this.ageClassification = merge("ageClassification", AgeClassification.higher(this.ageClassification, ageClassification), this.ageClassification, changes, true);
         this.genre = merge("genre", genre, this.genre, changes, true);
         this.worksType = merge("worksType", worksType, this.worksType, changes, true);
@@ -192,6 +193,16 @@ public class Works {
         if (added.isEmpty()) return null;
         hashtags.addAll(added);
         return "hashtags:" + added.stream().map(hashtag -> "+" + hashtag.getName()).collect(Collectors.joining(","));
+    }
+
+    // 이름이 같은 해시태그 연결만 끊음. 끊은 이름을 이름순으로 돌려줌
+    public List<String> removeHashtags(Collection<String> names) {
+        List<Hashtag> removed = hashtags.stream()
+                .filter(hashtag -> names.contains(hashtag.getName()))
+                .sorted(Comparator.comparing(Hashtag::getName))
+                .toList();
+        removed.forEach(hashtags::remove);
+        return removed.stream().map(Hashtag::getName).toList();
     }
 
     // 병합: keep 값을 우선하고 비어 있는 필드 · 없는 플랫폼 링크만 drop 값으로 채움

@@ -1,6 +1,7 @@
 package com.storix.domain.domains.works.adaptor;
 
 import com.storix.domain.domains.event.dto.StoryCardLuckyWorkPick;
+import com.storix.domain.domains.onboarding.dto.OnboardingWorksInfo;
 import com.storix.domain.domains.plus.exception.WorksNotExistException;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.search.exception.WorksNicknameNotFoundException;
@@ -131,6 +132,10 @@ public class WorksAdaptor {
 
 
     // 서재 도메인 용
+    public List<OnboardingWorksInfo> findAllOnboardingWorksInfo() {
+        return worksRepository.findAllOnboardingWorksInfo();
+    }
+
     public List<LibraryWorksInfo> getLibraryWorksInfo(List<Long> worksIds) {
         if (worksIds == null || worksIds.isEmpty()) {
             return Collections.emptyList();

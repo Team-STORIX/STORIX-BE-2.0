@@ -30,7 +30,7 @@ class WorksImportMergeTest {
     void overwriteWithNewValues() {
         Works works = works();
 
-        List<String> changes = works.updateFromImport(null, "장성락", null, AgeClassification.AGE_18, null, null, null, "https://new.png");
+        List<String> changes = works.updateFromImport(null, null, "장성락", null, AgeClassification.AGE_18, null, null, null, "https://new.png");
 
         assertThat(changes).containsExactly("illustrator:null->장성락", "ageClassification:AGE_15->AGE_18", "thumbnailUrl:https://old.png->https://new.png");
         assertThat(works.getIllustrator()).isEqualTo("장성락");
@@ -39,11 +39,22 @@ class WorksImportMergeTest {
     }
 
     @Test
+    @DisplayName("작가 표기도 새 값으로 바꾸고 같으면 그대로 둔다")
+    void overwriteArtistName() {
+        Works works = Works.builder().worksName("작품").artistName("이해날, 이해날, 김형사, 김형사").build();
+
+        assertThat(works.updateFromImport("이해날, 김형사", null, null, null, null, null, null, null, null))
+                .containsExactly("artistName:이해날, 이해날, 김형사, 김형사->이해날, 김형사");
+        assertThat(works.getArtistName()).isEqualTo("이해날, 김형사");
+        assertThat(works.updateFromImport("이해날, 김형사", null, null, null, null, null, null, null, null)).isEmpty();
+    }
+
+    @Test
     @DisplayName("새 값이 비어 있으면 기존 값을 둔다")
     void keepWhenBlank() {
         Works works = works();
 
-        List<String> changes = works.updateFromImport(" ", null, "", null, null, null, null, null);
+        List<String> changes = works.updateFromImport(null, " ", null, "", null, null, null, null, null);
 
         assertThat(changes).isEmpty();
         assertThat(works.getAuthor()).isEqualTo("추공");
@@ -56,7 +67,7 @@ class WorksImportMergeTest {
     void unchangedWhenSame() {
         Works works = works();
 
-        assertThat(works.updateFromImport("추공", null, null, AgeClassification.AGE_15, Genre.FANTASY, WorksType.WEBTOON, "기존 소개", "https://old.png"))
+        assertThat(works.updateFromImport(null, "추공", null, null, AgeClassification.AGE_15, Genre.FANTASY, WorksType.WEBTOON, "기존 소개", "https://old.png"))
                 .isEmpty();
     }
 
@@ -97,7 +108,7 @@ class WorksImportMergeTest {
     void ageNeverLowered() {
         Works works = works();
 
-        List<String> changes = works.updateFromImport(null, null, null, AgeClassification.ALL, null, null, null, null);
+        List<String> changes = works.updateFromImport(null, null, null, null, AgeClassification.ALL, null, null, null, null);
 
         assertThat(changes).isEmpty();
         assertThat(works.getAgeClassification()).isEqualTo(AgeClassification.AGE_15);
