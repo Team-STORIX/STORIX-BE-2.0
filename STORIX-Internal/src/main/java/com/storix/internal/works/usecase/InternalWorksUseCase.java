@@ -1,5 +1,7 @@
 package com.storix.internal.works.usecase;
 
+import com.storix.internal.works.controller.dto.HashtagRemoveRequest;
+import com.storix.internal.works.controller.dto.WorksHashtagRemoveRequest;
 import com.storix.internal.works.controller.dto.WorksImportRequest;
 import com.storix.internal.works.controller.dto.WorksMergeRequest;
 import com.storix.internal.works.controller.dto.WorksRenameRequest;
@@ -7,7 +9,9 @@ import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.hashtag.service.HashtagCacheHelper;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.search.service.WorksIndexService;
+import com.storix.domain.domains.works.dto.HashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
+import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksImportResult;
 import com.storix.domain.domains.works.dto.WorksMergeResult;
 import com.storix.domain.domains.works.dto.WorksRenameResult;
@@ -96,6 +100,50 @@ public class InternalWorksUseCase {
                 .addKeyValue("beforeName", result.beforeName())
                 .addKeyValue("afterName", result.afterName())
                 .log(">>> [WorksRename] 작품명 변경");
+        return result;
+    }
+
+    // 작품 하나에서 해시태그 연결 끊기. 적재가 같은 태그를 다시 붙이지 않게 같은 잠금 사용
+    public WorksHashtagRemoveResult removeWorksHashtags(Long worksId, WorksHashtagRemoveRequest request) {
+        String token = worksImportLockHelper.tryLock().orElseThrow(() -> WorksImportInProgressException.EXCEPTION);
+        WorksHashtagRemoveResult result;
+        try {
+            result = worksService.removeHashtags(worksId, request.normalizedNames());
+        } finally {
+            worksImportLockHelper.unlock(token);
+        }
+
+        if (!result.removed().isEmpty()) hashtagCacheHelper.evictGlobalMeta();
+
+        log.atInfo()
+                .addKeyValue("worksId", worksId)
+                .addKeyValue("removed", result.removed())
+                .addKeyValue("notFound", result.notFound())
+                .log(">>> [WorksHashtag] 해시태그 제거");
+        return result;
+    }
+
+    // 모든 작품에서 해시태그 연결 끊기. dryRun 이면 붙은 작품만 조회
+    public HashtagRemoveResult removeHashtagsFromAllWorks(HashtagRemoveRequest request) {
+        if (request.dryRun()) {
+            return worksService.removeHashtagsFromAllWorks(request.normalizedNames(), true);
+        }
+
+        String token = worksImportLockHelper.tryLock().orElseThrow(() -> WorksImportInProgressException.EXCEPTION);
+        HashtagRemoveResult result;
+        try {
+            result = worksService.removeHashtagsFromAllWorks(request.normalizedNames(), false);
+        } finally {
+            worksImportLockHelper.unlock(token);
+        }
+
+        hashtagCacheHelper.evictGlobalMeta();
+
+        result.affected().forEach(affected -> log.atInfo()
+                .addKeyValue("hashtag", affected.name())
+                .addKeyValue("worksIds", affected.worksIds())
+                .addKeyValue("count", affected.count())
+                .log(">>> [WorksHashtag] 해시태그 일괄 제거"));
         return result;
     }
 }
