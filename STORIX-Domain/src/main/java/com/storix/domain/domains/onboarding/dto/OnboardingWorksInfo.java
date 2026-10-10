@@ -9,29 +9,20 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OnboardingWorksInfo {
 
-    // 작품 정보
     private Long worksId;
     private String worksName;
     private String thumbnailUrl;
-
-    // 작가 정보
-    private String author;
-    private String illustrator;
-    private String originalAuthor;
+    private String artistName;
 
     public OnboardingWorksInfo(
             Long worksId,
             String worksName,
             String thumbnailUrl,
-            String author,
-            String illustrator,
-            String originalAuthor
+            String artistName
     ) {
         this.worksId = worksId;
         this.worksName = worksName;
         this.thumbnailUrl = thumbnailUrl;
-        this.author = author;
-        this.illustrator = illustrator;
-        this.originalAuthor = originalAuthor;
+        this.artistName = artistName;
     }
 }

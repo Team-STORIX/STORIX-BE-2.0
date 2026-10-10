@@ -100,12 +100,12 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
     );
 
     // 서재 관련 작품 정보 조회
-    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating, w.ageClassification) " +
+    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.artistName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds")
     List<LibraryWorksInfo> findLibraryWorksInfoByIds(@Param("worksIds") List<Long> worksIds);
 
-    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating, w.ageClassification) " +
+    @Query("SELECT new com.storix.domain.domains.works.dto.LibraryWorksInfo(w.id, w.worksName, w.artistName, w.author, w.illustrator, w.originalAuthor, w.thumbnailUrl, w.worksType, w.genre, w.avgRating, w.ageClassification) " +
             "FROM Works w " +
             "WHERE w.id IN :worksIds " +
             "AND w.worksName LIKE %:keyword%")
@@ -132,7 +132,7 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
     List<TopicRoomWorksInfo> findSimpleInfoByIdIn(@Param("ids") List<Long> ids);
 
     // 온보딩 작품 리스트 조회용. 비로그인 상태에서도 노출되는 공개 API라 성인 작품은 무조건 제외한다
-    @Query("SELECT new com.storix.domain.domains.onboarding.dto.OnboardingWorksInfo(w.id, w.worksName, w.thumbnailUrl, w.author, w.illustrator, w.originalAuthor) " +
+    @Query("SELECT new com.storix.domain.domains.onboarding.dto.OnboardingWorksInfo(w.id, w.worksName, w.thumbnailUrl, w.artistName) " +
             "FROM Works w " +
             "WHERE w.isOnboarding = true " +
             "AND w.ageClassification <> com.storix.domain.domains.works.domain.AgeClassification.AGE_18 " +
