@@ -161,4 +161,8 @@ public class BoardAdaptor {
         return readerBoardRepository.findAdminBoardContentsByIds(ids);
     }
 
+    /** 작품 병합 */
+    public int moveReaderBoards(Long fromWorksId, Long toWorksId) {
+        return readerBoardRepository.moveWorks(fromWorksId, toWorksId);
+    }
 }

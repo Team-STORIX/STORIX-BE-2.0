@@ -67,6 +67,9 @@ aws:
   s3:
     bucket: ${AWS_S3_BUCKET_NAME}
 
+internal:
+  api-key: ${INTERNAL_API_KEY}
+
 swagger:
   user: ${SWAGGER_USER}
   password: ${SWAGGER_PASSWORD}

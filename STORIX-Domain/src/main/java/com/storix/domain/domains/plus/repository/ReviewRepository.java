@@ -183,4 +183,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Long> findWorksIdsByRatings(@Param("userId") Long userId,
                                      @Param("ratings") List<Rating> ratings);
 
+    /** 작품 병합 — 삭제된 리뷰도 고유 제약에 걸려 함께 조회 */
+    @Query("SELECT r.libraryUserId FROM Review r WHERE r.worksId = :worksId")
+    List<Long> findLibraryUserIdsByWorksId(@Param("worksId") Long worksId);
+
+    @Query("SELECT r.rating FROM Review r WHERE r.worksId = :worksId AND r.deleted = false")
+    List<Rating> findActiveRatingsByWorksId(@Param("worksId") Long worksId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Review e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
+    int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
 }

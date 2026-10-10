@@ -62,8 +62,17 @@ public class STORIXStatic {
 
             "/api/v1/auth/admin/signup",
             "/api/v1/auth/admin/login",
-            "/api/v1/auth/admin/slack/callback"
+            "/api/v1/auth/admin/slack/callback",
+
+            Internal.URI_PREFIX
     );
+
+    // 크롤러 등 내부 서비스 전용 API
+    public static class Internal {
+        public static final String URI_PREFIX = "/internal/";
+        public static final String API_KEY_HEADER = "X-Internal-Api-Key";
+        public static final String SWAGGER_SCHEME = "INTERNAL API KEY";
+    }
 
     // 오늘의 스토리 카드
     public static class StoryCard {

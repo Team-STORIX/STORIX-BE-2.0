@@ -210,4 +210,9 @@ public class TopicRoomAdaptor {
             throw DuplicateTopicRoomReportException.EXCEPTION;
         }
     }
+
+    /** 작품 병합 */
+    public int moveWorks(Long fromWorksId, Long toWorksId) {
+        return topicRoomRepository.moveWorks(fromWorksId, toWorksId);
+    }
 }

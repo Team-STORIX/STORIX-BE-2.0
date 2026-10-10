@@ -5,6 +5,7 @@ jar { enabled = false }
 
 dependencies {
     implementation project(':STORIX-Infrastructure')
+    implementation project(':STORIX-Internal')
 
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
@@ -37,7 +38,7 @@ tasks.register('generateErrorMap', Exec) {
     args errorSpecScript.absolutePath, errorSpecFile.get().asFile.absolutePath
     environment 'STORIX_ROOT', rootDir.absolutePath
 
-    ['STORIX-Api', 'STORIX-Domain', 'STORIX-Common', 'STORIX-Infrastructure'].each {
+    ['STORIX-Api', 'STORIX-Internal', 'STORIX-Domain', 'STORIX-Common', 'STORIX-Infrastructure'].each {
         inputs.dir("${rootDir}/${it}/src/main/java").withPathSensitivity(PathSensitivity.RELATIVE)
     }
     inputs.dir(errorSpecScript.parentFile).withPathSensitivity(PathSensitivity.RELATIVE)

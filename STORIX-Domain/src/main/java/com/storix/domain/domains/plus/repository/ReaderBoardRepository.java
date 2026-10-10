@@ -216,4 +216,8 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long> 
     @Query("DELETE FROM ReaderBoard r WHERE r.id IN :ids")
     int hardDeleteByIds(@Param("ids") List<Long> ids);
 
+    /** 작품 병합 */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ReaderBoard e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
+    int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
 }

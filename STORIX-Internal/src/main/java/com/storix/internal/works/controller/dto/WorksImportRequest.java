@@ -1,4 +1,4 @@
-package com.storix.api.domain.works.controller.dto;
+package com.storix.internal.works.controller.dto;
 
 import com.storix.domain.domains.works.dto.WorksImportItem;
 import io.swagger.v3.oas.annotations.media.Schema;

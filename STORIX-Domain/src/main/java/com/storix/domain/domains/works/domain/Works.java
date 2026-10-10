@@ -185,6 +185,35 @@ public class Works {
         return "hashtags:" + String.join(",", diff);
     }
 
+    // 병합: keep 값을 우선하고 비어 있는 필드 · 없는 플랫폼 링크만 drop 값으로 채움
+    public void mergeFrom(Works drop) {
+        if (!hasText(artistName)) this.artistName = drop.artistName;
+        if (!hasText(author)) this.author = drop.author;
+        if (!hasText(illustrator)) this.illustrator = drop.illustrator;
+        if (!hasText(originalAuthor)) this.originalAuthor = drop.originalAuthor;
+        if (!hasText(description)) this.description = drop.description;
+        if (!hasText(thumbnailUrl)) this.thumbnailUrl = drop.thumbnailUrl;
+        if (ageClassification == null) this.ageClassification = drop.ageClassification;
+        if (genre == null) this.genre = drop.genre;
+        if (worksType == null) this.worksType = drop.worksType;
+        if (Boolean.TRUE.equals(drop.isOnboarding)) this.isOnboarding = true;
+
+        drop.platforms.forEach(dropPlatform -> platforms.stream()
+                .filter(platform -> platform.getPlatform() == dropPlatform.getPlatform())
+                .findFirst()
+                .ifPresentOrElse(
+                        platform -> {
+                            if (!hasText(platform.getLandingUrl())) platform.updateLandingUrl(dropPlatform.getLandingUrl());
+                        },
+                        () -> addPlatform(dropPlatform.getPlatform(), dropPlatform.getLandingUrl())));
+        hashtags.addAll(drop.hashtags);
+    }
+
+    public void applyReviewStats(int reviewsCount, double avgRating) {
+        this.reviewsCount = reviewsCount;
+        this.avgRating = avgRating;
+    }
+
     private static boolean hasText(String value) {
         return value != null && !value.isBlank();
     }

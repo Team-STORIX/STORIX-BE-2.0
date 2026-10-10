@@ -90,4 +90,9 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
 
     @Query("SELECT t.id FROM TopicRoom t WHERE t.lastChatTime > :since")
     List<Long> findRoomIdsByLastChatTimeAfter(@Param("since") LocalDateTime since);
+
+    /** 작품 병합 */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE TopicRoom e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
+    int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
 }

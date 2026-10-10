@@ -33,6 +33,10 @@ public class OnboardingWorksHelper {
     private final WorksRepository worksRepository;
     private final ArtistNameParseHelper artistNameParseHelper;
 
+    public void evictCache() {
+        redisTemplate.delete(KEY);
+    }
+
     @Transactional(readOnly = true)
     public List<StandardOnboardingWorksInfo> findOnboardingWorksList() {
 
