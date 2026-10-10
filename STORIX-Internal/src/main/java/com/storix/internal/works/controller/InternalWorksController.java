@@ -2,12 +2,14 @@ package com.storix.internal.works.controller;
 
 import com.storix.internal.works.controller.dto.WorksImportRequest;
 import com.storix.internal.works.controller.dto.WorksMergeRequest;
+import com.storix.internal.works.controller.dto.WorksRenameRequest;
 import com.storix.internal.works.usecase.InternalWorksUseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
 import com.storix.domain.domains.works.dto.WorksImportResult;
 import com.storix.domain.domains.works.dto.WorksMergeResult;
+import com.storix.domain.domains.works.dto.WorksRenameResult;
 import com.storix.common.utils.STORIXStatic;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -15,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -69,5 +72,19 @@ public class InternalWorksController {
             @Valid @RequestBody WorksMergeRequest request
     ) {
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.mergeWorks(keepWorksId, request));
+    }
+
+    @PatchMapping("/{worksId}/name")
+    @Operation(
+            summary = "작품명 변경",
+            description = "작품명을 바꿉니다. 적재는 작품명을 덮어쓰지 않아 잘못 들어간 이름을 정정할 때 씁니다. "
+                    + "currentName 이 지금 저장된 이름과 다르면 409(WORKS_ERROR_012)로 거절하고 이유에 현재 이름을 적습니다. "
+                    + "같은 작품 판정용 정규화 이름도 같이 바뀌고 작품 검색에 바로 반영됩니다. 작품 적재 · 병합과 동시에 돌 수 없고 겹치면 409(WORKS_ERROR_007)입니다."
+    )
+    public CustomResponse<WorksRenameResult> renameWorks(
+            @PathVariable Long worksId,
+            @Valid @RequestBody WorksRenameRequest request
+    ) {
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.renameWorks(worksId, request));
     }
 }
