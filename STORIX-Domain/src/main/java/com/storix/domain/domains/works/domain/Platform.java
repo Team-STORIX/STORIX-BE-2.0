@@ -12,7 +12,9 @@ public enum Platform {
     KAKAO_PAGE("카카오페이지"),
     RIDIBOOKS("리디북스"),
     BOMTOON("봄툰"),
-    NAVER_SERIES("네이버 시리즈");
+    NAVER_SERIES("네이버 시리즈"),
+    LEZHIN("레진코믹스"),
+    MRBLUE("미스터블루");
 
     private final String dbValue;
 }
