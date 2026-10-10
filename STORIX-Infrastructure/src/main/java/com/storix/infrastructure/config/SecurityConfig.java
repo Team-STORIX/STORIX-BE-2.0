@@ -38,6 +38,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final OnboardingAuthenticationFilter onboardingFilter;
     private final ErrorHandlingFilter errorHandlingFilter;
+    private final InternalApiKeyFilter internalApiKeyFilter;
 
     private final SecurityEntryPoint securityEntryPoint;
     private final SecurityDeniedHandler securityDeniedHandler;
@@ -141,6 +142,9 @@ public class SecurityConfig {
                                 // [TopicRoom]
                                 .requestMatchers("/ws-stomp/**").permitAll()
 
+                                // [Internal] 크롤러 등 내부 서비스 — 내부 키(X-Internal-Api-Key) 전용
+                                .requestMatchers("/internal/**").hasRole("INTERNAL")
+
                                 // [Admin] 관리자 페이지 (신고/약관) — 관리자(ADMIN) 전용
                                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
@@ -157,6 +161,7 @@ public class SecurityConfig {
                 .addFilterBefore(errorHandlingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(onboardingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(mdcContextFilter, ErrorHandlingFilter.class)
 
                 // spring security exception handler

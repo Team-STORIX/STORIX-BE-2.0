@@ -6,6 +6,7 @@ import com.storix.domain.domains.works.domain.Works;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Modifying;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,4 +40,16 @@ public interface ExplorationRepository extends JpaRepository<PreferenceExplorati
 
     // 유저가 특정 작품에 대해 이미 응답했는지 여부 확인
     boolean existsByUserIdAndWorksId(Long userId, Long worksId);
+
+    /** 작품 병합 */
+    @Query("SELECT e.userId FROM PreferenceExploration e WHERE e.worksId = :worksId")
+    List<Long> findUserIdsByWorksId(@Param("worksId") Long worksId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM PreferenceExploration e WHERE e.worksId = :worksId AND e.userId IN :userIds")
+    int deleteByWorksIdAndUserIds(@Param("worksId") Long worksId, @Param("userIds") List<Long> userIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE PreferenceExploration e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
+    int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
 }

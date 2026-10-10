@@ -1,5 +1,6 @@
 package com.storix.api.config;
 
+import com.storix.common.utils.STORIXStatic;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -28,7 +29,11 @@ public class SwaggerConfig {
                         .name(securityScheme)
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("Bearer")
-                        .bearerFormat("JWT"));
+                        .bearerFormat("JWT"))
+                .addSecuritySchemes(STORIXStatic.Internal.SWAGGER_SCHEME, new SecurityScheme()
+                        .type(SecurityScheme.Type.APIKEY)
+                        .in(SecurityScheme.In.HEADER)
+                        .name(STORIXStatic.Internal.API_KEY_HEADER));
 
         // 상대 경로라 스웨거를 연 주소를 그대로 따라간다. 비워두면 springdoc 이 절대 URL 을 만드는데,
         // 프록시 뒤에서는 http 로 잡혀 https 페이지에서 요청이 막힌다

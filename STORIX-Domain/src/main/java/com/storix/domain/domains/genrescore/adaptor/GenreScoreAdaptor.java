@@ -8,6 +8,8 @@ import com.storix.domain.domains.genrescore.dto.UnprocessedLogRow;
 import com.storix.domain.domains.genrescore.repository.UserGenreRawScoreRepository;
 import com.storix.domain.domains.genrescore.repository.UserGenreScoreLogRepository;
 import com.storix.domain.domains.works.domain.Genre;
+import com.storix.domain.domains.works.dto.WorksMoveCount;
+import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -87,5 +89,13 @@ public class GenreScoreAdaptor {
     // 보존기간 지난 처리 로그 삭제
     public int deleteProcessedLogBefore(LocalDateTime threshold) {
         return logRepository.deleteProcessedBefore(threshold);
+    }
+
+    /** 작품 병합 — 관심작품이 하나로 합쳐진 유저는 drop 쪽 관심작품 기록 삭제, 나머지 기록은 그대로 이동 */
+    public WorksMoveCount moveScoreLogs(Long fromWorksId, Long toWorksId, List<Long> favoriteMergedUserIds) {
+        int removed = favoriteMergedUserIds.isEmpty() ? 0 : logRepository.deleteByWorksIdAndUserIdsAndEventTypes(
+                fromWorksId, favoriteMergedUserIds,
+                List.of(GenreScoreEventType.FAVORITE_WORKS_ADD, GenreScoreEventType.FAVORITE_WORKS_REMOVE));
+        return new WorksMoveCount(logRepository.moveWorks(fromWorksId, toWorksId), removed);
     }
 }

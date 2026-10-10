@@ -42,4 +42,15 @@ public interface FavoriteWorksRepository extends JpaRepository<FavoriteWorks, Lo
             "WHERE f.userId = :userId")
     List<FavoriteWorksWithCreatedAt> findAllWithCreatedAtByUserId(@Param("userId") Long userId);
 
+    /** 작품 병합 */
+    @Query("SELECT e.userId FROM FavoriteWorks e WHERE e.worksId = :worksId")
+    List<Long> findUserIdsByWorksId(@Param("worksId") Long worksId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM FavoriteWorks e WHERE e.worksId = :worksId AND e.userId IN :userIds")
+    int deleteByWorksIdAndUserIds(@Param("worksId") Long worksId, @Param("userIds") List<Long> userIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE FavoriteWorks e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
+    int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
 }

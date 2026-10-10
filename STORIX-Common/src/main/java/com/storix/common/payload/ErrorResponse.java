@@ -13,16 +13,21 @@ public record ErrorResponse (
         Boolean isSuccess,
         String code,
         String message,
+        String detail,
         LocalDateTime timestamp,
         List<FieldErrorResponse> fieldErrors
 ) {
 
     public ErrorResponse(ErrorCode errorCode) {
-        this(false, errorCode.getCode(), errorCode.getMessage(), LocalDateTime.now(), null);
+        this(false, errorCode.getCode(), errorCode.getMessage(), null, LocalDateTime.now(), null);
     }
 
     public ErrorResponse(ErrorCode errorCode, List<FieldErrorResponse> fieldErrors) {
-        this(false, errorCode.getCode(), errorCode.getMessage(), LocalDateTime.now(), fieldErrors);
+        this(false, errorCode.getCode(), errorCode.getMessage(), null, LocalDateTime.now(), fieldErrors);
+    }
+
+    public static ErrorResponse withDetail(ErrorCode errorCode, String detail) {
+        return new ErrorResponse(false, errorCode.getCode(), errorCode.getMessage(), detail, LocalDateTime.now(), null);
     }
 
 }
