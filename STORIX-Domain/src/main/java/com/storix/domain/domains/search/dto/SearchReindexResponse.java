@@ -1,6 +1,6 @@
 package com.storix.domain.domains.search.dto;
 
-public record WorksReindexResponse(
+public record SearchReindexResponse(
         String index,
         long indexedCount
 ) {

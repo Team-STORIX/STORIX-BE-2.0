@@ -54,7 +54,11 @@ services:
       - storix-net
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.8
+    image: storix-elasticsearch:8.18.8-nori
+    build:
+      dockerfile_inline: |
+        FROM docker.elastic.co/elasticsearch/elasticsearch:8.18.8
+        RUN bin/elasticsearch-plugin install --batch analysis-nori
     container_name: storix-elasticsearch
     restart: unless-stopped
     environment:

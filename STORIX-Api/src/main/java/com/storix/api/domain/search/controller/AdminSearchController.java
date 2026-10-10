@@ -6,7 +6,7 @@ import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.search.dto.WorksNicknameBulkResponse;
 import com.storix.domain.domains.search.dto.WorksNicknameResponse;
-import com.storix.domain.domains.search.dto.WorksReindexResponse;
+import com.storix.domain.domains.search.dto.SearchReindexResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,8 +35,14 @@ public class AdminSearchController {
 
     @PostMapping("/works/reindex")
     @Operation(summary = "작품 검색 재색인", description = "작품 전체를 새 인덱스에 다시 색인하고 검색 대상을 교체합니다. 크롤링 작품을 적재한 뒤 호출합니다.")
-    public CustomResponse<WorksReindexResponse> reindexWorks() {
+    public CustomResponse<SearchReindexResponse> reindexWorks() {
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminSearchUseCase.reindexWorks());
+    }
+
+    @PostMapping("/feeds/reindex")
+    @Operation(summary = "피드 검색 재색인", description = "삭제되지 않은 피드 게시글 전체를 새 인덱스에 다시 색인하고 검색 대상을 교체합니다. 검색 결과가 DB 와 어긋날 때 호출합니다.")
+    public CustomResponse<SearchReindexResponse> reindexFeeds() {
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, adminSearchUseCase.reindexFeeds());
     }
 
     @GetMapping("/works/{worksId}/nicknames")

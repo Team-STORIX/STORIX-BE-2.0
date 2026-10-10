@@ -3,8 +3,6 @@ package com.storix.domain.domains.search.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.storix.domain.domains.search.exception.SearchReindexFailedException;
 import com.storix.domain.domains.search.exception.SearchReindexInProgressException;
-import com.storix.domain.domains.search.config.WorksIndexProperties;
-import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +17,6 @@ import org.springframework.data.redis.core.script.RedisScript;
 import java.time.Duration;
 import java.util.List;
 
-import static com.storix.common.utils.RedisKeyStatic.Search.WORKS_REINDEX_LOCK;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -31,32 +28,34 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("[검색] 작품 재색인 - 동시 실행 잠금")
-class WorksIndexServiceTest {
+@DisplayName("[검색] 재색인 - 동시 실행 잠금")
+class SearchIndexManagerTest {
+
+    private static final String ALIAS = "works-test";
+    private static final String DEFINITION = "elasticsearch/works-index.json";
+    private static final String LOCK_KEY = "search:test:reindex:lock";
 
     @Mock
     private ElasticsearchClient client;
-    @Mock
-    private WorksAdaptor worksAdaptor;
     @Mock
     private StringRedisTemplate redisTemplate;
     @Mock
     private ValueOperations<String, String> valueOperations;
 
-    private WorksIndexService worksIndexService;
+    private SearchIndexManager searchIndexManager;
 
     @BeforeEach
     void setUp() {
-        worksIndexService = new WorksIndexService(client, new WorksIndexProperties("test"), worksAdaptor, redisTemplate);
+        searchIndexManager = new SearchIndexManager(client, redisTemplate);
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
     }
 
     @Test
     @DisplayName("다른 재색인이 돌고 있으면 ES 를 건드리지 않고 거절한다")
     void rejectWhenLocked() {
-        given(valueOperations.setIfAbsent(eq(WORKS_REINDEX_LOCK), anyString(), any(Duration.class))).willReturn(false);
+        given(valueOperations.setIfAbsent(eq(LOCK_KEY), anyString(), any(Duration.class))).willReturn(false);
 
-        assertThatThrownBy(() -> worksIndexService.reindexAll())
+        assertThatThrownBy(() -> searchIndexManager.reindex(ALIAS, DEFINITION, LOCK_KEY, index -> 0))
                 .isSameAs(SearchReindexInProgressException.EXCEPTION);
 
         verifyNoInteractions(client);
@@ -67,13 +66,13 @@ class WorksIndexServiceTest {
     @DisplayName("재색인이 실패해도 잡을 때 쓴 토큰으로 잠금을 푼다")
     void releaseLockOnFailure() {
         ArgumentCaptor<String> token = ArgumentCaptor.forClass(String.class);
-        given(valueOperations.setIfAbsent(eq(WORKS_REINDEX_LOCK), token.capture(), any(Duration.class))).willReturn(true);
+        given(valueOperations.setIfAbsent(eq(LOCK_KEY), token.capture(), any(Duration.class))).willReturn(true);
         given(client.indices()).willThrow(new IllegalStateException("ES 연결 실패"));
 
-        assertThatThrownBy(() -> worksIndexService.reindexAll())
+        assertThatThrownBy(() -> searchIndexManager.reindex(ALIAS, DEFINITION, LOCK_KEY, index -> 0))
                 .isSameAs(SearchReindexFailedException.EXCEPTION);
 
-        verify(redisTemplate).execute(any(RedisScript.class), eq(List.of(WORKS_REINDEX_LOCK)), eq(token.getValue()));
+        verify(redisTemplate).execute(any(RedisScript.class), eq(List.of(LOCK_KEY)), eq(token.getValue()));
         verify(redisTemplate, never()).delete(anyString());
     }
 }

@@ -13,6 +13,7 @@ import com.storix.domain.domains.plus.service.ReaderBoardHelper;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.plus.dto.ReaderBoardInfo;
 import com.storix.domain.domains.profile.dto.ReaderBoardWithProfileInfo;
+import com.storix.domain.domains.search.adaptor.FeedSearchAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
 import com.storix.domain.domains.user.exception.block.BlockedUserContentException;
@@ -46,6 +47,7 @@ public class FeedService {
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
 
     private final ReaderFeedAdaptor readerFeedAdaptor;
+    private final FeedSearchAdaptor feedSearchAdaptor;
 
     private final ReaderBoardHelper readerBoardHelper;
     private final TodayFeedSelectionHelper todayFeedSelectionHelper;
@@ -57,17 +59,33 @@ public class FeedService {
 
         List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
 
-        // 1) 최신순 게시글 (차단 유저 제외)
+        // 최신순 게시글 (차단 유저 제외)
         Slice<ReaderBoard> boards = readerFeedAdaptor.findAllExcludingBlocked(blockedIds, pageable);
+        return toFeedBoards(userId, boards);
+    }
+
+    // ES 를 기다리는 동안 DB 커넥션을 잡지 않도록 트랜잭션을 걸지 않는다
+    public Slice<ReaderBoardWithProfileInfo> searchReaderBoards(Long userId, String keyword, Pageable pageable) {
+
+        List<Long> blockedIds = userBlockAdaptor.findBlockedUserIds(userId);
+
+        Slice<ReaderBoard> boards = feedSearchAdaptor
+                .searchBoardIds(keyword, blockedIds, pageable.getPageNumber(), pageable.getPageSize())
+                .<Slice<ReaderBoard>>map(result -> new SliceImpl<>(
+                        readerFeedAdaptor.findActiveBoardsInOrder(result.boardIds()), pageable, result.hasNext()))
+                .orElseGet(() -> readerFeedAdaptor.searchByContentExcludingBlocked(keyword, blockedIds, pageable));
+        return toFeedBoards(userId, boards);
+    }
+
+    // 좋아요·북마크 여부와 작성자 프로필을 붙이고, 성인 게시글은 인증 여부에 따라 가린다
+    private Slice<ReaderBoardWithProfileInfo> toFeedBoards(Long userId, Slice<ReaderBoard> boards) {
 
         List<Long> boardIds = boards.getContent().stream()
                 .map(ReaderBoard::getId)
                 .toList();
 
-        // 2) 좋아요·북마크 여부
         Set<Long> likedBoardIds = readerFeedAdaptor.findLikedBoardIds(userId, boardIds);
         Set<Long> bookmarkedBoardIds = readerFeedAdaptor.findBookmarkedBoardIds(userId, boardIds);
-
 
         Slice<ReaderBoardInfo> boardInfos = boards.map(board ->
                 ReaderBoardInfo.ofFeedBoard(
@@ -76,7 +94,6 @@ public class FeedService {
                         bookmarkedBoardIds.contains(board.getId()))
         );
 
-        // 3) 프로필 매핑
         List<Long> writerIds = boardInfos.getContent().stream()
                 .map(ReaderBoardInfo::userId)
                 .filter(Objects::nonNull)
@@ -86,7 +103,6 @@ public class FeedService {
         Map<Long, StandardProfileInfo> profileMap =
                 userAdaptor.findStandardProfileInfoByUserIds(writerIds);
 
-        // 최종 매핑
         return readerBoardHelper.map(userId, boardInfos, info ->
                 profileMap.get(info.userId()));
     }
