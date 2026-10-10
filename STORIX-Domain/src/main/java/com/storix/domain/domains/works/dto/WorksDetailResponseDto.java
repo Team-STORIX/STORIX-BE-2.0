@@ -3,13 +3,12 @@ package com.storix.domain.domains.works.dto;
 import com.storix.domain.domains.hashtag.domain.Hashtag;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksPlatform;
-import com.storix.domain.domains.works.domain.Platform;
 import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 @Builder
 public record WorksDetailResponseDto(
@@ -22,6 +21,7 @@ public record WorksDetailResponseDto(
         String originalAuthor,
         String genre,
         List<String> platforms,
+        List<WorksPlatformLink> platformLinks,
         String ageClassification,
         Double avgRating,
         Long reviewCount,
@@ -30,6 +30,10 @@ public record WorksDetailResponseDto(
         boolean hasTopicRoom
 ) {
     public static WorksDetailResponseDto from(Works works, Long reviewCount, boolean hasTopicRoom) {
+        List<WorksPlatform> worksPlatforms = works.getPlatforms().stream()
+                .filter(worksPlatform -> worksPlatform.getPlatform() != null)
+                .sorted(Comparator.comparing(WorksPlatform::getPlatform))
+                .toList();
         return WorksDetailResponseDto.builder()
                 .worksId(works.getId())
                 .worksName(works.getWorksName())
@@ -39,10 +43,11 @@ public record WorksDetailResponseDto(
                 .illustrator(resolveIllustrator(works.getAuthor(), works.getIllustrator()))
                 .originalAuthor(works.getOriginalAuthor())
                 .genre(works.getGenre() != null ? works.getGenre().getDbValue() : null)
-                .platforms(works.getPlatforms().stream()
-                        .map(WorksPlatform::getPlatform)
-                        .filter(Objects::nonNull)
-                        .map(Platform::getDbValue)
+                .platforms(worksPlatforms.stream()
+                        .map(worksPlatform -> worksPlatform.getPlatform().getDbValue())
+                        .toList())
+                .platformLinks(worksPlatforms.stream()
+                        .map(WorksPlatformLink::from)
                         .toList())
                 .ageClassification(works.getAgeClassification() != null ? works.getAgeClassification().getDbValue() : null)
                 .avgRating(roundAvgRating(works.getAvgRating()))
