@@ -1,6 +1,7 @@
 package com.storix.domain.domains.works.dto;
 
 import com.storix.domain.domains.hashtag.domain.Hashtag;
+import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksPlatform;
 import lombok.Builder;
@@ -41,6 +42,9 @@ public record WorksDetailResponseDto(
         List<String> illustrators = splitNames(creditsIllustrator ? works.getIllustrator() : null).stream()
                 .filter(name -> !writers.contains(name))
                 .toList();
+        List<String> hashtags = works.getHashtags().stream()
+                .map(Hashtag::getName)
+                .toList();
         return WorksDetailResponseDto.builder()
                 .worksId(works.getId())
                 .worksName(works.getWorksName())
@@ -60,9 +64,7 @@ public record WorksDetailResponseDto(
                 .avgRating(roundAvgRating(works.getAvgRating()))
                 .reviewCount(reviewCount)
                 .description(works.getDescription())
-                .hashtags(works.getHashtags().stream()
-                        .map(Hashtag::getName)
-                        .toList())
+                .hashtags(works.getGenre() == Genre.BL ? sortByBlRole(hashtags) : hashtags)
                 .hasTopicRoom(hasTopicRoom)
                 .build();
     }
@@ -76,6 +78,20 @@ public record WorksDetailResponseDto(
                 .filter(name -> !name.isEmpty())
                 .distinct()
                 .toList();
+    }
+
+    // BL 은 공 → 수 → 나머지, 같은 묶음은 가나다순. 두 글자 이하(복수 · 가수 등)는 공 · 수로 보지 않음
+    private static List<String> sortByBlRole(List<String> hashtags) {
+        return hashtags.stream()
+                .sorted(Comparator.comparingInt(WorksDetailResponseDto::blRoleOrder).thenComparing(Comparator.naturalOrder()))
+                .toList();
+    }
+
+    private static int blRoleOrder(String hashtag) {
+        if (hashtag.length() < 3) return 2;
+        if (hashtag.endsWith("공")) return 0;
+        if (hashtag.endsWith("수")) return 1;
+        return 2;
     }
 
     private static String joinNames(List<String> names) {
