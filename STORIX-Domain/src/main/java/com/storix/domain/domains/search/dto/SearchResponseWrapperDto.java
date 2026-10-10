@@ -10,4 +10,11 @@ public class SearchResponseWrapperDto<T> {
 
     private Slice<T> result;    // 무한 스크롤 데이터
     private String fallbackRecommendation;      // 검색 결과 없는 경우 추천 검색어
+
+    public static <T> SearchResponseWrapperDto<T> of(Slice<T> result, String fallbackRecommendation) {
+        return SearchResponseWrapperDto.<T>builder()
+                .result(result)
+                .fallbackRecommendation(fallbackRecommendation)
+                .build();
+    }
 }

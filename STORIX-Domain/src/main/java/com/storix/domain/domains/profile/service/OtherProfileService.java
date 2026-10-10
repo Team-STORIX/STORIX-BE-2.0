@@ -1,6 +1,5 @@
 package com.storix.domain.domains.profile.service;
 
-import com.storix.domain.domains.profile.dto.OtherUserProfileInfo;
 import com.storix.domain.domains.profile.exception.SelfProfileRequestException;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
@@ -18,7 +17,6 @@ public class OtherProfileService {
 
     private final UserAdaptor userAdaptor;
     private final UserBlockAdaptor userBlockAdaptor;
-    private final ProfileService profileService;
 
     @Transactional(readOnly = true)
     public User getViewableUser(Long viewerId, Long targetUserId) {
@@ -36,12 +34,6 @@ public class OtherProfileService {
         }
 
         return target;
-    }
-
-    @Transactional(readOnly = true)
-    public OtherUserProfileInfo getProfile(Long viewerId, Long targetUserId) {
-        getViewableUser(viewerId, targetUserId);
-        return OtherUserProfileInfo.from(profileService.getReaderProfileInfoV2(targetUserId));
     }
 
     @Transactional(readOnly = true)

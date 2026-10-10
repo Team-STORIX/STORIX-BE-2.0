@@ -32,7 +32,7 @@ import com.storix.domain.domains.user.domain.UserSanctionSource;
 import com.storix.domain.domains.user.domain.UserSanctionType;
 import com.storix.domain.domains.user.domain.WithdrawReason;
 import com.storix.domain.domains.user.publisher.UserAccessRevokedPublisher;
-import com.storix.domain.domains.user.service.AuthService;
+import com.storix.domain.domains.user.service.UserWithdrawalHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,7 +63,7 @@ public class AdminReportCommandService {
     private final ReviewLikeAdaptor reviewLikeAdaptor;
     private final LibraryAdaptor libraryAdaptor;
     private final UserAdaptor userAdaptor;
-    private final AuthService authService;
+    private final UserWithdrawalHelper userWithdrawalHelper;
     private final UserAccessRevokedPublisher userAccessRevokedPublisher;
     private final UserSanctionHistoryAdaptor userSanctionHistoryAdaptor;
 
@@ -163,7 +163,7 @@ public class AdminReportCommandService {
     }
 
     private void withdrawUserByAdminAction(ReportCase reportCase) {
-        authService.withDrawUser(
+        userWithdrawalHelper.withdraw(
                 reportCase.getReportedUserId(),
                 Set.of(WithdrawReason.OTHER),
                 StringUtils.hasText(reportCase.getProcessMemo()) ? reportCase.getProcessMemo().trim() : ACCOUNT_DELETION_DETAIL

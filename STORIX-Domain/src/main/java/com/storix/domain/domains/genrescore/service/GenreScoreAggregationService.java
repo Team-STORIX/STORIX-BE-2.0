@@ -3,14 +3,14 @@ package com.storix.domain.domains.genrescore.service;
 import com.storix.domain.domains.genrescore.adaptor.GenreScoreAdaptor;
 import com.storix.domain.domains.genrescore.dto.UnprocessedLogRow;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
-import com.storix.domain.domains.works.domain.Genre;
+import com.storix.domain.domains.genrescore.dto.GenreScoreChunkResult;
+import com.storix.domain.domains.genrescore.dto.UserGenreKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,10 +29,10 @@ public class GenreScoreAggregationService {
 
     // 미처리 로그를 청크 단위로 처리
     @Transactional
-    public ChunkResult processChunk(int chunkSize) {
+    public GenreScoreChunkResult processChunk(int chunkSize) {
         // 1. 미처리 로그 조회
         List<UnprocessedLogRow> rows = genreScoreAdaptor.findUnprocessedLogChunk(PageRequest.of(0, chunkSize));
-        if (rows.isEmpty()) return ChunkResult.empty();
+        if (rows.isEmpty()) return GenreScoreChunkResult.empty();
 
         // 2. (user, genre)별 가중치 합산
         Map<UserGenreKey, Long> sums = new HashMap<>();
@@ -51,7 +51,7 @@ public class GenreScoreAggregationService {
         // 4. 로그 처리
         genreScoreAdaptor.markLogProcessedUntil(maxId, LocalDateTime.now());
 
-        return new ChunkResult(rows.size(), sums.size(), users);
+        return new GenreScoreChunkResult(rows.size(), sums.size(), users);
     }
 
     // 처리된 로그 삭제
@@ -66,12 +66,4 @@ public class GenreScoreAggregationService {
         genreScoreAdaptor.deleteAllRawScores();
         userAdaptor.clearAllTitles();
     }
-
-    public record ChunkResult(int processedLogs, int groups, Set<Long> users) {
-        public static ChunkResult empty() {
-            return new ChunkResult(0, 0, Collections.emptySet());
-        }
-    }
-
-    private record UserGenreKey(Long userId, Genre genre) {}
 }

@@ -35,7 +35,8 @@ public class SearchUseCase {
 
         Slice<WorksSearchResponseDto> result = searchService.searchWorks(userId, keyword, pageable);
 
-        return CustomResponse.onSuccess(SuccessCode.SUCCESS, wrapWithFallback(result));
+        String fallback = result.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, SearchResponseWrapperDto.of(result, fallback));
     }
 
     // 작품 탭 필터 검색
@@ -49,7 +50,8 @@ public class SearchUseCase {
         Slice<WorksSearchResponseDto> result =
                 searchService.searchWorksWithFilters(userId, keyword, worksTypes, genres, pageable);
 
-        return CustomResponse.onSuccess(SuccessCode.SUCCESS, wrapWithFallback(result));
+        String fallback = result.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, SearchResponseWrapperDto.of(result, fallback));
     }
 
     // [+] 탭 검색
@@ -76,14 +78,4 @@ public class SearchUseCase {
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, result);
     }
 
-
-    // 검색 결과가 없으면 추천 검색어를 함께 담아 래핑
-    private SearchResponseWrapperDto<WorksSearchResponseDto> wrapWithFallback(Slice<WorksSearchResponseDto> result) {
-        String fallbackKeyword = result.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
-
-        return SearchResponseWrapperDto.<WorksSearchResponseDto>builder()
-                .result(result)
-                .fallbackRecommendation(fallbackKeyword)
-                .build();
-    }
 }

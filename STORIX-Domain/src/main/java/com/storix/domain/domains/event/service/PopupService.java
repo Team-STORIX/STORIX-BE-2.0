@@ -118,19 +118,6 @@ public class PopupService {
         return popups.size();
     }
 
-    // AppEvent 종료 cascade: 소속 활성 팝업 일괄 종료
-    @Transactional
-    public void endByAppEvent(Long appEventId) {
-        eventPopupAdaptor.findActiveByAppEvent(appEventId).forEach(Popup::end);
-    }
-
-    // AppEvent 기간 변경 cascade: 소속 팝업 노출기간을 이벤트 기간 안으로 clamp
-    @Transactional
-    public void clampByAppEvent(Long appEventId, LocalDateTime eventStartAt, LocalDateTime eventEndAt) {
-        eventPopupAdaptor.findActiveByAppEvent(appEventId)
-                .forEach(popup -> popup.clampToEventPeriod(eventStartAt, eventEndAt));
-    }
-
     private void validatePeriod(LocalDateTime displayStartAt, LocalDateTime displayEndAt) {
         eventDisplayPeriodHelper.validate(displayStartAt, displayEndAt, () -> PopupInvalidDisplayPeriodException.EXCEPTION);
     }

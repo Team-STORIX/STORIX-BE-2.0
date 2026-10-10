@@ -28,7 +28,7 @@ public class AdminNotificationDeliveryResultService {
     private final AdminNotificationAdaptor adminNotificationAdaptor;
     private final AdminNotificationLogAdaptor adminNotificationLogAdaptor;
     private final NotificationAdaptor notificationAdaptor;
-    private final AdminNotificationLifecycleService lifecycleService;
+    private final AdminNotificationLifecycleHelper lifecycleHelper;
 
     // FCM 발송 전 발송 로그 선점 + 인앱 알림 생성
     @Transactional
@@ -99,7 +99,7 @@ public class AdminNotificationDeliveryResultService {
     @Transactional
     public void accumulateProgress(Long adminNotificationId, int sent, int failed, int skipped) {
         adminNotificationAdaptor.addCounts(adminNotificationId, sent, failed, skipped, LocalDateTime.now());
-        lifecycleService.tryFinalize(adminNotificationId);
+        lifecycleHelper.tryFinalize(adminNotificationId);
     }
 
     // 야간 마케팅 청크 발송 연기 - 발송/집계 없이 다음 08:00로 재시도 예약

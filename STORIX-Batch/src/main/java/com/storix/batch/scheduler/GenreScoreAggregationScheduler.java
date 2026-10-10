@@ -1,7 +1,7 @@
 package com.storix.batch.scheduler;
 
 import com.storix.domain.domains.genrescore.service.GenreScoreAggregationService;
-import com.storix.domain.domains.genrescore.service.GenreScoreAggregationService.ChunkResult;
+import com.storix.domain.domains.genrescore.dto.GenreScoreChunkResult;
 import com.storix.domain.domains.user.service.UserTitleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class GenreScoreAggregationScheduler {
         int iter = 0;
 
         while (iter++ < MAX_ITERATIONS) {
-            ChunkResult result = aggregationService.processChunk(CHUNK_SIZE);
+            GenreScoreChunkResult result = aggregationService.processChunk(CHUNK_SIZE);
             if (result.processedLogs() == 0) break;
 
             totalLogs += result.processedLogs();

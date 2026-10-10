@@ -9,8 +9,8 @@ import com.storix.domain.domains.event.dto.AttendanceDrawWinner;
 import com.storix.domain.domains.event.dto.AttendanceTicketHolder;
 import com.storix.domain.domains.event.dto.EventWinner;
 import com.storix.domain.domains.event.exception.AttendanceEventNotFoundException;
-import com.storix.domain.domains.event.service.winner.AppEventWinnerService;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
+import com.storix.domain.domains.event.adaptor.AppEventWinnerAdaptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +26,7 @@ public class AttendanceDrawService {
 
     private final AppEventAdaptor appEventAdaptor;
     private final AttendanceCheckAdaptor attendanceCheckAdaptor;
-    private final AppEventWinnerService appEventWinnerService;
+    private final AppEventWinnerAdaptor appEventWinnerAdaptor;
     private final UserAdaptor userAdaptor;
 
     // 당첨자 조회 (확정은 AppEventFinalizeService 가 담당하고, 출석 고유 통계만 덧붙인다)
@@ -35,7 +35,7 @@ public class AttendanceDrawService {
     public AttendanceDrawResponse findWinners(Long appEventId) {
         AppEvent event = resolveEvent(appEventId);
 
-        return toResponse(event, appEventWinnerService.findWinners(appEventId));
+        return toResponse(event, appEventWinnerAdaptor.findWinners(appEventId));
     }
 
     // 모수 통계와 당첨자별 응모권 수는 저장하지 않고 매번 계산, 당첨자는 변경되지 않음

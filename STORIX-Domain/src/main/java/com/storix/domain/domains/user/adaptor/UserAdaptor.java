@@ -7,6 +7,7 @@ import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.User;
 import com.storix.domain.domains.user.dto.*;
 import com.storix.domain.domains.user.exception.me.*;
+import com.storix.domain.domains.user.repository.AdminUserContentQueryRepository;
 import com.storix.domain.domains.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ public class UserAdaptor {
     @Value("${AWS_S3_BASE_URL}") private String baseUrl;
 
     private final UserRepository userRepository;
+    private final AdminUserContentQueryRepository adminUserContentQueryRepository;
 
     public StandardProfileInfo findStandardProfileInfoByUserId(Long userId) {
         StandardProfileInfo info = userRepository.findStandardProfileInfoById(userId);
@@ -152,10 +154,12 @@ public class UserAdaptor {
     }
 
     // suspendedUntil 기준으로 정지 만료된 유저 일괄 복구 — ReportCase 상태와 독립적
+    @Transactional
     public int restoreExpiredSuspensions(LocalDateTime now) {
         return userRepository.restoreExpiredSuspensions(AccountState.SUSPENDED, now);
     }
 
+    @Transactional
     public int purgeOauthOidBefore(LocalDateTime cutoff) {
         return userRepository.purgeOauthOidBefore(cutoff);
     }
@@ -174,4 +178,8 @@ public class UserAdaptor {
                 ));
     }
 
+
+    public List<AdminUserContentKey> findAdminContentKeys(Long userId, Pageable pageable) {
+        return adminUserContentQueryRepository.findContentKeys(userId, pageable);
+    }
 }

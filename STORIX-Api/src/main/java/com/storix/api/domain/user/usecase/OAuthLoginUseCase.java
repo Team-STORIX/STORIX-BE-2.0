@@ -19,28 +19,18 @@ public class OAuthLoginUseCase {
     // Web: authCode로 accessToken(+idToken) 요청 및 검증
     public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerOAuthLogin(OAuthAuthorizationRequest req, OAuthProvider provider) {
         ValidAuthDTO valid = authUseCase.checkAvailableRegister(req, provider);
-        return dispatchLoginByRegistration(valid, provider, false);
+        // 가입한 유저는 로그인 토큰, 아니면 온보딩 토큰
+        return valid.isRegistered()
+                ? loginUseCase.readerLoginWithIdToken(valid.idToken(), valid.oid(), provider, false, valid.oauthRefreshToken())
+                : loginUseCase.readerPreLoginWithIdToken(valid.idToken(), valid.oid(), provider, false, valid.oauthRefreshToken());
     }
 
     // Native: Kakao/Naver SDK에서 받은 accessToken(+idToken)을 그대로 검증
     public ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> readerOAuthNativeLogin(OAuthAuthorizationRequest req, OAuthProvider provider) {
         ValidAuthDTO valid = authUseCase.checkAvailableRegisterNative(req, provider);
-        return dispatchLoginByRegistration(valid, provider, true);
+        // 가입한 유저는 로그인 토큰, 아니면 온보딩 토큰
+        return valid.isRegistered()
+                ? loginUseCase.readerLoginWithIdToken(valid.idToken(), valid.oid(), provider, true, valid.oauthRefreshToken())
+                : loginUseCase.readerPreLoginWithIdToken(valid.idToken(), valid.oid(), provider, true, valid.oauthRefreshToken());
     }
-
-    /**
-     * 회원 등록 여부에 따라 로그인 응답을 분기
-     *
-     * (1) isRegistered = true  -> 액세스 토큰 + 리프레쉬 토큰 쿠키 반환
-     * (2) isRegistered = false -> 온보딩 토큰 반환 (회원가입 필요)
-     */
-    private ResponseEntity<CustomResponse<ReaderSocialLoginResponse>> dispatchLoginByRegistration(
-            ValidAuthDTO valid, OAuthProvider provider, boolean isNative
-    ) {
-        if (valid.isRegistered()) {
-            return loginUseCase.readerLoginWithIdToken(valid.idToken(), valid.oid(), provider, isNative, valid.oauthRefreshToken());
-        }
-        return loginUseCase.readerPreLoginWithIdToken(valid.idToken(), valid.oid(), provider, isNative, valid.oauthRefreshToken());
-    }
-
 }

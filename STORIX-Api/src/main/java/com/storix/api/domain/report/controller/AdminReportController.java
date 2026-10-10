@@ -40,7 +40,6 @@ public class AdminReportController {
     @GetMapping
     @Operation(summary = "관리자 신고 목록 조회", description = "신고 유형, 처리 상태, 접수 기간, 피신고자 ID로 신고 케이스 목록을 조회합니다.")
     public CustomResponse<Page<AdminReportListResponse>> getReports(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
             @RequestParam(required = false) TargetContentType targetType,
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
@@ -49,33 +48,25 @@ public class AdminReportController {
             @RequestParam(required = false) String reportedUserKeyword,
             @ParameterObject @PageableDefault(size = 10) Pageable pageable
     ) {
-        return adminReportUseCase.getReports(authUserDetails, targetType, status, startAt, endAt, reportedUserId, reportedUserKeyword, pageable);
+        return adminReportUseCase.getReports(targetType, status, startAt, endAt, reportedUserId, reportedUserKeyword, pageable);
     }
 
     @GetMapping("/users/{userId}")
     @Operation(summary = "유저 신고 이력 요약 조회", description = "특정 유저에게 접수된 신고 케이스 집계 및 최근 10건을 조회합니다.")
-    public CustomResponse<AdminUserReportSummaryResponse> getUserReportSummary(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @PathVariable Long userId
-    ) {
-        return adminReportUseCase.getUserReportSummary(authUserDetails, userId);
+    public CustomResponse<AdminUserReportSummaryResponse> getUserReportSummary(@PathVariable Long userId) {
+        return adminReportUseCase.getUserReportSummary(userId);
     }
 
     @GetMapping("/unprocessed-count")
     @Operation(summary = "미처리 신고 케이스 수 조회", description = "처리되지 않은 신고 케이스 수를 조회합니다.")
-    public CustomResponse<Long> getUnprocessedCount(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails
-    ) {
-        return adminReportUseCase.getUnprocessedCount(authUserDetails);
+    public CustomResponse<Long> getUnprocessedCount() {
+        return adminReportUseCase.getUnprocessedCount();
     }
 
     @GetMapping("/{reportCaseId}")
     @Operation(summary = "관리자 신고 상세 조회", description = "신고 케이스 요약, 묶인 신고 목록, 피신고 콘텐츠 원문을 조회합니다.")
-    public CustomResponse<AdminReportDetailResponse> getReportDetail(
-            @AuthenticationPrincipal AuthUserDetails authUserDetails,
-            @PathVariable Long reportCaseId
-    ) {
-        return adminReportUseCase.getReportDetail(authUserDetails, reportCaseId);
+    public CustomResponse<AdminReportDetailResponse> getReportDetail(@PathVariable Long reportCaseId) {
+        return adminReportUseCase.getReportDetail(reportCaseId);
     }
 
     @PatchMapping("/{reportCaseId}")

@@ -114,19 +114,6 @@ public class BannerService {
         return banners.size();
     }
 
-    // AppEvent 종료 cascade: 소속 활성 배너 일괄 종료
-    @Transactional
-    public void endByAppEvent(Long appEventId) {
-        eventBannerAdaptor.findActiveByAppEvent(appEventId).forEach(Banner::end);
-    }
-
-    // AppEvent 기간 변경 cascade: 소속 배너 노출기간을 이벤트 기간 안으로 clamp
-    @Transactional
-    public void clampByAppEvent(Long appEventId, LocalDateTime eventStartAt, LocalDateTime eventEndAt) {
-        eventBannerAdaptor.findActiveByAppEvent(appEventId)
-                .forEach(banner -> banner.clampToEventPeriod(eventStartAt, eventEndAt));
-    }
-
     private void validatePeriod(LocalDateTime displayStartAt, LocalDateTime displayEndAt) {
         eventDisplayPeriodHelper.validate(displayStartAt, displayEndAt, () -> BannerInvalidDisplayPeriodException.EXCEPTION);
     }

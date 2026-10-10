@@ -144,9 +144,13 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             @Param("now") LocalDateTime now
     );
 
+    // 하드 delete 대상 선정 — id 정렬로 청크 반복 시 반환 순서를 결정적으로 유지
+    @Query("SELECT m.id FROM ChatMessage m WHERE m.deleted = true AND m.deletedAt < :cutoff ORDER BY m.id ASC")
+    List<Long> findIdsForHardDelete(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM ChatMessage m WHERE m.deleted = true AND m.deletedAt < :cutoff")
-    int hardDeleteBefore(@Param("cutoff") LocalDateTime cutoff);
+    @Query("DELETE FROM ChatMessage m WHERE m.id IN :ids")
+    int hardDeleteByIds(@Param("ids") List<Long> ids);
 
     @Query("SELECT new com.storix.domain.domains.chat.dto.ChatMessageResponseDto(" +
             "   m.id, " +

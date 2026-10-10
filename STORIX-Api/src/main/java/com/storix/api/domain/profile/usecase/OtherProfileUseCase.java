@@ -14,6 +14,7 @@ import com.storix.domain.domains.profile.dto.OtherUserProfileInfo;
 import com.storix.domain.domains.profile.dto.ProfileFavoriteWorksWrapperDto;
 import com.storix.domain.domains.profile.dto.RatingCountResponse;
 import com.storix.domain.domains.profile.service.OtherProfileService;
+import com.storix.domain.domains.profile.service.ProfileService;
 import com.storix.domain.domains.profile.service.ProfileFavoriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -26,13 +27,15 @@ import java.util.List;
 public class OtherProfileUseCase {
 
     private final OtherProfileService otherProfileService;
+    private final ProfileService profileService;
     private final ProfileFavoriteService profileFavoriteService;
     private final GenreScoreQueryService genreScoreQueryService;
     private final LibraryService libraryService;
 
     public CustomResponse<OtherUserProfileInfo> getProfile(Long viewerId, Long targetUserId) {
 
-        OtherUserProfileInfo result = otherProfileService.getProfile(viewerId, targetUserId);
+        otherProfileService.getViewableUser(viewerId, targetUserId);
+        OtherUserProfileInfo result = OtherUserProfileInfo.from(profileService.getReaderProfileInfoV2(targetUserId));
         return CustomResponse.onSuccess(SuccessCode.PROFILE_OTHER_USER_LOAD_SUCCESS, result);
     }
 
