@@ -198,6 +198,7 @@ public enum ErrorCode {
     WORKS_IMPORT_UNKNOWN_ENUM(HttpStatus.BAD_REQUEST, "WORKS_ERROR_009", "enum 카탈로그에 없는 값입니다."),
     WORKS_MERGE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "WORKS_ERROR_010", "작품 병합 요청이 올바르지 않습니다."),
     WORKS_MERGE_CONFLICT(HttpStatus.CONFLICT, "WORKS_ERROR_011", "합칠 수 없는 데이터가 있어 작품 병합을 거절했습니다."),
+    WORKS_RENAME_CONFLICT(HttpStatus.CONFLICT, "WORKS_ERROR_012", "현재 작품명이 요청과 달라 이름 변경을 거절했습니다."),
 
     // Favorite error
     FAVORITE_WORKS_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "FAVORITE_ERROR_001", "이미 관심 작품 해제가 되었거나, 관심 작품으로 등록한 적 없는 작품입니다."),
