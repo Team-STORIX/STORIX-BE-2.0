@@ -14,4 +14,9 @@ public enum WorksType {
     BOOK("단행본");
 
     private final String dbValue;
+
+    // 글 작품의 그림 작가는 표지 일러스트라 작가 표기에서 뺌
+    public boolean creditsIllustrator() {
+        return this == WEBTOON || this == COMIC;
+    }
 }

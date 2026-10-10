@@ -5,6 +5,7 @@ import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
+import com.storix.domain.domains.works.dto.WorksArtistInfo;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import org.springframework.data.domain.Limit;
@@ -132,6 +133,12 @@ public interface WorksRepository extends JpaRepository<Works, Long>, WorksReposi
     List<TopicRoomWorksInfo> findSimpleInfoByIdIn(@Param("ids") List<Long> ids);
 
     // 온보딩 작품 리스트 조회용. 비로그인 상태에서도 노출되는 공개 API라 성인 작품은 무조건 제외한다
+    @Query("SELECT new com.storix.domain.domains.works.dto.WorksArtistInfo(w.id, w.worksType, w.originalAuthor, w.author, w.illustrator, w.artistName) " +
+            "FROM Works w " +
+            "WHERE w.id > :afterWorksId " +
+            "ORDER BY w.id ASC")
+    List<WorksArtistInfo> findArtistInfosAfter(@Param("afterWorksId") Long afterWorksId, Pageable pageable);
+
     @Query("SELECT new com.storix.domain.domains.onboarding.dto.OnboardingWorksInfo(w.id, w.worksName, w.thumbnailUrl, w.artistName) " +
             "FROM Works w " +
             "WHERE w.isOnboarding = true " +
