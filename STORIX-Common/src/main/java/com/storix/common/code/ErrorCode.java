@@ -17,6 +17,7 @@ public enum ErrorCode {
     UNHANDLED_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_ERROR_009", "(내부) 핸들링하지 않은 에러입니다. 백엔드에게 연락주세요."),
     ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON_ERROR_010", "존재하지 않는 경로입니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "COMMON_ERROR_011", "지원하지 않는 요청 메서드입니다."),
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "COMMON_ERROR_012", "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."),
 
     // Token error
     TOKEN_NOT_EXIST(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_001", "인가가 필요한 경로로 토큰이 전달되지 않았습니다."),
@@ -198,6 +199,7 @@ public enum ErrorCode {
     WORKS_IMPORT_UNKNOWN_ENUM(HttpStatus.BAD_REQUEST, "WORKS_ERROR_009", "enum 카탈로그에 없는 값입니다."),
     WORKS_MERGE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "WORKS_ERROR_010", "작품 병합 요청이 올바르지 않습니다."),
     WORKS_MERGE_CONFLICT(HttpStatus.CONFLICT, "WORKS_ERROR_011", "합칠 수 없는 데이터가 있어 작품 병합을 거절했습니다."),
+    WORKS_RENAME_CONFLICT(HttpStatus.CONFLICT, "WORKS_ERROR_012", "현재 작품명이 요청과 달라 이름 변경을 거절했습니다."),
 
     // Favorite error
     FAVORITE_WORKS_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "FAVORITE_ERROR_001", "이미 관심 작품 해제가 되었거나, 관심 작품으로 등록한 적 없는 작품입니다."),

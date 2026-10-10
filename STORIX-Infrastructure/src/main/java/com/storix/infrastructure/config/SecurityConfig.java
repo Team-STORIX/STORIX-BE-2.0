@@ -1,5 +1,6 @@
 package com.storix.infrastructure.config;
 
+import com.storix.infrastructure.global.ratelimit.RateLimitFilter;
 import com.storix.infrastructure.global.security.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,7 @@ public class SecurityConfig {
     private final OnboardingAuthenticationFilter onboardingFilter;
     private final ErrorHandlingFilter errorHandlingFilter;
     private final InternalApiKeyFilter internalApiKeyFilter;
+    private final RateLimitFilter rateLimitFilter;
 
     private final SecurityEntryPoint securityEntryPoint;
     private final SecurityDeniedHandler securityDeniedHandler;
@@ -157,11 +159,12 @@ public class SecurityConfig {
                                 .anyRequest().hasRole("READER")
                 )
 
-                // MDC 상관키 -> 에러처리 -> jwt filter
+                // MDC 상관키 -> 에러처리 -> jwt filter -> 요청 횟수 제한
                 .addFilterBefore(errorHandlingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(onboardingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitFilter, InternalApiKeyFilter.class)
                 .addFilterBefore(mdcContextFilter, ErrorHandlingFilter.class)
 
                 // spring security exception handler

@@ -17,6 +17,13 @@ public final class RedisKeyStatic {
         }
     }
 
+    public static final class RateLimit {
+        public static final String PREFIX = "rate-limit:";
+
+        private RateLimit() {
+        }
+    }
+
     public static final class Search {
         public static final String TRENDING_PREFIX = "search:trending:";
         public static final String TRENDING_AGGREGATED = "search:trending:aggregated";

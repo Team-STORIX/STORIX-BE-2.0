@@ -2,6 +2,7 @@ package com.storix.internal.works.usecase;
 
 import com.storix.internal.works.controller.dto.WorksImportRequest;
 import com.storix.internal.works.controller.dto.WorksMergeRequest;
+import com.storix.internal.works.controller.dto.WorksRenameRequest;
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.hashtag.service.HashtagCacheHelper;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
@@ -9,10 +10,12 @@ import com.storix.domain.domains.search.service.WorksIndexService;
 import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
 import com.storix.domain.domains.works.dto.WorksImportResult;
 import com.storix.domain.domains.works.dto.WorksMergeResult;
+import com.storix.domain.domains.works.dto.WorksRenameResult;
 import com.storix.domain.domains.works.exception.WorksImportInProgressException;
 import com.storix.domain.domains.works.service.WorksImportLockHelper;
 import com.storix.domain.domains.works.service.WorksImportService;
 import com.storix.domain.domains.works.service.WorksMergeService;
+import com.storix.domain.domains.works.service.WorksService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,6 +32,7 @@ public class InternalWorksUseCase {
     private final WorksMergeService worksMergeService;
     private final WorksImportLockHelper worksImportLockHelper;
     private final OnboardingWorksHelper onboardingWorksHelper;
+    private final WorksService worksService;
 
     // 작품 enum 카탈로그 조회
     public WorksEnumCatalogResponse getEnumCatalog() {
@@ -72,6 +76,26 @@ public class InternalWorksUseCase {
                 .log(">>> [WorksMerge] 병합 완료 keepWorksId={}, dropWorksIds={}, moved={}, removedDuplicates={}, elapsedMs={}",
                         keepWorksId, result.mergedWorksIds(), result.moved(), result.removedDuplicates(),
                         System.currentTimeMillis() - startedAt);
+        return result;
+    }
+
+    // 작품명 정정. 적재가 옛 이름으로 같은 작품을 찾지 않게 같은 잠금 사용
+    public WorksRenameResult renameWorks(Long worksId, WorksRenameRequest request) {
+        String token = worksImportLockHelper.tryLock().orElseThrow(() -> WorksImportInProgressException.EXCEPTION);
+        WorksRenameResult result;
+        try {
+            result = worksService.rename(worksId, request.currentName(), request.newName());
+        } finally {
+            worksImportLockHelper.unlock(token);
+        }
+
+        worksIndexService.indexWorks(worksId);
+
+        log.atInfo()
+                .addKeyValue("worksId", worksId)
+                .addKeyValue("beforeName", result.beforeName())
+                .addKeyValue("afterName", result.afterName())
+                .log(">>> [WorksRename] 작품명 변경");
         return result;
     }
 }
