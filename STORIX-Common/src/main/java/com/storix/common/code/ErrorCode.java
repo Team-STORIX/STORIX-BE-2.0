@@ -17,6 +17,7 @@ public enum ErrorCode {
     UNHANDLED_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_ERROR_009", "(내부) 핸들링하지 않은 에러입니다. 백엔드에게 연락주세요."),
     ENDPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON_ERROR_010", "존재하지 않는 경로입니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "COMMON_ERROR_011", "지원하지 않는 요청 메서드입니다."),
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "COMMON_ERROR_012", "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."),
 
     // Token error
     TOKEN_NOT_EXIST(HttpStatus.UNAUTHORIZED, "TOKEN_ERROR_001", "인가가 필요한 경로로 토큰이 전달되지 않았습니다."),
