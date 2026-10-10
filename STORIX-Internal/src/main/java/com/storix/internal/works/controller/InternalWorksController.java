@@ -9,6 +9,7 @@ import com.storix.internal.works.usecase.InternalWorksUseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.works.dto.HashtagRemoveResult;
+import com.storix.domain.domains.works.dto.WorksArtistInfoPage;
 import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
 import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksImportResult;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -43,6 +45,19 @@ public class InternalWorksController {
     @Operation(summary = "작품 enum 카탈로그", description = "장르 · 연령가 · 작품 유형 · 플랫폼의 enum 이름과 DB 값을 내려줍니다. storedAs 는 DB 에 어느 값이 저장되는지입니다. 크롤러 검수 서비스가 원문을 enum 으로 매핑할 때 씁니다.")
     public CustomResponse<WorksEnumCatalogResponse> getEnumCatalog() {
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.getEnumCatalog());
+    }
+
+    @GetMapping("/artists")
+    @Operation(
+            summary = "작품 작가 필드 목록",
+            description = "작가 표기 보정용으로 작품마다 worksType · originalAuthor · author · illustrator 원본과 저장된 artistName 을 worksId 순으로 내려줍니다. "
+                    + "afterWorksId 보다 큰 작품부터 size 개(최대 1000)를 주고, 다음 요청에 쓸 nextAfterWorksId 를 돌려줍니다. 마지막이면 null 입니다."
+    )
+    public CustomResponse<WorksArtistInfoPage> getArtistInfos(
+            @RequestParam(defaultValue = "0") Long afterWorksId,
+            @RequestParam(defaultValue = "500") int size
+    ) {
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.getArtistInfos(afterWorksId, size));
     }
 
     @PostMapping("/import")

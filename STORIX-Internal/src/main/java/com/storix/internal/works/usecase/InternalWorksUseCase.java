@@ -10,6 +10,7 @@ import com.storix.domain.domains.hashtag.service.HashtagCacheHelper;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.search.service.WorksIndexService;
 import com.storix.domain.domains.works.dto.HashtagRemoveResult;
+import com.storix.domain.domains.works.dto.WorksArtistInfoPage;
 import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
 import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksImportResult;
@@ -145,5 +146,10 @@ public class InternalWorksUseCase {
                 .addKeyValue("count", affected.count())
                 .log(">>> [WorksHashtag] 해시태그 일괄 제거"));
         return result;
+    }
+
+    // 작가 표기 보정용 작품별 작가 필드 조회
+    public WorksArtistInfoPage getArtistInfos(Long afterWorksId, int size) {
+        return worksService.getArtistInfos(afterWorksId, Math.min(Math.max(size, 1), 1000));
     }
 }
