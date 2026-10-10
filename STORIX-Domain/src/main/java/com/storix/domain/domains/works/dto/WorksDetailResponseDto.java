@@ -37,7 +37,8 @@ public record WorksDetailResponseDto(
                 .sorted(Comparator.comparing(WorksPlatform::getPlatform))
                 .toList();
         List<String> writers = splitNames(works.getOriginalAuthor(), works.getAuthor());
-        List<String> illustrators = splitNames(works.getIllustrator()).stream()
+        boolean creditsIllustrator = works.getWorksType() == null || works.getWorksType().creditsIllustrator();
+        List<String> illustrators = splitNames(creditsIllustrator ? works.getIllustrator() : null).stream()
                 .filter(name -> !writers.contains(name))
                 .toList();
         return WorksDetailResponseDto.builder()

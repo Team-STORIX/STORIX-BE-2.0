@@ -1,6 +1,7 @@
 package com.storix.domain.domains.works.dto;
 
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +11,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WorksDetailResponseDtoTest {
 
     private WorksDetailResponseDto detail(String originalAuthor, String author, String illustrator) {
-        Works works = Works.builder().worksName("작품").artistName("작가")
+        return detail(WorksType.WEBTOON, originalAuthor, author, illustrator);
+    }
+
+    private WorksDetailResponseDto detail(WorksType worksType, String originalAuthor, String author, String illustrator) {
+        Works works = Works.builder().worksName("작품").artistName("작가").worksType(worksType)
                 .originalAuthor(originalAuthor).author(author).illustrator(illustrator).build();
         return WorksDetailResponseDto.from(works, 0L, false);
     }
@@ -41,5 +46,13 @@ class WorksDetailResponseDtoTest {
 
         assertThat(dto.author()).isEqualTo("추공");
         assertThat(dto.illustrator()).isNull();
+    }
+
+    @Test
+    @DisplayName("웹소설 · 단행본은 표지 일러스트레이터를 그림 작가로 내려주지 않는다")
+    void novelHidesIllustrator() {
+        assertThat(detail(WorksType.WEBNOVEL, "묵향동후", "묵향동후", "千二百").illustrator()).isNull();
+        assertThat(detail(WorksType.BOOK, null, "작가", "표지가").illustrator()).isNull();
+        assertThat(detail(WorksType.COMIC, null, "작가", "그림가").illustrator()).isEqualTo("그림가");
     }
 }
