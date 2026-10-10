@@ -11,9 +11,11 @@ import com.storix.domain.domains.feed.dto.LikeToggleResponse;
 import com.storix.domain.domains.feed.dto.ReaderBoardReplyInfoWithProfile;
 import com.storix.api.domain.feed.usecase.FeedKebabUseCase;
 import com.storix.api.domain.feed.usecase.FeedReactionUseCase;
+import com.storix.api.domain.feed.usecase.FeedSearchUseCase;
 import com.storix.api.domain.feed.usecase.FeedUseCase;
 import com.storix.domain.domains.profile.dto.ProfileSortType;
 import com.storix.domain.domains.profile.dto.ReaderBoardWithProfileInfo;
+import com.storix.domain.domains.search.dto.RecentResponseDto;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
 import com.storix.common.payload.CustomResponse;
@@ -21,6 +23,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +42,7 @@ public class FeedController {
     private final FeedUseCase feedUseCase;
     private final FeedReactionUseCase feedReactionUseCase;
     private final FeedKebabUseCase feedKebabUseCase;
+    private final FeedSearchUseCase feedSearchUseCase;
 
     @Operation(summary = "전체 게시물 리스트 조회", description = "전체 게시물 리스트를 조회하는 api 입니다. 무한 스크롤로 구성됩니다.")
     @GetMapping("/reader/board")
@@ -50,6 +54,46 @@ public class FeedController {
         Pageable pageable = PageRequest.of(page, 10, sort.getSortValue());
         return ResponseEntity.ok()
                 .body(feedUseCase.getAllReaderBoard(authUserDetails.getUserId(), pageable));
+    }
+
+    @Operation(summary = "피드 게시글 검색", description = "본문과 연결된 작품명으로 게시글을 관련도순으로 검색합니다. 관련도가 같으면 최신순이고, 차단한 유저의 글은 빠집니다. 첫 페이지 검색어는 피드 최근 검색어에 저장됩니다.")
+    @GetMapping("/reader/board/search")
+    public ResponseEntity<CustomResponse<Slice<ReaderBoardWithProfileInfo>>> searchReaderBoard(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @RequestParam @NotBlank String keyword,
+            @RequestParam(defaultValue = "0") @Min(0) int page
+    ) {
+        Pageable pageable = PageRequest.of(page, 10);
+        return ResponseEntity.ok()
+                .body(feedSearchUseCase.searchReaderBoards(authUserDetails.getUserId(), keyword, pageable));
+    }
+
+    @Operation(summary = "피드 최근 검색어 조회", description = "피드 검색에서 최근에 검색한 키워드를 최신순으로 최대 10개 조회합니다.")
+    @GetMapping("/search/recent")
+    public ResponseEntity<CustomResponse<RecentResponseDto>> getFeedRecentKeywords(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails
+    ) {
+        return ResponseEntity.ok()
+                .body(feedSearchUseCase.getRecentKeywords(authUserDetails.getUserId()));
+    }
+
+    @Operation(summary = "피드 최근 검색어 삭제", description = "피드 최근 검색어 하나를 삭제합니다.")
+    @DeleteMapping("/search/recent")
+    public ResponseEntity<CustomResponse<Void>> deleteFeedRecentKeyword(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails,
+            @RequestParam @NotBlank String keyword
+    ) {
+        return ResponseEntity.ok()
+                .body(feedSearchUseCase.deleteRecentKeyword(authUserDetails.getUserId(), keyword));
+    }
+
+    @Operation(summary = "피드 최근 검색어 전체 삭제", description = "피드 최근 검색어를 모두 삭제합니다.")
+    @DeleteMapping("/search/recent/all")
+    public ResponseEntity<CustomResponse<Void>> deleteAllFeedRecentKeywords(
+            @AuthenticationPrincipal AuthUserDetails authUserDetails
+    ) {
+        return ResponseEntity.ok()
+                .body(feedSearchUseCase.deleteAllRecentKeywords(authUserDetails.getUserId()));
     }
 
     @Operation(summary = "관심 작품 리스트 조회", description = "관심 작품 리스트를 조회하는 api 입니다. 무한스크롤 형식입니다.")

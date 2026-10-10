@@ -30,6 +30,7 @@ public final class RedisKeyStatic {
         public static final String TRENDING_PREV_AGGREGATED = "search:trending:aggregated:prev";
         public static final String RECENT_PREFIX = "search:recent:";
         public static final String WORKS_REINDEX_LOCK = "search:works:reindex:lock";
+        public static final String FEEDS_REINDEX_LOCK = "search:feeds:reindex:lock";
 
         private Search() {
         }
@@ -55,6 +56,7 @@ public final class RedisKeyStatic {
 
     public static final class Feed {
         public static final String TODAY_SELECTION_PREFIX = "feed:today:";
+        public static final String RECENT_PREFIX = "feed:recent:";
 
         private Feed() {
         }
