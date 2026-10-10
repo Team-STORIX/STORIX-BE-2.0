@@ -69,9 +69,13 @@ class ConventionArchitectureTest {
     @DisplayName("서비스 · 어댑터 · 유스케이스 · 엔티티는 JDK 예외를 직접 던지지 않는다")
     void noJdkExceptions() {
         ArchRule rule = noClasses().that().resideInAnyPackage("..domains..service..", "..domains..adaptor..", "..domains..domain..", "..usecase..")
-                .should().callConstructor(IllegalArgumentException.class, String.class)
-                .orShould().callConstructor(IllegalStateException.class, String.class)
+                .should().callConstructor(IllegalArgumentException.class)
+                .orShould().callConstructor(IllegalArgumentException.class, String.class)
+                .orShould().callConstructor(IllegalArgumentException.class, Throwable.class)
                 .orShould().callConstructor(IllegalArgumentException.class, String.class, Throwable.class)
+                .orShould().callConstructor(IllegalStateException.class)
+                .orShould().callConstructor(IllegalStateException.class, String.class)
+                .orShould().callConstructor(IllegalStateException.class, Throwable.class)
                 .orShould().callConstructor(IllegalStateException.class, String.class, Throwable.class);
         rule.check(classes);
     }
