@@ -51,6 +51,17 @@ class InternalApiKeyFilterTest {
     }
 
     @Test
+    @DisplayName("context-path 가 붙어도 내부 경로로 판정한다")
+    void withContextPath() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/storix/internal/v1/works/import");
+        request.setContextPath("/storix");
+        request.addHeader("X-Internal-Api-Key", "secret-key");
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+    }
+
+    @Test
     @DisplayName("키 설정이 비어 있으면 빈 헤더로 통과시키지 않는다")
     void emptyConfiguredKey() throws Exception {
         InternalApiKeyFilter emptyKeyFilter = new InternalApiKeyFilter("");
