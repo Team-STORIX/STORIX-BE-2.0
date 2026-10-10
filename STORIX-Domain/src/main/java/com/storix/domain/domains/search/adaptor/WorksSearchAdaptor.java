@@ -2,7 +2,6 @@ package com.storix.domain.domains.search.adaptor;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -99,18 +98,20 @@ public class WorksSearchAdaptor {
         }
     }
 
+    // 점수가 같으면 짧은 제목 먼저. 본편이 시리즈 · 외전보다 짧다
     private List<Long> search(Query query, int size) throws IOException {
-        SearchResponse<Void> response = client.search(s -> s
+        SearchResponse<WorksDocument> response = client.search(s -> s
                 .index(worksIndexProperties.alias())
                 .query(query)
-                .sort(so -> so.score(sc -> sc.order(SortOrder.Desc)))
-                .sort(so -> so.field(f -> f.field("worksId").order(SortOrder.Asc)))
                 .size(size)
-                .source(src -> src.fetch(false)), Void.class);
+                .source(src -> src.filter(f -> f.includes("worksId", "worksName"))), WorksDocument.class);
 
         return response.hits().hits().stream()
-                .map(Hit::id)
-                .map(Long::valueOf)
+                .filter(hit -> hit.source() != null)
+                .sorted(Comparator.comparing((Hit<WorksDocument> hit) -> -hit.score())
+                        .thenComparingInt(hit -> hit.source().worksName().length())
+                        .thenComparing(hit -> hit.source().worksId()))
+                .map(hit -> hit.source().worksId())
                 .toList();
     }
 
