@@ -3,6 +3,7 @@ package com.storix.infrastructure.global.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.storix.common.code.ErrorCode;
 import com.storix.common.payload.ErrorResponse;
+import com.storix.common.utils.STORIXStatic;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,9 @@ public class SecurityEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        ErrorCode code = ErrorCode.TOKEN_NOT_EXIST;
+        ErrorCode code = request.getRequestURI().startsWith(STORIXStatic.Internal.URI_PREFIX)
+                ? ErrorCode.INVALID_INTERNAL_API_KEY
+                : ErrorCode.TOKEN_NOT_EXIST;
 
         log.warn(">>> [Http] 인증 실패 code={} status={} message={}",
                 code.getCode(), code.getHttpStatus().value(), code.getMessage());

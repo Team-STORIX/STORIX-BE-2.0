@@ -3,6 +3,7 @@ package com.storix.domain.domains.genrescore.repository;
 import com.storix.domain.domains.genrescore.domain.UserGenreScoreLog;
 import com.storix.domain.domains.genrescore.dto.RecentGenreScore;
 import com.storix.domain.domains.genrescore.dto.UnprocessedLogRow;
+import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.works.domain.Genre;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -74,4 +75,15 @@ public interface UserGenreScoreLogRepository extends JpaRepository<UserGenreScor
     @Modifying
     @Query("DELETE FROM UserGenreScoreLog l WHERE l.processedAt IS NOT NULL AND l.processedAt < :threshold")
     int deleteProcessedBefore(@Param("threshold") LocalDateTime threshold);
+
+    /** 작품 병합 */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM UserGenreScoreLog e WHERE e.worksId = :worksId AND e.userId IN :userIds AND e.eventType IN :eventTypes")
+    int deleteByWorksIdAndUserIdsAndEventTypes(@Param("worksId") Long worksId,
+                                                @Param("userIds") List<Long> userIds,
+                                                @Param("eventTypes") Collection<GenreScoreEventType> eventTypes);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE UserGenreScoreLog e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
+    int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
 }

@@ -5,6 +5,7 @@ import com.storix.domain.domains.favorite.dto.FavoriteWorksWithCreatedAt;
 import com.storix.domain.domains.favorite.repository.FavoriteWorksRepository;
 import com.storix.domain.domains.favorite.exception.DuplicateFavoriteWorksRequestException;
 import com.storix.domain.domains.favorite.exception.InvalidFavoriteWorksRequestException;
+import com.storix.domain.domains.works.dto.WorksMoveCount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
@@ -73,5 +74,15 @@ public class FavoriteWorksAdaptor {
 
     public List<FavoriteWorksWithCreatedAt> findAllWithCreatedAtByUserId(Long userId) {
         return favoriteWorksRepository.findAllWithCreatedAtByUserId(userId);
+    }
+
+    /** 작품 병합 — 양쪽 모두 관심작품에 넣은 유저는 drop 쪽을 삭제 후 이동, 그 유저 목록도 돌려줌 */
+    public WorksMoveCount moveWorks(Long fromWorksId, Long toWorksId) {
+        Set<Long> existingUserIds = Set.copyOf(favoriteWorksRepository.findUserIdsByWorksId(toWorksId));
+        List<Long> duplicatedUserIds = favoriteWorksRepository.findUserIdsByWorksId(fromWorksId).stream()
+                .filter(existingUserIds::contains)
+                .toList();
+        int removed = duplicatedUserIds.isEmpty() ? 0 : favoriteWorksRepository.deleteByWorksIdAndUserIds(fromWorksId, duplicatedUserIds);
+        return new WorksMoveCount(favoriteWorksRepository.moveWorks(fromWorksId, toWorksId), removed, duplicatedUserIds);
     }
 }

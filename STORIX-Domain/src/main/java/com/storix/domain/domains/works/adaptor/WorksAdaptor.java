@@ -14,6 +14,7 @@ import com.storix.domain.domains.works.dto.WorksInfo;
 import com.storix.domain.domains.works.exception.UnknownWorksException;
 import com.storix.domain.domains.works.repository.WorksNicknameRepository;
 import com.storix.domain.domains.works.repository.WorksRepository;
+import com.storix.domain.domains.works.dto.WorksMoveCount;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Limit;
@@ -285,5 +286,16 @@ public class WorksAdaptor {
 
     public void deleteNickname(WorksNickname worksNickname) {
         worksNicknameRepository.delete(worksNickname);
+    }
+
+    /** 작품 병합 — 중복 별칭은 삭제 후 이동 */
+    public WorksMoveCount moveNicknames(Long fromWorksId, Long toWorksId) {
+        List<String> existing = worksNicknameRepository.findNormalizedByWorksId(toWorksId);
+        int removed = existing.isEmpty() ? 0 : worksNicknameRepository.deleteByWorksIdAndNormalized(fromWorksId, existing);
+        return new WorksMoveCount(worksNicknameRepository.moveWorks(fromWorksId, toWorksId), removed);
+    }
+
+    public void delete(Works works) {
+        worksRepository.delete(works);
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import com.storix.infrastructure.config.SecurityConfig;
+import com.storix.infrastructure.global.security.InternalApiKeyFilter;
 import com.storix.infrastructure.config.WebSocketConfig;
 import com.storix.infrastructure.external.chat.RedisSubscriber;
 import com.storix.infrastructure.external.chat.StompHandler;
@@ -23,6 +24,7 @@ import java.util.TimeZone;
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = {
                         SecurityConfig.class,
+                        InternalApiKeyFilter.class,
                         WebSocketConfig.class,
                         StompHandler.class,
                         RedisSubscriber.class,

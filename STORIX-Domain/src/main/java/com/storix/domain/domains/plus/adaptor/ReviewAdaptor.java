@@ -182,4 +182,16 @@ public class ReviewAdaptor {
         }
     }
 
+    /** 작품 병합 */
+    public List<Long> findLibraryUserIdsByWorksId(Long worksId) {
+        return reviewRepository.findLibraryUserIdsByWorksId(worksId);
+    }
+
+    public List<Rating> findActiveRatingsByWorksId(Long worksId) {
+        return reviewRepository.findActiveRatingsByWorksId(worksId);
+    }
+
+    public int moveWorks(Long fromWorksId, Long toWorksId) {
+        return reviewRepository.moveWorks(fromWorksId, toWorksId);
+    }
 }

@@ -74,6 +74,18 @@ public class WorksIndexService {
         }
     }
 
+    // 병합으로 없어진 작품 색인 삭제. 실패해도 다음 재색인 때 맞춰짐
+    public void deleteWorks(List<Long> worksIds) {
+        try {
+            BulkRequest.Builder bulk = new BulkRequest.Builder().index(worksIndexProperties.alias()).refresh(Refresh.WaitFor);
+            worksIds.forEach(worksId -> bulk.operations(op -> op.delete(d -> d.id(String.valueOf(worksId)))));
+            BulkResponse response = client.bulk(bulk.build());
+            if (response.errors()) log.warn(">>> [WorksIndex] 작품 일부 색인 삭제 실패 worksIds={}", worksIds);
+        } catch (Exception e) {
+            log.warn(">>> [WorksIndex] 작품 색인 삭제 실패 worksIds={}, cause={}", worksIds, e.getMessage());
+        }
+    }
+
     // 실패해도 다음 재색인 때 맞춰진다
     public void indexWorksBulk(List<Long> worksIds) {
         try {
