@@ -40,7 +40,7 @@ public class ErrorHandlingFilter extends OncePerRequestFilter {
 
     private void responseToClient(HttpServletResponse response, ErrorCode errorCode, ErrorResponse body)
             throws IOException {
-        log.warn(">>> [Http] 인증 실패 code={} status={} message={}",
+        log.warn(">>> [Http] 요청 거절 code={} status={} message={}",
                 errorCode.getCode(), errorCode.getHttpStatus().value(), errorCode.getMessage());
 
         response.setStatus(errorCode.getHttpStatus().value());
