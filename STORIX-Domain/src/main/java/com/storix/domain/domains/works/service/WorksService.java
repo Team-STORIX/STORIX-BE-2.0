@@ -3,15 +3,21 @@ package com.storix.domain.domains.works.service;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
+import com.storix.domain.domains.hashtag.adaptor.HashtagAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.dto.HashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksDetailResponseDto;
+import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksRenameResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -20,6 +26,7 @@ public class WorksService {
 
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
+    private final HashtagAdaptor hashtagAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
 
     private final ReviewAdaptor reviewAdaptor;
@@ -55,5 +62,23 @@ public class WorksService {
         Works works = worksAdaptor.findById(worksId);
         works.rename(currentName, newName);
         return new WorksRenameResult(worksId, currentName, newName);
+    }
+
+    @Transactional
+    public WorksHashtagRemoveResult removeHashtags(Long worksId, List<String> names) {
+        Works works = worksAdaptor.findByIdWithHashtags(worksId);
+        return WorksHashtagRemoveResult.of(worksId, names, works.removeHashtags(names));
+    }
+
+    @Transactional
+    public HashtagRemoveResult removeHashtagsFromAllWorks(List<String> names, boolean dryRun) {
+        Map<String, List<Long>> worksIdsByName = hashtagAdaptor.findWorksIdsByNames(names);
+        if (!dryRun) {
+            worksIdsByName.values().stream()
+                    .flatMap(List::stream)
+                    .distinct()
+                    .forEach(worksId -> worksAdaptor.findByIdWithHashtags(worksId).removeHashtags(names));
+        }
+        return HashtagRemoveResult.of(dryRun, names, worksIdsByName);
     }
 }

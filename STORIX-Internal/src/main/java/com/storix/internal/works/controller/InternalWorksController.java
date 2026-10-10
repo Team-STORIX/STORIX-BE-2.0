@@ -1,12 +1,16 @@
 package com.storix.internal.works.controller;
 
+import com.storix.internal.works.controller.dto.HashtagRemoveRequest;
+import com.storix.internal.works.controller.dto.WorksHashtagRemoveRequest;
 import com.storix.internal.works.controller.dto.WorksImportRequest;
 import com.storix.internal.works.controller.dto.WorksMergeRequest;
 import com.storix.internal.works.controller.dto.WorksRenameRequest;
 import com.storix.internal.works.usecase.InternalWorksUseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
+import com.storix.domain.domains.works.dto.HashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
+import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksImportResult;
 import com.storix.domain.domains.works.dto.WorksMergeResult;
 import com.storix.domain.domains.works.dto.WorksRenameResult;
@@ -86,5 +90,31 @@ public class InternalWorksController {
             @Valid @RequestBody WorksRenameRequest request
     ) {
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.renameWorks(worksId, request));
+    }
+
+    @PostMapping("/{worksId}/hashtags/remove")
+    @Operation(
+            summary = "작품 해시태그 제거",
+            description = "작품 하나에서 이름이 같은 해시태그 연결만 끊습니다. 해시태그 자체는 남습니다. 적재는 해시태그를 더하기만 해서 잘못 붙은 태그를 뺄 때 씁니다. "
+                    + "removed 는 끊은 이름, notFound 는 원래 붙어 있지 않던 이름입니다. 끊은 내역은 로그에 남습니다. "
+                    + "작품 적재 · 병합과 동시에 돌 수 없고 겹치면 409(WORKS_ERROR_007)입니다."
+    )
+    public CustomResponse<WorksHashtagRemoveResult> removeWorksHashtags(
+            @PathVariable Long worksId,
+            @Valid @RequestBody WorksHashtagRemoveRequest request
+    ) {
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.removeWorksHashtags(worksId, request));
+    }
+
+    @PostMapping("/hashtags/remove")
+    @Operation(
+            summary = "해시태그 일괄 제거",
+            description = "이름이 같은 해시태그를 모든 작품에서 끊습니다. 해시태그 자체는 남습니다. "
+                    + "dryRun 이 true 면 끊지 않고 이름마다 붙어 있는 작품 id 와 수만 돌려줍니다. false 면 끊고 같은 모양으로 돌려줍니다. "
+                    + "한 요청이 트랜잭션 하나라 중간에 실패하면 전부 되돌립니다. 끊은 내역은 해시태그마다 로그에 남습니다. "
+                    + "dryRun 이 false 면 작품 적재 · 병합과 동시에 돌 수 없고 겹치면 409(WORKS_ERROR_007)입니다."
+    )
+    public CustomResponse<HashtagRemoveResult> removeHashtagsFromAllWorks(@Valid @RequestBody HashtagRemoveRequest request) {
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.removeHashtagsFromAllWorks(request));
     }
 }

@@ -5,8 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.storix.domain.domains.onboarding.dto.OnboardingWorksInfo;
 import com.storix.domain.domains.onboarding.dto.StandardOnboardingWorksInfo;
-import com.storix.domain.domains.works.application.helper.ArtistNameParseHelper;
-import com.storix.domain.domains.works.repository.WorksRepository;
+import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 
 import com.storix.domain.domains.onboarding.exception.InvalidOnboardingWorksException;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +29,7 @@ public class OnboardingWorksHelper {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
-    private final WorksRepository worksRepository;
-    private final ArtistNameParseHelper artistNameParseHelper;
+    private final WorksAdaptor worksAdaptor;
 
     public void evictCache() {
         redisTemplate.delete(KEY);
@@ -57,15 +55,10 @@ public class OnboardingWorksHelper {
 
         // 2) DB 조회
         log.info(">>>> [Helper] OnboardingWorksList Cache Update");
-        List<OnboardingWorksInfo> raws = worksRepository.findAllOnboardingWorksInfo();
+        List<OnboardingWorksInfo> raws = worksAdaptor.findAllOnboardingWorksInfo();
 
         List<StandardOnboardingWorksInfo> result = raws.stream()
-                .map(raw ->
-                        StandardOnboardingWorksInfo.of
-                                (raw, artistNameParseHelper
-                                        .buildArtistName(raw.getOriginalAuthor(), raw.getAuthor(), raw.getIllustrator())
-                                )
-                )
+                .map(StandardOnboardingWorksInfo::of)
                 .toList();
 
         // 3) 캐시 저장

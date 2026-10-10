@@ -139,6 +139,7 @@ public class ExplorationService {
                 .map(w -> new LibraryWorksInfo(
                         w.getId(),
                         w.getWorksName(),
+                        w.getArtistName(),
                         w.getAuthor(),
                         w.getIllustrator(),
                         w.getOriginalAuthor(),
