@@ -31,7 +31,8 @@ public record WorksImportCommand(
         // 대상 작품을 지정하면 판정을 안 하므로 보낸 필드만 갱신
         boolean targeted = item.targetWorksId() != null;
         String worksName = targeted ? item.worksName() : requireText(item.worksName(), "worksName");
-        String artistName = targeted ? item.artistName() : WorksIdentity.dedupeArtistName(requireText(item.artistName(), "artistName"));
+        String artistName = targeted ? item.artistName() : requireText(item.artistName(), "artistName");
+        if (artistName != null) artistName = WorksIdentity.dedupeArtistName(artistName);
         WorksType worksType = parse(WorksType.class, item.worksType(), "worksType");
         return new WorksImportCommand(
                 item,
@@ -87,7 +88,7 @@ public record WorksImportCommand(
 
     // 해시태그는 보냈을 때만 기존에 더함
     public List<String> applyTo(Works works, Set<Hashtag> hashtags) {
-        List<String> changes = new ArrayList<>(works.updateFromImport(item.author(), item.illustrator(), item.originalAuthor(),
+        List<String> changes = new ArrayList<>(works.updateFromImport(artistName, item.author(), item.illustrator(), item.originalAuthor(),
                 ageClassification, genre, worksType, item.description(), item.thumbnailUrl()));
         changes.add(platform == null ? null : works.putPlatform(platform, item.landingUrl()));
         changes.add(works.addHashtags(hashtags));
