@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -24,6 +25,13 @@ public interface HashtagRepository extends JpaRepository<Hashtag, Long> {
             "WHERE w.id IN :worksIds " +
             "ORDER BY w.id, h.name")
     List<HashtagInfo> findAllByWorksIds(@Param("worksIds") List<Long> worksIds);
+
+    @Query("SELECT new com.storix.domain.domains.hashtag.dto.HashtagInfo(w.id, h.id, h.name) " +
+            "FROM Hashtag h " +
+            "JOIN h.works w " +
+            "WHERE h.name IN :names " +
+            "ORDER BY h.name, w.id")
+    List<HashtagInfo> findAllByNames(@Param("names") Collection<String> names);
 
     @Query("SELECT new com.storix.domain.domains.hashtag.dto.HashtagDocumentFrequency(h.id, COUNT(w)) " +
             "FROM Hashtag h " +

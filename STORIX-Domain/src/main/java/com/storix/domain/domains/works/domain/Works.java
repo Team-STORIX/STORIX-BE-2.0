@@ -8,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -192,6 +193,16 @@ public class Works {
         if (added.isEmpty()) return null;
         hashtags.addAll(added);
         return "hashtags:" + added.stream().map(hashtag -> "+" + hashtag.getName()).collect(Collectors.joining(","));
+    }
+
+    // 이름이 같은 해시태그 연결만 끊음. 끊은 이름을 이름순으로 돌려줌
+    public List<String> removeHashtags(Collection<String> names) {
+        List<Hashtag> removed = hashtags.stream()
+                .filter(hashtag -> names.contains(hashtag.getName()))
+                .sorted(Comparator.comparing(Hashtag::getName))
+                .toList();
+        removed.forEach(hashtags::remove);
+        return removed.stream().map(Hashtag::getName).toList();
     }
 
     // 병합: keep 값을 우선하고 비어 있는 필드 · 없는 플랫폼 링크만 drop 값으로 채움
