@@ -37,6 +37,7 @@ public class SearchHistoryService {
     private static final String TRENDING_KEY_PREFIX = RedisKeyStatic.Search.TRENDING_PREFIX;
     private static final String RECENT_KEY_PREFIX = RedisKeyStatic.Search.RECENT_PREFIX;
     private static final String LIBRARY_RECENT_KEY_PREFIX = RedisKeyStatic.Library.RECENT_PREFIX;
+    private static final String FEED_RECENT_KEY_PREFIX = RedisKeyStatic.Feed.RECENT_PREFIX;
 
     // 최근 검색어 개수 (10)
     private static final int MAX_RECENT_SIZE = 10;
@@ -260,5 +261,40 @@ public class SearchHistoryService {
 
         String key = LIBRARY_RECENT_KEY_PREFIX + userId;
         redisTemplate.opsForList().remove(key, 1, keyword);
+    }
+
+    // 피드
+    /** 1. 검색어 저장 (최근 검색어) */
+    @Async("logThreadPool")
+    public void addFeedSearchLog(Long userId, String keyword) {
+        try {
+            if (userId == null || keyword == null || keyword.isBlank()) return;
+
+            RedisScript<Long> script = new DefaultRedisScript<>(ADD_RECENT_SEARCH_SCRIPT, Long.class);
+            redisTemplate.execute(script,
+                    Collections.singletonList(FEED_RECENT_KEY_PREFIX + userId),
+                    keyword,
+                    String.valueOf(MAX_RECENT_SIZE - 1),
+                    String.valueOf(TimeUnit.DAYS.toSeconds(RECENT_KEY_TTL_DAYS))
+            );
+        } catch (Exception e) {
+            log.warn("피드 검색어 로그 저장 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /** 2. 최근 검색어 조회 */
+    public List<String> getFeedRecentKeywords(Long userId) {
+        List<String> keywords = redisTemplate.opsForList().range(FEED_RECENT_KEY_PREFIX + userId, 0, MAX_RECENT_SIZE - 1);
+        return keywords != null ? keywords : List.of();
+    }
+
+    /** 3. 최근 검색어 삭제 */
+    public void deleteFeedRecentKeyword(Long userId, String keyword) {
+        redisTemplate.opsForList().remove(FEED_RECENT_KEY_PREFIX + userId, 1, keyword);
+    }
+
+    /** 4. 최근 검색어 전체 삭제 */
+    public void deleteAllFeedRecentKeywords(Long userId) {
+        redisTemplate.delete(FEED_RECENT_KEY_PREFIX + userId);
     }
 }

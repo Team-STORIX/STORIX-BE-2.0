@@ -1,0 +1,86 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "tokenizer": {
+        "nori_mixed": {
+          "type": "nori_tokenizer",
+          "decompound_mode": "mixed"
+        },
+        "bigram": {
+          "type": "ngram",
+          "min_gram": 2,
+          "max_gram": 2,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
+      },
+      "analyzer": {
+        "korean": {
+          "type": "custom",
+          "tokenizer": "nori_mixed",
+          "filter": [
+            "nori_part_of_speech",
+            "nori_readingform",
+            "lowercase"
+          ]
+        },
+        "korean_bigram": {
+          "type": "custom",
+          "tokenizer": "bigram",
+          "filter": [
+            "lowercase"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "boardId": {
+        "type": "long"
+      },
+      "userId": {
+        "type": "long"
+      },
+      "content": {
+        "type": "text",
+        "analyzer": "korean",
+        "fields": {
+          "bigram": {
+            "type": "text",
+            "analyzer": "korean_bigram"
+          }
+        }
+      },
+      "worksName": {
+        "type": "text",
+        "analyzer": "korean",
+        "fields": {
+          "bigram": {
+            "type": "text",
+            "analyzer": "korean_bigram"
+          }
+        }
+      },
+      "nicknames": {
+        "type": "text",
+        "analyzer": "korean",
+        "fields": {
+          "bigram": {
+            "type": "text",
+            "analyzer": "korean_bigram"
+          }
+        }
+      },
+      "createdAt": {
+        "type": "date",
+        "format": "epoch_millis"
+      }
+    }
+  }
+}

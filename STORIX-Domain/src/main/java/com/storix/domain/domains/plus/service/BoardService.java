@@ -1,5 +1,6 @@
 package com.storix.domain.domains.plus.service;
 
+import com.storix.domain.domains.search.publisher.FeedIndexPublisher;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
@@ -24,6 +25,7 @@ public class BoardService {
     private final AdultWorksHelper adultWorksHelper;
 
     private final GenreScorePublisher genreScorePublisher;
+    private final FeedIndexPublisher feedIndexPublisher;
 
     // 독자 게시물 생성
     @Transactional
@@ -44,6 +46,7 @@ public class BoardService {
         }
 
         libraryAdaptor.incrementBoardCount(cmd.userId());
+        feedIndexPublisher.publishSaved(readerBoard.getId());
 
         if (cmd.isWorksSelected() && cmd.worksId() != null) {
             genreScorePublisher.publish(cmd.userId(), cmd.worksId(), GenreScoreEventType.BOARD_WRITE);

@@ -18,6 +18,7 @@ import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
 import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -96,6 +99,39 @@ public class ReaderFeedAdaptor {
             return readerBoardRepository.findAllByOrderByCreatedAtDesc(pageable);
         }
         return readerBoardRepository.findAllExcludingBlockedOrderByCreatedAtDesc(blockedIds, pageable);
+    }
+
+    public Slice<ReaderBoard> searchByContentExcludingBlocked(String keyword, List<Long> blockedIds, Pageable pageable) {
+        // % · _ 를 글자 그대로 찾도록
+        String escaped = keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        if (blockedIds.isEmpty()) {
+            return readerBoardRepository.searchByContent(escaped, pageable);
+        }
+        return readerBoardRepository.searchByContentExcludingBlocked(escaped, blockedIds, pageable);
+    }
+
+    // 검색 순서를 지키고, 색인 뒤에 삭제된 게시글은 뺀다
+    public List<ReaderBoard> findActiveBoardsInOrder(List<Long> boardIds) {
+        if (boardIds.isEmpty()) return List.of();
+
+        Map<Long, ReaderBoard> boards = readerBoardRepository.findAllByIdInAndDeletedFalse(boardIds).stream()
+                .collect(Collectors.toMap(ReaderBoard::getId, Function.identity()));
+        return boardIds.stream()
+                .map(boards::get)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    public Optional<ReaderBoard> findActiveBoard(Long boardId) {
+        return readerBoardRepository.findByIdAndDeletedFalse(boardId);
+    }
+
+    public List<ReaderBoard> findActiveBoardsAfter(Long lastBoardId, int size) {
+        return readerBoardRepository.findByIdGreaterThanAndDeletedFalseOrderByIdAsc(lastBoardId, Limit.of(size));
+    }
+
+    public List<ReaderBoard> findActiveBoardsOfWorksAfter(Collection<Long> worksIds, Long lastBoardId, int size) {
+        return readerBoardRepository.findByWorksIdInAndIdGreaterThanAndDeletedFalseOrderByIdAsc(worksIds, lastBoardId, Limit.of(size));
     }
 
     // 리스트 좋아요 정보 확인
