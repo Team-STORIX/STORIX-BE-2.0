@@ -46,7 +46,7 @@ public record WorksImportRequest(
             String landingUrl,
             String description,
             String thumbnailUrl,
-            @Schema(description = "비우면 기존 해시태그를 그대로 둔다")
+            @Schema(description = "기존 해시태그에 더한다. 빼지 않으며 비우면 그대로 둔다")
             List<String> hashtags,
             @Schema(description = "갱신할 기존 작품 id. 있으면 판정 없이 이 작품의 보낸 필드만 갱신한다. 이때 작품명 · 작가 · 작품 유형도 생략할 수 있다", example = "2782")
             Long targetWorksId,
