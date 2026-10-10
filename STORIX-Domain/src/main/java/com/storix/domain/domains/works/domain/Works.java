@@ -150,7 +150,8 @@ public class Works {
         this.author = merge("author", author, this.author, changes, true);
         this.illustrator = merge("illustrator", illustrator, this.illustrator, changes, true);
         this.originalAuthor = merge("originalAuthor", originalAuthor, this.originalAuthor, changes, true);
-        this.ageClassification = merge("ageClassification", ageClassification, this.ageClassification, changes, true);
+        // 연령은 올리기만. 플랫폼마다 표기가 달라 낮은 값으로 덮이지 않게
+        this.ageClassification = merge("ageClassification", AgeClassification.higher(this.ageClassification, ageClassification), this.ageClassification, changes, true);
         this.genre = merge("genre", genre, this.genre, changes, true);
         this.worksType = merge("worksType", worksType, this.worksType, changes, true);
         this.description = merge("description", description, this.description, changes, false);
@@ -203,7 +204,7 @@ public class Works {
         if (!hasText(originalAuthor)) this.originalAuthor = drop.originalAuthor;
         if (!hasText(description)) this.description = drop.description;
         if (!hasText(thumbnailUrl)) this.thumbnailUrl = drop.thumbnailUrl;
-        if (ageClassification == null) this.ageClassification = drop.ageClassification;
+        this.ageClassification = AgeClassification.higher(ageClassification, drop.ageClassification);
         if (genre == null) this.genre = drop.genre;
         if (worksType == null) this.worksType = drop.worksType;
         if (Boolean.TRUE.equals(drop.isOnboarding)) this.isOnboarding = true;
