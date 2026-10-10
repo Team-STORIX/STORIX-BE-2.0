@@ -8,7 +8,7 @@ import org.springframework.data.domain.Sort;
 @RequiredArgsConstructor
 public enum WorksSortType {
 
-    NAME("가나다순", Sort.by(Sort.Direction.ASC, "worksName")),
+    NAME("기본순", Sort.unsorted()),
     RATING("별점 높은 순", Sort.by(Sort.Direction.DESC, "avgRating", "id")),
     REVIEW("리뷰 많은 순", Sort.by(Sort.Direction.DESC, "reviewsCount", "id"));
 

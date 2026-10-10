@@ -2,6 +2,7 @@ package com.storix.domain.domains.search.adaptor;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -75,27 +76,15 @@ public class WorksSearchAdaptor {
         }
     }
 
-    // 인기 검색어에 올릴 작품. 제목 일치 > 제목 앞부분 > 제목 포함 > 초성 > 별칭 · 작가 순, 같으면 짧은 제목
+    // 인기 검색어에 올릴 작품. 검색 관련도순 1위, 같으면 짧은 제목
     public Optional<Long> findBestMatchId(String keyword, List<WorksType> worksTypes, List<Genre> genres) {
         String normalized = HangulTextHelper.normalize(keyword);
         if (normalized.isEmpty()) return Optional.empty();
 
-        String pattern = "*" + normalized + "*";
-        BoolQuery.Builder bool = new BoolQuery.Builder()
-                .should(q -> q.term(t -> t.field("worksName").value(normalized).boost(16f)))
-                .should(q -> q.prefix(p -> p.field("worksName").value(normalized).boost(8f)))
-                .should(q -> q.wildcard(w -> w.field("worksName").value(pattern).boost(4f)))
-                .should(q -> q.term(t -> t.field("worksNameChosung").value(normalized).boost(3f)))
-                .should(q -> q.wildcard(w -> w.field("worksNameChosung").value(pattern).boost(2f)))
-                .should(q -> q.wildcard(w -> w.field("nicknames").value(pattern)))
-                .should(q -> q.wildcard(w -> w.field("authors").value(pattern)))
-                .minimumShouldMatch("1");
-        addFilters(bool, worksTypes, genres);
-
         try {
             SearchResponse<WorksDocument> response = client.search(s -> s
                     .index(worksIndexProperties.alias())
-                    .query(bool.build()._toQuery())
+                    .query(strictQuery(normalized, true, worksTypes, genres))
                     .size(BEST_MATCH_CANDIDATES)
                     .source(src -> src.filter(f -> f.includes("worksId", "worksName"))), WorksDocument.class);
             return response.hits().hits().stream()
@@ -114,6 +103,8 @@ public class WorksSearchAdaptor {
         SearchResponse<Void> response = client.search(s -> s
                 .index(worksIndexProperties.alias())
                 .query(query)
+                .sort(so -> so.score(sc -> sc.order(SortOrder.Desc)))
+                .sort(so -> so.field(f -> f.field("worksId").order(SortOrder.Asc)))
                 .size(size)
                 .source(src -> src.fetch(false)), Void.class);
 
@@ -123,16 +114,21 @@ public class WorksSearchAdaptor {
                 .toList();
     }
 
-    private Query strictQuery(String normalized, boolean chosungOnly, List<WorksType> worksTypes, List<Genre> genres) {
+    private Query strictQuery(String normalized, boolean withChosung, List<WorksType> worksTypes, List<Genre> genres) {
         String pattern = "*" + normalized + "*";
 
+        // 제목 일치 = 별칭 일치 > 제목 앞부분 > 제목 포함 = 별칭 포함 > 초성 > 작가
         BoolQuery.Builder bool = new BoolQuery.Builder()
-                .should(q -> q.wildcard(w -> w.field("worksName").value(pattern)))
+                .should(q -> q.term(t -> t.field("worksName").value(normalized).boost(16f)))
+                .should(q -> q.term(t -> t.field("nicknames").value(normalized).boost(16f)))
+                .should(q -> q.prefix(p -> p.field("worksName").value(normalized).boost(8f)))
+                .should(q -> q.wildcard(w -> w.field("worksName").value(pattern).boost(4f)))
+                .should(q -> q.wildcard(w -> w.field("nicknames").value(pattern).boost(4f)))
                 .should(q -> q.wildcard(w -> w.field("authors").value(pattern)))
-                .should(q -> q.wildcard(w -> w.field("nicknames").value(pattern)))
                 .minimumShouldMatch("1");
-        if (chosungOnly) {
-            bool.should(q -> q.wildcard(w -> w.field("worksNameChosung").value(pattern)));
+        if (withChosung) {
+            bool.should(q -> q.term(t -> t.field("worksNameChosung").value(normalized).boost(3f)));
+            bool.should(q -> q.wildcard(w -> w.field("worksNameChosung").value(pattern).boost(2f)));
         }
         addFilters(bool, worksTypes, genres);
         return bool.build()._toQuery();

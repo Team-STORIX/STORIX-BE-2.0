@@ -16,6 +16,10 @@ import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.storix.domain.domains.works.domain.QWorks.works;
 import static com.storix.domain.domains.works.domain.QWorksPlatform.worksPlatform;
@@ -125,6 +129,29 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
         }
 
         BooleanBuilder builder = buildFilterCondition(worksTypes, genres);
+
+        // 기본순은 ES 관련도 순서 그대로
+        if (pageable.getSort().isUnsorted()) {
+            int from = (int) Math.min(pageable.getOffset(), worksIds.size());
+            List<Long> pageIds = worksIds.subList(from, Math.min(from + pageable.getPageSize() + 1, worksIds.size()));
+            if (pageIds.isEmpty()) {
+                return new SliceImpl<>(List.of(), pageable, false);
+            }
+
+            Map<Long, Works> byId = queryFactory
+                    .selectFrom(works)
+                    .where(builder.and(works.id.in(pageIds)))
+                    .fetch().stream()
+                    .collect(Collectors.toMap(Works::getId, Function.identity()));
+            List<Works> ordered = pageIds.stream().map(byId::get).filter(Objects::nonNull).collect(Collectors.toList());
+
+            boolean hasNext = pageIds.size() > pageable.getPageSize();
+            if (hasNext && ordered.size() > pageable.getPageSize()) {
+                ordered.remove(ordered.size() - 1);
+            }
+            return new SliceImpl<>(ordered, pageable, hasNext);
+        }
+
         builder.and(works.id.in(worksIds));
 
         List<Works> results = queryFactory
@@ -202,6 +229,11 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
 
     @SuppressWarnings("unchecked")
     private OrderSpecifier<?>[] getOrderSpecifiers(Sort sort) {
+        // 기본순인데 ES 점수가 없는 경로는 작품명순
+        if (sort.isUnsorted()) {
+            return new OrderSpecifier<?>[]{works.worksName.asc(), works.id.asc()};
+        }
+
         List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
         PathBuilder<Works> entityPath = new PathBuilder<>(Works.class, "works");
 
