@@ -73,16 +73,17 @@ class WorksImportMergeTest {
     }
 
     @Test
-    @DisplayName("해시태그는 같은 묶음이면 그대로 두고 다르면 교체한다")
-    void replaceHashtags() {
+    @DisplayName("해시태그는 기존에 더하기만 하고 빼지 않는다")
+    void addHashtags() {
         Works works = works();
         Hashtag hunter = new Hashtag("헌터");
         Hashtag fantasy = new Hashtag("판타지");
 
-        assertThat(works.replaceHashtags(Set.of(hunter))).isEqualTo("hashtags:+헌터");
-        assertThat(works.replaceHashtags(Set.of(hunter))).isNull();
-        assertThat(works.replaceHashtags(Set.of(fantasy))).isEqualTo("hashtags:+판타지,-헌터");
-        assertThat(works.getHashtags()).containsExactly(fantasy);
+        assertThat(works.addHashtags(Set.of(hunter))).isEqualTo("hashtags:+헌터");
+        assertThat(works.addHashtags(Set.of(new Hashtag("헌터")))).isNull();
+        assertThat(works.addHashtags(Set.of(fantasy, hunter))).isEqualTo("hashtags:+판타지");
+        assertThat(works.addHashtags(Set.of())).isNull();
+        assertThat(works.getHashtags()).extracting(Hashtag::getName).containsExactlyInAnyOrder("헌터", "판타지");
     }
 
     @Test
