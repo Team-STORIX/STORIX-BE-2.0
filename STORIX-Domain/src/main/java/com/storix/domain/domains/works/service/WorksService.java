@@ -8,6 +8,7 @@ import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.HashtagRemoveResult;
+import com.storix.domain.domains.works.dto.WorksArtistInfoPage;
 import com.storix.domain.domains.works.dto.WorksDetailResponseDto;
 import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksRenameResult;
@@ -80,5 +81,10 @@ public class WorksService {
                     .forEach(worksId -> worksAdaptor.findByIdWithHashtags(worksId).removeHashtags(names));
         }
         return HashtagRemoveResult.of(dryRun, names, worksIdsByName);
+    }
+
+    @Transactional(readOnly = true)
+    public WorksArtistInfoPage getArtistInfos(Long afterWorksId, int size) {
+        return WorksArtistInfoPage.of(worksAdaptor.findArtistInfosAfter(afterWorksId, size), size);
     }
 }
