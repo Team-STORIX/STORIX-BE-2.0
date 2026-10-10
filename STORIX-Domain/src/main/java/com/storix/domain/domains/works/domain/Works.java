@@ -8,10 +8,10 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Entity
@@ -182,18 +182,16 @@ public class Works {
         return existing.updateLandingUrl(landingUrl) ? "landingUrl:" + platform.name() + ":" + before + "->" + landingUrl : null;
     }
 
-    // 붙은 태그는 +, 빠진 태그는 - 로 돌려준다. 그대로면 null
-    public String replaceHashtags(Set<Hashtag> newHashtags) {
-        if (hashtags.equals(newHashtags)) return null;
-        Set<String> before = hashtags.stream().map(Hashtag::getName).collect(Collectors.toCollection(TreeSet::new));
-        Set<String> after = newHashtags.stream().map(Hashtag::getName).collect(Collectors.toCollection(TreeSet::new));
-        hashtags.clear();
-        hashtags.addAll(newHashtags);
-
-        List<String> diff = new ArrayList<>();
-        after.stream().filter(name -> !before.contains(name)).forEach(name -> diff.add("+" + name));
-        before.stream().filter(name -> !after.contains(name)).forEach(name -> diff.add("-" + name));
-        return "hashtags:" + String.join(",", diff);
+    // 해시태그는 더하기만. 새로 붙은 태그를 + 로 돌려주고 없으면 null
+    public String addHashtags(Set<Hashtag> newHashtags) {
+        Set<String> before = hashtags.stream().map(Hashtag::getName).collect(Collectors.toSet());
+        List<Hashtag> added = newHashtags.stream()
+                .filter(hashtag -> !before.contains(hashtag.getName()))
+                .sorted(Comparator.comparing(Hashtag::getName))
+                .toList();
+        if (added.isEmpty()) return null;
+        hashtags.addAll(added);
+        return "hashtags:" + added.stream().map(hashtag -> "+" + hashtag.getName()).collect(Collectors.joining(","));
     }
 
     // 병합: keep 값을 우선하고 비어 있는 필드 · 없는 플랫폼 링크만 drop 값으로 채움
