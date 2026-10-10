@@ -90,4 +90,40 @@ class WorksImportMergeTest {
     void newWorksIsNotOnboarding() {
         assertThat(works().getIsOnboarding()).isFalse();
     }
+
+    @Test
+    @DisplayName("연령은 기존보다 낮으면 바꾸지 않는다")
+    void ageNeverLowered() {
+        Works works = works();
+
+        List<String> changes = works.updateFromImport(null, null, null, AgeClassification.ALL, null, null, null, null);
+
+        assertThat(changes).isEmpty();
+        assertThat(works.getAgeClassification()).isEqualTo(AgeClassification.AGE_15);
+    }
+
+    @Test
+    @DisplayName("병합하면 keep 과 drop 중 높은 연령이 남는다")
+    void mergeKeepsHigherAge() {
+        Works keep = Works.builder().worksName("유언 때문에 죽는 건 잠깐 미뤘습니다").artistName("소림")
+                .ageClassification(AgeClassification.ALL).build();
+        Works drop = Works.builder().worksName("유언 때문에 죽는 건 잠깐 미뤘습니다 2~5권").artistName("소림")
+                .ageClassification(AgeClassification.AGE_15).build();
+
+        keep.mergeFrom(drop);
+
+        assertThat(keep.getAgeClassification()).isEqualTo(AgeClassification.AGE_15);
+    }
+
+    @Test
+    @DisplayName("병합할 때 drop 연령이 낮으면 keep 연령을 둔다")
+    void mergeKeepsKeepAgeWhenDropLower() {
+        Works keep = works();
+        Works drop = Works.builder().worksName("나 혼자만 레벨업").artistName("추공")
+                .ageClassification(AgeClassification.ALL).build();
+
+        keep.mergeFrom(drop);
+
+        assertThat(keep.getAgeClassification()).isEqualTo(AgeClassification.AGE_15);
+    }
 }
