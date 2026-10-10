@@ -7,6 +7,7 @@ import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.dto.WorksDetailResponseDto;
+import com.storix.domain.domains.works.dto.WorksRenameResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,5 +48,12 @@ public class WorksService {
         boolean hasTopicRoom = topicRoomAdaptor.existsByWorksId(worksId);
 
         return WorksDetailResponseDto.from(works, reviewCount, hasTopicRoom);
+    }
+
+    @Transactional
+    public WorksRenameResult rename(Long worksId, String currentName, String newName) {
+        Works works = worksAdaptor.findById(worksId);
+        works.rename(currentName, newName);
+        return new WorksRenameResult(worksId, currentName, newName);
     }
 }

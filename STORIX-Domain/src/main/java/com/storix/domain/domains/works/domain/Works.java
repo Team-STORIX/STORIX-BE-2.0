@@ -1,5 +1,7 @@
 package com.storix.domain.domains.works.domain;
 
+import com.storix.common.code.ErrorCode;
+import com.storix.common.exception.STORIXDynamicException;
 import com.storix.domain.domains.hashtag.domain.Hashtag;
 import jakarta.persistence.*;
 import lombok.*;
@@ -121,6 +123,14 @@ public class Works {
 
     public void refreshNormalizedName() {
         this.normalizedName = WorksIdentity.titleKey(worksName);
+    }
+
+    public void rename(String currentName, String newName) {
+        if (!worksName.equals(currentName)) {
+            throw new STORIXDynamicException(ErrorCode.WORKS_RENAME_CONFLICT, "현재 작품명: " + worksName, null);
+        }
+        this.worksName = newName;
+        refreshNormalizedName();
     }
 
     public void addPlatform(Platform platform) {
