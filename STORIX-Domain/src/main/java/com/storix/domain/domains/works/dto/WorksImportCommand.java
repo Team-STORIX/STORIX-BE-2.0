@@ -81,16 +81,16 @@ public record WorksImportCommand(
                 .thumbnailUrl(requireText(item.thumbnailUrl(), "thumbnailUrl"))
                 .build();
         if (platform != null) works.putPlatform(platform, item.landingUrl());
-        works.replaceHashtags(hashtags);
+        works.addHashtags(hashtags);
         return works;
     }
 
-    // 해시태그는 보냈을 때만 교체
+    // 해시태그는 보냈을 때만 기존에 더함
     public List<String> applyTo(Works works, Set<Hashtag> hashtags) {
         List<String> changes = new ArrayList<>(works.updateFromImport(item.author(), item.illustrator(), item.originalAuthor(),
                 ageClassification, genre, worksType, item.description(), item.thumbnailUrl()));
         changes.add(platform == null ? null : works.putPlatform(platform, item.landingUrl()));
-        changes.add(hashtags.isEmpty() ? null : works.replaceHashtags(hashtags));
+        changes.add(works.addHashtags(hashtags));
         changes.removeIf(Objects::isNull);
         return changes;
     }
