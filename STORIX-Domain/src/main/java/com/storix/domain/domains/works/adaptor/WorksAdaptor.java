@@ -10,6 +10,7 @@ import com.storix.domain.domains.works.domain.WorksNickname;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.LibraryWorksInfo;
 import com.storix.domain.domains.works.dto.SlicedWorksInfo;
+import com.storix.domain.domains.works.dto.WorksArtistInfo;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.works.dto.WorksInfo;
 import com.storix.domain.domains.works.exception.UnknownWorksException;
@@ -19,6 +20,7 @@ import com.storix.domain.domains.works.dto.WorksMoveCount;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -132,6 +134,10 @@ public class WorksAdaptor {
 
 
     // 서재 도메인 용
+    public List<WorksArtistInfo> findArtistInfosAfter(Long afterWorksId, int size) {
+        return worksRepository.findArtistInfosAfter(afterWorksId, PageRequest.of(0, size));
+    }
+
     public List<OnboardingWorksInfo> findAllOnboardingWorksInfo() {
         return worksRepository.findAllOnboardingWorksInfo();
     }
