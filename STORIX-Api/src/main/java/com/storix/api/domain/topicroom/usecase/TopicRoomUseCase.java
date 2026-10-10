@@ -10,6 +10,7 @@ import com.storix.domain.domains.topicroom.dto.TopicRoomUserResponseDto;
 import com.storix.domain.domains.topicroom.service.TopicRoomService;
 import com.storix.domain.domains.topicroom.service.TopicRoomUnreadService;
 import com.storix.domain.domains.topicroom.service.TopicRoomUserService;
+import com.storix.domain.domains.search.service.SearchHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -23,6 +24,7 @@ public class TopicRoomUseCase {
     private final TopicRoomService topicRoomService;
     private final TopicRoomUserService topicRoomUserService;
     private final TopicRoomUnreadService topicRoomUnreadService;
+    private final SearchHistoryService searchHistoryService;
 
     public Slice<TopicRoomResponseDto> getMyJoinedRooms(Long userId, Pageable pageable) {
         return topicRoomService.getMyJoinedRooms(userId, pageable);
@@ -33,7 +35,8 @@ public class TopicRoomUseCase {
     }
 
     public SearchResponseWrapperDto<TopicRoomResponseDto> searchRooms(String keyword, Long userId, Pageable pageable) {
-        return topicRoomService.searchRooms(keyword, userId, pageable);
+        Slice<TopicRoomResponseDto> rooms = topicRoomService.searchRooms(keyword, userId, pageable);
+        return SearchResponseWrapperDto.of(rooms, rooms.isEmpty() ? searchHistoryService.pickTrendingKeyword() : null);
     }
 
     public Long createRoom(Long userId, TopicRoomCreateRequestDto request) {

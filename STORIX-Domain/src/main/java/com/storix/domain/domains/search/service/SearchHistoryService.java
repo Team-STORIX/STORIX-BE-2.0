@@ -191,6 +191,14 @@ public class SearchHistoryService {
     }
 
     /** 5. 추천 검색어 (검색 결과 없는 경우) */
+    // 토픽룸 검색 결과가 없을 때 추천할 인기 검색어
+    public String pickTrendingKeyword() {
+        List<TrendingItem> trending = new ArrayList<>(getTrendingKeywords());
+        if (trending.isEmpty()) return null;
+        Collections.shuffle(trending);
+        return trending.get(0).getKeyword();
+    }
+
     public String getFallbackRecommendation() {
 
         try {

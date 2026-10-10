@@ -5,13 +5,12 @@ import com.storix.api.domain.notification.controller.dto.NotificationDispatchTes
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
-import com.storix.domain.domains.notification.publisher.NotificationPublisher;
+import com.storix.domain.domains.notification.service.NotificationService;
 import com.storix.domain.domains.pushdevice.service.PushDispatchService;
 import com.storix.infrastructure.external.notification.exception.FcmSendFailedException;
 import com.storix.infrastructure.external.notification.fcm.FcmSender;
 import com.storix.infrastructure.external.notification.dto.SingleSendResult;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +22,7 @@ public class NotificationTestUseCase {
 
     private final PushDispatchService pushDispatchService;
 
-    private final NotificationPublisher notificationPublisher;
+    private final NotificationService notificationService;
     private final FcmSender fcmSender;
 
 
@@ -49,9 +48,8 @@ public class NotificationTestUseCase {
     }
 
     // [test] 단일 유저
-    @Transactional
     public CustomResponse<Void> testDispatch(NotificationDispatchTestRequest request) {
-        notificationPublisher.publish(request.toEvent());
+        notificationService.publishTest(request.toEvent());
         return CustomResponse.onSuccess(SuccessCode.NOTIFICATION_TEST_PUSH_SUCCESS);
     }
 }

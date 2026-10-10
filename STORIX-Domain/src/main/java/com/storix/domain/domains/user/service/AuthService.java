@@ -4,10 +4,8 @@ import com.storix.domain.domains.bannedword.adaptor.BannedWordAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
-import com.storix.domain.domains.image.publisher.S3CleanupPublisher;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
-import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
@@ -22,7 +20,6 @@ import com.storix.domain.domains.user.dto.ValidAuthDTO;
 import com.storix.domain.domains.user.exception.me.DuplicateUserException;
 import com.storix.domain.domains.user.exception.me.ProfileForbiddenNicknameException;
 import com.storix.domain.domains.user.exception.me.ProfileNicknameBannedWordException;
-import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
@@ -30,10 +27,6 @@ import com.storix.domain.domains.user.adaptor.UserHistoryAdaptor;
 import com.storix.domain.domains.user.domain.OAuthInfo;
 import com.storix.domain.domains.user.domain.OAuthProvider;
 import com.storix.domain.domains.user.domain.User;
-import com.storix.domain.domains.user.domain.UserHistory;
-import com.storix.domain.domains.user.domain.UserHistoryType;
-import com.storix.domain.domains.user.domain.WithdrawReason;
-import com.storix.domain.domains.user.publisher.UserAccessRevokedPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,14 +48,11 @@ public class AuthService {
 
     private final PushDeviceAdaptor pushDeviceAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
-    private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final UserHistoryAdaptor userHistoryAdaptor;
     private final TermsAdaptor termsAdaptor;
 
     private final OnboardingWorksHelper onboardingWorksHelper; // -> usecase 리팩토링 필요
     private final GenreScorePublisher genreScorePublisher;
-    private final UserAccessRevokedPublisher userAccessRevokedPublisher;
-    private final S3CleanupPublisher s3CleanupPublisher;
     private final BannedWordAdaptor bannedWordAdaptor;
 
     // 독자 회원 가입 가능 여부 (토큰 검증, 계정 정보 유무)
@@ -208,34 +198,6 @@ public class AuthService {
         }
     }
 
-    // 유저 회원 탈퇴
-    @Transactional
-    public void withDrawUser(Long userId, Set<WithdrawReason> reasons, String detail) {
-        // 1. 유저 soft-delete
-        User user = userAdaptor.findUserByIdForUpdate(userId);
-        String profileObjectKey = user.getProfileObjectKey();
-        user.withdraw();
-        s3CleanupPublisher.publish(profileObjectKey);
-
-        // 2. 유저 관련 정보 (관심 작품, 서재) 삭제 + Redis 반영(refreshToken 삭제, blacklist 등록)은 커밋 후 처리
-        userAccessRevokedPublisher.publishWithdrawn(userId);
-        favoriteWorksAdaptor.deleteFavoriteWorks(userId);
-        libraryAdaptor.deleteLibrary(userId);
-
-        // 3. 푸시 알림 토큰 물리 삭제
-        pushDeviceAdaptor.deleteAllByUserId(userId);
-
-        // 4. 알림 설정 삭제 (재가입 시 새 row 생성됨)
-        notificationSettingAdaptor.deleteByUserId(userId);
-
-        // 5. 성인인증 이력 삭제
-        adultVerificationAdaptor.deleteAllByUserId(userId);
-
-        // 6. 탈퇴 사유 로그 저장
-        saveWithdrawHistory(userId, reasons, detail);
-    }
-
-
     // 회원 가입 시 필수 약관(서비스 이용약관/개인정보 수집·이용) 동의 이력 저장
     private void saveSignupTermsAgreements(Long userId, ReaderSignUpData cmd) {
         if (Boolean.TRUE.equals(cmd.serviceTermsAgree())) {
@@ -258,21 +220,4 @@ public class AuthService {
     }
 
     // 회원탈퇴 사유 저장
-    private void saveWithdrawHistory(Long userId, Set<WithdrawReason> reasons, String detail) {
-        if (reasons == null || reasons.isEmpty()) return;
-        String otherDetail = (detail == null) ? null : detail.trim();
-        LocalDateTime processedAt = LocalDateTime.now();
-
-        for (WithdrawReason reason : reasons) {
-            String detailValue = (reason == WithdrawReason.OTHER) ? otherDetail : null;
-            userHistoryAdaptor.save(UserHistory.builder()
-                    .userId(userId)
-                    .historyType(UserHistoryType.WITHDRAW)
-                    .processor(STORIXStatic.UserHistory.PROCESSOR_TEAM_STORIX)
-                    .processedAt(processedAt)
-                    .reason(reason)
-                    .detail(detailValue)
-                    .build());
-        }
-    }
 }

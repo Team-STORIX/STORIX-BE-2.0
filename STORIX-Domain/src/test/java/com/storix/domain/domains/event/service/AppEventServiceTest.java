@@ -1,6 +1,8 @@
 package com.storix.domain.domains.event.service;
 
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
+import com.storix.domain.domains.event.adaptor.BannerAdaptor;
+import com.storix.domain.domains.event.adaptor.PopupAdaptor;
 import com.storix.domain.domains.event.adaptor.AppEventWinnerAdaptor;
 import com.storix.domain.domains.event.domain.AppEvent;
 import com.storix.domain.domains.event.domain.AppEventStatus;
@@ -53,10 +55,10 @@ class AppEventServiceTest {
     private AppEventWinnerAdaptor appEventWinnerAdaptor;
 
     @Mock
-    private PopupService popupService;
+    private PopupAdaptor eventPopupAdaptor;
 
     @Mock
-    private BannerService bannerService;
+    private BannerAdaptor eventBannerAdaptor;
 
     @InjectMocks
     private AppEventService appEventService;
@@ -413,8 +415,8 @@ class AppEventServiceTest {
 
             // endAt 이 현재로 당겨져 파생 상태가 ENDED
             assertThat(cancelled.status()).isEqualTo(AppEventStatus.ENDED);
-            verify(popupService).endByAppEvent(ID);
-            verify(bannerService).endByAppEvent(ID);
+            verify(eventPopupAdaptor).findActiveByAppEvent(ID);
+            verify(eventBannerAdaptor).findActiveByAppEvent(ID);
         }
     }
 

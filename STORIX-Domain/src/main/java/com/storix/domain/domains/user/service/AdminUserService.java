@@ -39,8 +39,8 @@ import com.storix.domain.domains.user.exception.admin.UserNotSuspendedException;
 import com.storix.domain.domains.user.exception.auth.ForbiddenApproachException;
 import com.storix.domain.domains.user.exception.auth.InvalidWithdrawException;
 import com.storix.domain.domains.user.publisher.UserAccessRevokedPublisher;
-import com.storix.domain.domains.user.repository.AdminUserContentQueryRepository;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
+import com.storix.domain.domains.user.dto.AdminUserContentLookupKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -68,7 +68,7 @@ public class AdminUserService {
     private static final String ACCOUNT_DELETION_DETAIL = "관리자 처리로 인한 계정 삭제";
 
     private final UserAdaptor userAdaptor;
-    private final AuthService authService;
+    private final UserWithdrawalHelper userWithdrawalHelper;
     private final UserAccessRevokedPublisher userAccessRevokedPublisher;
     private final NotificationPublisher notificationPublisher;
     private final UserBlacklistAdaptor userBlacklistAdaptor;
@@ -84,8 +84,7 @@ public class AdminUserService {
     private final TopicRoomReportAdaptor topicRoomReportAdaptor;
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final UserSanctionHistoryAdaptor userSanctionHistoryAdaptor;
-    private final AdminUserContentQueryRepository adminUserContentQueryRepository;
-
+    
     public Page<AdminUserListResponse> searchUsers(AdminUserSearchCondition condition, Pageable pageable) {
         String nickName = StringUtils.hasText(condition.nickName()) ? condition.nickName().trim() : null;
         Page<AdminUserListResponse> page = userAdaptor.findAdminUsers(
@@ -171,16 +170,16 @@ public class AdminUserService {
     public AdminUserContentPageResponse getUserContents(Long userId, Pageable pageable) {
         userAdaptor.findUserById(userId);
 
-        List<AdminUserContentKey> keys = adminUserContentQueryRepository.findContentKeys(userId, pageable);
+        List<AdminUserContentKey> keys = userAdaptor.findAdminContentKeys(userId, pageable);
         Map<TargetContentType, List<Long>> idsByType = keys.stream()
                 .collect(Collectors.groupingBy(
                         AdminUserContentKey::type,
                         () -> new EnumMap<>(TargetContentType.class),
                         Collectors.mapping(AdminUserContentKey::contentId, Collectors.toList())
                 ));
-        Map<ContentLookupKey, AdminUserContentItemResponse> contentsByKey = loadAdminUserContents(idsByType);
+        Map<AdminUserContentLookupKey, AdminUserContentItemResponse> contentsByKey = loadAdminUserContents(idsByType);
         List<AdminUserContentItemResponse> contents = keys.stream()
-                .map(key -> contentsByKey.get(new ContentLookupKey(key.type(), key.contentId())))
+                .map(key -> contentsByKey.get(new AdminUserContentLookupKey(key.type(), key.contentId())))
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -192,10 +191,10 @@ public class AdminUserService {
         ));
     }
 
-    private Map<ContentLookupKey, AdminUserContentItemResponse> loadAdminUserContents(
+    private Map<AdminUserContentLookupKey, AdminUserContentItemResponse> loadAdminUserContents(
             Map<TargetContentType, List<Long>> idsByType
     ) {
-        Map<ContentLookupKey, AdminUserContentItemResponse> contents = new java.util.HashMap<>();
+        Map<AdminUserContentLookupKey, AdminUserContentItemResponse> contents = new java.util.HashMap<>();
         List<Long> feedIds = idsByType.getOrDefault(TargetContentType.FEED, Collections.emptyList());
         if (!feedIds.isEmpty()) {
             putAll(contents, TargetContentType.FEED, boardAdaptor.findAdminBoardContentsByIds(feedIds));
@@ -219,13 +218,13 @@ public class AdminUserService {
     }
 
     private void putAll(
-            Map<ContentLookupKey, AdminUserContentItemResponse> contents,
+            Map<AdminUserContentLookupKey, AdminUserContentItemResponse> contents,
             TargetContentType type,
             List<AdminUserContentItemResponse> items
     ) {
         items.stream()
                 .collect(Collectors.toMap(
-                        item -> new ContentLookupKey(type, item.contentId()),
+                        item -> new AdminUserContentLookupKey(type, item.contentId()),
                         Function.identity()
                 ))
                 .forEach(contents::put);
@@ -236,9 +235,6 @@ public class AdminUserService {
                 + readerFeedAdaptor.countActiveRepliesByUserId(userId)
                 + chatAdaptor.countActiveChatsByUserId(userId)
                 + reviewAdaptor.countActiveReviewsByUserId(userId);
-    }
-
-    private record ContentLookupKey(TargetContentType type, Long contentId) {
     }
 
     @Transactional
@@ -272,7 +268,7 @@ public class AdminUserService {
     }
 
     private void withdrawUserManually(Long adminId, Long userId, String memo) {
-        authService.withDrawUser(
+        userWithdrawalHelper.withdraw(
                 userId,
                 Set.of(WithdrawReason.OTHER),
                 StringUtils.hasText(memo) ? memo.trim() : ACCOUNT_DELETION_DETAIL

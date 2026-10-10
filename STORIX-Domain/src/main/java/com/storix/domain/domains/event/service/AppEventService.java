@@ -13,6 +13,10 @@ import com.storix.domain.domains.event.exception.AppEventInvalidPeriodBoundaryEx
 import com.storix.domain.domains.event.exception.AppEventFinalizedNotModifiableException;
 import com.storix.domain.domains.event.exception.AppEventNotFoundException;
 import com.storix.domain.domains.event.exception.AppEventOverlappingTypeException;
+import com.storix.domain.domains.event.adaptor.PopupAdaptor;
+import com.storix.domain.domains.event.adaptor.BannerAdaptor;
+import com.storix.domain.domains.event.domain.Popup;
+import com.storix.domain.domains.event.domain.Banner;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
@@ -32,8 +36,8 @@ public class AppEventService {
 
     private final AppEventAdaptor appEventAdaptor;
     private final AppEventWinnerAdaptor appEventWinnerAdaptor;
-    private final PopupService popupService;
-    private final BannerService bannerService;
+    private final PopupAdaptor eventPopupAdaptor;
+    private final BannerAdaptor eventBannerAdaptor;
 
     // 응답 DTO 매핑은 promotionTypes(LAZY) 초기화를 위해 트랜잭션 안에서 수행한다
     @Transactional
@@ -84,8 +88,8 @@ public class AppEventService {
         );
         // 이벤트 기간이 바뀌면 소속 팝업/배너 노출기간을 이벤트 기간 안으로 clamp (앱 이벤트 ⊇ 팝업/배너)
         if (periodChanged) {
-            popupService.clampByAppEvent(appEventId, cmd.startAt(), cmd.endAt());
-            bannerService.clampByAppEvent(appEventId, cmd.startAt(), cmd.endAt());
+            eventPopupAdaptor.findActiveByAppEvent(appEventId).forEach(popup -> popup.clampToEventPeriod(cmd.startAt(), cmd.endAt()));
+            eventBannerAdaptor.findActiveByAppEvent(appEventId).forEach(banner -> banner.clampToEventPeriod(cmd.startAt(), cmd.endAt()));
         }
         return AppEventResponse.from(appEvent);
     }
@@ -118,8 +122,8 @@ public class AppEventService {
     public AppEventResponse cancel(Long appEventId) {
         AppEvent appEvent = appEventAdaptor.findById(appEventId);
         appEvent.endNow(LocalDateTime.now());
-        popupService.endByAppEvent(appEventId);
-        bannerService.endByAppEvent(appEventId);
+        eventPopupAdaptor.findActiveByAppEvent(appEventId).forEach(Popup::end);
+        eventBannerAdaptor.findActiveByAppEvent(appEventId).forEach(Banner::end);
         return AppEventResponse.from(appEvent);
     }
 

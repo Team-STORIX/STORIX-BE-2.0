@@ -23,8 +23,8 @@ public class AdminNotificationBroadcastService {
     private static final long RELAY_GRACE_MINUTES = 5;
     private static final String MDC_KEY = STORIXStatic.Mdc.ADMIN_NOTIFICATION_ID;
 
-    private final AdminNotificationTargetService targetService;
-    private final AdminNotificationLifecycleService lifecycleService;
+    private final AdminNotificationTargetHelper targetHelper;
+    private final AdminNotificationLifecycleHelper lifecycleHelper;
     private final AdminNotificationPublisher adminNotificationPublisher;
 
     // 1. 발송 실행 (즉시 발송 | 예약 발송 | 수동 재발송)
@@ -34,7 +34,7 @@ public class AdminNotificationBroadcastService {
 
         try {
             // 발송 가능 상태로 변경
-            AdminNotificationStartResult result = lifecycleService.startSending(adminNotificationId);
+            AdminNotificationStartResult result = lifecycleHelper.startSending(adminNotificationId);
             if (!result.started()) {
                 log.info(">>> [AdminNotification] broadcast 건너뜀 - 발송 처리 불가 상태 status={}", result.status());
                 return;
@@ -54,7 +54,7 @@ public class AdminNotificationBroadcastService {
     public void resumeBroadcast(Long adminNotificationId, LocalDateTime cutoff) {
         MDC.put(MDC_KEY, String.valueOf(adminNotificationId));
         try {
-            if (!lifecycleService.claimStaleForResume(adminNotificationId, cutoff)) {
+            if (!lifecycleHelper.claimStaleForResume(adminNotificationId, cutoff)) {
                 log.info(">>> [AdminNotification] broadcast 재개 건너뜀 - 선점 실패(이미 처리 중)");
                 return;
             }
@@ -70,18 +70,18 @@ public class AdminNotificationBroadcastService {
 
     // 청크 단위로 이벤트 발행
     private void runFanOut(Long adminNotificationId) {
-        AdminNotificationBroadcastInfo info = targetService.getBroadcastInfo(adminNotificationId);
+        AdminNotificationBroadcastInfo info = targetHelper.getBroadcastInfo(adminNotificationId);
         Long lastUserId = info.lastBroadcastUserId(); // 청크 단위 유저 조회 진행 커서
         LocalDateTime now = LocalDateTime.now();
 
         while (true) {
             // 1. 진행 커서 기준 청크 단위 유저 조회
-            List<Long> userIds = targetService.findTargetChunk(info.targetAudience(), info.eventTargetId(), lastUserId, now, TARGET_USER_CHUNK_SIZE);
+            List<Long> userIds = targetHelper.findTargetChunk(info.targetAudience(), info.eventTargetId(), lastUserId, now, TARGET_USER_CHUNK_SIZE);
             if (userIds.isEmpty()) break;
             Long chunkLastUserId = userIds.get(userIds.size() - 1);
 
             // 2. 청크 단위 발송 로그 선저장
-            targetService.persistPendingChunk(
+            targetHelper.persistPendingChunk(
                     adminNotificationId, userIds, LocalDateTime.now().plusMinutes(RELAY_GRACE_MINUTES), chunkLastUserId);
 
             // 3. 청크 단위 발송 이벤트 발행
@@ -94,8 +94,8 @@ public class AdminNotificationBroadcastService {
         }
 
         // 4. 이벤트 발행 완료 표시
-        int targetCount = targetService.countEnrolled(adminNotificationId);
+        int targetCount = targetHelper.countEnrolled(adminNotificationId);
         log.info(">>> [AdminNotification] 모든 chunk 발행 완료 targetCount={}", targetCount);
-        lifecycleService.markAllChunkPublished(adminNotificationId, targetCount);
+        lifecycleHelper.markAllChunkPublished(adminNotificationId, targetCount);
     }
 }

@@ -88,6 +88,7 @@ public class PushDeviceAdaptor {
     }
 
     // [Batch] 장기 미활동 디바이스 일괄 비활성화 (threshold 이후 sync 없음, 기기별)
+    @Transactional
     public int deactivateStaleDevices(LocalDateTime threshold) {
         return pushDeviceRepository.deactivateStaleDevices(threshold);
     }

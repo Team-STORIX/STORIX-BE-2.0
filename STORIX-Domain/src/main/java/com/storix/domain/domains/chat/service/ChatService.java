@@ -69,11 +69,13 @@ public class ChatService {
         return chatAdaptor.loadMessages(roomId, blockedIds, pageable);
     }
 
+    @Transactional(readOnly = true)
     public Integer getActiveUserNumber(Long roomId) {
         return topicRoomAdaptor.findActiveUserNumberById(roomId);
     }
 
     // 차단한 유저의 메시지는 목록에서 빼고, 실시간 수신 필터용으로 앱에도 내려준다
+    @Transactional(readOnly = true)
     public List<Long> getBlockedUserIds(Long userId) {
         return userBlockAdaptor.findBlockedUserIds(userId);
     }

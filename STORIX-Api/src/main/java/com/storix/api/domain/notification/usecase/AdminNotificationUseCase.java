@@ -8,7 +8,7 @@ import com.storix.api.domain.notification.controller.dto.AdminNotificationReques
 import com.storix.api.domain.notification.controller.dto.AdminNotificationResponse;
 import com.storix.api.domain.notification.controller.dto.AdminNotificationSummaryResponse;
 import com.storix.domain.domains.notification.service.AdminNotificationService;
-import com.storix.domain.domains.notification.service.AdminNotificationLifecycleService;
+import com.storix.domain.domains.notification.service.AdminNotificationLifecycleHelper;
 import com.storix.domain.domains.notification.service.AdminNotificationBroadcastService;
 import com.storix.domain.domains.event.adaptor.AppEventAdaptor;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class AdminNotificationUseCase {
 
     private final AdminNotificationService adminNotificationService;
-    private final AdminNotificationLifecycleService adminNotificationLifecycleService;
+    private final AdminNotificationLifecycleHelper adminNotificationLifecycleHelper;
     private final AdminNotificationBroadcastService adminNotificationBroadcastService;
     private final AppEventAdaptor appEventAdaptor;
 
@@ -96,7 +96,7 @@ public class AdminNotificationUseCase {
 
     // 운영자 알림 수동 재발송
     public CustomResponse<Void> broadcastNotification(Long adminNotificationId) {
-        adminNotificationLifecycleService.prepareRebroadcast(adminNotificationId);
+        adminNotificationLifecycleHelper.prepareRebroadcast(adminNotificationId);
         return CustomResponse.onSuccess(SuccessCode.ADMIN_NOTIFICATION_BROADCAST_SUCCESS);
     }
 }
