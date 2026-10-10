@@ -144,10 +144,11 @@ public class Works {
     }
 
     // 플랫폼에서 표지 · 연령가 등이 바뀌므로 새 값이 있으면 덮어쓰고, 비어 있으면 기존 값을 둔다
-    public List<String> updateFromImport(String author, String illustrator, String originalAuthor,
+    public List<String> updateFromImport(String artistName, String author, String illustrator, String originalAuthor,
                                          AgeClassification ageClassification, Genre genre, WorksType worksType,
                                          String description, String thumbnailUrl) {
         List<String> changes = new ArrayList<>();
+        this.artistName = merge("artistName", artistName, this.artistName, changes, true);
         this.author = merge("author", author, this.author, changes, true);
         this.illustrator = merge("illustrator", illustrator, this.illustrator, changes, true);
         this.originalAuthor = merge("originalAuthor", originalAuthor, this.originalAuthor, changes, true);
