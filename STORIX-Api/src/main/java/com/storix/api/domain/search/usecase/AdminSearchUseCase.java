@@ -64,10 +64,13 @@ public class AdminSearchUseCase {
         // 1. CSV 를 읽어 별칭 저장
         WorksNicknameBulkResponse response = worksNicknameService.addNicknames(worksNicknameCsvHelper.parse(file));
 
-        // 2. 추가된 별칭이 있으면 작품 · 피드 전체 재색인
+        // 2. 추가된 별칭이 있으면 작품 · 피드 전체 재색인. 작품이 실패해도 피드는 돌린다
         if (response.addedCount() > 0) {
-            worksIndexService.reindexAll();
-            feedIndexService.reindexAll();
+            try {
+                worksIndexService.reindexAll();
+            } finally {
+                feedIndexService.reindexAll();
+            }
         }
         return response;
     }

@@ -102,10 +102,12 @@ public class ReaderFeedAdaptor {
     }
 
     public Slice<ReaderBoard> searchByContentExcludingBlocked(String keyword, List<Long> blockedIds, Pageable pageable) {
+        // % · _ 를 글자 그대로 찾도록
+        String escaped = keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
         if (blockedIds.isEmpty()) {
-            return readerBoardRepository.searchByContent(keyword, pageable);
+            return readerBoardRepository.searchByContent(escaped, pageable);
         }
-        return readerBoardRepository.searchByContentExcludingBlocked(keyword, blockedIds, pageable);
+        return readerBoardRepository.searchByContentExcludingBlocked(escaped, blockedIds, pageable);
     }
 
     // 검색 순서를 지키고, 색인 뒤에 삭제된 게시글은 뺀다
