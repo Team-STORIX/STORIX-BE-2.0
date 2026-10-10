@@ -55,7 +55,7 @@ public class HashtagRecommendService {
 
         return new HashtagRecommendationContext(
                 userId,
-                user.getFavoriteGenreList(),
+                Set.copyOf(user.getFavoriteGenreList()),
                 favoriteWorksAdaptor.findAllWithCreatedAtByUserId(userId),
                 explorationAdaptor.findExplorationsWithCreatedAtByUserId(userId),
                 hashtagCacheHelper.getOrLoadTotalWorksCount(workAdaptor::countAllWorks)
