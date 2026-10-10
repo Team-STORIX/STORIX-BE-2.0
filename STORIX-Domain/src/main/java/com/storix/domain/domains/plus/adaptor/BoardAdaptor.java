@@ -10,6 +10,7 @@ import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.plus.dto.BoardHardDeleteResult;
 import com.storix.domain.domains.plus.dto.CreateReaderBoardCommand;
 import com.storix.domain.domains.plus.repository.ReaderBoardRepository;
+import com.storix.domain.domains.search.publisher.FeedIndexPublisher;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.feed.exception.InvalidBoardRequestException;
 import com.storix.domain.domains.plus.exception.DuplicateBoardUploadException;
@@ -40,6 +41,7 @@ public class BoardAdaptor {
     private final ReaderBoardReplyRepository readerBoardReplyRepository;
     private final ReaderBoardReplyLikeRepository readerBoardReplyLikeRepository;
     private final S3CleanupPublisher s3CleanupPublisher;
+    private final FeedIndexPublisher feedIndexPublisher;
     private final PlatformTransactionManager transactionManager;
 
     /**
@@ -75,13 +77,17 @@ public class BoardAdaptor {
 
         readerBoardRepository.deleteById(boardId);
         s3CleanupPublisher.publish(imageObjectKeys);
+        feedIndexPublisher.publishDeleted(boardId);
     }
 
     // 관리자 게시글 강제 삭제 — 이미 삭제된 경우 null 반환 (idempotent)
     public Long adminDeleteReaderBoard(Long boardId) {
         ReaderBoard board = readerBoardRepository.findById(boardId)
                 .orElseThrow(() -> InvalidBoardRequestException.EXCEPTION);
-        return board.softDeleteByAdmin() ? board.getUserId() : null;
+        if (!board.softDeleteByAdmin()) return null;
+
+        feedIndexPublisher.publishDeleted(boardId);
+        return board.getUserId();
     }
 
     // 피드 작품 관련 게시글 조회

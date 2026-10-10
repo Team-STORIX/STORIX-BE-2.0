@@ -4,6 +4,7 @@ import com.storix.domain.domains.plus.domain.ReaderBoard;
 import com.storix.domain.domains.plus.dto.StandardReaderBoardInfo;
 import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
@@ -14,6 +15,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -147,6 +149,25 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long> 
             "WHERE rb.userId NOT IN :blockedIds AND rb.deleted = false " +
             "ORDER BY rb.createdAt DESC")
     Slice<ReaderBoard> findAllExcludingBlockedOrderByCreatedAtDesc(
+            @Param("blockedIds") List<Long> blockedIds,
+            Pageable pageable);
+
+    List<ReaderBoard> findAllByIdInAndDeletedFalse(Collection<Long> ids);
+
+    List<ReaderBoard> findByIdGreaterThanAndDeletedFalseOrderByIdAsc(Long id, Limit limit);
+
+    List<ReaderBoard> findByWorksIdInAndIdGreaterThanAndDeletedFalseOrderByIdAsc(Collection<Long> worksIds, Long id, Limit limit);
+
+    @Query("SELECT rb FROM ReaderBoard rb " +
+            "WHERE rb.content LIKE CONCAT('%', :keyword, '%') ESCAPE '!' AND rb.deleted = false " +
+            "ORDER BY rb.createdAt DESC")
+    Slice<ReaderBoard> searchByContent(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT rb FROM ReaderBoard rb " +
+            "WHERE rb.content LIKE CONCAT('%', :keyword, '%') ESCAPE '!' AND rb.userId NOT IN :blockedIds AND rb.deleted = false " +
+            "ORDER BY rb.createdAt DESC")
+    Slice<ReaderBoard> searchByContentExcludingBlocked(
+            @Param("keyword") String keyword,
             @Param("blockedIds") List<Long> blockedIds,
             Pageable pageable);
 
