@@ -193,4 +193,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Review e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
     int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
+
+    /** 작품 삭제. 지운 리뷰도 작품을 가리키므로 함께 센다 */
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.worksId = :worksId")
+    long countAllByWorksId(@Param("worksId") Long worksId);
 }

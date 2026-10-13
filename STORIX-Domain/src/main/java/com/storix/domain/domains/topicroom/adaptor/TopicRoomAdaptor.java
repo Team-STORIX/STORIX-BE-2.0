@@ -215,4 +215,8 @@ public class TopicRoomAdaptor {
     public int moveWorks(Long fromWorksId, Long toWorksId) {
         return topicRoomRepository.moveWorks(fromWorksId, toWorksId);
     }
+
+    public long countByWorksId(Long worksId) {
+        return topicRoomRepository.countByWorksId(worksId);
+    }
 }

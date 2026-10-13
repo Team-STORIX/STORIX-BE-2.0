@@ -52,4 +52,11 @@ public interface ExplorationRepository extends JpaRepository<PreferenceExplorati
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE PreferenceExploration e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
     int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
+
+    /** 작품 삭제 */
+    long countByWorksId(Long worksId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM PreferenceExploration e WHERE e.worksId = :worksId")
+    int deleteAllByWorksId(@Param("worksId") Long worksId);
 }

@@ -85,4 +85,9 @@ public class FavoriteWorksAdaptor {
         int removed = duplicatedUserIds.isEmpty() ? 0 : favoriteWorksRepository.deleteByWorksIdAndUserIds(fromWorksId, duplicatedUserIds);
         return new WorksMoveCount(favoriteWorksRepository.moveWorks(fromWorksId, toWorksId), removed, duplicatedUserIds);
     }
+
+    /** 작품 삭제 */
+    public long countByWorksId(Long worksId) {
+        return favoriteWorksRepository.countByWorksId(worksId);
+    }
 }
