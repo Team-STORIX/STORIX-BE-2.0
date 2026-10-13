@@ -1,6 +1,7 @@
 package com.storix.internal.works.usecase;
 
 import com.storix.internal.works.controller.dto.HashtagRemoveRequest;
+import com.storix.internal.works.controller.dto.WorksDeleteRequest;
 import com.storix.internal.works.controller.dto.WorksHashtagRemoveRequest;
 import com.storix.internal.works.controller.dto.WorksImportRequest;
 import com.storix.internal.works.controller.dto.WorksMergeRequest;
@@ -11,12 +12,14 @@ import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.search.service.WorksIndexService;
 import com.storix.domain.domains.works.dto.HashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksArtistInfoPage;
+import com.storix.domain.domains.works.dto.WorksDeleteResult;
 import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
 import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksImportResult;
 import com.storix.domain.domains.works.dto.WorksMergeResult;
 import com.storix.domain.domains.works.dto.WorksRenameResult;
 import com.storix.domain.domains.works.exception.WorksImportInProgressException;
+import com.storix.domain.domains.works.service.WorksDeleteService;
 import com.storix.domain.domains.works.service.WorksImportLockHelper;
 import com.storix.domain.domains.works.service.WorksImportService;
 import com.storix.domain.domains.works.service.WorksMergeService;
@@ -35,6 +38,7 @@ public class InternalWorksUseCase {
     private final WorksIndexService worksIndexService;
     private final HashtagCacheHelper hashtagCacheHelper;
     private final WorksMergeService worksMergeService;
+    private final WorksDeleteService worksDeleteService;
     private final WorksImportLockHelper worksImportLockHelper;
     private final OnboardingWorksHelper onboardingWorksHelper;
     private final WorksService worksService;
@@ -81,6 +85,43 @@ public class InternalWorksUseCase {
                 .log(">>> [WorksMerge] 병합 완료 keepWorksId={}, dropWorksIds={}, moved={}, removedDuplicates={}, elapsedMs={}",
                         keepWorksId, result.mergedWorksIds(), result.moved(), result.removedDuplicates(),
                         System.currentTimeMillis() - startedAt);
+        return result;
+    }
+
+    // 서비스 종료 · 못 찾는 작품 삭제. dryRun 이면 지울 데이터만 조회
+    public WorksDeleteResult deleteWorks(WorksDeleteRequest request) {
+        if (request.dryRun()) {
+            return worksDeleteService.deleteAll(request.distinctWorksIds(), true);
+        }
+
+        String token = worksImportLockHelper.tryLock().orElseThrow(() -> WorksImportInProgressException.EXCEPTION);
+        WorksDeleteResult result;
+        try {
+            result = worksDeleteService.deleteAll(request.distinctWorksIds(), false);
+        } catch (RuntimeException e) {
+            log.atWarn()
+                    .addKeyValue("worksIds", request.distinctWorksIds())
+                    .log(">>> [WorksDelete] 작품 삭제 실패, 전부 되돌림 worksIds={}, cause={}", request.distinctWorksIds(), e.getMessage());
+            throw e;
+        } finally {
+            worksImportLockHelper.unlock(token);
+        }
+
+        List<Long> deletedWorksIds = result.deletedWorksIds();
+        if (!deletedWorksIds.isEmpty()) {
+            worksIndexService.deleteWorks(deletedWorksIds);
+            hashtagCacheHelper.evictGlobalMeta();
+        }
+        if (result.onboardingDeleted()) onboardingWorksHelper.evictCache();
+
+        result.works().forEach(works -> log.atInfo()
+                .addKeyValue("worksId", works.worksId())
+                .addKeyValue("status", works.status())
+                .addKeyValue("worksName", works.worksName())
+                .addKeyValue("deleted", works.deleted())
+                .addKeyValue("blockedBy", works.blockedBy())
+                .log(">>> [WorksDelete] 작품 삭제 worksId={}, status={}, worksName={}, deleted={}, blockedBy={}",
+                        works.worksId(), works.status(), works.worksName(), works.deleted(), works.blockedBy()));
         return result;
     }
 

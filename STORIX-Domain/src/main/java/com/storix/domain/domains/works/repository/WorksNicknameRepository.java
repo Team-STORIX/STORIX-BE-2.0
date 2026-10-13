@@ -31,4 +31,11 @@ public interface WorksNicknameRepository extends JpaRepository<WorksNickname, Lo
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE WorksNickname e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
     int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
+
+    /** 작품 삭제 */
+    long countByWorksId(Long worksId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM WorksNickname e WHERE e.worksId = :worksId")
+    int deleteAllByWorksId(@Param("worksId") Long worksId);
 }

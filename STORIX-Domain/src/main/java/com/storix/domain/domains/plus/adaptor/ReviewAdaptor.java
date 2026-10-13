@@ -194,4 +194,8 @@ public class ReviewAdaptor {
     public int moveWorks(Long fromWorksId, Long toWorksId) {
         return reviewRepository.moveWorks(fromWorksId, toWorksId);
     }
+
+    public long countAllByWorksId(Long worksId) {
+        return reviewRepository.countAllByWorksId(worksId);
+    }
 }
