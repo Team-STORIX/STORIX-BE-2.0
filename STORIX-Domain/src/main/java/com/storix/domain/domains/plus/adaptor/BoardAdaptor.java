@@ -171,4 +171,8 @@ public class BoardAdaptor {
     public int moveReaderBoards(Long fromWorksId, Long toWorksId) {
         return readerBoardRepository.moveWorks(fromWorksId, toWorksId);
     }
+
+    public long countReaderBoardsByWorksId(Long worksId) {
+        return readerBoardRepository.countByWorksId(worksId);
+    }
 }

@@ -98,4 +98,9 @@ public class GenreScoreAdaptor {
                 List.of(GenreScoreEventType.FAVORITE_WORKS_ADD, GenreScoreEventType.FAVORITE_WORKS_REMOVE));
         return new WorksMoveCount(logRepository.moveWorks(fromWorksId, toWorksId), removed);
     }
+
+    /** 작품 삭제 */
+    public long countScoreLogsByWorksId(Long worksId) {
+        return logRepository.countByWorksId(worksId);
+    }
 }

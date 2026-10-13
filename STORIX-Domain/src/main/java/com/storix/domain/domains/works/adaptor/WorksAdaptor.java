@@ -309,4 +309,17 @@ public class WorksAdaptor {
     public void delete(Works works) {
         worksRepository.delete(works);
     }
+
+    /** 작품 삭제 */
+    public Optional<Works> findOptionalById(Long worksId) {
+        return worksRepository.findById(worksId);
+    }
+
+    public long countNicknamesByWorksId(Long worksId) {
+        return worksNicknameRepository.countByWorksId(worksId);
+    }
+
+    public int deleteNicknamesByWorksId(Long worksId) {
+        return worksNicknameRepository.deleteAllByWorksId(worksId);
+    }
 }
