@@ -1,6 +1,7 @@
 package com.storix.internal.works.controller;
 
 import com.storix.internal.works.controller.dto.HashtagRemoveRequest;
+import com.storix.internal.works.controller.dto.WorksDeleteRequest;
 import com.storix.internal.works.controller.dto.WorksHashtagRemoveRequest;
 import com.storix.internal.works.controller.dto.WorksImportRequest;
 import com.storix.internal.works.controller.dto.WorksMergeRequest;
@@ -10,6 +11,7 @@ import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.works.dto.HashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksArtistInfoPage;
+import com.storix.domain.domains.works.dto.WorksDeleteResult;
 import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
 import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksImportResult;
@@ -91,6 +93,20 @@ public class InternalWorksController {
             @Valid @RequestBody WorksMergeRequest request
     ) {
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.mergeWorks(keepWorksId, request));
+    }
+
+    @PostMapping("/delete")
+    @Operation(
+            summary = "작품 삭제",
+            description = "서비스가 끝났거나 어느 플랫폼에서도 찾을 수 없는 작품을 지웁니다. 요청 하나가 트랜잭션 하나입니다. 막히거나 없는 작품은 건너뛰고 나머지를 지우며, 예상 못 한 오류가 나면 전부 되돌립니다. "
+                    + "작품마다 DELETED · DELETABLE · BLOCKED · NOT_FOUND 를 돌려줍니다. "
+                    + "리뷰 · 피드 글 · 토픽룸 · 관심작품 · 장르 점수 기록이 있으면 사용자 콘텐츠 · 활동 기록이라 지우지 않고 BLOCKED 로, blockedBy 에 테이블별 건수를 적습니다. 지운 글도 작품을 가리키므로 셉니다. "
+                    + "플랫폼 · 해시태그 연결 · 별칭 · 취향 탐색은 함께 지우고 deleted 에 테이블별 건수를 적습니다. "
+                    + "dryRun 이 true 면 지우지 않고, 지울 수 있는 작품은 DELETABLE 로 돌려줍니다. 겹치는 id 는 한 번만 처리합니다. "
+                    + "지운 작품은 작품 검색에서 바로 빠지고 결과는 작품마다 로그에 남습니다. dryRun 이 false 면 작품 적재 · 병합과 동시에 돌 수 없고 겹치면 409(WORKS_ERROR_007)입니다."
+    )
+    public CustomResponse<WorksDeleteResult> deleteWorks(@Valid @RequestBody WorksDeleteRequest request) {
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.deleteWorks(request));
     }
 
     @PatchMapping("/{worksId}/name")

@@ -241,4 +241,7 @@ public interface ReaderBoardRepository extends JpaRepository<ReaderBoard, Long> 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ReaderBoard e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
     int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
+
+    /** 작품 삭제. 지운 글도 작품을 가리키므로 함께 센다 */
+    long countByWorksId(Long worksId);
 }

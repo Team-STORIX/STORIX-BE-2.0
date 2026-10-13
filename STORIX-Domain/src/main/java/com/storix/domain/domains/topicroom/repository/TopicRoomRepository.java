@@ -95,4 +95,7 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE TopicRoom e SET e.worksId = :toWorksId WHERE e.worksId = :fromWorksId")
     int moveWorks(@Param("fromWorksId") Long fromWorksId, @Param("toWorksId") Long toWorksId);
+
+    /** 작품 삭제 */
+    long countByWorksId(Long worksId);
 }

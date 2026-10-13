@@ -45,4 +45,13 @@ public class ExplorationAdaptor {
         int removed = existingUserIds.isEmpty() ? 0 : explorationRepository.deleteByWorksIdAndUserIds(fromWorksId, existingUserIds);
         return new WorksMoveCount(explorationRepository.moveWorks(fromWorksId, toWorksId), removed);
     }
+
+    /** 작품 삭제 */
+    public long countByWorksId(Long worksId) {
+        return explorationRepository.countByWorksId(worksId);
+    }
+
+    public int deleteAllByWorksId(Long worksId) {
+        return explorationRepository.deleteAllByWorksId(worksId);
+    }
 }
