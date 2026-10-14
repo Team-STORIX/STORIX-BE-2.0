@@ -205,6 +205,20 @@ public class Works {
         return removed.stream().map(Hashtag::getName).toList();
     }
 
+    // 요청한 플랫폼만 뗌. 하나도 안 남게 되면 거절하고 작품 삭제로 안내. dryRun 이면 떼지 않고 뗄 것만 돌려줌
+    public List<WorksPlatform> removePlatforms(Collection<Platform> targets, boolean dryRun) {
+        List<WorksPlatform> removed = platforms.stream()
+                .filter(worksPlatform -> targets.contains(worksPlatform.getPlatform()))
+                .sorted(Comparator.comparing(WorksPlatform::getPlatform))
+                .toList();
+        if (!removed.isEmpty() && removed.size() == platforms.size()) {
+            throw new STORIXDynamicException(ErrorCode.WORKS_PLATFORM_REMOVE_CONFLICT,
+                    "남는 플랫폼이 없습니다. 작품을 지우려면 작품 삭제를 쓰세요", null);
+        }
+        if (!dryRun) removed.forEach(platforms::remove);
+        return removed;
+    }
+
     // 병합: keep 값을 우선하고 비어 있는 필드 · 없는 플랫폼 링크만 drop 값으로 채움
     public void mergeFrom(Works drop) {
         if (!hasText(artistName)) this.artistName = drop.artistName;

@@ -5,6 +5,7 @@ import com.storix.internal.works.controller.dto.WorksDeleteRequest;
 import com.storix.internal.works.controller.dto.WorksHashtagRemoveRequest;
 import com.storix.internal.works.controller.dto.WorksImportRequest;
 import com.storix.internal.works.controller.dto.WorksMergeRequest;
+import com.storix.internal.works.controller.dto.WorksPlatformRemoveRequest;
 import com.storix.internal.works.controller.dto.WorksRenameRequest;
 import com.storix.internal.works.usecase.InternalWorksUseCase;
 import com.storix.common.code.SuccessCode;
@@ -16,6 +17,7 @@ import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
 import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksImportResult;
 import com.storix.domain.domains.works.dto.WorksMergeResult;
+import com.storix.domain.domains.works.dto.WorksPlatformRemoveResult;
 import com.storix.domain.domains.works.dto.WorksRenameResult;
 import com.storix.common.utils.STORIXStatic;
 import io.swagger.v3.oas.annotations.Operation;
@@ -135,6 +137,22 @@ public class InternalWorksController {
             @Valid @RequestBody WorksHashtagRemoveRequest request
     ) {
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.removeWorksHashtags(worksId, request));
+    }
+
+    @PostMapping("/{worksId}/platforms/remove")
+    @Operation(
+            summary = "작품 플랫폼 떼기",
+            description = "작품 하나에서 플랫폼 연결을 링크와 함께 뗍니다. 적재는 플랫폼을 붙이거나 링크를 바꾸기만 해서, 잘못 붙었거나 그 플랫폼에서 찾을 수 없는 플랫폼을 뗄 때 씁니다. "
+                    + "removed 는 뗀 플랫폼과 링크, notFound 는 원래 붙어 있지 않던 플랫폼, remaining 은 남은 플랫폼입니다. "
+                    + "떼고 나면 플랫폼이 하나도 남지 않는 요청은 409(WORKS_ERROR_013)로 거절합니다. 그런 작품은 작품 삭제를 씁니다. "
+                    + "dryRun 이 true 면 떼지 않고 같은 모양으로 돌려줍니다. 뗀 내역은 로그에 남습니다. "
+                    + "dryRun 이 false 면 작품 적재 · 병합과 동시에 돌 수 없고 겹치면 409(WORKS_ERROR_007)입니다."
+    )
+    public CustomResponse<WorksPlatformRemoveResult> removeWorksPlatforms(
+            @PathVariable Long worksId,
+            @Valid @RequestBody WorksPlatformRemoveRequest request
+    ) {
+        return CustomResponse.onSuccess(SuccessCode.SUCCESS, internalWorksUseCase.removeWorksPlatforms(worksId, request));
     }
 
     @PostMapping("/hashtags/remove")
