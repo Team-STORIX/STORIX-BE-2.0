@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 public record WorksDocument(
         Long worksId,
         String worksName,
+        Integer baseNameLength,
         String worksNameChosung,
         String worksNameJamo,
         List<String> authors,
@@ -29,6 +30,7 @@ public record WorksDocument(
         return new WorksDocument(
                 works.getId(),
                 HangulTextHelper.normalize(works.getWorksName()),
+                HangulTextHelper.baseTitle(works.getWorksName()).length(),
                 HangulTextHelper.chosung(works.getWorksName()),
                 HangulTextHelper.jamo(works.getWorksName()),
                 authors,
