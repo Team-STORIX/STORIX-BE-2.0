@@ -27,6 +27,10 @@
       "worksName": {
         "type": "wildcard"
       },
+      "baseNameLength": {
+        "type": "integer",
+        "index": false
+      },
       "worksNameChosung": {
         "type": "wildcard"
       },
