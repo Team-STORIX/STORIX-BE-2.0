@@ -32,7 +32,8 @@ public class WorksSearchAdaptor {
     private static final int BEST_MATCH_CANDIDATES = 10;
     private static final List<String> SORT_FIELDS = List.of("worksId", "worksName", "baseNameLength");
 
-    // 점수가 같으면 본제목 짧은 순 → 작품명 짧은 순 → 작품 ID 순. '패션' 검색 시 '패션(PASSION)' 이 '패션왕' 보다,
+    // 관련도 → 본제목 짧은 순 → 작품명 짧은 순 → 작품 ID 순. 본제목은 앞 라벨 · 부제를 떼고 정규화한 것.
+    // '패션' 검색 시 '패션(PASSION)'(본제목 패션) 이 '패션왕' 보다,
     // '나혼렙' 검색 시 본편이 '나 혼자만 레벨업 : 라그나로크' 보다 앞선다. 본제목 길이가 없는 옛 문서는 작품명 길이로 본다
     private static final Comparator<Hit<WorksDocument>> BY_RELEVANCE =
             Comparator.comparing((Hit<WorksDocument> hit) -> -hit.score())
@@ -84,7 +85,7 @@ public class WorksSearchAdaptor {
         }
     }
 
-    // 인기 검색어에 올릴 작품. 검색 결과와 같은 순서의 1위
+    // 인기 검색어에 올릴 작품. 관련도 1위, 같으면 본제목 짧은 작품 (BY_RELEVANCE)
     public Optional<Long> findBestMatchId(String keyword, List<WorksType> worksTypes, List<Genre> genres) {
         String normalized = HangulTextHelper.normalize(keyword);
         if (normalized.isEmpty()) return Optional.empty();
