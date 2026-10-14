@@ -30,6 +30,16 @@ public class WorksSearchAdaptor {
     private static final String FUZZY_MINIMUM_MATCH = "70%";
     private static final int MIN_FUZZY_LENGTH = 4;
     private static final int BEST_MATCH_CANDIDATES = 10;
+    private static final List<String> SORT_FIELDS = List.of("worksId", "worksName", "baseNameLength");
+
+    // 관련도 → 본제목 짧은 순 → 작품명 짧은 순 → 작품 ID 순. 본제목은 앞 라벨 · 부제를 떼고 정규화한 것.
+    // '패션' 검색 시 '패션(PASSION)'(본제목 패션) 이 '패션왕' 보다,
+    // '나혼렙' 검색 시 본편이 '나 혼자만 레벨업 : 라그나로크' 보다 앞선다. 본제목 길이가 없는 옛 문서는 작품명 길이로 본다
+    private static final Comparator<Hit<WorksDocument>> BY_RELEVANCE =
+            Comparator.comparing((Hit<WorksDocument> hit) -> -hit.score())
+                    .thenComparingInt(hit -> baseNameLength(hit.source()))
+                    .thenComparingInt(hit -> hit.source().worksName().length())
+                    .thenComparing(hit -> hit.source().worksId());
 
     private final ElasticsearchClient client;
     private final WorksIndexProperties worksIndexProperties;
@@ -75,7 +85,7 @@ public class WorksSearchAdaptor {
         }
     }
 
-    // 인기 검색어에 올릴 작품. 검색 관련도순 1위, 같으면 짧은 제목
+    // 인기 검색어에 올릴 작품. 관련도 1위, 같으면 본제목 짧은 작품 (BY_RELEVANCE)
     public Optional<Long> findBestMatchId(String keyword, List<WorksType> worksTypes, List<Genre> genres) {
         String normalized = HangulTextHelper.normalize(keyword);
         if (normalized.isEmpty()) return Optional.empty();
@@ -85,12 +95,10 @@ public class WorksSearchAdaptor {
                     .index(worksIndexProperties.alias())
                     .query(strictQuery(normalized, true, worksTypes, genres))
                     .size(BEST_MATCH_CANDIDATES)
-                    .source(src -> src.filter(f -> f.includes("worksId", "worksName"))), WorksDocument.class);
+                    .source(src -> src.filter(f -> f.includes(SORT_FIELDS))), WorksDocument.class);
             return response.hits().hits().stream()
                     .filter(hit -> hit.source() != null)
-                    .min(Comparator.comparing((Hit<WorksDocument> hit) -> -hit.score())
-                            .thenComparingInt(hit -> hit.source().worksName().length())
-                            .thenComparing(hit -> hit.source().worksId()))
+                    .min(BY_RELEVANCE)
                     .map(hit -> hit.source().worksId());
         } catch (Exception e) {
             log.warn(">>> [WorksSearch] 인기 검색어 작품 조회 실패 keyword={}, cause={}", keyword, e.getMessage());
@@ -98,19 +106,16 @@ public class WorksSearchAdaptor {
         }
     }
 
-    // 점수가 같으면 짧은 제목 먼저. 본편이 시리즈 · 외전보다 짧다
     private List<Long> search(Query query, int size) throws IOException {
         SearchResponse<WorksDocument> response = client.search(s -> s
                 .index(worksIndexProperties.alias())
                 .query(query)
                 .size(size)
-                .source(src -> src.filter(f -> f.includes("worksId", "worksName"))), WorksDocument.class);
+                .source(src -> src.filter(f -> f.includes(SORT_FIELDS))), WorksDocument.class);
 
         return response.hits().hits().stream()
                 .filter(hit -> hit.source() != null)
-                .sorted(Comparator.comparing((Hit<WorksDocument> hit) -> -hit.score())
-                        .thenComparingInt(hit -> hit.source().worksName().length())
-                        .thenComparing(hit -> hit.source().worksId()))
+                .sorted(BY_RELEVANCE)
                 .map(hit -> hit.source().worksId())
                 .toList();
     }
@@ -154,5 +159,9 @@ public class WorksSearchAdaptor {
             List<FieldValue> values = genres.stream().map(genre -> FieldValue.of(genre.name())).toList();
             bool.filter(q -> q.terms(t -> t.field("genre").terms(v -> v.value(values))));
         }
+    }
+
+    private static int baseNameLength(WorksDocument document) {
+        return document.baseNameLength() != null ? document.baseNameLength() : document.worksName().length();
     }
 }
