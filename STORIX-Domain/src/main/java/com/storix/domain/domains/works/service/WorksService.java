@@ -6,11 +6,14 @@ import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdap
 import com.storix.domain.domains.hashtag.adaptor.HashtagAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
+import com.storix.domain.domains.works.domain.Platform;
 import com.storix.domain.domains.works.domain.Works;
+import com.storix.domain.domains.works.domain.WorksPlatform;
 import com.storix.domain.domains.works.dto.HashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksArtistInfoPage;
 import com.storix.domain.domains.works.dto.WorksDetailResponseDto;
 import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
+import com.storix.domain.domains.works.dto.WorksPlatformRemoveResult;
 import com.storix.domain.domains.works.dto.WorksRenameResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -69,6 +73,13 @@ public class WorksService {
     public WorksHashtagRemoveResult removeHashtags(Long worksId, List<String> names) {
         Works works = worksAdaptor.findByIdWithHashtags(worksId);
         return WorksHashtagRemoveResult.of(worksId, names, works.removeHashtags(names));
+    }
+
+    @Transactional
+    public WorksPlatformRemoveResult removePlatforms(Long worksId, List<Platform> platforms, boolean dryRun) {
+        Works works = worksAdaptor.findById(worksId);
+        Set<WorksPlatform> before = works.getPlatforms();
+        return WorksPlatformRemoveResult.of(worksId, dryRun, platforms, before, works.removePlatforms(platforms, dryRun));
     }
 
     @Transactional
