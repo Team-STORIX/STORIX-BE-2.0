@@ -1,5 +1,7 @@
 package com.storix.domain.domains.search.helper;
 
+import java.util.regex.Pattern;
+
 public final class HangulTextHelper {
 
     private static final char SYLLABLE_START = '가';
@@ -17,6 +19,9 @@ public final class HangulTextHelper {
             0, 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
     };
 
+    private static final Pattern LEADING_LABEL = Pattern.compile("^\\s*((\\[[^]]*]|\\([^)]*\\)|【[^】]*】|<[^>]*>)\\s*)+");
+    private static final Pattern SUBTITLE = Pattern.compile("[:：(\\[【<]");
+
     private HangulTextHelper() {
     }
 
@@ -30,6 +35,16 @@ public final class HangulTextHelper {
                 .map(Character::toLowerCase)
                 .forEach(sb::appendCodePoint);
         return sb.toString();
+    }
+
+    // 앞 라벨([개정판] 등)을 떼고 ':' · '(' · '[' 앞까지. '패션(PASSION)' → 패션, '나 혼자만 레벨업 : 라그나로크' → 나혼자만레벨업
+    public static String baseTitle(String text) {
+        if (text == null) return "";
+
+        String title = LEADING_LABEL.matcher(text).replaceFirst("");
+        var subtitle = SUBTITLE.matcher(title);
+        String base = normalize(subtitle.find() ? title.substring(0, subtitle.start()) : title);
+        return base.isEmpty() ? normalize(text) : base;
     }
 
     public static String chosung(String text) {
