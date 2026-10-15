@@ -5,6 +5,7 @@ import com.storix.internal.works.controller.dto.WorksDeleteRequest;
 import com.storix.internal.works.controller.dto.WorksHashtagRemoveRequest;
 import com.storix.internal.works.controller.dto.WorksImportRequest;
 import com.storix.internal.works.controller.dto.WorksMergeRequest;
+import com.storix.internal.works.controller.dto.WorksPlatformRemoveRequest;
 import com.storix.internal.works.controller.dto.WorksRenameRequest;
 import com.storix.common.annotation.UseCase;
 import com.storix.domain.domains.hashtag.service.HashtagCacheHelper;
@@ -17,6 +18,7 @@ import com.storix.domain.domains.works.dto.WorksEnumCatalogResponse;
 import com.storix.domain.domains.works.dto.WorksHashtagRemoveResult;
 import com.storix.domain.domains.works.dto.WorksImportResult;
 import com.storix.domain.domains.works.dto.WorksMergeResult;
+import com.storix.domain.domains.works.dto.WorksPlatformRemoveResult;
 import com.storix.domain.domains.works.dto.WorksRenameResult;
 import com.storix.domain.domains.works.exception.WorksImportInProgressException;
 import com.storix.domain.domains.works.service.WorksDeleteService;
@@ -162,6 +164,29 @@ public class InternalWorksUseCase {
                 .addKeyValue("removed", result.removed())
                 .addKeyValue("notFound", result.notFound())
                 .log(">>> [WorksHashtag] 해시태그 제거");
+        return result;
+    }
+
+    // 작품 하나에서 플랫폼 떼기. dryRun 이면 뗄 플랫폼만 조회, 적재가 같은 플랫폼을 다시 붙이지 않게 같은 잠금 사용
+    public WorksPlatformRemoveResult removeWorksPlatforms(Long worksId, WorksPlatformRemoveRequest request) {
+        if (request.dryRun()) {
+            return worksService.removePlatforms(worksId, request.distinctPlatforms(), true);
+        }
+
+        String token = worksImportLockHelper.tryLock().orElseThrow(() -> WorksImportInProgressException.EXCEPTION);
+        WorksPlatformRemoveResult result;
+        try {
+            result = worksService.removePlatforms(worksId, request.distinctPlatforms(), false);
+        } finally {
+            worksImportLockHelper.unlock(token);
+        }
+
+        log.atInfo()
+                .addKeyValue("worksId", worksId)
+                .addKeyValue("removed", result.removed())
+                .addKeyValue("notFound", result.notFound())
+                .addKeyValue("remaining", result.remaining())
+                .log(">>> [WorksPlatform] 플랫폼 떼기 worksId={}, removed={}, remaining={}", worksId, result.removed(), result.remaining());
         return result;
     }
 
