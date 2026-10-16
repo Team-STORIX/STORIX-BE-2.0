@@ -1,0 +1,24 @@
+name: Release tag
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    name: Tag · GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Release 커밋이면 태그 · 릴리스
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MESSAGE: ${{ github.event.head_commit.message }}
+        run: python3 .github/scripts/release_notes.py "$MESSAGE" "$GITHUB_SHA"
