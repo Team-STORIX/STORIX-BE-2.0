@@ -1,6 +1,5 @@
 package com.storix.domain.domains.topicroom.adaptor;
 
-import com.storix.domain.domains.chat.domain.MessageType;
 import com.storix.domain.domains.search.exception.SearchNoTopicRoomFoundException;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
@@ -123,8 +122,8 @@ public class TopicRoomAdaptor {
 
     // 실패해도 채팅 후처리 트랜잭션이 롤백되지 않게 따로 커밋
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateLastMessage(Long roomId, Long messageId, String message, MessageType messageType, Long senderId, LocalDateTime lastChatTime) {
-        topicRoomRepository.updateLastMessage(roomId, messageId, message, messageType, senderId, lastChatTime);
+    public void updateLastMessage(Long roomId, Long messageId, LocalDateTime lastChatTime) {
+        topicRoomRepository.updateLastMessage(roomId, messageId, lastChatTime);
     }
 
     public void updatePopularity(List<TopicRoom> rooms) {

@@ -34,6 +34,7 @@ import com.storix.domain.domains.works.domain.Works;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
 import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
+import com.storix.domain.domains.chat.dto.ChatMessagePreview;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -153,9 +154,14 @@ public class TopicRoomService {
 
         List<Long> roomIds = rooms.stream().map(TopicRoom::getId).toList();
         List<Long> worksIds = rooms.stream().map(TopicRoom::getWorksId).distinct().toList();
-        List<Long> senderIds = rooms.stream()
-                .map(TopicRoom::getLastMessageSenderId)
+        List<Long> lastMessageIds = rooms.stream()
+                .map(TopicRoom::getLastMessageId)
                 .filter(Objects::nonNull)
+                .toList();
+
+        Map<Long, ChatMessagePreview> previewMap = chatAdaptor.findPreviewMapByIds(lastMessageIds);
+        List<Long> senderIds = previewMap.values().stream()
+                .map(ChatMessagePreview::senderId)
                 .distinct()
                 .toList();
 
@@ -177,9 +183,10 @@ public class TopicRoomService {
                         return null;
                     }
                     boolean isJoined = joinedRoomIds.contains(room.getId());
-                    String lastMessageSenderNickname = nicknameMap.get(room.getLastMessageSenderId());
+                    ChatMessagePreview lastMessage = previewMap.get(room.getLastMessageId());
+                    String lastMessageSenderNickname = lastMessage != null ? nicknameMap.get(lastMessage.senderId()) : null;
 
-                    return TopicRoomPreviewResponseDto.from(room, worksInfo, lastMessageSenderNickname, isJoined, excludeAdult);
+                    return TopicRoomPreviewResponseDto.from(room, worksInfo, lastMessage, lastMessageSenderNickname, isJoined, excludeAdult);
                 })
                 .filter(Objects::nonNull)
                 .toList();

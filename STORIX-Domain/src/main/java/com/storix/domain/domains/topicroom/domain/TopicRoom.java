@@ -1,7 +1,6 @@
 package com.storix.domain.domains.topicroom.domain;
 
 import com.storix.common.model.BaseTimeEntity;
-import com.storix.domain.domains.chat.domain.MessageType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -50,16 +49,6 @@ public class TopicRoom extends BaseTimeEntity {
     @Column(name = "last_chat_time")
     private LocalDateTime lastChatTime;
 
-    @Column(name = "last_message", columnDefinition = "TEXT")
-    private String lastMessage;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "last_message_type")
-    private MessageType lastMessageType;
-
-    @Column(name = "last_message_sender_id")
-    private Long lastMessageSenderId;
-
     @Column(name = "last_message_id")
     private Long lastMessageId;
 
@@ -79,9 +68,6 @@ public class TopicRoom extends BaseTimeEntity {
         this.activeUserNumber = 0;
         this.previousActiveUserNumber = 0;
         this.lastChatTime = LocalDateTime.now();
-        this.lastMessage = null;
-        this.lastMessageType = null;
-        this.lastMessageSenderId = null;
         this.popularityScore = 0.0;
         this.popularityGrowthRate = 0.0;
         this.activityScore = 0.0;
