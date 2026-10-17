@@ -2,6 +2,7 @@ package com.storix.domain.domains.chat.repository;
 
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.domain.MessageType;
+import com.storix.domain.domains.chat.dto.ChatMessagePreview;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.chat.dto.ChatMessageText;
 import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
@@ -294,6 +295,15 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             WHERE m.id IN :ids
             """)
     List<ChatMessageText> findMessageTextsByIds(@Param("ids") List<Long> ids);
+
+    @Query("""
+            SELECT new com.storix.domain.domains.chat.dto.ChatMessagePreview(
+                m.id, m.senderId, m.message, m.messageType
+            )
+            FROM ChatMessage m
+            WHERE m.id IN :ids AND m.deleted = false
+            """)
+    List<ChatMessagePreview> findPreviewsByIds(@Param("ids") List<Long> ids);
 
     @Query("""
             SELECT new com.storix.domain.domains.topicroom.dto.UserUnreadCount(tu.userId, COUNT(m.id))
