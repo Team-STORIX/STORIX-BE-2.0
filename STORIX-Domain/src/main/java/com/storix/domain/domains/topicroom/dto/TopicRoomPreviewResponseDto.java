@@ -1,6 +1,7 @@
 package com.storix.domain.domains.topicroom.dto;
 
 import com.storix.domain.domains.chat.domain.MessageType;
+import com.storix.domain.domains.chat.dto.ChatMessagePreview;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
 import com.storix.domain.domains.works.domain.AdultContentPolicy;
 import com.storix.domain.domains.works.dto.TopicRoomWorksInfo;
@@ -27,6 +28,7 @@ public record TopicRoomPreviewResponseDto(
     public static TopicRoomPreviewResponseDto from(
             TopicRoom room,
             TopicRoomWorksInfo worksInfo,
+            ChatMessagePreview lastMessage,
             String lastMessageSenderNickname,
             boolean isJoined,
             boolean excludeAdult
@@ -35,6 +37,7 @@ public record TopicRoomPreviewResponseDto(
 
         // 미리보기 채팅 마스킹
         boolean mask = isAdultOnly && excludeAdult;
+        boolean hide = mask || lastMessage == null;
 
         return new TopicRoomPreviewResponseDto(
                 room.getId(),
@@ -43,10 +46,10 @@ public record TopicRoomPreviewResponseDto(
                 worksInfo.worksName(),
                 mask ? null : worksInfo.imageUrl(),
                 room.getActiveUserNumber(),
-                mask ? null : room.getLastMessage(),
-                mask ? null : room.getLastMessageType(),
-                mask ? null : room.getLastMessageSenderId(),
-                mask ? null : lastMessageSenderNickname,
+                hide ? null : lastMessage.message(),
+                hide ? null : lastMessage.messageType(),
+                hide ? null : lastMessage.senderId(),
+                hide ? null : lastMessageSenderNickname,
                 formatTimeAgo(room.getLastChatTime()),
                 isJoined,
                 isAdultOnly,

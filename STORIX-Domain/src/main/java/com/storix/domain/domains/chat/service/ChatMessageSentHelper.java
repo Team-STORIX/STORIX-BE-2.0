@@ -28,9 +28,6 @@ public class ChatMessageSentHelper {
             topicRoomAdaptor.updateLastMessage(
                     savedMessage.getRoomId(),
                     savedMessage.getId(),
-                    savedMessage.getMessage(),
-                    savedMessage.getMessageType(),
-                    savedMessage.getSenderId(),
                     savedMessage.getCreatedAt()
             );
         } catch (Exception e) {

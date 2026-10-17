@@ -2,6 +2,7 @@ package com.storix.domain.domains.chat.adaptor;
 
 import com.storix.domain.domains.chat.domain.ChatMessage;
 import com.storix.domain.domains.chat.domain.MessageType;
+import com.storix.domain.domains.chat.dto.ChatMessagePreview;
 import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.chat.dto.ChatMessageText;
 import com.storix.domain.domains.chat.repository.ChatRepository;
@@ -155,6 +156,14 @@ public class ChatAdaptor {
             return List.of();
         }
         return chatRepository.findMessageTextsByIds(ids);
+    }
+
+    public Map<Long, ChatMessagePreview> findPreviewMapByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        return chatRepository.findPreviewsByIds(ids).stream()
+                .collect(Collectors.toMap(ChatMessagePreview::messageId, preview -> preview));
     }
 
     public List<UserUnreadCount> countTotalUnreadByUserIds(List<Long> userIds) {
