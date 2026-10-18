@@ -1,4 +1,9 @@
 spring:
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    # Flyway 도입 전부터 있던 DB 는 V1 을 실행하지 않고 적용된 것으로만 기록한다
+    baseline-on-migrate: true
+    baseline-version: 1
