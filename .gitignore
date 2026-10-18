@@ -60,6 +60,8 @@ application-*.yml
 .claude
 /tools
 *.sql
+# Flyway 마이그레이션은 저장소에서 관리한다 (#386). 그 밖의 .sql(DB 덤프 등)은 계속 올리지 않는다
+!STORIX-Api/src/main/resources/db/migration/*.sql
 
 
 ### nginx basic auth
