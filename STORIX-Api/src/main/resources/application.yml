@@ -10,6 +10,9 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     open-in-view: false
+  # 스키마는 dev · prod 에서만 Flyway 로 바꾼다 (#386). 배치는 의존성이 없어 마이그레이션을 돌리지 않는다
+  flyway:
+    enabled: false
   data:
     redis:
       host: storix-redis
