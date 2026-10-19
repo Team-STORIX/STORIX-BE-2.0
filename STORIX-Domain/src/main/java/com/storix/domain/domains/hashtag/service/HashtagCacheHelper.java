@@ -1,5 +1,10 @@
 package com.storix.domain.domains.hashtag.service;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.storix.common.utils.RedisKeyStatic;
+import com.storix.domain.domains.hashtag.dto.HashtagRecommendResponseDto;
+import com.storix.domain.domains.works.domain.Genre;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +23,13 @@ import java.util.stream.Collectors;
 public class HashtagCacheHelper {
 
     private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     private static final String TOTAL_WORKS_KEY = RedisKeyStatic.Hashtag.TOTAL_WORKS;
     private static final String DF_HASH_KEY = RedisKeyStatic.Hashtag.DF;
+    private static final String POPULAR_HASH_KEY = RedisKeyStatic.Hashtag.POPULAR;
+    private static final String ALL_GENRES = "ALL";
+    private static final TypeReference<List<HashtagRecommendResponseDto>> POPULAR_TYPE = new TypeReference<>() {};
     private static final Duration META_TTL = Duration.ofDays(7);
 
     public long getOrLoadTotalWorksCount(Supplier<Long> loader) {
@@ -73,8 +82,29 @@ public class HashtagCacheHelper {
         return result;
     }
 
+    // 장르 조합별 인기 해시태그 순위. 트랜잭션 밖에서 불러야 캐시가 맞을 때 DB 커넥션을 안 잡는다
+    public List<HashtagRecommendResponseDto> getOrLoadPopular(Set<Genre> genres, Supplier<List<HashtagRecommendResponseDto>> loader) {
+        String field = genres.isEmpty() ? ALL_GENRES : genres.stream().map(Genre::name).sorted().collect(Collectors.joining(","));
+        Object cached = redisTemplate.opsForHash().get(POPULAR_HASH_KEY, field);
+        if (cached != null) {
+            try {
+                return objectMapper.readValue((String) cached, POPULAR_TYPE);
+            } catch (JsonProcessingException e) {
+                log.warn(">>> [HashtagCache] 인기 해시태그 캐시 읽기 실패", e);
+            }
+        }
+        List<HashtagRecommendResponseDto> loaded = loader.get();
+        try {
+            redisTemplate.opsForHash().put(POPULAR_HASH_KEY, field, objectMapper.writeValueAsString(loaded));
+            redisTemplate.expire(POPULAR_HASH_KEY, META_TTL);
+        } catch (JsonProcessingException e) {
+            log.warn(">>> [HashtagCache] 인기 해시태그 캐시 쓰기 실패", e);
+        }
+        return loaded;
+    }
+
     // 전체 메타 캐시 무효화
     public void evictGlobalMeta() {
-        redisTemplate.delete(List.of(TOTAL_WORKS_KEY, DF_HASH_KEY));
+        redisTemplate.delete(List.of(TOTAL_WORKS_KEY, DF_HASH_KEY, POPULAR_HASH_KEY));
     }
 }

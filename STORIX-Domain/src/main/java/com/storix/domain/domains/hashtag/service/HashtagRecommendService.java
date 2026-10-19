@@ -232,10 +232,19 @@ public class HashtagRecommendService {
         return Math.pow(0.5, ageDays / HALF_LIFE_DAYS);
     }
 
+    // 인기 해시태그 순위 조회. 장르가 비어 있으면 전체 인기
     @Transactional(readOnly = true)
+    public List<HashtagRecommendResponseDto> loadPopularHashtags(Set<Genre> genres, int size) {
+        return genres.isEmpty()
+                ? hashtagAdaptor.recommendGlobalPopular(size)
+                : hashtagAdaptor.recommendByGenres(genres, size);
+    }
+
+    // DB 를 쓰지 않아 트랜잭션 없음
     public List<HashtagRecommendResponseDto> fillWithFallback(
             List<HashtagRecommendResponseDto> personalized,
-            Set<Genre> favoriteGenres,
+            List<HashtagRecommendResponseDto> genrePopular,
+            List<HashtagRecommendResponseDto> globalPopular,
             int recommendationLimit
     ) {
         // LinkedHashMap으로 삽입 순서를 유지하면서 id 기준 중복 제거
@@ -246,28 +255,22 @@ public class HashtagRecommendService {
         appendRecommendations(result, personalized, genreNames, recommendationLimit);
 
         // 개인화 결과가 부족하면 온보딩 장르 기반 인기 태그 보충
-        if (result.size() < recommendationLimit && favoriteGenres != null && !favoriteGenres.isEmpty()) {
-            appendRecommendations(
-                    result,
-                    hashtagAdaptor.recommendByGenres(favoriteGenres, recommendationLimit - result.size()),
-                    genreNames,
-                    recommendationLimit
-            );
+        if (result.size() < recommendationLimit) {
+            appendRecommendations(result, topOf(genrePopular, recommendationLimit - result.size()), genreNames, recommendationLimit);
         }
 
         // 그래도 부족하면 전체 인기 태그로 최종 보충
         if (result.size() < recommendationLimit) {
-            appendRecommendations(
-                    result,
-                    hashtagAdaptor.recommendGlobalPopular(recommendationLimit - result.size()),
-                    genreNames,
-                    recommendationLimit
-            );
+            appendRecommendations(result, topOf(globalPopular, recommendationLimit - result.size()), genreNames, recommendationLimit);
         }
 
         return result.values().stream()
                 .limit(recommendationLimit)
                 .toList();
+    }
+
+    private List<HashtagRecommendResponseDto> topOf(List<HashtagRecommendResponseDto> ranked, int count) {
+        return ranked.subList(0, Math.min(count, ranked.size()));
     }
 
     private void appendRecommendations(
