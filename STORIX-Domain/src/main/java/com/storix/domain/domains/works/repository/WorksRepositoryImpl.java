@@ -15,9 +15,11 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -130,26 +132,31 @@ public class WorksRepositoryImpl implements WorksRepositoryCustom {
 
         BooleanBuilder builder = buildFilterCondition(worksTypes, genres);
 
-        // 기본순은 ES 관련도 순서 그대로
+        // 기본순은 ES 관련도 순서 그대로. 필터를 전체 ID 에 먼저 걸고 나서 페이지를 자른다
+        // 자른 뒤에 거르면 걸러진 만큼 페이지가 모자라거나 비어도 다음 페이지가 있다고 나온다
         if (pageable.getSort().isUnsorted()) {
-            int from = (int) Math.min(pageable.getOffset(), worksIds.size());
-            List<Long> pageIds = worksIds.subList(from, Math.min(from + pageable.getPageSize() + 1, worksIds.size()));
+            Set<Long> matched = new HashSet<>(queryFactory
+                    .select(works.id)
+                    .from(works)
+                    .where(builder.and(works.id.in(worksIds)))
+                    .fetch());
+            List<Long> filteredIds = worksIds.stream().filter(matched::contains).toList();
+
+            int from = (int) Math.min(pageable.getOffset(), filteredIds.size());
+            int to = (int) Math.min((long) from + pageable.getPageSize(), filteredIds.size());
+            List<Long> pageIds = filteredIds.subList(from, to);
             if (pageIds.isEmpty()) {
                 return new SliceImpl<>(List.of(), pageable, false);
             }
 
             Map<Long, Works> byId = queryFactory
                     .selectFrom(works)
-                    .where(builder.and(works.id.in(pageIds)))
+                    .where(works.id.in(pageIds))
                     .fetch().stream()
                     .collect(Collectors.toMap(Works::getId, Function.identity()));
-            List<Works> ordered = pageIds.stream().map(byId::get).filter(Objects::nonNull).collect(Collectors.toList());
+            List<Works> ordered = pageIds.stream().map(byId::get).filter(Objects::nonNull).toList();
 
-            boolean hasNext = pageIds.size() > pageable.getPageSize();
-            if (hasNext && ordered.size() > pageable.getPageSize()) {
-                ordered.remove(ordered.size() - 1);
-            }
-            return new SliceImpl<>(ordered, pageable, hasNext);
+            return new SliceImpl<>(ordered, pageable, to < filteredIds.size());
         }
 
         builder.and(works.id.in(worksIds));

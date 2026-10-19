@@ -26,10 +26,22 @@ public class FeaturedNotificationDedupAdaptor {
         return markIfFirstToday(RedisKeyStatic.Notification.FEATURED_TOPIC_ROOM_PREFIX, topicRoomId);
     }
 
+    // 발행에 실패했을 때 다음 실행에서 다시 보낼 수 있게 표시를 지운다
+    public void unmarkFeedToday(Long feedId) {
+        redisTemplate.delete(todayKey(RedisKeyStatic.Notification.FEATURED_FEED_PREFIX, feedId));
+    }
+
+    public void unmarkTopicRoomToday(Long topicRoomId) {
+        redisTemplate.delete(todayKey(RedisKeyStatic.Notification.FEATURED_TOPIC_ROOM_PREFIX, topicRoomId));
+    }
+
     // SETNX + TTL 원자 연산 -> 오늘 첫 선정이면 true, 이미 보냈으면 false
     private boolean markIfFirstToday(String prefix, Long id) {
-        String key = prefix + LocalDate.now().format(DATE) + ":" + id;
-        Boolean first = redisTemplate.opsForValue().setIfAbsent(key, "1", DEDUP_TTL);
+        Boolean first = redisTemplate.opsForValue().setIfAbsent(todayKey(prefix, id), "1", DEDUP_TTL);
         return Boolean.TRUE.equals(first);
+    }
+
+    private String todayKey(String prefix, Long id) {
+        return prefix + LocalDate.now().format(DATE) + ":" + id;
     }
 }

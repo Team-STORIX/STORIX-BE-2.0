@@ -69,7 +69,12 @@ public class HotTopicRoomFeatureService {
                         : members;
 
                 if (featuredNotificationHelper.markHotTopicRoomIfFirst(room.getId())) {
-                    featuredNotificationHelper.notifyHotTopicRoom(room.getId(), room.getTopicRoomName(), targetMembers);
+                    try {
+                        featuredNotificationHelper.notifyHotTopicRoom(room.getId(), room.getTopicRoomName(), targetMembers);
+                    } catch (RuntimeException e) {
+                        featuredNotificationHelper.unmarkHotTopicRoom(room.getId());
+                        throw e;
+                    }
                 }
             } catch (Exception e) {
                 log.error(">>> [HotTopicRoom] 룸 선정 알림 실패 roomId={}", room.getId(), e);
