@@ -73,6 +73,10 @@ aws:
 internal:
   api-key: ${INTERNAL_API_KEY}
 
+# false 는 local 프로필에서만 적용
+rate-limit:
+  enabled: true
+
 swagger:
   user: ${SWAGGER_USER}
   password: ${SWAGGER_PASSWORD}

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -31,11 +32,37 @@ import static org.mockito.Mockito.when;
 class RateLimitFilterTest {
 
     private final RateLimitCounter counter = mock(RateLimitCounter.class);
-    private final RateLimitFilter filter = new RateLimitFilter(counter);
+    private final RateLimitFilter filter = new RateLimitFilter(counter, true, new MockEnvironment());
 
     @AfterEach
     void clear() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    @DisplayName("local 에서 끄면 세지 않고 통과")
+    void disabledOnLocal() throws Exception {
+        MockEnvironment local = new MockEnvironment();
+        local.setActiveProfiles("local");
+        RateLimitFilter off = new RateLimitFilter(counter, false, local);
+        MockFilterChain chain = new MockFilterChain();
+
+        off.doFilter(new MockHttpServletRequest("GET", "/api/v1/works/1"), new MockHttpServletResponse(), chain);
+
+        assertThat(chain.getRequest()).isNotNull();
+        verify(counter, never()).increment(anyString(), anyLong());
+    }
+
+    @Test
+    @DisplayName("local 이 아니면 끄기 설정을 무시하고 센다")
+    void cannotDisableOutsideLocal() throws Exception {
+        MockEnvironment prod = new MockEnvironment();
+        prod.setActiveProfiles("prod");
+        RateLimitFilter stillOn = new RateLimitFilter(counter, false, prod);
+
+        stillOn.doFilter(new MockHttpServletRequest("GET", "/api/v1/works/1"), new MockHttpServletResponse(), new MockFilterChain());
+
+        verify(counter).increment(startsWith("rate-limit:DEFAULT:"), anyLong());
     }
 
     @Test
