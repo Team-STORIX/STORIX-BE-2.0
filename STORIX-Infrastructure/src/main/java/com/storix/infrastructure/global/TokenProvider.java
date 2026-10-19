@@ -31,16 +31,19 @@ public class TokenProvider implements InitializingBean {
 
 
     private Key key;
+    // 파서를 만들 때마다 jjwt 가 클래스패스를 뒤져 비싸다. 한 번 만들어 여러 스레드가 같이 쓴다
+    private JwtParser jwtParser;
 
     @Override
     public void afterPropertiesSet() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes); // HMAC-SHA
+        this.jwtParser = Jwts.parserBuilder().setSigningKey(key).build();
     }
 
     private Jws<Claims> getJws(String token) {
         try {
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return jwtParser.parseClaimsJws(token);
         } catch (ExpiredJwtException e) {
             throw ExpiredTokenException.EXCEPTION;
         } catch (Exception e) {
