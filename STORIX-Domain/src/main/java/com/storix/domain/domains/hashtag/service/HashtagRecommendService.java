@@ -49,7 +49,12 @@ public class HashtagRecommendService {
     private final HashtagCacheHelper hashtagCacheHelper;
 
     @Transactional(readOnly = true)
-    public HashtagRecommendationContext collectRecommendationContext(Long userId) {
+    public long countAllWorks() {
+        return workAdaptor.countAllWorks();
+    }
+
+    @Transactional(readOnly = true)
+    public HashtagRecommendationContext collectRecommendationContext(Long userId, long totalWorksCount) {
 
         User user = userAdaptor.findUserById(userId);
 
@@ -58,11 +63,10 @@ public class HashtagRecommendService {
                 Set.copyOf(user.getFavoriteGenreList()),
                 favoriteWorksAdaptor.findAllWithCreatedAtByUserId(userId),
                 explorationAdaptor.findExplorationsWithCreatedAtByUserId(userId),
-                hashtagCacheHelper.getOrLoadTotalWorksCount(workAdaptor::countAllWorks)
+                totalWorksCount
         );
     }
 
-    @Transactional(readOnly = true)
     public List<HashtagRecommendResponseDto> calculatePersonalizedHashtags(
             HashtagRecommendationContext context,
             int recommendationLimit
@@ -96,10 +100,14 @@ public class HashtagRecommendService {
         Map<Long, HashtagScore> scoreMap = calculateRawScores(actions, hashtagsByWorksId);
 
         // 5. 후보 해시태그별 전체 작품 등장 빈도를 조회해 IDF 보정에 사용
-        Map<Long, Long> documentFrequencyMap = hashtagCacheHelper.getOrLoadDocumentFrequencies(
-                scoreMap.keySet(),
-                hashtagAdaptor::findDocumentFrequencyMap
-        );
+        Map<Long, Long> documentFrequencyMap = new HashMap<>(hashtagCacheHelper.findDocumentFrequencies(scoreMap.keySet()));
+        Set<Long> missingIds = new HashSet<>(scoreMap.keySet());
+        missingIds.removeAll(documentFrequencyMap.keySet());
+        if (!missingIds.isEmpty()) {
+            Map<Long, Long> loaded = hashtagAdaptor.findDocumentFrequencyMap(missingIds);
+            hashtagCacheHelper.saveDocumentFrequencies(loaded);
+            documentFrequencyMap.putAll(loaded);
+        }
 
         // 6. raw score에 IDF를 곱해 범용 태그 쏠림을 완화한 뒤 랭킹
         return rankPersonalizedHashtags(
@@ -232,7 +240,7 @@ public class HashtagRecommendService {
         return Math.pow(0.5, ageDays / HALF_LIFE_DAYS);
     }
 
-    // 인기 해시태그 순위 조회. 장르가 비어 있으면 전체 인기
+    // 장르가 비어 있으면 전체 인기
     @Transactional(readOnly = true)
     public List<HashtagRecommendResponseDto> loadPopularHashtags(Set<Genre> genres, int size) {
         return genres.isEmpty()
@@ -240,7 +248,6 @@ public class HashtagRecommendService {
                 : hashtagAdaptor.recommendByGenres(genres, size);
     }
 
-    // DB 를 쓰지 않아 트랜잭션 없음
     public List<HashtagRecommendResponseDto> fillWithFallback(
             List<HashtagRecommendResponseDto> personalized,
             List<HashtagRecommendResponseDto> genrePopular,

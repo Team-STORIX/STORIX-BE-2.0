@@ -68,7 +68,9 @@ public class HotTopicRoomFeatureService {
                                 .toList()
                         : members;
 
-                featuredNotificationHelper.notifyHotTopicRoomIfFirst(room.getId(), room.getTopicRoomName(), targetMembers);
+                if (featuredNotificationHelper.markHotTopicRoomIfFirst(room.getId())) {
+                    featuredNotificationHelper.notifyHotTopicRoom(room.getId(), room.getTopicRoomName(), targetMembers);
+                }
             } catch (Exception e) {
                 log.error(">>> [HotTopicRoom] 룸 선정 알림 실패 roomId={}", room.getId(), e);
             }

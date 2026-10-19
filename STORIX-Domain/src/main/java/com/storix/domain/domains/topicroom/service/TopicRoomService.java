@@ -10,7 +10,6 @@ import com.storix.domain.domains.report.domain.ReportCase;
 import com.storix.domain.domains.report.domain.TargetContentType;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomReportAdaptor;
 import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
-import com.storix.domain.domains.search.adaptor.WorksSearchAdaptor;
 import com.storix.domain.domains.search.dto.PlusSearchResponseWrapperDto;
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
@@ -66,7 +65,6 @@ public class TopicRoomService {
     private final UserAdaptor userAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
     private final WorksAdaptor worksAdaptor;
-    private final WorksSearchAdaptor worksSearchAdaptor;
     private final TopicRoomActiveUserNumberPublisher activeUserNumberPublisher;
     private final NotificationPublisher notificationPublisher;
 
@@ -205,10 +203,12 @@ public class TopicRoomService {
     // 토픽룸 다중 필터 검색
     @Transactional
     public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
-            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable
+            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, List<Long> matchedWorksIds, Pageable pageable
     ) {
-        List<Long> worksIds = worksSearchAdaptor.searchIds(keyword, worksTypes, genres)
-                .orElseGet(() -> worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres));
+        // ES 결과가 없으면 MySQL 로 찾는다
+        List<Long> worksIds = matchedWorksIds != null
+                ? matchedWorksIds
+                : worksAdaptor.findAllIdsByKeywordWithFilters(keyword, worksTypes, genres);
 
         Slice<TopicRoomResponseDto> rooms = topicRoomAdaptor.searchWithFilters(worksIds, pageable);
         applyMembershipStatus(rooms.getContent(), userId);

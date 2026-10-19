@@ -11,7 +11,6 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
-import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 class TransactionBoundaryArchitectureTest {
 
     // 트랜잭션 안에서 기다리면 그동안 DB 커넥션을 쥐고 있게 되는 바깥 호출
-    // ES 는 쿼리 조립 클래스(BoolQuery · Builder 등)는 네트워크를 안 타서 클라이언트만 본다
+    // ES 는 쿼리 조립 클래스는 네트워크를 안 타서 클라이언트만 본다
     private static final List<String> OUTSIDE_PACKAGES = List.of(
             "org.springframework.data.redis.core",
             "org.springframework.data.elasticsearch.core",
@@ -54,14 +53,13 @@ class TransactionBoundaryArchitectureTest {
                 .importPackages("com.storix");
     }
 
-    // 이미 있는 위반은 archunit_store 에 얼려 두고 새로 생기는 위반만 막는다. 고치면 목록에서 빠진다
     @Test
     @DisplayName("트랜잭션 안에서 Redis · ES · 외부 API 를 부르지 않는다. 호출을 끝까지 따라가 본다")
     void transactionDoesNotCallOutside() {
         ArchRule rule = methods().that().areAnnotatedWith(Transactional.class)
                 .or().areDeclaredInClassesThat().areAnnotatedWith(Transactional.class)
                 .should(notReachOutsideCalls());
-        FreezingArchRule.freeze(rule).check(classes);
+        rule.check(classes);
     }
 
     private static ArchCondition<JavaMethod> notReachOutsideCalls() {
@@ -81,7 +79,7 @@ class TransactionBoundaryArchitectureTest {
         if (!visited.add(unit) || path.size() > MAX_DEPTH) {
             return;
         }
-        // 얼려 둔 목록과 비교하려면 매번 같은 경로가 나와야 해서 호출을 줄 번호 순으로 따라간다
+        // 실행마다 같은 경로가 나오게 줄 번호 순으로 따라간다
         List<JavaMethodCall> calls = unit.getMethodCallsFromSelf().stream()
                 .sorted(Comparator.comparingInt(JavaMethodCall::getLineNumber).thenComparing(c -> c.getTarget().getFullName()))
                 .toList();

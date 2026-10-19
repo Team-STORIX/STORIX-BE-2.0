@@ -22,7 +22,12 @@ public class HashtagUseCase {
     public List<HashtagRecommendResponseDto> getHashtagRecommendation(Long userId) {
 
         // 사용자 데이터 수집
-        HashtagRecommendationContext context = hashtagRecommendService.collectRecommendationContext(userId);
+        Long totalWorksCount = hashtagCacheHelper.findTotalWorksCount();
+        if (totalWorksCount == null) {
+            totalWorksCount = hashtagRecommendService.countAllWorks();
+            hashtagCacheHelper.saveTotalWorksCount(totalWorksCount);
+        }
+        HashtagRecommendationContext context = hashtagRecommendService.collectRecommendationContext(userId, totalWorksCount);
 
         // 데이터 기반 개인화 추천 해시 태그 계산
         List<HashtagRecommendResponseDto> personalized =
@@ -33,13 +38,21 @@ public class HashtagUseCase {
             return personalized;
         }
 
-        // 추천 결과가 충분하지 않은 경우, 선호 장르 · 전체 인기 순위로 보충. 순위는 캐시에서, 없을 때만 DB 조회
-        List<HashtagRecommendResponseDto> genrePopular = context.favoriteGenres().isEmpty()
-                ? List.of()
-                : hashtagCacheHelper.getOrLoadPopular(context.favoriteGenres(),
-                        () -> hashtagRecommendService.loadPopularHashtags(context.favoriteGenres(), RECOMMENDATION_LIMIT));
-        List<HashtagRecommendResponseDto> globalPopular = hashtagCacheHelper.getOrLoadPopular(Set.of(),
-                () -> hashtagRecommendService.loadPopularHashtags(Set.of(), RECOMMENDATION_LIMIT));
+        // 모자라면 선호 장르 · 전체 인기 순위로 채운다. 순위는 캐시에 없을 때만 DB 에서
+        List<HashtagRecommendResponseDto> genrePopular = List.of();
+        if (!context.favoriteGenres().isEmpty()) {
+            genrePopular = hashtagCacheHelper.findPopular(context.favoriteGenres());
+            if (genrePopular == null) {
+                genrePopular = hashtagRecommendService.loadPopularHashtags(context.favoriteGenres(), RECOMMENDATION_LIMIT);
+                hashtagCacheHelper.savePopular(context.favoriteGenres(), genrePopular);
+            }
+        }
+
+        List<HashtagRecommendResponseDto> globalPopular = hashtagCacheHelper.findPopular(Set.of());
+        if (globalPopular == null) {
+            globalPopular = hashtagRecommendService.loadPopularHashtags(Set.of(), RECOMMENDATION_LIMIT);
+            hashtagCacheHelper.savePopular(Set.of(), globalPopular);
+        }
 
         return hashtagRecommendService.fillWithFallback(
                 personalized,
