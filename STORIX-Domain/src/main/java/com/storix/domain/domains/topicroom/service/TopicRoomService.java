@@ -201,7 +201,6 @@ public class TopicRoomService {
     }
 
     // 토픽룸 다중 필터 검색
-    @Transactional
     public PlusSearchResponseWrapperDto<TopicRoomResponseDto> searchRoomsWithFilters(
             Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, List<Long> matchedWorksIds, Pageable pageable
     ) {
