@@ -36,15 +36,10 @@ public class ExplorationService {
     private final AdultVerificationAdaptor adultVerificationAdaptor;
 
     @Transactional(readOnly = true)
-    public List<ExplorationWorksResponseDto> getExplorationWorks(Long userId) {
-        if (cacheHelper.isAlreadyParticipatedToday(userId)) {
-            return Collections.emptyList();
-        }
-
+    public List<ExplorationWorksResponseDto> getExplorationWorks(Long userId, Set<Long> pendingIds) {
         LocalDateTime threshold = LocalDateTime.now().minusHours(3);
 
         List<Long> dbHistoryIds = explorationAdaptor.findRespondedWorksIdsByUserId(userId);
-        Set<Long> pendingIds = cacheHelper.getPendingWorksIds(userId);
         List<Long> favoriteWorksIds = favoriteWorksAdaptor.findAllFavoriteWorksIdsByUserId(userId);
         List<Long> reviewedWorksIds = reviewAdaptor.findAllReviewedWorksIdsByUserId(userId);
 
@@ -67,7 +62,6 @@ public class ExplorationService {
                 .toList();
     }
 
-    @Transactional
     public void submitExploration(Long userId, ExplorationSubmitRequestDto request) {
 
         worksAdaptor.checkWorksExistById(request.worksId());
@@ -104,14 +98,12 @@ public class ExplorationService {
     }
 
     @Transactional(readOnly = true)
-    public ExplorationResultResponseDto getExplorationResults(Long userId) {
+    public ExplorationResultResponseDto getExplorationResults(Long userId, List<PendingSwipeDto> pending) {
 
         LocalDateTime threshold = LocalDateTime.now().minusHours(3);
 
         List<Long> dbLikedIds = explorationAdaptor.findRespondedWorksIdsByStatusSince(userId, true, threshold);
         List<Long> dbDislikedIds = explorationAdaptor.findRespondedWorksIdsByStatusSince(userId, false, threshold);
-
-        List<PendingSwipeDto> pending = cacheHelper.getAllPendingSwipes(userId);
 
         Set<Long> finalLikedIds = new HashSet<>(dbLikedIds);
         finalLikedIds.addAll(pending.stream()
@@ -152,11 +144,9 @@ public class ExplorationService {
                 .toList();
     }
 
-    // Redis 에 쌓인 스와이프 DB 반영
+    // Redis 에서 꺼낸 스와이프 DB 반영
     @Transactional
-    public void flushPendingSwipes(int batchSize) {
-        List<PendingSwipeDto> batch = cacheHelper.popBatchFromGlobalQueue(batchSize);
-
+    public void flushPendingSwipes(List<PendingSwipeDto> batch) {
         if (batch.isEmpty()) {
             return;
         }

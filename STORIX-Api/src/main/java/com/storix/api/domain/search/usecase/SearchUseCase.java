@@ -47,8 +47,12 @@ public class SearchUseCase {
             searchHistoryService.addTrendingScore(keyword, worksTypes, genres);
         }
 
+        // 해시태그 검색은 ES 를 쓰지 않는다
+        List<Long> matchedIds = keyword != null && keyword.startsWith("#")
+                ? null
+                : searchService.searchMatchedWorksIds(keyword, worksTypes, genres);
         Slice<WorksSearchResponseDto> result =
-                searchService.searchWorksWithFilters(userId, keyword, worksTypes, genres, pageable);
+                searchService.searchWorksWithFilters(userId, keyword, worksTypes, genres, matchedIds, pageable);
 
         String fallback = result.isEmpty() ? searchHistoryService.getFallbackRecommendation() : null;
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, SearchResponseWrapperDto.of(result, fallback));
@@ -60,7 +64,9 @@ public class SearchUseCase {
             searchHistoryService.addTrendingScore(keyword, null, null);
         }
 
-        PlusSearchResponseWrapperDto<WorksSearchResponseDto> result = searchService.searchWorksForWriting(userId, keyword, pageable);
+        List<Long> matchedIds = searchService.searchMatchedWorksIds(keyword, null, null);
+        PlusSearchResponseWrapperDto<WorksSearchResponseDto> result =
+                searchService.searchWorksForWriting(userId, keyword, matchedIds, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.PLUS_WORKS_LOAD_SUCCESS, result);
     }
@@ -72,8 +78,9 @@ public class SearchUseCase {
             searchHistoryService.addTrendingScore(keyword, worksTypes, genres);
         }
 
+        List<Long> matchedIds = searchService.searchMatchedWorksIds(keyword, worksTypes, genres);
         PlusSearchResponseWrapperDto<TopicRoomResponseDto> result =
-                topicRoomService.searchRoomsWithFilters(userId, keyword, worksTypes, genres, pageable);
+                topicRoomService.searchRoomsWithFilters(userId, keyword, worksTypes, genres, matchedIds, pageable);
 
         return CustomResponse.onSuccess(SuccessCode.SUCCESS, result);
     }

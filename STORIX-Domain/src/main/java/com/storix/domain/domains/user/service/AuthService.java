@@ -170,6 +170,14 @@ public class AuthService {
         userAdaptor.checkNicknameDuplicate(nickName);
     }
 
+    // 토큰 재발급 때 마지막 로그인 시각 갱신
+    @Transactional
+    public AuthUserDetails refreshLogin(Long userId) {
+        User user = userAdaptor.findUserById(userId);
+        user.login();
+        return new AuthUserDetails(userId, user.getRole());
+    }
+
     // 유저 OAuth 정보 조회
     @Transactional(readOnly = true)
     public OAuthInfo findOAuthInfoByUserId(Long userId) {

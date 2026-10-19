@@ -5,7 +5,6 @@ import com.storix.api.domain.user.controller.dto.LoginWithTokenResponse;
 import com.storix.api.domain.user.controller.dto.OAuthLoginWithTokenResponse;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.TokenAdaptor;
-import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.dto.OnboardingTokenInfo;
 import com.storix.domain.domains.user.exception.token.ExpiredTokenException;
 import com.storix.domain.domains.user.exception.token.InvalidRefreshTokenException;
@@ -13,7 +12,6 @@ import com.storix.domain.domains.user.exception.token.InvalidTokenException;
 import com.storix.infrastructure.global.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import static com.storix.common.utils.STORIXStatic.MILLI_TO_SECOND;
 
@@ -23,7 +21,6 @@ public class TokenGenerateHelper {
 
     private final TokenProvider tokenProvider;
     private final TokenAdaptor tokenAdaptor;
-    private final UserAdaptor userAdaptor;
 
     public LoginWithTokenResponse generateLoginWithToken(AuthUserDetails userDetails) {
 
@@ -54,15 +51,6 @@ public class TokenGenerateHelper {
         Long userId = tokenProvider.parseRefreshToken(refreshToken);
         tokenAdaptor.consumeRefreshToken(userId, refreshToken);
         return userId;
-    }
-
-    @Transactional
-    public LoginWithTokenResponse reissueTokens(Long userId) {
-
-        User user = userAdaptor.findUserById(userId);
-        user.login();
-
-        return generateLoginWithToken(new AuthUserDetails(userId, user.getRole()));
     }
 
     public OAuthLoginWithTokenResponse generateOAuthLoginWithToken(OAuthInfo oAuthInfo, String oauthRefreshToken) {
