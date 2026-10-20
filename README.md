@@ -17,6 +17,11 @@ STORIX-BE-2.0
 
 <h1><img src="https://github.com/user-attachments/assets/77539278-b8fc-40e2-85ac-f50340e5c417" width="25"/> STORIX 2.0</h1>
 
+> 웹툰 · 웹소설 독자의 기록과 관계 데이터를 쌓는 팬덤 라이프 플랫폼
+
+- 🎖️ **2026 예비창업패키지 선정**
+- Team STORIX · 2026.03 ~
+
 ## 🛠️ Tech Stack
 
 <table>
