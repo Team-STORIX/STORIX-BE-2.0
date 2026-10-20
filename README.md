@@ -50,22 +50,143 @@ STORIX-BE/
 
 ## 🚀 Trouble Shooting
 
-## 🛠️ Developer
+## 🛠️ Developers
+
+### 2026.03 ~ : 2.0 설계 · 개발 · 배포
 <table>
-    <tr align="center">
-        <td><B>Lead·Backend</B></td>
-    </tr>
-    <tr align="center">
-        <td><B>이수아</B></td>
-    </tr>
-    <tr align="center">
-        <td>
-            <img src="https://github.com/Immmii.png?size=100" width="100">
-            <br>
-            <a href="https://github.com/Immmii"><I>Immmii</I></a>
+    <tr>
+        <td align="center" width="160"><B>Lead·Backend</B></td>
+        <td rowspan="4">
+            <ul>
+                <li><B>2.0 기반 · 배포</B>
+                    <ul>
+                        <li>단일 모듈 → 멀티모듈 전환 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/2">#2</a></li>
+                        <li>CI/CD · dev · prod 분리 · Parameter Store — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/3">#3</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/20">#20</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/142">#142</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/303">#303</a></li>
+                        <li>Flyway 도입 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/387">#387</a></li>
+                    </ul>
+                </li>
+                <li><B>인증</B>
+                    <ul>
+                        <li>Apple · 카카오 · 네이버 · X 소셜 로그인 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/40">#40</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/50">#50</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/89">#89</a></li>
+                        <li>Refresh Token 다중 기기 저장 · 재발급 검증 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/170">#170</a></li>
+                        <li>포트원 성인인증 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/256">#256</a></li>
+                    </ul>
+                </li>
+                <li><B>알림</B>
+                    <ul>
+                        <li>이벤트 기반 FCM 푸시 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/64">#64</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/67">#67</a></li>
+                        <li>관리자 알림 발송 · 재발송 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/114">#114</a></li>
+                        <li>토픽룸 채팅 알림 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/213">#213</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/219">#219</a></li>
+                    </ul>
+                </li>
+                <li><B>검색 · 작품</B>
+                    <ul>
+                        <li>Elasticsearch 작품 · 토픽룸 검색 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/318">#318</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/322">#322</a></li>
+                        <li>크롤러 검수 · 적재 · 병합 내부 API — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/324">#324</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/341">#341</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/355">#355</a></li>
+                    </ul>
+                </li>
+                <li><B>운영 · 관리자</B>
+                    <ul>
+                        <li>관리자 이벤트 · 팝업 · 배너 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/122">#122</a></li>
+                        <li>보유기간 경과 데이터 파기 · 탈퇴 개인정보 파기 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/127">#127</a></li>
+                        <li>앱 버전 게이팅 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/165">#165</a></li>
+                    </ul>
+                </li>
+                <li><B>모니터링</B>
+                    <ul>
+                        <li>Prometheus · Loki · Grafana 스택 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/135">#135</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/136">#136</a></li>
+                        <li>JSON 구조화 로깅 · API 요청 로그 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/134">#134</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/180">#180</a></li>
+                    </ul>
+                </li>
+                <li><B>구조 · 성능</B>
+                    <ul>
+                        <li>계층 · 트랜잭션 컨벤션과 ArchUnit 규칙 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/339">#339</a></li>
+                        <li>JWT 파서 재사용 (앱 CPU 약 40% 절감) — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/393">#393</a></li>
+                        <li>인기 해시태그 Redis 캐시 · 트랜잭션 경계 정리 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/396">#396</a></li>
+                    </ul>
+                </li>
+            </ul>
         </td>
-    <tr align="center">
-        <td><B>배포·이벤트(알림)<br>·유지보수·자동화</B></td>
+    </tr>
+    <tr>
+        <td align="center"><B>이수아</B></td>
+    </tr>
+    <tr>
+        <td align="center"><img src="https://github.com/Immmii.png?size=100" width="100"></td>
+    </tr>
+    <tr>
+        <td align="center"><a href="https://github.com/Immmii"><I>Immmii</I></a></td>
+    </tr>
+</table>
+
+### 2026.06 ~ 2026.09 : 신고 · 차단 · 이벤트
+<table>
+    <tr>
+        <td align="center" width="160"><B>Backend</B></td>
+        <td rowspan="4">
+            <ul>
+                <li><B>신고 · 차단</B>
+                    <ul>
+                        <li>신고 이력 처리 · 정지 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/84">#84</a> · <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/125">#125</a></li>
+                        <li>사용자 간 차단 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/94">#94</a></li>
+                        <li>토픽룸 제목 · 프로필 금칙어 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/117">#117</a></li>
+                    </ul>
+                </li>
+                <li><B>이벤트</B>
+                    <ul>
+                        <li>출석 이벤트 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/145">#145</a></li>
+                        <li>오늘의 스토리 카드 · 출석 추첨 관리자 API — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/190">#190</a></li>
+                    </ul>
+                </li>
+                <li><B>성인인증</B>
+                    <ul>
+                        <li>성인인증 도입 이후 필터링 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/266">#266</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td align="center"><B>이윤지</B></td>
+    </tr>
+    <tr>
+        <td align="center"><img src="https://github.com/yooniicode.png?size=100" width="100"></td>
+    </tr>
+    <tr>
+        <td align="center"><a href="https://github.com/yooniicode"><I>yooniicode</I></a></td>
+    </tr>
+</table>
+
+### 2026.05 ~ 2026.07 : 추천 · 토픽룸 · 관리자
+<table>
+    <tr>
+        <td align="center" width="160"><B>Backend</B></td>
+        <td rowspan="4">
+            <ul>
+                <li><B>추천 · 취향</B>
+                    <ul>
+                        <li>해시태그 추천 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/72">#72</a></li>
+                        <li>취향 탐색 리뷰한 작품 제외 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/86">#86</a></li>
+                    </ul>
+                </li>
+                <li><B>토픽룸 · 관리자</B>
+                    <ul>
+                        <li>채팅 미리보기 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/79">#79</a></li>
+                        <li>관리자 유저 관리 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/105">#105</a></li>
+                        <li>생일 테마 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/66">#66</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td align="center"><B>변호영</B></td>
+    </tr>
+    <tr>
+        <td align="center"><img src="https://github.com/Hoyoung027.png?size=100" width="100"></td>
+    </tr>
+    <tr>
+        <td align="center"><a href="https://github.com/Hoyoung027"><I>Hoyoung027</I></a></td>
     </tr>
 </table>
 
