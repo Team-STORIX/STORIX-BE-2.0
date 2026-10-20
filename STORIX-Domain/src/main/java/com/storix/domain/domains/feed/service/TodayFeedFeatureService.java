@@ -24,7 +24,14 @@ public class TodayFeedFeatureService {
         List<StandardReaderBoardInfo> selected = readerFeedAdaptor.findStandardInfoByIds(selectedBoardIds);
         for (StandardReaderBoardInfo feed : selected) {
             try {
-                featuredNotificationHelper.notifyTodayFeedIfFirst(feed.boardId(), feed.userId());
+                if (featuredNotificationHelper.markTodayFeedIfFirst(feed.boardId())) {
+                    try {
+                        featuredNotificationHelper.notifyTodayFeed(feed.boardId(), feed.userId());
+                    } catch (RuntimeException e) {
+                        featuredNotificationHelper.unmarkTodayFeed(feed.boardId());
+                        throw e;
+                    }
+                }
             } catch (Exception e) {
                 log.error(">>> [TodayFeed] 피드 선정 알림 실패 feedId={}", feed.boardId(), e);
             }

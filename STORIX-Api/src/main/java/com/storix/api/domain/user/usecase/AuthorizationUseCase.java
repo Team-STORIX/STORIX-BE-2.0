@@ -7,7 +7,9 @@ import com.storix.api.domain.user.helper.TokenGenerateHelper;
 import com.storix.api.domain.user.controller.dto.LoginWithTokenResponse;
 import com.storix.common.payload.CustomResponse;
 import com.storix.common.code.SuccessCode;
+import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.exception.token.RefreshTokenNotExistException;
+import com.storix.domain.domains.user.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 public class AuthorizationUseCase {
 
     private final TokenGenerateHelper tokenGenerateHelper;
+    private final AuthService authService;
 
     private final CookieHelper cookieHelper;
 
@@ -31,7 +34,8 @@ public class AuthorizationUseCase {
         if (refreshToken == null || refreshToken.isBlank()) throw RefreshTokenNotExistException.EXCEPTION;
 
         Long userId = tokenGenerateHelper.validateRefreshToken(refreshToken);
-        LoginWithTokenResponse tokenResponse = tokenGenerateHelper.reissueTokens(userId);
+        AuthUserDetails userDetails = authService.refreshLogin(userId);
+        LoginWithTokenResponse tokenResponse = tokenGenerateHelper.generateLoginWithToken(userDetails);
         log.info(">>> [Auth] 토큰 재발급 userId={} native={}", userId, useBodyToken);
 
         // Native: body로 access/refresh 둘 다 반환
