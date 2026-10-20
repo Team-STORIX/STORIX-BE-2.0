@@ -7,6 +7,8 @@ STORIX-BE-2.0
 
 <br>
 
+<img width="1920" height="1080" alt="STORIX Banner" src="https://github.com/user-attachments/assets/78d6f268-1e0a-43e9-a77f-c4cdc4d9dced" />
+
 <p align="center">
   <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store 에서 다운로드" src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" height="32"></a>
   &nbsp;&nbsp;
