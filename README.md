@@ -7,7 +7,8 @@ STORIX-BE
 
 <br>
 
-<img width="1920" height="1080" alt="STORIX Banner" src="https://github.com/user-attachments/assets/78d6f268-1e0a-43e9-a77f-c4cdc4d9dced" />
+[![App Store](https://img.shields.io/badge/App_Store-스토릭스-0D96F6?logo=appstore&logoColor=white)](https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035)
+[![Google Play](https://img.shields.io/badge/Google_Play-스토릭스-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=kr.storix.android)
 
 <h1><img src="https://github.com/user-attachments/assets/77539278-b8fc-40e2-85ac-f50340e5c417" width="25"/> STORIX 2.0</h1>
 
