@@ -99,6 +99,16 @@ CEOS 22기에서 시작한 Team-STORIX가 2026.03. 부터<br>
 
 <img width="2736" height="1951" alt="STORIX-BE-2.0 AWS Infra" src="https://github.com/user-attachments/assets/72ad10ce-2b35-4186-9981-754c607d201f" />
 
+<details open>
+<summary><b>관련 레포</b></summary>
+<dl><dd>
+
+- Crawler 서버 (작품 수집 · 검수) — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
+- storix MCP · 스펙 변경 알림 · dev 자동 종료 Lambda — [STORIX-MCP](https://github.com/Team-STORIX/STORIX-MCP)
+
+</dd></dl>
+</details>
+
 ## 📂 Project Structure
 ```
 STORIX-BE/
@@ -226,7 +236,7 @@ STORIX-BE/
 - 팀 공용 MCP 서버 — [STORIX-MCP](https://github.com/Team-STORIX/STORIX-MCP)
 - 작품 수집 · 검수 크롤러 — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
 - 부하 테스트 · 실험 — [STORIX-BE-Lab](https://github.com/Team-STORIX/STORIX-BE-Lab)
-- Capacitor iOS · Android 앱 세팅 · 배포 — [STORIX-FE-2.0](https://github.com/Team-STORIX/STORIX-FE-2.0)
+- (구) Capacitor iOS · Android 앱 세팅 · 배포 — [STORIX-FE-2.0](https://github.com/Team-STORIX/STORIX-FE-2.0)
 
 </dd></dl>
 </details>
