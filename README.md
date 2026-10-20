@@ -9,19 +9,21 @@ STORIX-BE-2.0
 
 <img width="1920" height="1080" alt="STORIX Banner" src="https://github.com/user-attachments/assets/78d6f268-1e0a-43e9-a77f-c4cdc4d9dced" />
 
-<p align="center">
+<h1><img src="https://github.com/user-attachments/assets/77539278-b8fc-40e2-85ac-f50340e5c417" width="25"/> STORIX 2.0</h1>
+
+CEOS 22기에서 시작한 Team-STORIX가<br>
+2026.03. 부터 웹 서비스를 앱으로 새로 만들어<br>
+운영하고 있는 iOS · Android 애플리케이션입니다.
+
+웹툰 · 웹소설 독자의 기록과 관계 데이터를 쌓는<br>
+팬덤 라이프 플랫폼으로,<br>
+🎖️2026 예비창업패키지🎖️에 선정되었습니다.
+
+<p>
   <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store 에서 다운로드" src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" height="32"></a>
   &nbsp;&nbsp;
   <a href="https://play.google.com/store/apps/details?id=kr.storix.android"><img alt="Google Play 에서 받기" src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" height="32"></a>
 </p>
-
-<h1><img src="https://github.com/user-attachments/assets/77539278-b8fc-40e2-85ac-f50340e5c417" width="25"/> STORIX 2.0</h1>
-
-CEOS 22기에서 시작한 Team-STORIX가
-2026.03. 부터 웹 서비스를 앱으로 새로 만들어 운영하고 있는 iOS · Android 애플리케이션입니다.
-
-웹툰 · 웹소설 독자의 기록과 관계 데이터를 쌓는 팬덤 라이프 플랫폼으로,
-🎖️2026 예비창업패키지🎖️에 선정되었습니다.
 
 ## 🛠️ Tech Stack
 
