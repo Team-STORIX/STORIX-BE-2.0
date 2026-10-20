@@ -11,11 +11,9 @@ STORIX-BE-2.0
 <table>
   <tr>
     <td align="center">
-      <b>📱 지금 스토릭스를 만나 보세요</b>
-      <br><br>
-      <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store" src="https://img.shields.io/badge/App_Store-스토릭스-0D96F6?style=for-the-badge&logo=appstore&logoColor=white"></a>
+      <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store" src="https://img.shields.io/badge/App_Store-STORIX-0D96F6?style=for-the-badge&logo=appstore&logoColor=white"></a>
       &nbsp;
-      <a href="https://play.google.com/store/apps/details?id=kr.storix.android"><img alt="Google Play" src="https://img.shields.io/badge/Google_Play-스토릭스-414141?style=for-the-badge&logo=googleplay&logoColor=white"></a>
+      <a href="https://play.google.com/store/apps/details?id=kr.storix.android"><img alt="Google Play" src="https://img.shields.io/badge/Google_Play-STORIX-414141?style=for-the-badge&logo=googleplay&logoColor=white"></a>
     </td>
   </tr>
 </table>
