@@ -11,9 +11,9 @@ STORIX-BE-2.0
 <table>
   <tr>
     <td align="center">
-      <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store" src="https://img.shields.io/badge/App_Store-STORIX-0D96F6?style=for-the-badge&logo=appstore&logoColor=white"></a>
+      <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store" src="https://img.shields.io/badge/App_Store-STORIX-FF4093?style=for-the-badge&logo=appstore&logoColor=white&labelColor=000000"></a>
       &nbsp;
-      <a href="https://play.google.com/store/apps/details?id=kr.storix.android"><img alt="Google Play" src="https://img.shields.io/badge/Google_Play-STORIX-414141?style=for-the-badge&logo=googleplay&logoColor=white"></a>
+      <a href="https://play.google.com/store/apps/details?id=kr.storix.android"><img alt="Google Play" src="https://img.shields.io/badge/Google_Play-STORIX-FF4093?style=for-the-badge&logo=googleplay&logoColor=white&labelColor=000000"></a>
     </td>
   </tr>
 </table>
@@ -21,7 +21,77 @@ STORIX-BE-2.0
 
 <h1><img src="https://github.com/user-attachments/assets/77539278-b8fc-40e2-85ac-f50340e5c417" width="25"/> STORIX 2.0</h1>
 
-![Spring Boot](https://img.shields.io/badge/SpringBoot-3.5.7-6DB33F)
+## 🛠️ 기술 스택
+
+<table>
+  <tr>
+    <td align="center"><b>Backend</b></td>
+    <td>
+      <img alt="Java" src="https://img.shields.io/badge/Java-17-007396?style=flat-square&logo=openjdk&logoColor=white">
+      <img alt="Spring Boot" src="https://img.shields.io/badge/Spring_Boot-3.5.7-6DB33F?style=flat-square&logo=springboot&logoColor=white">
+      <img alt="Spring Security" src="https://img.shields.io/badge/Spring_Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white">
+      <img alt="JPA" src="https://img.shields.io/badge/JPA-59666C?style=flat-square&logo=hibernate&logoColor=white">
+      <img alt="QueryDSL" src="https://img.shields.io/badge/QueryDSL-5.1-0769AD?style=flat-square">
+      <img alt="OpenFeign" src="https://img.shields.io/badge/OpenFeign-6DB33F?style=flat-square&logo=spring&logoColor=white">
+      <img alt="WebSocket · STOMP" src="https://img.shields.io/badge/WebSocket_·_STOMP-010101?style=flat-square">
+      <img alt="JWT" src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><b>Data</b></td>
+    <td>
+      <img alt="MySQL" src="https://img.shields.io/badge/MySQL-8.4-4479A1?style=flat-square&logo=mysql&logoColor=white">
+      <img alt="Redis" src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white">
+      <img alt="Elasticsearch" src="https://img.shields.io/badge/Elasticsearch-8.18 nori-005571?style=flat-square&logo=elasticsearch&logoColor=white">
+      <img alt="Flyway" src="https://img.shields.io/badge/Flyway-CC0200?style=flat-square&logo=flyway&logoColor=white">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><b>Infra</b></td>
+    <td>
+      <img alt="Amazon EC2" src="https://img.shields.io/badge/Amazon_EC2-FF9900?style=flat-square&logo=amazonec2&logoColor=white">
+      <img alt="Amazon RDS" src="https://img.shields.io/badge/Amazon_RDS-527FFF?style=flat-square&logo=amazonrds&logoColor=white">
+      <img alt="Amazon S3" src="https://img.shields.io/badge/Amazon_S3-569A31?style=flat-square&logo=amazons3&logoColor=white">
+      <img alt="CloudFront" src="https://img.shields.io/badge/CloudFront-8C4FFF?style=flat-square&logo=amazoncloudfront&logoColor=white">
+      <img alt="AWS Lambda" src="https://img.shields.io/badge/AWS_Lambda-FF9900?style=flat-square&logo=awslambda&logoColor=white">
+      <img alt="ECR · SSM · Parameter Store" src="https://img.shields.io/badge/ECR_·_SSM_·_Parameter_Store-232F3E?style=flat-square&logo=amazonwebservices&logoColor=white">
+      <img alt="Docker" src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><b>CI / CD</b></td>
+    <td>
+      <img alt="GitHub Actions" src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white">
+      <img alt="Gradle" src="https://img.shields.io/badge/Gradle-02303A?style=flat-square&logo=gradle&logoColor=white">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><b>Monitoring</b></td>
+    <td>
+      <img alt="Prometheus" src="https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white">
+      <img alt="Grafana" src="https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white">
+      <img alt="Loki" src="https://img.shields.io/badge/Loki-F46800?style=flat-square&logo=grafana&logoColor=white">
+      <img alt="Alloy" src="https://img.shields.io/badge/Alloy-F46800?style=flat-square&logo=grafana&logoColor=white">
+      <img alt="Nginx" src="https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><b>외부 연동</b></td>
+    <td>
+      <img alt="Firebase FCM" src="https://img.shields.io/badge/Firebase_FCM-DD2C00?style=flat-square&logo=firebase&logoColor=white">
+      <img alt="PortOne" src="https://img.shields.io/badge/PortOne-2C2C2C?style=flat-square">
+      <img alt="Slack" src="https://img.shields.io/badge/Slack-4A154B?style=flat-square&logo=slack&logoColor=white">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><b>문서 · 테스트</b></td>
+    <td>
+      <img alt="Swagger" src="https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=white">
+      <img alt="JUnit 5" src="https://img.shields.io/badge/JUnit_5-25A162?style=flat-square&logo=junit5&logoColor=white">
+      <img alt="ArchUnit" src="https://img.shields.io/badge/ArchUnit-2C2C2C?style=flat-square">
+    </td>
+  </tr>
+</table>
 
 ## 🌐 서버 인프라 2.0
 
