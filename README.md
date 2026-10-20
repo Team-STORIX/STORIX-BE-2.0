@@ -219,7 +219,7 @@ STORIX-BE/
     </tr>
 </table>
 
-<details>
+<details open>
 <summary><b>기여한 레포</b></summary>
 
 - 팀 공용 MCP 서버 — [STORIX-MCP](https://github.com/Team-STORIX/STORIX-MCP)
@@ -266,7 +266,7 @@ STORIX-BE/
     </tr>
 </table>
 
-<details>
+<details open>
 <summary><b>기여한 레포</b></summary>
 
 - 크롤러 2.0 전환 · 리디북스 · 네이버 웹소설 수집 — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
