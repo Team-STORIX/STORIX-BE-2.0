@@ -251,7 +251,7 @@ public class TopicRoomService {
 
         try {
             TopicRoom savedRoom = topicRoomAdaptor.saveRoom(room);
-            topicRoomAdaptor.saveParticipation(user.getId(), savedRoom, TopicRoomRole.HOST);
+            topicRoomAdaptor.saveParticipation(user.getId(), savedRoom, TopicRoomRole.HOST, 0L);
             topicRoomAdaptor.incrementActiveUserNumber(savedRoom.getId());
 
             genreScorePublisher.publishWithGenre(
@@ -276,7 +276,9 @@ public class TopicRoomService {
             throw MaxLimitException.EXCEPTION;
 
         try {
-            topicRoomAdaptor.saveParticipation(userId, room, TopicRoomRole.MEMBER);
+            // 방 엔티티의 lastMessageId 는 메시지 저장 뒤 따로 갱신돼 늦을 수 있어 채팅에서 직접 찾는다
+            Long lastMessageId = chatAdaptor.findLastMessageId(roomId);
+            topicRoomAdaptor.saveParticipation(userId, room, TopicRoomRole.MEMBER, lastMessageId);
             topicRoomAdaptor.incrementActiveUserNumber(roomId);
             Integer activeUserNumber = topicRoomAdaptor.findActiveUserNumberById(roomId);
             publishActiveUserNumberChanged(roomId, activeUserNumber);

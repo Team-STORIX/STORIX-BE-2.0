@@ -6,6 +6,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.topicroom.dto.RoomMessageCount;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.works.domain.AgeClassification;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.storix.domain.domains.chat.domain.QChatMessage.chatMessage;
 import static com.storix.domain.domains.topicroom.domain.QTopicRoom.topicRoom;
 import static com.storix.domain.domains.works.domain.QWorks.works;
 
@@ -60,27 +62,53 @@ public class TopicRoomRankingRepositoryImpl implements TopicRoomRankingRepositor
                 });
     }
 
+    // 활동 점수 대상: 참여자 2명 이상
+    @Override
+    public List<Long> findActivityScoreTargetRoomIds() {
+        return queryFactory
+                .select(topicRoom.id)
+                .from(topicRoom)
+                .where(topicRoom.activeUserNumber.gt(1))
+                .fetch();
+    }
+
+    // 쓰는 문장 안에서 읽으면 채팅 행 · 틈까지 잠가 새 채팅 INSERT 를 막으므로 일반 SELECT 로 따로 읽는다
+    // 방 번호를 상수로 넘겨 통계가 틀어져도 방마다 (room_id, created_at) 범위만 읽는다
+    @Override
+    public List<RoomMessageCount> countMessagesSince(List<Long> roomIds, LocalDateTime since) {
+        return queryFactory
+                .select(Projections.constructor(RoomMessageCount.class,
+                        chatMessage.roomId,
+                        chatMessage.count()))
+                .from(chatMessage)
+                .where(chatMessage.roomId.in(roomIds),
+                        chatMessage.createdAt.goe(since),
+                        chatMessage.deleted.isFalse())
+                .groupBy(chatMessage.roomId)
+                .fetch();
+    }
+
     // 활동 점수 = 24h 메시지 수×0.5 + 참여자 수×0.3 + 신규성(생성 24h 이내 1)×0.2
     @Override
     @Transactional
-    public int updateActivityScores(LocalDateTime messageSince, LocalDateTime freshnessSince) {
+    public void bulkUpdateActivityScores(List<RoomMessageCount> counts, LocalDateTime freshnessSince) {
 
         String sql = """
-                UPDATE topic_room tr
-                LEFT JOIN (
-                    SELECT room_id, COUNT(*) AS cnt
-                    FROM chat_message
-                    WHERE created_at >= ? AND deleted = false
-                    GROUP BY room_id
-                ) c ON c.room_id = tr.topic_room_id
-                SET tr.activity_score =
-                    COALESCE(c.cnt, 0) * 0.5
-                    + tr.active_user_number * 0.3
-                    + (CASE WHEN tr.created_at >= ? THEN 1 ELSE 0 END) * 0.2
-                WHERE tr.active_user_number > 1
+                UPDATE topic_room
+                SET activity_score = ? * 0.5
+                    + active_user_number * 0.3
+                    + (CASE WHEN created_at >= ? THEN 1 ELSE 0 END) * 0.2
+                WHERE topic_room_id = ?
                 """;
 
-        return jdbcTemplate.update(sql, messageSince, freshnessSince);
+        jdbcTemplate.batchUpdate(sql,
+                counts,
+                1000,
+                (PreparedStatement ps, RoomMessageCount count) -> {
+                    ps.setLong(1, count.messageCount());
+                    ps.setObject(2, freshnessSince);
+                    ps.setLong(3, count.roomId());
+                });
     }
 
     // 공통 필터: 참여자 2명 이상 + 최근 메시지 72시간 이내
