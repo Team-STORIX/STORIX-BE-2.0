@@ -7,17 +7,11 @@ STORIX-BE-2.0
 
 <br>
 
-<div align="center">
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store 에서 다운로드" src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" height="44"></a>
-      &nbsp;
-      <a href="https://play.google.com/store/apps/details?id=kr.storix.android"><img alt="Google Play 에서 받기" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="64"></a>
-    </td>
-  </tr>
-</table>
-</div>
+<p align="center">
+  <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store 에서 다운로드" src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" height="60"></a>
+  &nbsp;&nbsp;
+  <a href="https://play.google.com/store/apps/details?id=kr.storix.android"><img alt="Google Play 에서 받기" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="88"></a>
+</p>
 
 <h1><img src="https://github.com/user-attachments/assets/77539278-b8fc-40e2-85ac-f50340e5c417" width="25"/> STORIX 2.0</h1>
 
