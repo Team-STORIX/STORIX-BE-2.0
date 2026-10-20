@@ -11,9 +11,9 @@ STORIX-BE-2.0
 <table>
   <tr>
     <td align="center">
-      <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store" src="https://img.shields.io/badge/App_Store-STORIX-FF4093?style=for-the-badge&logo=appstore&logoColor=white&labelColor=000000"></a>
+      <a href="https://apps.apple.com/kr/app/%EC%8A%A4%ED%86%A0%EB%A6%AD%EC%8A%A4-storix/id6762126035"><img alt="App Store 에서 다운로드" src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" height="44"></a>
       &nbsp;
-      <a href="https://play.google.com/store/apps/details?id=kr.storix.android"><img alt="Google Play" src="https://img.shields.io/badge/Google_Play-STORIX-FF4093?style=for-the-badge&logo=googleplay&logoColor=white&labelColor=000000"></a>
+      <a href="https://play.google.com/store/apps/details?id=kr.storix.android"><img alt="Google Play 에서 받기" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="64"></a>
     </td>
   </tr>
 </table>
