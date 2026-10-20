@@ -219,7 +219,7 @@ STORIX-BE/
     </tr>
 </table>
 
-**참여한 레포**
+🔗 **기여한 레포**
 - 팀 공용 MCP 서버 — [STORIX-MCP](https://github.com/Team-STORIX/STORIX-MCP)
 - 작품 수집 · 검수 크롤러 — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
 - 부하 테스트 · 실험 — [STORIX-BE-Lab](https://github.com/Team-STORIX/STORIX-BE-Lab)
@@ -262,7 +262,7 @@ STORIX-BE/
     </tr>
 </table>
 
-**참여한 레포**
+🔗 **기여한 레포**
 - 크롤러 2.0 전환 · 리디북스 · 네이버 웹소설 수집 — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
 
 ### 2026.05 ~ 2026.07 : 추천 · 토픽룸 · 관리자
