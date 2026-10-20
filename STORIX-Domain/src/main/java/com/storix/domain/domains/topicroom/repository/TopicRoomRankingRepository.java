@@ -1,6 +1,7 @@
 package com.storix.domain.domains.topicroom.repository;
 
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.topicroom.dto.RoomMessageCount;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 
 import java.time.LocalDateTime;
@@ -14,8 +15,14 @@ public interface TopicRoomRankingRepository {
     // 여러 개의 방 이전 참여자 수를 한 번에 업데이트
     void bulkUpdatePreviousActiveUserNumbers(List<TopicRoom> rooms);
 
-    // 활동 점수를 DB 단일 UPDATE 로 일괄 계산·갱신
-    int updateActivityScores(LocalDateTime messageSince, LocalDateTime freshnessSince);
+    // 활동 점수 대상 방 id
+    List<Long> findActivityScoreTargetRoomIds();
+
+    // 방별 since 이후 메시지 수 (메시지 없는 방은 빠짐)
+    List<RoomMessageCount> countMessagesSince(List<Long> roomIds, LocalDateTime since);
+
+    // 여러 개의 방 활동 점수를 한 번에 업데이트
+    void bulkUpdateActivityScores(List<RoomMessageCount> counts, LocalDateTime freshnessSince);
 
     // 충성 슬롯: 증가율 기준 상위 1개
     List<TopicRoomResponseDto> findLoyaltySlot();

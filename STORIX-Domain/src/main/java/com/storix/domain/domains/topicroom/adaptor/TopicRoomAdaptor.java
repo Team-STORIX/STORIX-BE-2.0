@@ -6,6 +6,7 @@ import com.storix.domain.domains.topicroom.domain.TopicRoomReport;
 import com.storix.domain.domains.topicroom.domain.TopicRoomUser;
 import com.storix.domain.domains.topicroom.domain.enums.TopicRoomRole;
 import com.storix.domain.domains.topicroom.dto.RoomMember;
+import com.storix.domain.domains.topicroom.dto.RoomMessageCount;
 import com.storix.domain.domains.topicroom.dto.TopicRoomResponseDto;
 import com.storix.domain.domains.topicroom.exception.DuplicateTopicRoomReportException;
 import com.storix.domain.domains.topicroom.exception.TodayTopicRoomNotFoundException;
@@ -134,8 +135,16 @@ public class TopicRoomAdaptor {
         topicRoomRepository.bulkUpdatePreviousActiveUserNumbers(rooms);
     }
 
-    public int updateActivityScores(LocalDateTime messageSince, LocalDateTime freshnessSince) {
-        return topicRoomRepository.updateActivityScores(messageSince, freshnessSince);
+    public List<Long> findActivityScoreTargetRoomIds() {
+        return topicRoomRepository.findActivityScoreTargetRoomIds();
+    }
+
+    public List<RoomMessageCount> countMessagesSince(List<Long> roomIds, LocalDateTime since) {
+        return topicRoomRepository.countMessagesSince(roomIds, since);
+    }
+
+    public void updateActivityScores(List<RoomMessageCount> counts, LocalDateTime freshnessSince) {
+        topicRoomRepository.bulkUpdateActivityScores(counts, freshnessSince);
     }
 
     public void incrementActiveUserNumber(Long roomId) {
