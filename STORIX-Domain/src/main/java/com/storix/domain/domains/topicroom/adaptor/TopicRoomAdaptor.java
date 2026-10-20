@@ -155,8 +155,8 @@ public class TopicRoomAdaptor {
         return topicRoomUserRepository.findByUserIdWithTopicRoom(userId, pageable);
     }
 
-    public void saveParticipation(Long userId, TopicRoom room, TopicRoomRole role) {
-        topicRoomUserRepository.save(new TopicRoomUser(room, userId, role));
+    public void saveParticipation(Long userId, TopicRoom room, TopicRoomRole role, Long lastReadMessageId) {
+        topicRoomUserRepository.save(new TopicRoomUser(room, userId, role, lastReadMessageId));
     }
 
     public int deleteParticipation(Long userId, Long roomId) {

@@ -53,7 +53,7 @@ public interface TopicRoomUserRepository extends JpaRepository<TopicRoomUser, Lo
     @Modifying(clearAutomatically = true)
     @Query("UPDATE TopicRoomUser tu SET tu.lastReadMessageId = :messageId, tu.updatedAt = CURRENT_TIMESTAMP "
             + "WHERE tu.userId = :userId AND tu.topicRoom.id = :roomId "
-            + "AND (tu.lastReadMessageId IS NULL OR tu.lastReadMessageId < :messageId)")
+            + "AND tu.lastReadMessageId < :messageId")
     int advanceReadCursor(@Param("userId") Long userId,
                           @Param("roomId") Long roomId,
                           @Param("messageId") Long messageId);
