@@ -11,12 +11,10 @@ STORIX-BE-2.0
 
 <h1><img src="https://github.com/user-attachments/assets/77539278-b8fc-40e2-85ac-f50340e5c417" width="25"/> STORIX 2.0</h1>
 
-CEOS 22기에서 시작한 Team-STORIX가<br>
-2026.03. 부터 웹 서비스를 앱으로 새로 만들어<br>
-운영하고 있는 iOS · Android 애플리케이션입니다.
+CEOS 22기에서 시작한 Team-STORIX가 2026.03. 부터<br>
+웹 서비스를 앱으로 새로 만들어 운영하고 있는 iOS · Android 애플리케이션입니다.
 
-웹툰 · 웹소설 독자의 기록과 관계 데이터를 쌓는<br>
-팬덤 라이프 플랫폼으로,<br>
+웹툰 · 웹소설 독자의 기록과 관계 데이터를 쌓는 팬덤 라이프 플랫폼으로,<br>
 🎖️2026 예비창업패키지🎖️에 선정되었습니다.
 
 <p>
