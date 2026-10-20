@@ -2,6 +2,7 @@ package com.storix.domain.domains.topicroom.service;
 
 import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.domain.TopicRoom;
+import com.storix.domain.domains.topicroom.dto.RoomMessageCount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +38,21 @@ public class TopicRoomRankingService {
         }
         topicRoomAdaptor.updatePopularity(activeRooms);
         return activeRooms.size();
+    }
+
+    // 활동 점수 갱신. 채팅 수는 잠금 없이 먼저 읽고, 쓰기는 토픽룸 행에만
+    public int calculateActivityScores(LocalDateTime messageSince, LocalDateTime freshnessSince) {
+        List<Long> roomIds = topicRoomAdaptor.findActivityScoreTargetRoomIds();
+        if (roomIds.isEmpty()) return 0;
+
+        Map<Long, Long> messageCounts = topicRoomAdaptor.countMessagesSince(roomIds, messageSince).stream()
+                .collect(Collectors.toMap(RoomMessageCount::roomId, RoomMessageCount::messageCount));
+        List<RoomMessageCount> counts = roomIds.stream()
+                .map(roomId -> new RoomMessageCount(roomId, messageCounts.getOrDefault(roomId, 0L)))
+                .toList();
+
+        topicRoomAdaptor.updateActivityScores(counts, freshnessSince);
+        return counts.size();
     }
 
     // 참여자 수 스냅샷 갱신

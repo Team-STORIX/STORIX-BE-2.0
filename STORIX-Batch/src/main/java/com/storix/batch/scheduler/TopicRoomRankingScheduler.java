@@ -1,6 +1,5 @@
 package com.storix.batch.scheduler;
 
-import com.storix.domain.domains.topicroom.adaptor.TopicRoomAdaptor;
 import com.storix.domain.domains.topicroom.service.TopicRoomRankingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,6 @@ public class TopicRoomRankingScheduler {
     private static final int MESSAGE_WINDOW_HOURS = 24;
     private static final int FRESHNESS_HOURS = 24;
 
-    private final TopicRoomAdaptor topicRoomAdaptor;
     private final TopicRoomRankingService topicRoomRankingService;
 
     @CacheEvict(cacheNames = {"trendingLoyaltySlot", "trendingNewUserSlots"},
@@ -42,7 +40,7 @@ public class TopicRoomRankingScheduler {
     @Scheduled(cron = "0 0 * * * *")
     public void calculateHotActivityScore() {
         LocalDateTime now = LocalDateTime.now();
-        int updated = topicRoomAdaptor.updateActivityScores(
+        int updated = topicRoomRankingService.calculateActivityScores(
                 now.minusHours(MESSAGE_WINDOW_HOURS), now.minusHours(FRESHNESS_HOURS));
         log.info(">>>> [Scheduler] 토픽룸 활동 점수 {}건 갱신 완료", updated);
     }
