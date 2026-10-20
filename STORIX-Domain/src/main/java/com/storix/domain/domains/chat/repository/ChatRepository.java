@@ -7,7 +7,6 @@ import com.storix.domain.domains.chat.dto.ChatMessageResponseDto;
 import com.storix.domain.domains.chat.dto.ChatMessageText;
 import com.storix.domain.domains.topicroom.dto.RecentSenderRow;
 import com.storix.domain.domains.topicroom.dto.RoomLastMessageId;
-import com.storix.domain.domains.topicroom.dto.RoomUnreadCount;
 import com.storix.domain.domains.topicroom.dto.UserUnreadCount;
 import com.storix.domain.domains.user.dto.AdminUserContentItemResponse;
 import org.springframework.data.domain.Page;
@@ -21,7 +20,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
+public interface ChatRepository extends JpaRepository<ChatMessage, Long>, ChatRepositoryCustom {
 
     @Query("SELECT new com.storix.domain.domains.chat.dto.ChatMessageResponseDto(" +
             "   m.id, " +
@@ -174,66 +173,6 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
             Pageable pageable
     );
 
-    @Query("""
-            SELECT new com.storix.domain.domains.topicroom.dto.RoomUnreadCount(m.roomId, COUNT(m.id))
-            FROM ChatMessage m
-            JOIN TopicRoomUser tu ON tu.topicRoom.id = m.roomId AND tu.userId = :userId
-            WHERE m.roomId IN :roomIds
-              AND m.deleted = false
-              AND m.messageType = :messageType
-              AND m.senderId <> :userId
-              AND NOT EXISTS (
-                  SELECT 1 FROM UserBlock b
-                  WHERE b.blockerId = tu.userId AND b.blockedUserId = m.senderId
-              )
-              AND ((tu.lastReadMessageId IS NOT NULL AND m.id > tu.lastReadMessageId)
-                OR (tu.lastReadMessageId IS NULL AND m.createdAt > tu.createdAt))
-            GROUP BY m.roomId
-            """)
-    List<RoomUnreadCount> countUnreadByRoomIds(
-            @Param("userId") Long userId,
-            @Param("roomIds") List<Long> roomIds,
-            @Param("messageType") MessageType messageType
-    );
-
-    @Query("""
-            SELECT COUNT(m.id)
-            FROM ChatMessage m
-            JOIN TopicRoomUser tu ON tu.topicRoom.id = m.roomId AND tu.userId = :userId
-            WHERE m.deleted = false
-              AND m.messageType = :messageType
-              AND m.senderId <> :userId
-              AND NOT EXISTS (
-                  SELECT 1 FROM UserBlock b
-                  WHERE b.blockerId = tu.userId AND b.blockedUserId = m.senderId
-              )
-              AND ((tu.lastReadMessageId IS NOT NULL AND m.id > tu.lastReadMessageId)
-                OR (tu.lastReadMessageId IS NULL AND m.createdAt > tu.createdAt))
-            """)
-    long countTotalUnreadByUserId(
-            @Param("userId") Long userId,
-            @Param("messageType") MessageType messageType
-    );
-
-    @Query("""
-            SELECT COUNT(m.id) > 0
-            FROM ChatMessage m
-            JOIN TopicRoomUser tu ON tu.topicRoom.id = m.roomId AND tu.userId = :userId
-            WHERE m.deleted = false
-              AND m.messageType = :messageType
-              AND m.senderId <> :userId
-              AND NOT EXISTS (
-                  SELECT 1 FROM UserBlock b
-                  WHERE b.blockerId = tu.userId AND b.blockedUserId = m.senderId
-              )
-              AND ((tu.lastReadMessageId IS NOT NULL AND m.id > tu.lastReadMessageId)
-                OR (tu.lastReadMessageId IS NULL AND m.createdAt > tu.createdAt))
-            """)
-    boolean existsUnreadByUserId(
-            @Param("userId") Long userId,
-            @Param("messageType") MessageType messageType
-    );
-
     // 차단 여부가 유저마다 달라 NOT EXISTS 로 각자 기준을 적용
     @Query("""
             SELECT new com.storix.domain.domains.topicroom.dto.UserUnreadCount(tu.userId, COUNT(m.id))
@@ -250,8 +189,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
                   SELECT 1 FROM UserBlock b
                   WHERE b.blockerId = tu.userId AND b.blockedUserId = m.senderId
               )
-              AND ((tu.lastReadMessageId IS NOT NULL AND m.id > tu.lastReadMessageId)
-                OR (tu.lastReadMessageId IS NULL AND m.createdAt > tu.createdAt))
+              AND m.id > tu.lastReadMessageId
             GROUP BY tu.userId
             """)
     List<UserUnreadCount> countMessagesAfterForUsers(
@@ -277,8 +215,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
                   SELECT 1 FROM UserBlock b
                   WHERE b.blockerId = tu.userId AND b.blockedUserId = m.senderId
               )
-              AND ((tu.lastReadMessageId IS NOT NULL AND m.id > tu.lastReadMessageId)
-                OR (tu.lastReadMessageId IS NULL AND m.createdAt > tu.createdAt))
+              AND m.id > tu.lastReadMessageId
             GROUP BY tu.userId, m.senderId
             """)
     List<RecentSenderRow> findRecentSenderRows(
@@ -317,8 +254,7 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
                   SELECT 1 FROM UserBlock b
                   WHERE b.blockerId = tu.userId AND b.blockedUserId = m.senderId
               )
-              AND ((tu.lastReadMessageId IS NOT NULL AND m.id > tu.lastReadMessageId)
-                OR (tu.lastReadMessageId IS NULL AND m.createdAt > tu.createdAt))
+              AND m.id > tu.lastReadMessageId
             GROUP BY tu.userId
             """)
     List<UserUnreadCount> countTotalUnreadByUserIds(

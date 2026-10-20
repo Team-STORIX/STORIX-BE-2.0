@@ -37,7 +37,7 @@ public class TopicRoomUser extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private TopicRoomRole role;
 
-    @Column(name = "last_read_message_id")
+    @Column(name = "last_read_message_id", nullable = false)
     private Long lastReadMessageId;
 
     @Column(name = "notification_enabled", nullable = false, columnDefinition = "tinyint(1) not null default 1")
@@ -49,6 +49,8 @@ public class TopicRoomUser extends BaseTimeEntity {
         this.userId = userId;
         this.role = role;
         this.notificationEnabled = true;
+        // 들어오기 전 메시지는 안 읽은 수에 넣지 않는다
+        this.lastReadMessageId = topicRoom.getLastMessageId() == null ? 0L : topicRoom.getLastMessageId();
     }
 
     /** 비즈니스 메서드 */
