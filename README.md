@@ -103,8 +103,8 @@ CEOS 22기에서 시작한 Team-STORIX가 2026.03. 부터<br>
 <summary><b>관련 레포</b></summary>
 <dl><dd>
 
-- Crawler 서버 (작품 수집 · 검수) — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
-- storix MCP · 스펙 변경 알림 · dev 자동 종료 Lambda — [STORIX-MCP](https://github.com/Team-STORIX/STORIX-MCP)
+- Crawler — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
+- MCP — [STORIX-MCP](https://github.com/Team-STORIX/STORIX-MCP)
 
 </dd></dl>
 </details>
