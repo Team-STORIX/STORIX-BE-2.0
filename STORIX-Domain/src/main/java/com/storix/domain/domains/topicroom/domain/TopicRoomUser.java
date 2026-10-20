@@ -44,13 +44,13 @@ public class TopicRoomUser extends BaseTimeEntity {
     private boolean notificationEnabled;
 
     @Builder
-    public TopicRoomUser(TopicRoom topicRoom, Long userId, TopicRoomRole role) {
+    public TopicRoomUser(TopicRoom topicRoom, Long userId, TopicRoomRole role, Long lastReadMessageId) {
         this.topicRoom = topicRoom;
         this.userId = userId;
         this.role = role;
         this.notificationEnabled = true;
         // 들어오기 전 메시지는 안 읽은 수에 넣지 않는다
-        this.lastReadMessageId = topicRoom.getLastMessageId() == null ? 0L : topicRoom.getLastMessageId();
+        this.lastReadMessageId = lastReadMessageId == null ? 0L : lastReadMessageId;
     }
 
     /** 비즈니스 메서드 */
