@@ -135,7 +135,7 @@ STORIX-BE/
     </tr>
 </table>
 
-### 2026.06 ~ 2026.09 : 신고 · 차단 · 이벤트
+### 2026.05 ~ 2026.09 : 신고 · 차단 · 이벤트
 <table>
     <tr>
         <td align="center" width="160"><B>Backend</B></td>
