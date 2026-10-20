@@ -99,27 +99,19 @@ CEOS 22기에서 시작한 Team-STORIX가 2026.03. 부터<br>
 
 <img width="2736" height="1951" alt="STORIX-BE-2.0 AWS Infra" src="https://github.com/user-attachments/assets/72ad10ce-2b35-4186-9981-754c607d201f" />
 
+<details open>
+<summary><b>관련 레포</b></summary>
+<dl><dd>
+
+- Crawler — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
+- MCP — [STORIX-MCP](https://github.com/Team-STORIX/STORIX-MCP)
+
+</dd></dl>
+</details>
+
 ## 📂 Project Structure
 ```
 STORIX-BE/
-  │
-  ├── STORIX-Common/                  # 공통 응답 · 에러 코드 · 예외 · 어노테이션(@UseCase 등) · Redis 키
-  │
-  ├── STORIX-Domain/                  # 도메인 모듈
-  │   └── com/storix/domain/domains/<도메인>/
-  │       ├── domain/                 # 엔티티
-  │       ├── repository/             # JPA · QueryDSL
-  │       ├── adaptor/                # Repository · Redis · ES 를 감싸는 조회 · 저장 창구
-  │       ├── service/                # 트랜잭션 단위 비즈니스 로직
-  │       └── dto/ · exception/
-  │   └── resources/elasticsearch/    # ES 인덱스 매핑 (works · feeds)
-  │
-  ├── STORIX-Infrastructure/          # 인프라 모듈
-  │   └── com/storix/infrastructure/
-  │       ├── config/                 # Security · Redis · WebSocket · JPA · QueryDSL · Firebase · Feign 설정
-  │       ├── external/               # STOMP 채팅 · FCM 알림 · 소셜 로그인 · 포트원 · Slack
-  │       ├── global/                 # JWT · 인증 필터 · Rate Limit
-  │       └── s3/                     # S3 업로드 · 삭제
   │
   ├── STORIX-Api/                     # 앱 API 모듈
   │   └── com/storix/api/
@@ -134,6 +126,24 @@ STORIX-BE/
   ├── STORIX-Batch/                   # 배치 모듈
   │   └── com/storix/batch/scheduler/ # 장르 점수 · 랭킹 · 알림 · 개인정보 파기 · 하드 삭제 등 스케줄러
   │   └── Dockerfile
+  │
+  ├── STORIX-Infrastructure/          # 인프라 모듈
+  │   └── com/storix/infrastructure/
+  │       ├── config/                 # Security · Redis · WebSocket · JPA · QueryDSL · Firebase · Feign 설정
+  │       ├── external/               # STOMP 채팅 · FCM 알림 · 소셜 로그인 · 포트원 · Slack
+  │       ├── global/                 # JWT · 인증 필터 · Rate Limit
+  │       └── s3/                     # S3 업로드 · 삭제
+  │
+  ├── STORIX-Domain/                  # 도메인 모듈
+  │   └── com/storix/domain/domains/<도메인>/
+  │       ├── domain/                 # 엔티티
+  │       ├── repository/             # JPA · QueryDSL
+  │       ├── adaptor/                # Repository · Redis · ES 를 감싸는 조회 · 저장 창구
+  │       ├── service/                # 트랜잭션 단위 비즈니스 로직
+  │       └── dto/ · exception/
+  │   └── resources/elasticsearch/    # ES 인덱스 매핑 (works · feeds)
+  │
+  ├── STORIX-Common/                  # 공통 응답 · 에러 코드 · 예외 · 어노테이션(@UseCase 등) · Redis 키
   │
   ├── deploy/                         # 서버 부팅 때 Parameter Store → .env 생성
   ├── monitoring/                     # Prometheus · Loki · Grafana · nginx
@@ -226,6 +236,7 @@ STORIX-BE/
 - 팀 공용 MCP 서버 — [STORIX-MCP](https://github.com/Team-STORIX/STORIX-MCP)
 - 작품 수집 · 검수 크롤러 — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
 - 부하 테스트 · 실험 — [STORIX-BE-Lab](https://github.com/Team-STORIX/STORIX-BE-Lab)
+- (구) Capacitor iOS · Android 앱 세팅 · 배포 — [STORIX-FE-2.0](https://github.com/Team-STORIX/STORIX-FE-2.0)
 
 </dd></dl>
 </details>
