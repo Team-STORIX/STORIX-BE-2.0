@@ -79,6 +79,7 @@ public final class RedisKeyStatic {
     public static final class Hashtag {
         public static final String TOTAL_WORKS = "hashtag:meta:total_works";
         public static final String DF = "hashtag:df";
+        public static final String POPULAR = "hashtag:popular";
 
         private Hashtag() {
         }

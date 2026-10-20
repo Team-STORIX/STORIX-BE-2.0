@@ -16,19 +16,31 @@ public class FeaturedNotificationHelper {
     private final FeaturedNotificationDedupAdaptor dedupAdaptor;
     private final NotificationPublisher notificationPublisher;
 
+    // 오늘 처음이면 표시하고 true
+    public boolean markTodayFeedIfFirst(Long feedId) {
+        return dedupAdaptor.markFeedIfFirstToday(feedId);
+    }
+
+    public boolean markHotTopicRoomIfFirst(Long roomId) {
+        return dedupAdaptor.markTopicRoomIfFirstToday(roomId);
+    }
+
+    public void unmarkTodayFeed(Long feedId) {
+        dedupAdaptor.unmarkFeedToday(feedId);
+    }
+
+    public void unmarkHotTopicRoom(Long roomId) {
+        dedupAdaptor.unmarkTopicRoomToday(roomId);
+    }
+
+    // 알림 리스너가 커밋 뒤에 돌아서 트랜잭션이 있어야 발행된다
     @Transactional
-    public void notifyTodayFeedIfFirst(Long feedId, Long authorUserId) {
-        if (!dedupAdaptor.markFeedIfFirstToday(feedId)) {
-            return;
-        }
+    public void notifyTodayFeed(Long feedId, Long authorUserId) {
         notificationPublisher.publish(NotificationEvent.todayFeed(authorUserId, feedId));
     }
 
     @Transactional
-    public void notifyHotTopicRoomIfFirst(Long roomId, String roomName, List<Long> memberIds) {
-        if (!dedupAdaptor.markTopicRoomIfFirstToday(roomId)) {
-            return;
-        }
+    public void notifyHotTopicRoom(Long roomId, String roomName, List<Long> memberIds) {
         for (Long memberId : memberIds) {
             notificationPublisher.publish(NotificationEvent.hotTopicRoom(memberId, roomId, roomName));
         }

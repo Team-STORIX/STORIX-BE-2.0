@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.*;
@@ -35,7 +34,6 @@ public class OnboardingWorksHelper {
         redisTemplate.delete(KEY);
     }
 
-    @Transactional(readOnly = true)
     public List<StandardOnboardingWorksInfo> findOnboardingWorksList() {
 
         // 1) 캐시 조회
@@ -72,7 +70,6 @@ public class OnboardingWorksHelper {
         return result;
     }
 
-    @Transactional(readOnly = true)
     public void checkReaderSignUpWithOnboardingWorksList(Set<Long> worksIds) {
 
         if (worksIds == null || worksIds.isEmpty()) {

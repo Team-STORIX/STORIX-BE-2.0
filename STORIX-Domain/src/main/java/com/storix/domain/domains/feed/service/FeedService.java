@@ -27,7 +27,6 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,7 +49,6 @@ public class FeedService {
     private final FeedSearchAdaptor feedSearchAdaptor;
 
     private final ReaderBoardHelper readerBoardHelper;
-    private final TodayFeedSelectionHelper todayFeedSelectionHelper;
     private final AdultWorksHelper adultWorksHelper;
 
 
@@ -200,11 +198,9 @@ public class FeedService {
 
 
     @Transactional(readOnly = true)
-    public List<SlicedReaderBoardWithProfileInfo> findTodayTrendingFeeds(Long userId) {
+    public List<SlicedReaderBoardWithProfileInfo> findTodayTrendingFeeds(Long userId, List<Long> selectedBoardIds) {
 
         // 1) 오늘의 피드 추천
-        List<Long> selectedBoardIds = todayFeedSelectionHelper.loadOrSelect(LocalDateTime.now());
-
         List<ReaderBoardInfo> boards =
                 readerBoardHelper.findTop3TrendingFeedInfo(userId, selectedBoardIds);
 

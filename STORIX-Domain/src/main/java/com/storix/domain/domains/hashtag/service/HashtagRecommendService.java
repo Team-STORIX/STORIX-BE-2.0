@@ -49,7 +49,12 @@ public class HashtagRecommendService {
     private final HashtagCacheHelper hashtagCacheHelper;
 
     @Transactional(readOnly = true)
-    public HashtagRecommendationContext collectRecommendationContext(Long userId) {
+    public long countAllWorks() {
+        return workAdaptor.countAllWorks();
+    }
+
+    @Transactional(readOnly = true)
+    public HashtagRecommendationContext collectRecommendationContext(Long userId, long totalWorksCount) {
 
         User user = userAdaptor.findUserById(userId);
 
@@ -58,11 +63,10 @@ public class HashtagRecommendService {
                 Set.copyOf(user.getFavoriteGenreList()),
                 favoriteWorksAdaptor.findAllWithCreatedAtByUserId(userId),
                 explorationAdaptor.findExplorationsWithCreatedAtByUserId(userId),
-                hashtagCacheHelper.getOrLoadTotalWorksCount(workAdaptor::countAllWorks)
+                totalWorksCount
         );
     }
 
-    @Transactional(readOnly = true)
     public List<HashtagRecommendResponseDto> calculatePersonalizedHashtags(
             HashtagRecommendationContext context,
             int recommendationLimit
@@ -96,10 +100,14 @@ public class HashtagRecommendService {
         Map<Long, HashtagScore> scoreMap = calculateRawScores(actions, hashtagsByWorksId);
 
         // 5. 후보 해시태그별 전체 작품 등장 빈도를 조회해 IDF 보정에 사용
-        Map<Long, Long> documentFrequencyMap = hashtagCacheHelper.getOrLoadDocumentFrequencies(
-                scoreMap.keySet(),
-                hashtagAdaptor::findDocumentFrequencyMap
-        );
+        Map<Long, Long> documentFrequencyMap = new HashMap<>(hashtagCacheHelper.findDocumentFrequencies(scoreMap.keySet()));
+        Set<Long> missingIds = new HashSet<>(scoreMap.keySet());
+        missingIds.removeAll(documentFrequencyMap.keySet());
+        if (!missingIds.isEmpty()) {
+            Map<Long, Long> loaded = hashtagAdaptor.findDocumentFrequencyMap(missingIds);
+            hashtagCacheHelper.saveDocumentFrequencies(loaded);
+            documentFrequencyMap.putAll(loaded);
+        }
 
         // 6. raw score에 IDF를 곱해 범용 태그 쏠림을 완화한 뒤 랭킹
         return rankPersonalizedHashtags(
@@ -232,10 +240,18 @@ public class HashtagRecommendService {
         return Math.pow(0.5, ageDays / HALF_LIFE_DAYS);
     }
 
+    // 장르가 비어 있으면 전체 인기
     @Transactional(readOnly = true)
+    public List<HashtagRecommendResponseDto> loadPopularHashtags(Set<Genre> genres, int size) {
+        return genres.isEmpty()
+                ? hashtagAdaptor.recommendGlobalPopular(size)
+                : hashtagAdaptor.recommendByGenres(genres, size);
+    }
+
     public List<HashtagRecommendResponseDto> fillWithFallback(
             List<HashtagRecommendResponseDto> personalized,
-            Set<Genre> favoriteGenres,
+            List<HashtagRecommendResponseDto> genrePopular,
+            List<HashtagRecommendResponseDto> globalPopular,
             int recommendationLimit
     ) {
         // LinkedHashMap으로 삽입 순서를 유지하면서 id 기준 중복 제거
@@ -246,28 +262,22 @@ public class HashtagRecommendService {
         appendRecommendations(result, personalized, genreNames, recommendationLimit);
 
         // 개인화 결과가 부족하면 온보딩 장르 기반 인기 태그 보충
-        if (result.size() < recommendationLimit && favoriteGenres != null && !favoriteGenres.isEmpty()) {
-            appendRecommendations(
-                    result,
-                    hashtagAdaptor.recommendByGenres(favoriteGenres, recommendationLimit - result.size()),
-                    genreNames,
-                    recommendationLimit
-            );
+        if (result.size() < recommendationLimit) {
+            appendRecommendations(result, topOf(genrePopular, recommendationLimit - result.size()), genreNames, recommendationLimit);
         }
 
         // 그래도 부족하면 전체 인기 태그로 최종 보충
         if (result.size() < recommendationLimit) {
-            appendRecommendations(
-                    result,
-                    hashtagAdaptor.recommendGlobalPopular(recommendationLimit - result.size()),
-                    genreNames,
-                    recommendationLimit
-            );
+            appendRecommendations(result, topOf(globalPopular, recommendationLimit - result.size()), genreNames, recommendationLimit);
         }
 
         return result.values().stream()
                 .limit(recommendationLimit)
                 .toList();
+    }
+
+    private List<HashtagRecommendResponseDto> topOf(List<HashtagRecommendResponseDto> ranked, int count) {
+        return ranked.subList(0, Math.min(count, ranked.size()));
     }
 
     private void appendRecommendations(

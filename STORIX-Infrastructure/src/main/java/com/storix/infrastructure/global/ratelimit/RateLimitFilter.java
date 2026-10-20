@@ -8,8 +8,10 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
@@ -24,10 +26,10 @@ import java.util.List;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final long WINDOW_SECONDS = 60;
+    private static final String LOCAL_PROFILE = "local";
     private static final String FORWARDED_FOR_HEADER = "X-Forwarded-For";
     private static final List<String> EXCLUDED_URI_PREFIXES = List.of(
             "/actuator",
@@ -39,11 +41,30 @@ public class RateLimitFilter extends OncePerRequestFilter {
     );
 
     private final RateLimitCounter rateLimitCounter;
+    private final boolean enabled;
+
+    // 끄기는 local 부하 테스트 전용, 다른 프로필의 false 는 무시
+    public RateLimitFilter(RateLimitCounter rateLimitCounter,
+                           @Value("${rate-limit.enabled}") boolean enabled,
+                           Environment environment) {
+        this.rateLimitCounter = rateLimitCounter;
+        boolean local = environment.acceptsProfiles(Profiles.of(LOCAL_PROFILE));
+        if (!enabled && !local) {
+            log.atWarn()
+                    .addKeyValue("profiles", String.join(",", environment.getActiveProfiles()))
+                    .log(">>> [RateLimit] local 이 아니라 끄기 설정을 무시");
+        }
+        this.enabled = enabled || !local;
+        if (!this.enabled) {
+            log.warn(">>> [RateLimit] 꺼짐");
+        }
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        return HttpMethod.OPTIONS.matches(request.getMethod())
+        return !enabled
+                || HttpMethod.OPTIONS.matches(request.getMethod())
                 || EXCLUDED_URI_PREFIXES.stream().anyMatch(uri::startsWith);
     }
 

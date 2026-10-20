@@ -34,9 +34,14 @@ public class SearchService {
         return toWorkDtos(userId, worksAdaptor.searchWorks(keyword, pageable));
     }
 
+    // ES 가 찾은 작품 ID. ES 를 못 쓰면 null
+    public List<Long> searchMatchedWorksIds(String keyword, List<WorksType> worksTypes, List<Genre> genres) {
+        return worksSearchAdaptor.searchIds(keyword, worksTypes, genres).orElse(null);
+    }
+
     @Transactional(readOnly = true)
     public Slice<WorksSearchResponseDto> searchWorksWithFilters(
-            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
+            Long userId, String keyword, List<WorksType> worksTypes, List<Genre> genres, List<Long> matchedIds, Pageable pageable) {
 
         Slice<Works> worksSlice;
         if (keyword != null && keyword.startsWith("#")) {
@@ -45,7 +50,7 @@ public class SearchService {
             worksSlice = worksAdaptor.searchWorksByHashtagWithFilters(hashtagKeyword, worksTypes, genres, pageable);
         } else {
             // 2-2. 작품명 검색
-            worksSlice = searchByKeyword(keyword, worksTypes, genres, pageable);
+            worksSlice = searchByKeyword(keyword, worksTypes, genres, matchedIds, pageable);
         }
 
         return toWorkDtos(userId, worksSlice);
@@ -53,10 +58,11 @@ public class SearchService {
 
     // 피드 작성용 작품 검색
     @Transactional(readOnly = true)
-    public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(Long userId, String keyword, Pageable pageable) {
+    public PlusSearchResponseWrapperDto<WorksSearchResponseDto> searchWorksForWriting(
+            Long userId, String keyword, List<Long> matchedIds, Pageable pageable) {
 
         // 작품 검색
-        Slice<Works> worksSlice = searchByKeyword(keyword, null, null, pageable);
+        Slice<Works> worksSlice = searchByKeyword(keyword, null, null, matchedIds, pageable);
 
         return PlusSearchResponseWrapperDto.<WorksSearchResponseDto>builder()
                 .result(toWorkDtos(userId, worksSlice))
@@ -64,10 +70,12 @@ public class SearchService {
     }
 
     // ES 는 매칭되는 작품 ID 만 주고 필터·정렬·페이징은 기존처럼 MySQL 에서 한다
-    private Slice<Works> searchByKeyword(String keyword, List<WorksType> worksTypes, List<Genre> genres, Pageable pageable) {
-        return worksSearchAdaptor.searchIds(keyword, worksTypes, genres)
-                .map(ids -> worksAdaptor.findByIdsWithFilters(ids, worksTypes, genres, pageable))
-                .orElseGet(() -> worksAdaptor.searchWorksWithFilters(keyword, worksTypes, genres, pageable));
+    // ES 결과가 없으면 MySQL LIKE 로 찾는다
+    private Slice<Works> searchByKeyword(
+            String keyword, List<WorksType> worksTypes, List<Genre> genres, List<Long> matchedIds, Pageable pageable) {
+        return matchedIds != null
+                ? worksAdaptor.findByIdsWithFilters(matchedIds, worksTypes, genres, pageable)
+                : worksAdaptor.searchWorksWithFilters(keyword, worksTypes, genres, pageable);
     }
 
     private Slice<WorksSearchResponseDto> toWorkDtos(Long userId, Slice<Works> worksSlice) {
