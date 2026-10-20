@@ -228,6 +228,8 @@ STORIX-BE/
 
 </details>
 
+<br>
+
 ### 2026.05 ~ 2026.09 : 신고 · 차단 · 이벤트
 <table>
     <tr>
@@ -272,6 +274,8 @@ STORIX-BE/
 - 크롤러 2.0 전환 · 리디북스 · 네이버 웹소설 수집 — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
 
 </details>
+
+<br>
 
 ### 2026.05 ~ 2026.07 : 추천 · 토픽룸 · 관리자
 <table>
