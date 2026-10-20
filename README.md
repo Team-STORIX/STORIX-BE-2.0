@@ -19,34 +19,50 @@ STORIX-BE
 ```
 STORIX-BE/
   │
-  ├── STORIX-Common/                  # 공통 모듈
+  ├── STORIX-Common/                  # 공통 응답 · 에러 코드 · 예외 · 어노테이션(@UseCase 등) · Redis 키
   │
-  ├── STORIX-Domain/                  # 도메인 모듈           
+  ├── STORIX-Domain/                  # 도메인 모듈
+  │   └── com/storix/domain/domains/<도메인>/
+  │       ├── domain/                 # 엔티티
+  │       ├── repository/             # JPA · QueryDSL
+  │       ├── adaptor/                # Repository · Redis · ES 를 감싸는 조회 · 저장 창구
+  │       ├── service/                # 트랜잭션 단위 비즈니스 로직
+  │       └── dto/ · exception/
+  │   └── resources/elasticsearch/    # ES 인덱스 매핑 (works · feeds)
   │
   ├── STORIX-Infrastructure/          # 인프라 모듈
   │   └── com/storix/infrastructure/
-  │       ├── config/                 # Security, S3, Redis, WebSocket 설정
-  │       ├── external/               # WebSocket/STOMP, Feign Client
-  │       └── global/
-  │           └── security/           # JWT 필터, 인증/인가
+  │       ├── config/                 # Security · Redis · WebSocket · JPA · QueryDSL · Firebase · Feign 설정
+  │       ├── external/               # STOMP 채팅 · FCM 알림 · 소셜 로그인 · 포트원 · Slack
+  │       ├── global/                 # JWT · 인증 필터 · Rate Limit
+  │       └── s3/                     # S3 업로드 · 삭제
   │
-  ├── STORIX-Api/                     # API 모듈
+  ├── STORIX-Api/                     # 앱 API 모듈
   │   └── com/storix/api/
-  │       ├── domain/                 # Controller, UseCase (도메인별)
-  │       └── global/                 # 전역 예외처리, Swagger 설정
+  │       ├── config/                 # Swagger (에러 응답 스펙 자동 생성)
+  │       ├── domain/<도메인>/        # Controller · UseCase
+  │       └── global/                 # 전역 예외 처리 · 요청 검증
+  │   └── resources/db/migration/     # Flyway 마이그레이션
   │   └── Dockerfile
   │
-  └── STORIX-Batch/                   # 배치 모듈
-      └── com/storix/batch/
-          └── scheduler/              # 취향 탐색, 랭킹 스케줄러
-      └── Dockerfile
+  ├── STORIX-Internal/                # 크롤러용 내부 API (작품 적재 · 병합 · 검수, Controller · UseCase)
+  │
+  ├── STORIX-Batch/                   # 배치 모듈
+  │   └── com/storix/batch/scheduler/ # 장르 점수 · 랭킹 · 알림 · 개인정보 파기 · 하드 삭제 등 스케줄러
+  │   └── Dockerfile
+  │
+  ├── deploy/                         # 서버 부팅 때 Parameter Store → .env 생성
+  ├── monitoring/                     # Prometheus · Loki · Grafana · nginx
+  └── .github/workflows/              # PR 테스트 · CI(이미지 빌드) · CD(dev · prod) · Release
 ```
 
 - 모듈 의존성
   ```
   STORIX-Common → STORIX-Domain → STORIX-Infrastructure → STORIX-Api
                                                         → STORIX-Batch
+                                → STORIX-Internal ─────→ STORIX-Api
   ```
+- 계층 규칙(Service 는 Adaptor 를 거침, Service → Service 금지, 트랜잭션 안 Redis · ES 호출 금지 등)은 ArchUnit 테스트가 지킨다 (`STORIX-Api/src/test/.../architecture`)
 
 ## 🚀 Trouble Shooting
 
