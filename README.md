@@ -89,6 +89,8 @@ STORIX-BE-2.0
 
 ## 🌐 서버 인프라 2.0
 
+<img width="2736" height="1951" alt="STORIX-BE-2.0 AWS Infra" src="https://github.com/user-attachments/assets/72ad10ce-2b35-4186-9981-754c607d201f" />
+
 ## 📂 프로젝트 구조 2.0
 ```
 STORIX-BE/
