@@ -17,7 +17,7 @@ STORIX-BE-2.0
 
 <h1><img src="https://github.com/user-attachments/assets/77539278-b8fc-40e2-85ac-f50340e5c417" width="25"/> STORIX 2.0</h1>
 
-## 🛠️ 기술 스택
+## 🛠️ Tech Stack
 
 <table>
   <tr>
@@ -89,11 +89,11 @@ STORIX-BE-2.0
   </tr>
 </table>
 
-## 🌐 서버 인프라 2.0
+## 🌐 Server Infrastructure
 
 <img width="2736" height="1951" alt="STORIX-BE-2.0 AWS Infra" src="https://github.com/user-attachments/assets/72ad10ce-2b35-4186-9981-754c607d201f" />
 
-## 📂 프로젝트 구조 2.0
+## 📂 Project Structure
 ```
 STORIX-BE/
   │
