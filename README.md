@@ -205,13 +205,6 @@ STORIX-BE/
                         <li>인기 해시태그 Redis 캐시 · 트랜잭션 경계 정리 — <a href="https://github.com/Team-STORIX/STORIX-BE-2.0/pull/396">#396</a></li>
                     </ul>
                 </li>
-                <li><B>함께 만든 레포</B>
-                    <ul>
-                        <li>팀 공용 MCP 서버 — <a href="https://github.com/Team-STORIX/STORIX-MCP">STORIX-MCP</a></li>
-                        <li>작품 수집 · 검수 크롤러 — <a href="https://github.com/Team-STORIX/STORIX-BE-crawler-2.0">STORIX-BE-crawler-2.0</a></li>
-                        <li>부하 테스트 · 실험 — <a href="https://github.com/Team-STORIX/STORIX-BE-Lab">STORIX-BE-Lab</a></li>
-                    </ul>
-                </li>
             </ul>
         </td>
     </tr>
@@ -225,6 +218,11 @@ STORIX-BE/
         <td align="center"><a href="https://github.com/Immmii"><I>Immmii</I></a></td>
     </tr>
 </table>
+
+**함께 만든 레포**
+- 팀 공용 MCP 서버 — [STORIX-MCP](https://github.com/Team-STORIX/STORIX-MCP)
+- 작품 수집 · 검수 크롤러 — [STORIX-BE-crawler-2.0](https://github.com/Team-STORIX/STORIX-BE-crawler-2.0)
+- 부하 테스트 · 실험 — [STORIX-BE-Lab](https://github.com/Team-STORIX/STORIX-BE-Lab)
 
 ### 2026.05 ~ 2026.09 : 신고 · 차단 · 이벤트
 <table>
