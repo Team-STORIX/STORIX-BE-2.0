@@ -16,7 +16,7 @@ class WorksPlatformRemoveTest {
 
     private Works works() {
         Works works = Works.builder().worksName("작품").artistName("작가").build();
-        works.addPlatform(Platform.NAVER_NOVEL, null);
+        works.addPlatform(Platform.RIDIBOOKS, null);
         works.addPlatform(Platform.NAVER_SERIES, "https://series.naver.com/novel/detail.series?productNo=1");
         return works;
     }
@@ -26,13 +26,13 @@ class WorksPlatformRemoveTest {
     void removePlatforms() {
         Works works = works();
         Set<WorksPlatform> before = works.getPlatforms();
-        List<Platform> targets = List.of(Platform.NAVER_NOVEL, Platform.KAKAO_PAGE);
+        List<Platform> targets = List.of(Platform.RIDIBOOKS, Platform.KAKAO_PAGE);
 
         List<WorksPlatform> removed = works.removePlatforms(targets, false);
         WorksPlatformRemoveResult result = WorksPlatformRemoveResult.of(1L, false, targets, before, removed);
 
         assertThat(works.getPlatforms()).extracting(WorksPlatform::getPlatform).containsExactly(Platform.NAVER_SERIES);
-        assertThat(result.removed()).extracting(WorksPlatformRemoveResult.Removed::platform).containsExactly(Platform.NAVER_NOVEL);
+        assertThat(result.removed()).extracting(WorksPlatformRemoveResult.Removed::platform).containsExactly(Platform.RIDIBOOKS);
         assertThat(result.notFound()).containsExactly(Platform.KAKAO_PAGE);
         assertThat(result.remaining()).containsExactly(Platform.NAVER_SERIES);
     }
@@ -42,9 +42,9 @@ class WorksPlatformRemoveTest {
     void dryRun() {
         Works works = works();
 
-        List<WorksPlatform> removed = works.removePlatforms(List.of(Platform.NAVER_NOVEL), true);
+        List<WorksPlatform> removed = works.removePlatforms(List.of(Platform.RIDIBOOKS), true);
 
-        assertThat(removed).extracting(WorksPlatform::getPlatform).containsExactly(Platform.NAVER_NOVEL);
+        assertThat(removed).extracting(WorksPlatform::getPlatform).containsExactly(Platform.RIDIBOOKS);
         assertThat(works.getPlatforms()).hasSize(2);
     }
 
@@ -53,7 +53,7 @@ class WorksPlatformRemoveTest {
     void rejectRemovingAll() {
         Works works = works();
 
-        assertThatThrownBy(() -> works.removePlatforms(List.of(Platform.NAVER_NOVEL, Platform.NAVER_SERIES), true))
+        assertThatThrownBy(() -> works.removePlatforms(List.of(Platform.RIDIBOOKS, Platform.NAVER_SERIES), true))
                 .isInstanceOf(STORIXDynamicException.class);
         assertThat(works.getPlatforms()).hasSize(2);
     }
