@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public record WorksPlatformRemoveRequest(
-        @Schema(description = "뗄 플랫폼. enum 카탈로그의 name", example = "[\"NAVER_NOVEL\"]")
+        @Schema(description = "뗄 플랫폼. enum 카탈로그의 name", example = "[\"KAKAO_PAGE\"]")
         @NotEmpty(message = "뗄 플랫폼이 없습니다.")
         List<@NotNull(message = "플랫폼이 비어 있습니다.") Platform> platforms,
 
