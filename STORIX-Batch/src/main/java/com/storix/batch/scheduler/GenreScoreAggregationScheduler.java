@@ -56,7 +56,12 @@ public class GenreScoreAggregationScheduler {
                     touchedUsers.size(), touchedUsers.stream().limit(20).toList(), e);
         }
 
-        int oldDeleted = aggregationService.cleanupOldProcessed();
+        int oldDeleted = 0;
+        int deleted;
+        while ((deleted = aggregationService.cleanupOldProcessedChunk(CHUNK_SIZE)) > 0) {
+            oldDeleted += deleted;
+            sleep(INTER_CHUNK_DELAY_MS);
+        }
 
         log.info(">>> [GenreScoreBatch] processedLogs={}, groups={}, users={}, oldDeleted={}, iterations={}, took={}ms",
                 totalLogs, totalGroups, touchedUsers.size(), oldDeleted, iter - 1,
