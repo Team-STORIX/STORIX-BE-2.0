@@ -62,19 +62,18 @@ public interface UserGenreScoreLogRepository extends JpaRepository<UserGenreScor
                                                             @Param("genres") Collection<Genre> genres,
                                                             @Param("since") LocalDateTime since);
 
-    // 미처리 로그 -> 처리 로그 (벌크 업데이트)
+    // 미처리 로그 -> 처리 로그 벌크 업데이트
+    // 범위 조건으로 고르면 새 로그가 붙을 자리까지 잠겨 그동안 INSERT 가 기다린다. 읽어 둔 id 로만 고른다
     @Modifying
-    @Query("""
-            UPDATE UserGenreScoreLog l
-            SET l.processedAt = :now
-            WHERE l.processedAt IS NULL AND l.id <= :maxId
-    """)
-    int markProcessedUntil(@Param("maxId") Long maxId, @Param("now") LocalDateTime now);
+    @Query("UPDATE UserGenreScoreLog l SET l.processedAt = :now WHERE l.id IN :ids")
+    int markProcessedByIds(@Param("ids") List<Long> ids, @Param("now") LocalDateTime now);
 
+    @Query("SELECT l.id FROM UserGenreScoreLog l WHERE l.processedAt < :threshold ORDER BY l.id ASC")
+    List<Long> findProcessedIdsBefore(@Param("threshold") LocalDateTime threshold, Pageable pageable);
 
     @Modifying
-    @Query("DELETE FROM UserGenreScoreLog l WHERE l.processedAt IS NOT NULL AND l.processedAt < :threshold")
-    int deleteProcessedBefore(@Param("threshold") LocalDateTime threshold);
+    @Query("DELETE FROM UserGenreScoreLog l WHERE l.id IN :ids")
+    int deleteByIds(@Param("ids") List<Long> ids);
 
     /** 작품 병합 */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
