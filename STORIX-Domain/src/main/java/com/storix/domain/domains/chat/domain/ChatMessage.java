@@ -22,6 +22,10 @@ import java.time.LocalDateTime;
                 @Index(
                         name = "idx_room_id_sender",
                         columnList = "roomId, id, senderId"
+                ),
+                @Index(
+                        name = "idx_chat_message_deleted_at",
+                        columnList = "deletedAt"
                 )
         }
 )

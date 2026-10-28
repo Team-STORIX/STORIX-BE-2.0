@@ -17,7 +17,8 @@ import java.util.List;
         indexes = {
                 @Index(name = "idx_reader_board_reply_board_id", columnList = "reader_board_id"),
                 @Index(name = "idx_reader_board_reply_user_id", columnList = "user_id"),
-                @Index(name = "idx_reader_board_reply_parent_id", columnList = "parent_reply_id")
+                @Index(name = "idx_reader_board_reply_parent_deleted", columnList = "parent_reply_id, deleted"),
+                @Index(name = "idx_reader_board_reply_deleted_at", columnList = "deleted_at")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
