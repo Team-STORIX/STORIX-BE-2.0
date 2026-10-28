@@ -22,7 +22,8 @@ import java.time.LocalDateTime;
                 )
         },
         indexes = {
-                @Index(name = "idx_review_works_deleted", columnList = "works_id, deleted")
+                @Index(name = "idx_review_works_deleted", columnList = "works_id, deleted"),
+                @Index(name = "idx_review_deleted_at", columnList = "deleted_at")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
