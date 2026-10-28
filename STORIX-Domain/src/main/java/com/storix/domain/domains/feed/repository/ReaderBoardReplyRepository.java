@@ -143,7 +143,7 @@ public interface ReaderBoardReplyRepository extends JpaRepository<ReaderBoardRep
             "WHERE r.id = :replyId AND r.deleted = false")
     int softDeleteByAdminIfNotDeleted(@Param("replyId") Long replyId, @Param("now") LocalDateTime now);
 
-    // 살아 있는 자식이 없는 댓글만. NOT EXISTS 는 지울 게 많으면 살아 있는 댓글 전체를 임시 표로 모아 LEFT JOIN 으로 쓴다
+    // 살아 있는 답글 없는 댓글만, NOT EXISTS 는 댓글 전체를 훑어 LEFT JOIN
     @Query("SELECT r.id FROM ReaderBoardReply r " +
             "LEFT JOIN ReaderBoardReply c ON c.parentReply = r AND c.deleted = false " +
             "WHERE r.deleted = true AND r.deletedAt < :cutoff AND c.id IS NULL " +
