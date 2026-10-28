@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,27 +38,29 @@ public class GenreScoreAggregationService {
         // 2. (user, genre)별 가중치 합산
         Map<UserGenreKey, Long> sums = new HashMap<>();
         Set<Long> users = new HashSet<>();
-        long maxId = 0L;
+        List<Long> ids = new ArrayList<>(rows.size());
 
         for (UnprocessedLogRow row : rows) {
             sums.merge(new UserGenreKey(row.userId(), row.genre()), row.weight().longValue(), Long::sum);
             users.add(row.userId());
-            if (row.id() > maxId) maxId = row.id();
+            ids.add(row.id());
         }
 
         // 3. raw_score 테이블 UPSERT
         sums.forEach((key, sum) -> genreScoreAdaptor.addRawScore(key.userId(), key.genre(), sum));
 
         // 4. 로그 처리
-        genreScoreAdaptor.markLogProcessedUntil(maxId, LocalDateTime.now());
+        genreScoreAdaptor.markLogProcessed(ids, LocalDateTime.now());
 
         return new GenreScoreChunkResult(rows.size(), sums.size(), users);
     }
 
-    // 처리된 로그 삭제
+    // 보존기간 지난 처리 로그를 청크 단위로 삭제
     @Transactional
-    public int cleanupOldProcessed() {
-        return genreScoreAdaptor.deleteProcessedLogBefore(LocalDateTime.now().minusDays(LOG_RETENTION_DAYS));
+    public int cleanupOldProcessedChunk(int chunkSize) {
+        List<Long> ids = genreScoreAdaptor.findProcessedLogIdsBefore(
+                LocalDateTime.now().minusDays(LOG_RETENTION_DAYS), PageRequest.of(0, chunkSize));
+        return ids.isEmpty() ? 0 : genreScoreAdaptor.deleteLogsByIds(ids);
     }
 
     // 주기별 raw_score 테이블 전체 초기화
