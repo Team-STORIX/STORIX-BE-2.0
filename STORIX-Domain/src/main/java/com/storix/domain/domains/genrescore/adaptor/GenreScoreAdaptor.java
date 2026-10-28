@@ -82,13 +82,18 @@ public class GenreScoreAdaptor {
     }
 
     // 미처리 로그를 처리 완료로 일괄 갱신
-    public int markLogProcessedUntil(Long maxId, LocalDateTime now) {
-        return logRepository.markProcessedUntil(maxId, now);
+    public int markLogProcessed(List<Long> ids, LocalDateTime now) {
+        return logRepository.markProcessedByIds(ids, now);
     }
 
-    // 보존기간 지난 처리 로그 삭제
-    public int deleteProcessedLogBefore(LocalDateTime threshold) {
-        return logRepository.deleteProcessedBefore(threshold);
+    // 보존기간 지난 처리 로그 id 청크 조회
+    public List<Long> findProcessedLogIdsBefore(LocalDateTime threshold, Pageable pageable) {
+        return logRepository.findProcessedIdsBefore(threshold, pageable);
+    }
+
+    // 로그 id 로 삭제
+    public int deleteLogsByIds(List<Long> ids) {
+        return logRepository.deleteByIds(ids);
     }
 
     /** 작품 병합 — 관심작품이 하나로 합쳐진 유저는 drop 쪽 관심작품 기록 삭제, 나머지 기록은 그대로 이동 */

@@ -1,6 +1,5 @@
 package com.storix.domain.domains.feed.domain;
 
-import com.storix.domain.domains.plus.domain.DeletedBy;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,7 +16,8 @@ import java.util.List;
         indexes = {
                 @Index(name = "idx_reader_board_reply_board_id", columnList = "reader_board_id"),
                 @Index(name = "idx_reader_board_reply_user_id", columnList = "user_id"),
-                @Index(name = "idx_reader_board_reply_parent_id", columnList = "parent_reply_id")
+                @Index(name = "idx_reader_board_reply_parent_deleted", columnList = "parent_reply_id, deleted"),
+                @Index(name = "idx_reader_board_reply_deleted_at", columnList = "deleted_at")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -50,9 +50,9 @@ public class ReaderBoardReply extends BoardReply {
         this.depth = (parentReply != null) ? parentReply.getDepth() + 1 : 0;
     }
 
+    // 답글 달린 댓글 본인 삭제, 본문은 바로 파기
     public void softDelete() {
-        this.deleted = true;
-        this.deletedBy = DeletedBy.USER;
+        if (!softDeleteByUser()) return;
         this.comment = "삭제된 댓글입니다";
     }
 

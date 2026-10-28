@@ -19,6 +19,7 @@ public class GenreScoreAggregationScheduler {
     private static final int CHUNK_SIZE = GenreScoreAggregationService.DEFAULT_CHUNK_SIZE;
     private static final long INTER_CHUNK_DELAY_MS = 100L;
     private static final int MAX_ITERATIONS = 10_000;
+    private static final int MAX_CLEANUP_CHUNKS = 100;
 
     private final GenreScoreAggregationService aggregationService;
     private final UserTitleService userTitleService;
@@ -56,7 +57,19 @@ public class GenreScoreAggregationScheduler {
                     touchedUsers.size(), touchedUsers.stream().limit(20).toList(), e);
         }
 
-        int oldDeleted = aggregationService.cleanupOldProcessed();
+        int oldDeleted = 0;
+        int cleanupChunks = 0;
+        while (cleanupChunks++ < MAX_CLEANUP_CHUNKS) {
+            int deleted = aggregationService.cleanupOldProcessedChunk(CHUNK_SIZE);
+            if (deleted == 0) break;
+
+            oldDeleted += deleted;
+            sleep(INTER_CHUNK_DELAY_MS);
+        }
+
+        if (cleanupChunks > MAX_CLEANUP_CHUNKS) {
+            log.warn(">>> [GenreScoreBatch] MAX_CLEANUP_CHUNKS({}) 도달 — 다음 실행 시 잔여분 삭제", MAX_CLEANUP_CHUNKS);
+        }
 
         log.info(">>> [GenreScoreBatch] processedLogs={}, groups={}, users={}, oldDeleted={}, iterations={}, took={}ms",
                 totalLogs, totalGroups, touchedUsers.size(), oldDeleted, iter - 1,
