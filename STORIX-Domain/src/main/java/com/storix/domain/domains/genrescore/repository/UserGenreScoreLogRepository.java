@@ -62,8 +62,7 @@ public interface UserGenreScoreLogRepository extends JpaRepository<UserGenreScor
                                                             @Param("genres") Collection<Genre> genres,
                                                             @Param("since") LocalDateTime since);
 
-    // 미처리 로그 -> 처리 로그 벌크 업데이트
-    // 범위 조건으로 고르면 새 로그가 붙을 자리까지 잠겨 그동안 INSERT 가 기다린다. 읽어 둔 id 로만 고른다
+    // 미처리 로그 -> 처리 로그 벌크 업데이트, 새 로그 INSERT 가 안 막히게 id 로만
     @Modifying
     @Query("UPDATE UserGenreScoreLog l SET l.processedAt = :now WHERE l.id IN :ids")
     int markProcessedByIds(@Param("ids") List<Long> ids, @Param("now") LocalDateTime now);
