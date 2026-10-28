@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class HardDeleteScheduler {
 
-    private static final int RETENTION_YEARS = 5;
+    private static final int RETENTION_YEARS = 3;
 
     private final BoardAdaptor boardAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
@@ -26,7 +26,7 @@ public class HardDeleteScheduler {
 
     /**
      * 매일 새벽 4시 실행.
-     * soft-delete 후 5년이 경과한 콘텐츠 레코드를 테이블별로 순차 hard-delete 한다.
+     * soft-delete 후 3년이 경과한 콘텐츠 레코드를 테이블별로 순차 hard-delete 한다.
      * 자식(좋아요/댓글/이미지) → 부모(게시물) 순서로 삭제해 FK 위반을 방지한다.
      * 테이블마다 청크 단위 트랜잭션으로 지워 한 번에 긴 트랜잭션을 잡지 않는다.
      * 게시물의 첨부 이미지는 S3CleanupEvent 로 발행되어 청크 커밋 후 S3 에서 정리된다.
