@@ -26,7 +26,7 @@ services:
     container_name: storix-caddy
     restart: unless-stopped
     environment:
-      - SITE_DOMAIN=${SITE_DOMAIN:-}
+      - SITE_DOMAIN=${SITE_DOMAIN}
     ports:
       - "80:80"
       - "443:443"

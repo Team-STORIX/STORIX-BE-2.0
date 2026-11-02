@@ -6,7 +6,7 @@
 
 import /etc/caddy/upstream.caddy
 
-{$SITE_DOMAIN:localhost} {
+{$SITE_DOMAIN} {
 	reverse_proxy {
 		import app_upstream
 	}
