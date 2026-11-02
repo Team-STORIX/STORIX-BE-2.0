@@ -1,0 +1,13 @@
+// bootRun 에 실행 위치의 local.env 를 환경변수로 넘긴다. 값은 Gradle 프로세스만 읽는다
+allprojects {
+    tasks.matching { it.name == 'bootRun' }.configureEach { task ->
+        def envFile = rootProject.file('local.env')
+        if (!envFile.exists()) throw new GradleException("local.env 없음: ${envFile}")
+        envFile.eachLine { line ->
+            def text = line.trim()
+            if (!text || text.startsWith('#')) return
+            def idx = text.indexOf('=')
+            if (idx > 0) task.environment(text.substring(0, idx).trim(), text.substring(idx + 1))
+        }
+    }
+}
