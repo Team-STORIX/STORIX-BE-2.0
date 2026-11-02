@@ -21,16 +21,8 @@ public class FeaturedNotificationHelper {
         return dedupAdaptor.markFeedIfFirstToday(feedId);
     }
 
-    public boolean markHotTopicRoomIfFirst(Long roomId) {
-        return dedupAdaptor.markTopicRoomIfFirstToday(roomId);
-    }
-
     public void unmarkTodayFeed(Long feedId) {
         dedupAdaptor.unmarkFeedToday(feedId);
-    }
-
-    public void unmarkHotTopicRoom(Long roomId) {
-        dedupAdaptor.unmarkTopicRoomToday(roomId);
     }
 
     // 알림 리스너가 커밋 뒤에 돌아서 트랜잭션이 있어야 발행된다

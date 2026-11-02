@@ -44,6 +44,14 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
             "WHERE t.id = :id AND t.activeUserNumber > 0")
     int decrementActiveUserNumber(@Param("id") Long id);
 
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE TopicRoom t SET t.hotNotifiedAt = :now WHERE t.id = :id AND t.hotNotifiedAt IS NULL")
+    int markHotNotifiedIfFirst(@Param("id") Long id, @Param("now") LocalDateTime now);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE TopicRoom t SET t.hotNotifiedAt = NULL WHERE t.id = :id")
+    void unmarkHotNotified(@Param("id") Long id);
+
     // 마지막 채팅 정보 갱신
     @Modifying(clearAutomatically = true)
     @Query("""
