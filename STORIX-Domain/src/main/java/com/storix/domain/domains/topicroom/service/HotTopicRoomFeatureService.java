@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -24,6 +25,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class HotTopicRoomFeatureService {
+
+    private static final Duration RENOTIFY_COOLDOWN = Duration.ofDays(7);
 
     private final TopicRoomAdaptor topicRoomAdaptor;
     private final WorksAdaptor worksAdaptor;
@@ -55,6 +58,8 @@ public class HotTopicRoomFeatureService {
                 : safeLoadVerifiedAt(adultRoomMemberIds.stream().toList());
 
         LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime renotifyBefore = now.minus(RENOTIFY_COOLDOWN);
 
         for (TopicRoom room : validRooms) {
             try {
@@ -68,17 +73,26 @@ public class HotTopicRoomFeatureService {
                                 .toList()
                         : members;
 
-                if (topicRoomAdaptor.markHotNotifiedIfFirst(room.getId())) {
+                if (topicRoomAdaptor.markHotNotifiedIfDue(room.getId(), now, renotifyBefore)) {
                     try {
                         featuredNotificationHelper.notifyHotTopicRoom(room.getId(), room.getTopicRoomName(), targetMembers);
                     } catch (RuntimeException e) {
-                        topicRoomAdaptor.unmarkHotNotified(room.getId());
+                        topicRoomAdaptor.restoreHotNotified(room.getId(), room.getHotNotifiedAt(), room.getHotDroppedAt());
                         throw e;
                     }
+                } else if (room.getHotDroppedAt() != null) {
+                    // 대기 기간 안에 다시 들어온 방은 알림 없이 계속 HOT 으로 취급
+                    topicRoomAdaptor.clearHotDropped(room.getId());
                 }
             } catch (Exception e) {
                 log.error(">>> [HotTopicRoom] 룸 선정 알림 실패 roomId={}", room.getId(), e);
             }
+        }
+
+        try {
+            topicRoomAdaptor.markHotDropped(rooms.stream().map(TopicRoom::getId).toList(), now);
+        } catch (Exception e) {
+            log.error(">>> [HotTopicRoom] 밀려난 방 표시 실패", e);
         }
     }
 

@@ -44,13 +44,31 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
             "WHERE t.id = :id AND t.activeUserNumber > 0")
     int decrementActiveUserNumber(@Param("id") Long id);
 
+    // 처음 뽑혔거나, 밀렸다가 대기 기간이 지나 다시 들어온 방만 표시
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE TopicRoom t SET t.hotNotifiedAt = :now WHERE t.id = :id AND t.hotNotifiedAt IS NULL")
-    int markHotNotifiedIfFirst(@Param("id") Long id, @Param("now") LocalDateTime now);
+    @Query("""
+        UPDATE TopicRoom t SET t.hotNotifiedAt = :now, t.hotDroppedAt = NULL
+        WHERE t.id = :id
+          AND (t.hotNotifiedAt IS NULL OR (t.hotDroppedAt IS NOT NULL AND t.hotNotifiedAt < :renotifyBefore))
+    """)
+    int markHotNotifiedIfDue(@Param("id") Long id, @Param("now") LocalDateTime now,
+                             @Param("renotifyBefore") LocalDateTime renotifyBefore);
 
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE TopicRoom t SET t.hotNotifiedAt = NULL WHERE t.id = :id")
-    void unmarkHotNotified(@Param("id") Long id);
+    @Query("UPDATE TopicRoom t SET t.hotNotifiedAt = :notifiedAt, t.hotDroppedAt = :droppedAt WHERE t.id = :id")
+    void restoreHotNotified(@Param("id") Long id, @Param("notifiedAt") LocalDateTime notifiedAt,
+                            @Param("droppedAt") LocalDateTime droppedAt);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE TopicRoom t SET t.hotDroppedAt = NULL WHERE t.id = :id")
+    void clearHotDropped(@Param("id") Long id);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+        UPDATE TopicRoom t SET t.hotDroppedAt = :now
+        WHERE t.hotNotifiedAt IS NOT NULL AND t.hotDroppedAt IS NULL AND t.id NOT IN :hotIds
+    """)
+    int markHotDropped(@Param("hotIds") List<Long> hotIds, @Param("now") LocalDateTime now);
 
     // 마지막 채팅 정보 갱신
     @Modifying(clearAutomatically = true)
