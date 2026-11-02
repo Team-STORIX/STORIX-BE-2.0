@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - 'monitoring/**'
       - '.github/workflows/cd-monitoring.yml'
+      - '.claude/**'
 
 jobs:
   build-and-push:
