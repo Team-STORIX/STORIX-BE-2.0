@@ -25,7 +25,7 @@ public class FeaturedContentNotificationScheduler {
         }
     }
 
-    // 토픽룸 활동 점수 매시 갱신 직후 실행
+    // 토픽룸 활동 점수 매시 갱신 직후 실행, 방마다 처음 뽑혔을 때만 보낸다
     @Scheduled(cron = "0 5 * * * *", zone = "Asia/Seoul")
     public void notifyHotTopicRoom() {
         try {

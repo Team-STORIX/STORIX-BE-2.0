@@ -68,11 +68,11 @@ public class HotTopicRoomFeatureService {
                                 .toList()
                         : members;
 
-                if (featuredNotificationHelper.markHotTopicRoomIfFirst(room.getId())) {
+                if (topicRoomAdaptor.markHotNotifiedIfFirst(room.getId())) {
                     try {
                         featuredNotificationHelper.notifyHotTopicRoom(room.getId(), room.getTopicRoomName(), targetMembers);
                     } catch (RuntimeException e) {
-                        featuredNotificationHelper.unmarkHotTopicRoom(room.getId());
+                        topicRoomAdaptor.unmarkHotNotified(room.getId());
                         throw e;
                     }
                 }

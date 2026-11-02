@@ -72,6 +72,18 @@ public class TopicRoomAdaptor {
         return topicRoomRepository.findTop15ByOrderByActivityScoreDescLastChatTimeDesc();
     }
 
+    // 처음 뽑힌 방이면 표시하고 true
+    @Transactional
+    public boolean markHotNotifiedIfFirst(Long roomId) {
+        return topicRoomRepository.markHotNotifiedIfFirst(roomId, LocalDateTime.now()) == 1;
+    }
+
+    // 발행에 실패했을 때 다음 실행에서 다시 보낼 수 있게 표시를 지운다
+    @Transactional
+    public void unmarkHotNotified(Long roomId) {
+        topicRoomRepository.unmarkHotNotified(roomId);
+    }
+
     public List<TopicRoom> findAllActiveRooms() {
         return topicRoomRepository.findAllActiveRooms();
     }
