@@ -5,9 +5,11 @@ on:
     branches:
       - develop
       - main
+    # 바꾸면 cd.yml 의 최신 커밋 확인 목록도 같이 바꾼다
     paths-ignore:
       - 'monitoring/**'
       - '.github/workflows/cd-monitoring.yml'
+      - '.claude/**'
 
 jobs:
   build-and-push:

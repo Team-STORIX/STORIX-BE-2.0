@@ -57,7 +57,9 @@ application-*.yml
 /storix-maintenance.sh
 /.maintenance-silence-id
 
-.claude
+# Claude Code — 팀 공용 스킬(.claude/skills)만 올리고 개인 설정은 올리지 않는다
+.claude/*
+!.claude/skills/
 /tools
 *.sql
 # Flyway 마이그레이션은 저장소에서 관리한다 (#386). 그 밖의 .sql(DB 덤프 등)은 계속 올리지 않는다

@@ -50,12 +50,22 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           LATEST=$(gh api "repos/${{ github.repository }}/commits/${BRANCH}" --jq .sha)
+          STALE=false
           if [ "$LATEST" != "$SHA" ]; then
-            echo "Superseded: branch tip=$LATEST, this run=$SHA — skipping stale deploy."
-            echo "stale=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "stale=false" >> "$GITHUB_OUTPUT"
+            COMPARE_API="repos/${{ github.repository }}/compare/${SHA}...${LATEST}"
+            STATUS=$(gh api "$COMPARE_API" --jq .status)
+            FILE_COUNT=$(gh api "$COMPARE_API" --jq '.files | length')
+            # ci.yml 의 paths-ignore 와 같은 목록. 이 경로만 바뀌었으면 새 CI 가 안 돌아서 이 실행이 마지막 이미지다
+            APP_FILES=$(gh api "$COMPARE_API" --jq '.files[].filename' \
+              | grep -vE '^(monitoring/|\.claude/|\.github/workflows/cd-monitoring\.yml$)' || true)
+            if [ "$STATUS" != "ahead" ] || [ "${FILE_COUNT:-0}" -ge 300 ] || [ -n "$APP_FILES" ]; then
+              STALE=true
+              echo "Superseded: branch tip=$LATEST, this run=$SHA — skipping stale deploy."
+            else
+              echo "Only CI-ignored paths changed since $SHA — deploying this run."
+            fi
           fi
+          echo "stale=$STALE" >> "$GITHUB_OUTPUT"
 
       - name: Configure AWS credentials (OIDC)
         if: ${{ steps.target.outputs.deploy == 'true' && steps.fresh.outputs.stale != 'true' }}
