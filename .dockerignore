@@ -5,4 +5,5 @@
 .gradle
 .git
 *.log
-.DS_Store.claude
+.DS_Store
+.claude
