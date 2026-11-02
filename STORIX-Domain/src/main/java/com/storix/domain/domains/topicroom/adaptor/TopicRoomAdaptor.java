@@ -72,16 +72,26 @@ public class TopicRoomAdaptor {
         return topicRoomRepository.findTop15ByOrderByActivityScoreDescLastChatTimeDesc();
     }
 
-    // 처음 뽑힌 방이면 표시하고 true
+    // 알림 보낼 차례면 표시하고 true
     @Transactional
-    public boolean markHotNotifiedIfFirst(Long roomId) {
-        return topicRoomRepository.markHotNotifiedIfFirst(roomId, LocalDateTime.now()) == 1;
+    public boolean markHotNotifiedIfDue(Long roomId, LocalDateTime now, LocalDateTime renotifyBefore) {
+        return topicRoomRepository.markHotNotifiedIfDue(roomId, now, renotifyBefore) == 1;
     }
 
-    // 발행에 실패했을 때 다음 실행에서 다시 보낼 수 있게 표시를 지운다
+    // 발행 실패 시 다음 실행에서 다시 보내도록 표시 전 값으로 복구
     @Transactional
-    public void unmarkHotNotified(Long roomId) {
-        topicRoomRepository.unmarkHotNotified(roomId);
+    public void restoreHotNotified(Long roomId, LocalDateTime notifiedAt, LocalDateTime droppedAt) {
+        topicRoomRepository.restoreHotNotified(roomId, notifiedAt, droppedAt);
+    }
+
+    @Transactional
+    public void clearHotDropped(Long roomId) {
+        topicRoomRepository.clearHotDropped(roomId);
+    }
+
+    @Transactional
+    public int markHotDropped(List<Long> hotRoomIds, LocalDateTime now) {
+        return topicRoomRepository.markHotDropped(hotRoomIds, now);
     }
 
     public List<TopicRoom> findAllActiveRooms() {
