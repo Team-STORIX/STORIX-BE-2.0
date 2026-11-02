@@ -30,11 +30,13 @@ jobs:
             echo "instance_id=${{ secrets.PROD_INSTANCE_ID }}" >> "$GITHUB_OUTPUT"
             echo "pull_batch=true" >> "$GITHUB_OUTPUT"
             echo "env_tag=prod" >> "$GITHUB_OUTPUT"
+            echo "site_domain=api.storix.kr" >> "$GITHUB_OUTPUT"
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           elif [ "$BRANCH" = "develop" ]; then
             echo "instance_id=${{ secrets.DEV_INSTANCE_ID }}" >> "$GITHUB_OUTPUT"
             echo "pull_batch=true" >> "$GITHUB_OUTPUT"
             echo "env_tag=dev" >> "$GITHUB_OUTPUT"
+            echo "site_domain=dev.storix.kr" >> "$GITHUB_OUTPUT"
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           else
             echo "deploy=false" >> "$GITHUB_OUTPUT"
@@ -110,39 +112,36 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
           ENV_TAG: ${{ steps.target.outputs.env_tag }}
           PULL_BATCH: ${{ steps.target.outputs.pull_batch }}
+          SITE_DOMAIN: ${{ steps.target.outputs.site_domain }}
           ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
         run: |
-          BATCH_LINE="true"
-          if [ "$PULL_BATCH" = "true" ]; then BATCH_LINE="docker compose pull batch"; fi
-
+          # app 은 blue/green 무중단 교체, batch 는 예약 작업 시간을 피해 교체한다. 순서는 deploy/deploy.sh 에 있다
+          RAW=https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}
           cat > /tmp/params.json << JSON
           {
             "commands": [
               "set -eu",
               "export HOME=/root",
-              "export IMAGE_TAG=${ENV_TAG}-${SHA}",
               "cd /home/ubuntu/storix",
               "exec 9>.deploy.lock",
               "flock 9",
-              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/.env.example -o .env.example",
-              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/deploy/render-env.py -o render-env.py",
+              "curl -sfL ${RAW}/.env.example -o .env.example",
+              "curl -sfL ${RAW}/deploy/render-env.py -o render-env.py",
               "python3 render-env.py ${ENV_TAG}",
-              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/docker-compose.yml -o docker-compose.yml.new",
+              "curl -sfL ${RAW}/docker-compose.yml -o docker-compose.yml.new",
               "docker compose -f docker-compose.yml.new config -q",
               "test ! -f docker-compose.yml || cp docker-compose.yml docker-compose.yml.prev",
               "mv docker-compose.yml.new docker-compose.yml",
-              "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}",
-              "mkdir -p alloy",
-              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/monitoring/app-side/config.alloy -o alloy/config.alloy",
-              "docker compose pull app",
-              "${BATCH_LINE}",
-              "docker compose up -d",
-              "printf 'DEPLOY_ENV=%s\\\\nIMAGE_TAG=%s\\\\n' ${ENV_TAG} ${ENV_TAG}-${SHA} > deploy.state",
-              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/deploy/boot-refresh.sh -o boot-refresh.sh",
-              "curl -sfL https://raw.githubusercontent.com/Team-STORIX/STORIX-BE-2.0/${SHA}/deploy/storix-env.service -o /etc/systemd/system/storix-env.service",
+              "mkdir -p alloy caddy",
+              "curl -sfL ${RAW}/monitoring/app-side/config.alloy -o alloy/config.alloy",
+              "curl -sfL ${RAW}/caddy/Caddyfile -o caddy/Caddyfile",
+              "curl -sfL ${RAW}/deploy/deploy.sh -o deploy.sh",
+              "curl -sfL ${RAW}/deploy/boot-refresh.sh -o boot-refresh.sh",
+              "curl -sfL ${RAW}/deploy/storix-env.service -o /etc/systemd/system/storix-env.service",
               "systemctl daemon-reload",
               "systemctl enable storix-env.service",
-              "docker image prune -af"
+              "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}",
+              "sh deploy.sh app ${ENV_TAG} ${ENV_TAG}-${SHA} ${SITE_DOMAIN} ${PULL_BATCH}"
             ]
           }
           JSON

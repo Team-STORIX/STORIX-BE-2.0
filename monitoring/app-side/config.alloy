@@ -8,7 +8,7 @@ discovery.relabel "storix" {
 
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex         = "/(storix-app|storix-batch)"
+    regex         = "/(storix-app|storix-app-blue|storix-app-green|storix-batch)"
     action        = "keep"
   }
 
@@ -16,6 +16,14 @@ discovery.relabel "storix" {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
     target_label  = "container"
+  }
+
+  // blue / green 어느 쪽이 떠 있어도 로그 쿼리가 그대로 storix-app 으로 잡히게 묶는다
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/storix-app-(blue|green)"
+    target_label  = "container"
+    replacement   = "storix-app"
   }
 
   rule {
