@@ -101,16 +101,59 @@ NEW=blue
 NEW_NAME=storix-app-$NEW
 log "현재: $OLD_NAME → 새: $NEW_NAME ($IMAGE_TAG)"
 
+write_upstream() {
+  mkdir -p caddy
+  # 마운트한 디렉터리 안 파일을 제자리에서 덮어쓴다
+  cat > caddy/upstream.caddy << EOF
+(app_upstream) {
+	to $1:8080
+}
+(metrics_upstream) {
+	to $1:9100
+}
+EOF
+}
+
+reload_caddy() {
+  _i=0
+  until docker exec storix-caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null; do
+    _i=$(( _i + 1 )); [ "$_i" -ge 15 ] && return 1
+    sleep 2
+  done
+}
+
+# 트래픽을 새 색으로 넘기고 deploy.state 를 쓰기 전에 어디서 끝나든 옛 버전이 다시 받게 한다
+STOPPED_FIRST=""
+SWITCHED=""
+LEGACY_STOPPED=""
+COMMITTED=""
+rollback() {
+  [ -n "$COMMITTED" ] && return 0
+  set +e
+  log "배포 실패. 옛 버전으로 되돌린다"
+  docker logs --tail 80 "$NEW_NAME" 2>/dev/null
+  if [ -n "$LEGACY_STOPPED" ]; then
+    # Caddy 가 잡은 8080 · 9100 을 비워야 옛 컨테이너가 다시 뜬다
+    docker rm -f storix-caddy
+    docker start "$LEGACY"
+  elif [ -n "$SWITCHED" ] && [ -n "$OLD" ]; then
+    write_upstream "$OLD_NAME"
+    reload_caddy || log "caddy reload 실패. upstream.caddy 는 $OLD_NAME 로 되돌렸다"
+  fi
+  [ -n "$STOPPED_FIRST" ] && docker start "$OLD_NAME"
+  docker rm -f "$NEW_NAME"
+}
+trap rollback EXIT
+
 docker compose --profile "$NEW" pull "app-$NEW"
 [ "$PULL_BATCH" = "true" ] && docker compose pull batch
 docker rm -f "$NEW_NAME" 2>/dev/null || true
 
 FREE_MB=$(awk '/MemAvailable/ { print int($2 / 1024) }' /proc/meminfo)
-STOPPED_FIRST=""
 if [ -n "$OLD_NAME" ] && [ "$FREE_MB" -lt "$MIN_FREE_MB" ]; then
   log "여유 메모리 ${FREE_MB}MB < ${MIN_FREE_MB}MB 라 $OLD_NAME 을 먼저 내린다. 잠깐 끊긴다"
-  docker stop -t 40 "$OLD_NAME"
   STOPPED_FIRST=1
+  docker stop -t 40 "$OLD_NAME"
 fi
 
 docker compose --profile "$NEW" up -d --no-deps "app-$NEW"
@@ -121,43 +164,32 @@ i=0
 until curl -sf -o /dev/null "http://$IP:9100/actuator/health"; do
   i=$(( i + 1 ))
   if [ "$i" -ge "$HEALTH_TRIES" ] || ! running "$NEW_NAME"; then
-    log "$NEW_NAME 가 뜨지 않았다. 옛 버전을 그대로 둔다"
-    docker logs --tail 80 "$NEW_NAME" || true
-    docker rm -f "$NEW_NAME" || true
-    [ -n "$STOPPED_FIRST" ] && docker start "$OLD_NAME"
+    log "$NEW_NAME 가 뜨지 않았다"
     exit 1
   fi
   sleep 2
 done
 log "$NEW_NAME 헬스체크 통과"
 
-# Caddy 가 새 색으로 보내게 바꾼다. 마운트한 디렉터리 안 파일을 제자리에서 덮어쓴다
-mkdir -p caddy
-cat > caddy/upstream.caddy << EOF
-(app_upstream) {
-	to $NEW_NAME:8080
-}
-(metrics_upstream) {
-	to $NEW_NAME:9100
-}
-EOF
+SWITCHED=1
+write_upstream "$NEW_NAME"
 
-# 옛 단일 컨테이너가 8080 · 9100 을 잡고 있어서 내린 뒤에 Caddy 를 띄운다
+# 옛 단일 컨테이너가 8080 · 9100 을 잡고 있어서 내린 뒤에 Caddy 를 띄운다. 지우는 건 성공한 뒤에
 if [ -n "$LEGACY" ]; then
   log "옛 $LEGACY 를 내리고 Caddy 를 띄운다"
-  docker stop -t 40 "$LEGACY" && docker rm "$LEGACY"
+  LEGACY_STOPPED=1
+  docker stop -t 40 "$LEGACY"
 fi
 docker compose up -d --no-deps caddy
-i=0
-until docker exec storix-caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null; do
-  i=$(( i + 1 )); [ "$i" -ge 15 ] && { log "caddy reload 실패"; exit 1; }
-  sleep 2
-done
+reload_caddy || { log "caddy reload 실패"; exit 1; }
 curl -sf -o /dev/null http://127.0.0.1:9100/actuator/health || { log "Caddy 를 거친 헬스체크 실패"; exit 1; }
 log "트래픽을 $NEW_NAME 로 넘겼다"
 
 ACTIVE_COLOR=$NEW
 write_state
+COMMITTED=1
+
+[ -n "$LEGACY" ] && docker rm "$LEGACY"
 
 if [ -n "$OLD" ]; then
   docker compose --profile "$OLD" stop "app-$OLD"
