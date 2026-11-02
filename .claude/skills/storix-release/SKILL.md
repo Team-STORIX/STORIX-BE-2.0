@@ -24,21 +24,23 @@ description: STORIX-BE-2.0 배포 프로세스. 기존 Release PR 이후에 머�
 ### 1. 사전 조사 (병렬 실행)
 
 ```bash
-# 가장 최근 release PR로 직전 버전 확인 (다음 버전 계산용)
-gh pr list --state all --search "Release" --limit 5
+# 직전 버전 확인 (다음 버전 계산용). 열린 Release PR 이 끼지 않게 main 에 머지된 것 중 가장 최근 1건만 본다
+gh pr list --state merged --base main --search "Release in:title" --limit 20 \
+  --json number,title,mergedAt --jq 'sort_by(.mergedAt) | last'
 ```
 
 각 대상 PR의 커밋 목록을 가져온다 (병렬):
 ```bash
-gh pr view <num> --json number,title,commits
+gh pr view <num> --json number,title,state,mergedAt,commits
 ```
 
-`commits[].oid`를 시간순으로 모두 수집. **머지 커밋은 자동 제외** (PR view의 commits 필드는 squash 전 원본 커밋만 보여줌).
+- `state` 가 `MERGED` 이고 `mergedAt` 이 직전 Release PR 의 `mergedAt` 보다 뒤인 PR 만 대상이다. 아니면 빼고 사용자에게 알린다
+- `commits[].oid` 를 모두 수집. **머지 커밋은 자동 제외** (PR view의 commits 필드는 squash 전 원본 커밋만 보여줌)
 
 ### 2. 사용자 확인
 
 - 다음 버전 번호 (직전 +1)
-- cherry-pick 대상 커밋 목록 (시간순, oid + 헤드라인)
+- cherry-pick 대상 커밋 목록 (아래 순서대로, oid + 헤드라인)
 - 브랜치명 `release/v2.6.x`
 
 세 가지를 한 번에 보여주고 진행 확인. 브랜치 네이밍 표기(점 유무 등) 모호하면 반드시 확인.
@@ -51,7 +53,7 @@ git checkout -b release/v2.6.<x> origin/main
 git cherry-pick <oid1> <oid2> ... <oidN>
 ```
 
-- 시간순(authoredDate 오름차순)으로 한꺼번에 cherry-pick.
+- PR 은 `mergedAt` 이른 순, 한 PR 안의 커밋은 `gh pr view` 가 준 순서 그대로 한꺼번에 cherry-pick. 작성 시각으로 다시 정렬하지 않는다. rebase 한 커밋은 작성 시각이 부모보다 빠를 수 있다
 - 충돌 시 즉시 멈추고 사용자에게 보고. 임의로 해결하지 말 것.
 
 ### 4. Push
@@ -86,15 +88,19 @@ base=`main`, head=`release/v2.6.<x>`, title=`Release v2.6.<x>`, **assignee=`@me`
 ## 💬 리뷰 요구사항(선택)
 
 ## ⚠️ PR하기 전에 확인해 주세요.
-- [x] 로컬테스트를 진행하셨나요?
+- [ ] 로컬테스트를 진행하셨나요?
 - [x] 머지할 브랜치를 확인하셨나요?
 - [x] 관련 label을 선택하셨나요?
 
 ## ⭐ 관련 이슈 번호
-- #12
+- #<포함한 PR 의 이슈 번호>
+- #<포함한 PR 의 이슈 번호>
 
 ## 🖇️ 기타
 ```
+
+- 로컬테스트 칸은 이번 릴리스 브랜치로 실제로 확인했을 때만 `[x]` 로 바꾼다
+- 관련 이슈는 cherry-pick 한 각 PR 의 `Closes #N` 을 모아 적는다. 이슈가 없는 PR 은 건너뛴다
 
 `gh pr create` 호출 시 본문은 HEREDOC으로 전달. assignee/label 플래그도 같이:
 

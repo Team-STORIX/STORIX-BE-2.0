@@ -25,8 +25,11 @@ user_invocable: true
 - `git push origin {현재브랜치}`
 
 ### 4. 연결된 이슈 확인
-- `gh issue list --repo Team-STORIX/STORIX-BE-2.0 --state all`로 브랜치와 관련된 이슈 번호를 찾는다
-- 브랜치명에서 키워드를 추출하여 매칭 (예: feed-spoiler → 피드 관련 이슈)
+- 브랜치명에서 키워드를 뽑아 검색한다 (예: feed-spoiler → 피드 · 스포일러). `--search` 없이 목록만 받으면 최근 30건만 와서 놓친다
+  ```bash
+  gh issue list --repo Team-STORIX/STORIX-BE-2.0 --state all --search "<키워드>" --limit 50
+  ```
+- 못 찾으면 이슈 번호를 사용자에게 묻는다
 
 ### 5. PR 생성
 - `gh pr create`로 PR 생성
@@ -79,7 +82,7 @@ ISSUE_ID=$(gh api graphql -f query='{ repository(owner:"Team-STORIX", name:"STOR
 ## 💬 리뷰 요구사항(선택)
 
 ## ⚠️ PR하기 전에 확인해 주세요.
-- [x] 로컬테스트를 진행하셨나요?
+- [ ] 로컬테스트를 진행하셨나요?
 - [x] 머지할 브랜치를 확인하셨나요?
 - [x] 관련 label을 선택하셨나요?
 
@@ -99,5 +102,6 @@ ISSUE_ID=$(gh api graphql -f query='{ repository(owner:"Team-STORIX", name:"STOR
 
 ### 주의사항
 - PR 본문에 환경변수 실제 값, API Key, Secret 등 민감 정보를 절대 포함하지 않을 것
-- 관련 이슈 번호는 `- #xx` 형식으로 작성
+- 관련 이슈 번호는 `- Closes #xx` 형식으로 작성. `- #xx` 는 Development 연결과 머지 시 자동 종료가 안 된다
+- 로컬테스트 칸은 이번 변경으로 로컬 API 를 실제로 호출해 봤을 때만 `[x]`
 - PR 작업 내용 체크박스에서 해당하는 항목만 [x]로 체크
