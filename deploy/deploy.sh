@@ -68,7 +68,11 @@ schedule_batch() {
   fi
 }
 
-if [ "${1:-}" = "batch" ]; then
+USAGE="usage: deploy.sh app <env> <tag> <domain> <pull_batch> | deploy.sh batch"
+[ "$#" -ge 1 ] || { echo "$USAGE"; exit 2; }
+MODE=$1
+
+if [ "$MODE" = "batch" ]; then
   exec 9>.deploy.lock
   flock 9
   DEPLOY_ENV=$(state_get DEPLOY_ENV); IMAGE_TAG=$(state_get IMAGE_TAG)
@@ -80,7 +84,7 @@ fi
 
 # ---------- app ----------
 
-[ "${1:-}" = "app" ] || { echo "usage: deploy.sh app <env> <tag> <domain> <pull_batch> | deploy.sh batch"; exit 2; }
+[ "$MODE" = "app" ] && [ "$#" -eq 5 ] || { echo "$USAGE"; exit 2; }
 DEPLOY_ENV=$2 IMAGE_TAG=$3 SITE_DOMAIN=$4 PULL_BATCH=$5
 export IMAGE_TAG SITE_DOMAIN
 
@@ -90,13 +94,12 @@ if [ -n "$PREV" ] && running "storix-app-$PREV"; then OLD=$PREV; fi
 # blue/green 이전 compose 의 단일 컨테이너. 첫 배포 때 한 번만 거친다
 LEGACY=""
 running storix-app && LEGACY=storix-app
-OLD_NAME=${OLD:+storix-app-$OLD}
-OLD_NAME=${OLD_NAME:-$LEGACY}
+if [ -n "$OLD" ]; then OLD_NAME=storix-app-$OLD; else OLD_NAME=$LEGACY; fi
 
 NEW=blue
 [ "$OLD" = blue ] && NEW=green
 NEW_NAME=storix-app-$NEW
-log "현재: ${OLD_NAME:-없음} → 새: $NEW_NAME ($IMAGE_TAG)"
+log "현재: $OLD_NAME → 새: $NEW_NAME ($IMAGE_TAG)"
 
 docker compose --profile "$NEW" pull "app-$NEW"
 [ "$PULL_BATCH" = "true" ] && docker compose pull batch

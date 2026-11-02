@@ -17,5 +17,5 @@ flock 9
 
 python3 render-env.py "$DEPLOY_ENV"
 # 마지막 배포가 남긴 blue 또는 green app 만 띄운다
-export IMAGE_TAG SITE_DOMAIN="${SITE_DOMAIN:-}" COMPOSE_PROFILES="${ACTIVE_COLOR:-}"
+export IMAGE_TAG SITE_DOMAIN COMPOSE_PROFILES="$ACTIVE_COLOR"
 docker compose up -d
