@@ -71,10 +71,13 @@ redis-cli -h 127.0.0.1 -p 6379 ping   # PONG 이면 성공
 ```
 
 없어졌다면 다시 만든다. compose의 `storix-redis`와 이름이 겹치지 않게 `-local` 접미사를 유지한다.
+포트는 `127.0.0.1` 에만 연다. 그냥 `-p 6379:6379` 로 열면 같은 와이파이의 다른 기기에서도 붙는다.
 
 ```bash
-docker run -d --name storix-redis-local -p 6379:6379 redis:alpine
+docker run -d --name storix-redis-local -p 127.0.0.1:6379:6379 redis:alpine
 ```
+
+`docker inspect -f '{{json .HostConfig.PortBindings}}' storix-redis-local` 의 `HostIp` 가 비어 있으면 예전 방식으로 만든 컨테이너다. 지우고 위 명령으로 다시 만든다.
 
 ### Elasticsearch 켜기
 
@@ -97,7 +100,7 @@ FROM docker.elastic.co/elasticsearch/elasticsearch:8.18.8
 RUN bin/elasticsearch-plugin install --batch analysis-nori
 EOF2
 
-docker run -d --name storix-elasticsearch-local -p 9200:9200 \
+docker run -d --name storix-elasticsearch-local -p 127.0.0.1:9200:9200 \
   -e discovery.type=single-node -e xpack.security.enabled=false \
   -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -m 1g \
   -v storix-es-local:/usr/share/elasticsearch/data \
@@ -116,10 +119,12 @@ docker run -d --name storix-elasticsearch-local -p 9200:9200 \
 export STORIX_PENDING_ID=<내 테스터 pendingId>
 ```
 
+요청 본문은 `jq` 로 만들어 표준 입력으로 넘긴다. `-d "...$STORIX_PENDING_ID..."` 처럼 쓰면 값이 명령행 인자에 펼쳐져 `ps` 로 보인다.
+
 ```bash
-curl -s -X POST localhost:8080/api/v1/auth/tester/login \
-  -H 'Content-Type: application/json' \
-  -d "{\"pendingId\":\"$STORIX_PENDING_ID\"}"
+jq -n '{pendingId: env.STORIX_PENDING_ID}' \
+  | curl -s -X POST localhost:8080/api/v1/auth/tester/login \
+      -H 'Content-Type: application/json' --data-binary @-
 ```
 
 응답 (`CustomResponse` 봉투):
@@ -128,11 +133,14 @@ curl -s -X POST localhost:8080/api/v1/auth/tester/login \
 ```
 
 **`refreshToken`은 body에 안 온다.** `Set-Cookie`로 내려오므로 나중에 재발급하려면 쿠키 jar에 받아둬야 한다.
+쿠키 jar 는 `/tmp` 말고 나만 읽을 수 있는 `~/.storix-local/cookies` 에 둔다.
 
 ```bash
-AT=$(curl -s -c /tmp/storix_cookies.txt \
-      -X POST localhost:8080/api/v1/auth/tester/login \
-      -H 'Content-Type: application/json' -d "{\"pendingId\":\"$STORIX_PENDING_ID\"}" \
+mkdir -p -m 700 ~/.storix-local/cookies
+AT=$(jq -n '{pendingId: env.STORIX_PENDING_ID}' \
+      | curl -s -c ~/.storix-local/cookies/tester.txt \
+          -X POST localhost:8080/api/v1/auth/tester/login \
+          -H 'Content-Type: application/json' --data-binary @- \
       | jq -r '.result.accessToken')
 ```
 
@@ -146,10 +154,10 @@ AT=$(curl -s -c /tmp/storix_cookies.txt \
 계정은 팀 내부 채널에서 받고, 테스터와 마찬가지로 환경변수로만 둔다.
 
 ```bash
-ADMIN_AT=$(curl -s -c /tmp/storix_admin_cookies.txt \
-      -X POST localhost:8080/api/v1/auth/admin/login \
-      -H 'Content-Type: application/json' \
-      -d "{\"email\":\"$STORIX_ADMIN_EMAIL\",\"password\":\"$STORIX_ADMIN_PASSWORD\"}" \
+ADMIN_AT=$(jq -n '{email: env.STORIX_ADMIN_EMAIL, password: env.STORIX_ADMIN_PASSWORD}' \
+      | curl -s -c ~/.storix-local/cookies/admin.txt \
+          -X POST localhost:8080/api/v1/auth/admin/login \
+          -H 'Content-Type: application/json' --data-binary @- \
       | jq -r '.result.accessToken')
 ```
 
@@ -161,12 +169,13 @@ ADMIN_AT=$(curl -s -c /tmp/storix_admin_cookies.txt \
 
 ```bash
 # 로그인 때 받아둔 쿠키로 (테스터 로그인은 이쪽)
-curl -s -b /tmp/storix_cookies.txt -c /tmp/storix_cookies.txt \
+curl -s -b ~/.storix-local/cookies/tester.txt -c ~/.storix-local/cookies/tester.txt \
   -X POST localhost:8080/api/v1/auth/tokens/refresh
 
 # refreshToken 문자열을 들고 있으면 body로도 된다 (네이티브 방식)
-curl -s -X POST localhost:8080/api/v1/auth/tokens/refresh \
-  -H 'Content-Type: application/json' -d "{\"refreshToken\":\"$RT\"}"
+RT=$RT jq -n '{refreshToken: env.RT}' \
+  | curl -s -X POST localhost:8080/api/v1/auth/tokens/refresh \
+      -H 'Content-Type: application/json' --data-binary @-
 ```
 
 응답의 `result.accessToken`으로 갈아끼우고 실패했던 요청을 재시도한다. 리프레시도 만료됐으면 2번(테스터 로그인)부터 다시 한다.
@@ -191,8 +200,8 @@ API 응답만 보지 말고 **저장소 상태까지 확인**한다. 캐시·스
 
 ```bash
 redis-cli -h 127.0.0.1 -p 6379 keys 'feed:*'
-redis-cli -h 127.0.0.1 -p 6379 get 'feed:today:20260811'
-redis-cli -h 127.0.0.1 -p 6379 ttl 'feed:today:20260811'
+redis-cli -h 127.0.0.1 -p 6379 get "feed:today:$(date +%Y%m%d)"
+redis-cli -h 127.0.0.1 -p 6379 ttl "feed:today:$(date +%Y%m%d)"
 ```
 
 키 프리픽스는 `STORIX-Common/src/main/java/com/storix/common/utils/RedisKeyStatic.java`에 전부 정의돼 있다.
@@ -204,7 +213,7 @@ MySQL 접속이 필요하면 계정을 사용자에게 요청한다. `local.env`
 - **`ddl-auto: update`가 로컬 DB에 걸린다.** 엔티티에 `@Index`나 컬럼을 추가한 상태로 앱을 띄우면 로컬 스키마가 실제로 바뀐다. 의도한 것이면 좋은 검증이고, 아니면 미리 알린다
 - **컬럼 삭제는 반영되지 않는다.** `update`는 DROP을 안 한다. 엔티티에서 필드를 지워도 컬럼은 남는다
 - **스케줄러는 STORIX-Batch 모듈에 있다.** API만 띄우면 배치가 안 돈다. 배치 동작을 봐야 하면 사용자에게 알리고, 가능하면 배치가 채우는 상태를 직접 만들어(예: Redis 키 주입) 조회 경로만 검증한다
-- **끝나면 정리한다.** 내가 만든 테스트 데이터는 API로 지우고, 남긴 Redis 키도 지우고, `docker stop storix-redis-local`으로 Redis를, 켰다면 `docker stop storix-elasticsearch-local`로 ES를 내린다. 앱은 내가 `app.sh` 로 켰으면 `app.sh stop`, 사용자가 띄웠으면 건드리지 않는다
+- **끝나면 정리한다.** 내가 만든 테스트 데이터는 API로 지우고, 남긴 Redis 키도 지우고, 쿠키 jar 는 `rm -f ~/.storix-local/cookies/*.txt` 로 지운다. Redis · ES 는 처음 확인할 때 꺼져 있어서 내가 켠 것만 `docker stop` 한다. 원래 떠 있던 건 다른 세션이 쓰는 중일 수 있다. 앱은 내가 `app.sh` 로 켰으면 `app.sh stop`, 사용자가 띄웠으면 건드리지 않는다
 
 ## 테스트 데이터 만들기
 
