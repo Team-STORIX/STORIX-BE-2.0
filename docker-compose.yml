@@ -1,25 +1,61 @@
+# app 은 blue / green 두 벌을 번갈아 띄워 무중단으로 바꾼다. 교체는 deploy/deploy.sh 가 한다.
+# 평소에는 한 색만 떠 있고, 어느 색인지는 deploy.state 의 ACTIVE_COLOR 에 남는다.
+x-app: &app
+  image: ${ECR_REGISTRY}/storix-api:${IMAGE_TAG}
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    - SPRING_PROFILES_ACTIVE=${ENV}
+    - TZ=Asia/Seoul
+  depends_on:
+    - cache
+  networks:
+    - storix-net
+  mem_limit: 1536m
+  # 진행 중인 요청을 마치고 내려가도록 Spring graceful shutdown 30초보다 길게 둔다
+  stop_grace_period: 40s
+  logging:
+    driver: json-file
+    options:
+      max-size: "100m"
+      max-file: "3"
+
 services:
-  app:
-    image: ${ECR_REGISTRY}/storix-api:${IMAGE_TAG}
-    container_name: storix-app
+  caddy:
+    image: caddy:2.10.0-alpine
+    container_name: storix-caddy
     restart: unless-stopped
-    env_file: .env
+    environment:
+      - SITE_DOMAIN=${SITE_DOMAIN}
     ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
       - "8080:8080"
       - "9100:9100"
-    environment:
-      - SPRING_PROFILES_ACTIVE=${ENV}
-      - TZ=Asia/Seoul
-    depends_on:
-      - cache
+    volumes:
+      # 파일 하나만 마운트하면 upstream.caddy 를 바꿔도 컨테이너가 옛 파일을 본다
+      - ./caddy:/etc/caddy:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    mem_limit: 128m
     networks:
       - storix-net
-    mem_limit: 1536m
     logging:
       driver: json-file
       options:
-        max-size: "100m"
+        max-size: "50m"
         max-file: "3"
+
+  app-blue:
+    <<: *app
+    container_name: storix-app-blue
+    profiles: [blue]
+
+  app-green:
+    <<: *app
+    container_name: storix-app-green
+    profiles: [green]
 
   batch:
     image: ${ECR_REGISTRY}/storix-batch:${IMAGE_TAG}
@@ -34,6 +70,8 @@ services:
     networks:
       - storix-net
     mem_limit: 1024m
+    # 스케줄러가 도는 작업을 30초까지 기다리고 내려가도록 그보다 길게 둔다
+    stop_grace_period: 45s
     logging:
       driver: json-file
       options:
@@ -101,6 +139,8 @@ services:
 
 volumes:
   alloy-data:
+  caddy-config:
+  caddy-data:
   es-data:
   redis-data:
 
