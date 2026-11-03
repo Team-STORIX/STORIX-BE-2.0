@@ -91,10 +91,7 @@ export IMAGE_TAG SITE_DOMAIN
 OLD=""
 PREV=$(state_get ACTIVE_COLOR)
 if [ -n "$PREV" ] && running "storix-app-$PREV"; then OLD=$PREV; fi
-# blue/green 이전 compose 의 단일 컨테이너. 첫 배포 때 한 번만 거친다
-LEGACY=""
-running storix-app && LEGACY=storix-app
-if [ -n "$OLD" ]; then OLD_NAME=storix-app-$OLD; else OLD_NAME=$LEGACY; fi
+if [ -n "$OLD" ]; then OLD_NAME=storix-app-$OLD; else OLD_NAME=""; fi
 
 NEW=blue
 [ "$OLD" = blue ] && NEW=green
@@ -125,18 +122,13 @@ reload_caddy() {
 # 트래픽을 새 색으로 넘기고 deploy.state 를 쓰기 전에 어디서 끝나든 옛 버전이 다시 받게 한다
 STOPPED_FIRST=""
 SWITCHED=""
-LEGACY_STOPPED=""
 COMMITTED=""
 rollback() {
   [ -n "$COMMITTED" ] && return 0
   set +e
   log "배포 실패. 옛 버전으로 되돌린다"
   docker logs --tail 80 "$NEW_NAME" 2>/dev/null
-  if [ -n "$LEGACY_STOPPED" ]; then
-    # Caddy 가 잡은 8080 · 9100 을 비워야 옛 컨테이너가 다시 뜬다
-    docker rm -f storix-caddy
-    docker start "$LEGACY"
-  elif [ -n "$SWITCHED" ] && [ -n "$OLD" ]; then
+  if [ -n "$SWITCHED" ] && [ -n "$OLD" ]; then
     write_upstream "$OLD_NAME"
     reload_caddy || log "caddy reload 실패. upstream.caddy 는 $OLD_NAME 로 되돌렸다"
   fi
@@ -174,12 +166,6 @@ log "$NEW_NAME 헬스체크 통과"
 SWITCHED=1
 write_upstream "$NEW_NAME"
 
-# 옛 단일 컨테이너가 8080 · 9100 을 잡고 있어서 내린 뒤에 Caddy 를 띄운다. 지우는 건 성공한 뒤에
-if [ -n "$LEGACY" ]; then
-  log "옛 $LEGACY 를 내리고 Caddy 를 띄운다"
-  LEGACY_STOPPED=1
-  docker stop -t 40 "$LEGACY"
-fi
 docker compose up -d --no-deps caddy
 reload_caddy || { log "caddy reload 실패"; exit 1; }
 curl -sf -o /dev/null http://127.0.0.1:9100/actuator/health || { log "Caddy 를 거친 헬스체크 실패"; exit 1; }
@@ -188,8 +174,6 @@ log "트래픽을 $NEW_NAME 로 넘겼다"
 ACTIVE_COLOR=$NEW
 write_state
 COMMITTED=1
-
-[ -n "$LEGACY" ] && docker rm "$LEGACY"
 
 if [ -n "$OLD" ]; then
   docker compose --profile "$OLD" stop "app-$OLD"
