@@ -47,7 +47,8 @@ public class HotTopicRoomFeatureService {
                 .toList();
 
         List<Long> roomIds = validRooms.stream().map(TopicRoom::getId).toList();
-        Map<Long, List<Long>> membersByRoom = safeLoadMembers(roomIds);
+        // 조회 실패 시 빈 수신자로 발송 표시만 남지 않게 이번 회차 중단
+        Map<Long, List<Long>> membersByRoom = topicRoomAdaptor.loadMembersByRoomIds(roomIds);
 
         Set<Long> adultRoomMemberIds = validRooms.stream()
                 .filter(room -> isAdultRoom(worksByWorksId, room))
@@ -55,7 +56,7 @@ public class HotTopicRoomFeatureService {
                 .collect(Collectors.toSet());
         Map<Long, LocalDateTime> verifiedAtByUserId = adultRoomMemberIds.isEmpty()
                 ? Collections.emptyMap()
-                : safeLoadVerifiedAt(adultRoomMemberIds.stream().toList());
+                : adultVerificationAdaptor.findLatestVerifiedAtByUserIds(adultRoomMemberIds.stream().toList());
 
         LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
@@ -80,19 +81,18 @@ public class HotTopicRoomFeatureService {
                         topicRoomAdaptor.restoreHotNotified(room.getId(), room.getHotNotifiedAt(), room.getHotDroppedAt());
                         throw e;
                     }
-                } else if (room.getHotDroppedAt() != null) {
-                    // 대기 기간 안에 다시 들어온 방은 알림 없이 계속 HOT 으로 취급
-                    topicRoomAdaptor.clearHotDropped(room.getId());
                 }
             } catch (Exception e) {
                 log.error(">>> [HotTopicRoom] 룸 선정 알림 실패 roomId={}", room.getId(), e);
             }
         }
 
+        List<Long> hotRoomIds = rooms.stream().map(TopicRoom::getId).toList();
         try {
-            topicRoomAdaptor.markHotDropped(rooms.stream().map(TopicRoom::getId).toList(), now);
+            topicRoomAdaptor.clearHotDroppedWithinCooldown(hotRoomIds, renotifyBefore);
+            topicRoomAdaptor.markHotDropped(hotRoomIds, now);
         } catch (Exception e) {
-            log.error(">>> [HotTopicRoom] 밀려난 방 표시 실패", e);
+            log.error(">>> [HotTopicRoom] HOT 이탈 · 복귀 표시 실패", e);
         }
     }
 
@@ -117,24 +117,6 @@ public class HotTopicRoomFeatureService {
             return worksAdaptor.loadWorksMapByIds(worksIds);
         } catch (Exception e) {
             log.error(">>> [HotTopicRoom] 작품 정보 배치 조회 실패", e);
-            return Collections.emptyMap();
-        }
-    }
-
-    private Map<Long, List<Long>> safeLoadMembers(List<Long> roomIds) {
-        try {
-            return topicRoomAdaptor.loadMembersByRoomIds(roomIds);
-        } catch (Exception e) {
-            log.error(">>> [HotTopicRoom] 방별 멤버 조회 실패", e);
-            return Collections.emptyMap();
-        }
-    }
-
-    private Map<Long, LocalDateTime> safeLoadVerifiedAt(List<Long> memberIds) {
-        try {
-            return adultVerificationAdaptor.findLatestVerifiedAtByUserIds(memberIds);
-        } catch (Exception e) {
-            log.error(">>> [HotTopicRoom] 성인 인증 배치 조회 실패", e);
             return Collections.emptyMap();
         }
     }

@@ -85,8 +85,8 @@ public class TopicRoomAdaptor {
     }
 
     @Transactional
-    public void clearHotDropped(Long roomId) {
-        topicRoomRepository.clearHotDropped(roomId);
+    public int clearHotDroppedWithinCooldown(List<Long> hotRoomIds, LocalDateTime renotifyBefore) {
+        return topicRoomRepository.clearHotDroppedWithinCooldown(hotRoomIds, renotifyBefore);
     }
 
     @Transactional
