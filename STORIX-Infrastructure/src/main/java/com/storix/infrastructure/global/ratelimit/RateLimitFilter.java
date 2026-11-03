@@ -98,8 +98,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // 앞단 프록시가 실제 접속 IP 를 X-Forwarded-For 맨 뒤에 붙임. 앞쪽 값은 클라이언트가 위조 가능
-    // Caddy 는 클라이언트가 보낸 값을 버리고 접속 IP 만 적는다. ALB 를 거칠 때는 ALB 가 붙인 값을 그대로 넘긴다
+    // Caddy 가 클라이언트가 보낸 값을 버리고 실제 접속 IP 만 X-Forwarded-For 에 적는다
     private String clientIp(HttpServletRequest request) {
         String forwardedFor = request.getHeader(FORWARDED_FOR_HEADER);
         if (!StringUtils.hasText(forwardedFor)) return request.getRemoteAddr();
