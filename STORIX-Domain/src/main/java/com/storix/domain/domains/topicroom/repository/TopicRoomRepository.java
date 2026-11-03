@@ -54,12 +54,7 @@ public interface TopicRoomRepository extends JpaRepository<TopicRoom, Long>, Top
     int markHotNotifiedIfDue(@Param("id") Long id, @Param("now") LocalDateTime now,
                              @Param("renotifyBefore") LocalDateTime renotifyBefore);
 
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE TopicRoom t SET t.hotNotifiedAt = :notifiedAt, t.hotDroppedAt = :droppedAt WHERE t.id = :id")
-    void restoreHotNotified(@Param("id") Long id, @Param("notifiedAt") LocalDateTime notifiedAt,
-                            @Param("droppedAt") LocalDateTime droppedAt);
-
-    // 대기 기간 안에 다시 들어온 방만, 알림 차례 · 발행 실패로 복구된 방은 유지
+    // 대기 기간 안에 다시 들어온 방만, 알림 차례 · 실패로 롤백된 방은 유지
     @Modifying(clearAutomatically = true)
     @Query("""
         UPDATE TopicRoom t SET t.hotDroppedAt = NULL
