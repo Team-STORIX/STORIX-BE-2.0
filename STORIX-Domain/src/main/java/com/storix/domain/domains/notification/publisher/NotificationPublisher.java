@@ -1,6 +1,7 @@
 package com.storix.domain.domains.notification.publisher;
 
 import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.event.NotificationPushEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,7 +32,7 @@ public class NotificationPublisher {
     }
 
     // 발행 실패를 호출부에 그대로 전달
-    public void publishOrThrow(NotificationEvent event) {
+    public void publishPushOrThrow(NotificationPushEvent event) {
         eventPublisher.publishEvent(event);
     }
 

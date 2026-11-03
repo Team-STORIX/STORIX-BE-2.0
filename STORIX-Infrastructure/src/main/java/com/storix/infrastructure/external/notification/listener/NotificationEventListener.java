@@ -3,6 +3,7 @@ package com.storix.infrastructure.external.notification.listener;
 import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.notification.dto.DispatchResult;
 import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.event.NotificationPushEvent;
 import com.storix.domain.domains.notification.service.NotificationDispatchService;
 import com.storix.infrastructure.external.notification.fcm.FcmPushExecutor;
 import lombok.RequiredArgsConstructor;
@@ -30,18 +31,33 @@ public class NotificationEventListener {
             // 1. Domain 비즈니스 로직 위임 (인앱 저장 + 푸시 발송 대상 결정)
             DispatchResult result = notificationDispatchService.dispatch(event);
 
-            // 2. 푸시 발송 대상 없으면 종료
-            if (!result.shouldSendPush()) return;
-
-            // 3. FCM 멀티캐스트 발송 + 토큰 후처리 (일시오류 시 최대 3회 백오프 재시도)
-            fcmPushExecutor.sendWithRetry(
-                    result.tokens(),
-                    buildData(event, result.notificationId(), result.unreadCount()),
-                    STORIXStatic.Notification.PUSH_COLLAPSE_KEY_PREFIX + result.notificationId(),
-                    "notificationId=" + result.notificationId());
+            // 2. FCM 멀티캐스트 발송 + 토큰 후처리
+            sendPush(event, result);
         } catch (Exception e) {
             log.error(">>> [Notification] dispatch failed event={}, cause={}", event, e.getMessage(), e);
         }
+    }
+
+    // 앱 안 알림은 발행한 트랜잭션에서 이미 저장
+    @Async("notificationConsumerExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPushEvent(NotificationPushEvent pushEvent) {
+        try {
+            sendPush(pushEvent.event(), notificationDispatchService.dispatchPush(pushEvent));
+        } catch (Exception e) {
+            log.error(">>> [Notification] push failed event={}, cause={}", pushEvent, e.getMessage(), e);
+        }
+    }
+
+    // 일시 오류는 최대 3회 백오프 재시도
+    private void sendPush(NotificationEvent event, DispatchResult result) {
+        if (!result.shouldSendPush()) return;
+
+        fcmPushExecutor.sendWithRetry(
+                result.tokens(),
+                buildData(event, result.notificationId(), result.unreadCount()),
+                STORIXStatic.Notification.PUSH_COLLAPSE_KEY_PREFIX + result.notificationId(),
+                "notificationId=" + result.notificationId());
     }
 
     // FCM data payload 빌드
