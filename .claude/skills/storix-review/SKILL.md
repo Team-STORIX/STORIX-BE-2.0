@@ -63,7 +63,7 @@ check-then-act(exists→save, count→insert)에 락/제약이 없으면 동시 
 - 트리거 질문: *"이 값이 명령행 · 파일 · 네트워크 중 어디에 남고, 거기서 누가 읽을 수 있나?"*
 - 상시 체크
   - **포트 바인딩**: `docker run -p 6379:6379` 처럼 주소 없이 열면 같은 네트워크 모든 기기에 열린다. 인증을 끈 서비스(`xpack.security.enabled=false` 등)면 더 위험. 로컬용은 `-p 127.0.0.1:6379:6379`
-  - **명령행 인자 속 비밀값**: `curl -d "{\"pw\":\"$SECRET\"}"` 는 셸이 값을 펼쳐 인자로 넘겨 `ps` 로 보인다. `jq -n '{pw: env.SECRET}' | curl --data-binary @-` 처럼 표준 입력으로
+  - **명령행 인자 속 비밀값**: `curl -d "{\"pw\":\"$SECRET\"}"` 는 셸이 값을 펼쳐 인자로 넘겨 `ps` 로 보인다. `jq -n '{pw: env.SECRET}' | curl -H 'Content-Type: application/json' --data-binary @-` 처럼 표준 입력으로
   - **문자열로 조립한 JSON**: 값에 `"` · `\` · 줄바꿈이 있으면 깨지거나 다른 값이 된다. `jq` · 직렬화 라이브러리로 만든다
   - **비밀값을 담은 파일**: 토큰 · 쿠키 jar 를 `/tmp` 에 기본 권한으로 두지 않는다. 나만 읽는 폴더(`mkdir -m 700`)에 두고 끝나면 지운다
 - STORIX 예: #416 `storix-local-test` 가 Redis · ES 를 모든 네트워크에 열고(ES 는 인증 꺼짐), `pendingId` · 어드민 비밀번호를 `curl -d` 인자로, refreshToken 쿠키를 `/tmp` 에 남김.
