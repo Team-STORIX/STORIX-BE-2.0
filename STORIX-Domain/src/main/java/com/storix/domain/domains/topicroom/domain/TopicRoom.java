@@ -61,6 +61,14 @@ public class TopicRoom extends BaseTimeEntity {
     @Column(name = "activity_score", nullable = false)
     private Double activityScore;
 
+    // HOT 토픽룸 선정 알림 마지막 발송 시각
+    @Column(name = "hot_notified_at")
+    private LocalDateTime hotNotifiedAt;
+
+    // 알림 뒤 HOT 목록에서 밀려난 시각, 다시 들어오면 비움
+    @Column(name = "hot_dropped_at")
+    private LocalDateTime hotDroppedAt;
+
     @Builder
     public TopicRoom(String topicRoomName, Long worksId) {
         this.topicRoomName = topicRoomName;

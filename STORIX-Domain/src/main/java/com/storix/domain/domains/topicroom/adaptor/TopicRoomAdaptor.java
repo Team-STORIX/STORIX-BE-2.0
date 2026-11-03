@@ -72,6 +72,28 @@ public class TopicRoomAdaptor {
         return topicRoomRepository.findTop15ByOrderByActivityScoreDescLastChatTimeDesc();
     }
 
+    // 알림 보낼 차례면 표시하고 true
+    @Transactional
+    public boolean markHotNotifiedIfDue(Long roomId, LocalDateTime now, LocalDateTime renotifyBefore) {
+        return topicRoomRepository.markHotNotifiedIfDue(roomId, now, renotifyBefore) == 1;
+    }
+
+    // 발행 실패 시 다음 실행에서 다시 보내도록 표시 전 값으로 복구
+    @Transactional
+    public void restoreHotNotified(Long roomId, LocalDateTime notifiedAt, LocalDateTime droppedAt) {
+        topicRoomRepository.restoreHotNotified(roomId, notifiedAt, droppedAt);
+    }
+
+    @Transactional
+    public int clearHotDroppedWithinCooldown(List<Long> hotRoomIds, LocalDateTime renotifyBefore) {
+        return topicRoomRepository.clearHotDroppedWithinCooldown(hotRoomIds, renotifyBefore);
+    }
+
+    @Transactional
+    public int markHotDropped(List<Long> hotRoomIds, LocalDateTime now) {
+        return topicRoomRepository.markHotDropped(hotRoomIds, now);
+    }
+
     public List<TopicRoom> findAllActiveRooms() {
         return topicRoomRepository.findAllActiveRooms();
     }

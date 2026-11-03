@@ -30,6 +30,11 @@ public class NotificationPublisher {
         }
     }
 
+    // 발행 실패를 호출부에 그대로 전달
+    public void publishOrThrow(NotificationEvent event) {
+        eventPublisher.publishEvent(event);
+    }
+
     // 본인 글에 본인이 좋아요/댓글을 달 경우 알림 발행 X (actorUserId == recipientUserId)
     public void publishUnlessSelf(Long actorUserId, NotificationEvent event) {
         if (actorUserId != null && event != null

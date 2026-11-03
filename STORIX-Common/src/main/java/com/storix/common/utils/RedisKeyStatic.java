@@ -48,7 +48,6 @@ public final class RedisKeyStatic {
     // 선정 알림 dedup — {prefix}{yyyyMMdd}:{id}
     public static final class Notification {
         public static final String FEATURED_FEED_PREFIX = "featured:feed:";
-        public static final String FEATURED_TOPIC_ROOM_PREFIX = "featured:topicroom:";
 
         private Notification() {
         }
