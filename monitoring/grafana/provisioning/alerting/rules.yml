@@ -462,3 +462,31 @@ groups:
               expression: A
               conditions:
                 - evaluator: { type: gt, params: [10] }
+
+      - uid: storix-cert-renew-failed
+        title: 'HTTPS 인증서 발급 · 갱신 실패'
+        condition: B
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.env }} Caddy 가 HTTPS 인증서를 받지 못해 다시 시도하고 있습니다. 갱신은 만료 30일 전부터 시도합니다.'
+          runbook: 'Loki: {container="storix-caddy"} |= "will retry". 보안 그룹 80 · 443, DNS 가 서버를 가리키는지, Let''s Encrypt 발급 한도 확인'
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            relativeTimeRange: { from: 1800, to: 0 }
+            datasourceUid: loki
+            model:
+              refId: A
+              queryType: instant
+              expr: 'sum by (env) (count_over_time({container="storix-caddy"} |~ "will retry|could not get certificate from issuer" [30m]))'
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
