@@ -2,9 +2,21 @@
 # 어느 색으로 보낼지는 deploy.sh 가 upstream.caddy 에 적고 caddy reload 로 바꾼다.
 {
 	admin localhost:2019
-	# ALB 를 거친 요청은 접속 로그에 ALB 가 아니라 X-Forwarded-For 의 실제 IP 를 남긴다
+	# ALB 를 거친 요청은 접속 로그에 ALB 가 아니라 X-Forwarded-For 의 실제 IP 를 남긴다.
+	# ALB 는 클라이언트가 보낸 값 뒤에 실제 IP 를 붙여서 오른쪽부터 읽어야 위조되지 않는다
 	servers :8080 {
 		trusted_proxies static private_ranges
+		trusted_proxies_strict
+	}
+	# 앱이 응답하지 않을 때 남는 오류 로그에도 요청 주소가 찍혀서 같은 값을 지운다
+	log default {
+		output stderr
+		format filter {
+			request>uri query {
+				delete code
+				delete state
+			}
+		}
 	}
 }
 
