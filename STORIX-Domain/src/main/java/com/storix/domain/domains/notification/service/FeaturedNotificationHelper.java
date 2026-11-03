@@ -34,7 +34,7 @@ public class FeaturedNotificationHelper {
     @Transactional
     public void notifyHotTopicRoom(Long roomId, String roomName, List<Long> memberIds) {
         for (Long memberId : memberIds) {
-            notificationPublisher.publish(NotificationEvent.hotTopicRoom(memberId, roomId, roomName));
+            notificationPublisher.publishOrThrow(NotificationEvent.hotTopicRoom(memberId, roomId, roomName));
         }
     }
 }
