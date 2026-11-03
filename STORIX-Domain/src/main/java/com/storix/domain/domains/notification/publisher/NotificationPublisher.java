@@ -1,6 +1,7 @@
 package com.storix.domain.domains.notification.publisher;
 
 import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.event.NotificationPushEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,6 +29,11 @@ public class NotificationPublisher {
             log.warn(">>> [Notification] publish failed recipient={}, type={}, cause={}",
                     event.recipientUserId(), event.notificationType(), e.getMessage());
         }
+    }
+
+    // 발행 실패를 호출부에 그대로 전달
+    public void publishPushOrThrow(NotificationPushEvent event) {
+        eventPublisher.publishEvent(event);
     }
 
     // 본인 글에 본인이 좋아요/댓글을 달 경우 알림 발행 X (actorUserId == recipientUserId)

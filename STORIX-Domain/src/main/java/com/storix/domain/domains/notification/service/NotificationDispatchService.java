@@ -7,6 +7,7 @@ import com.storix.domain.domains.notification.domain.Notification;
 import com.storix.domain.domains.notification.domain.NotificationSetting;
 import com.storix.domain.domains.notification.dto.DispatchResult;
 import com.storix.domain.domains.notification.event.NotificationEvent;
+import com.storix.domain.domains.notification.event.NotificationPushEvent;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
 import com.storix.domain.domains.user.adaptor.UserBlockAdaptor;
@@ -50,22 +51,30 @@ public class NotificationDispatchService {
         }
 
         // 2. 인앱 알림함 저장 > 수신 동의와 무관, 항상 저장
-        Notification saved = notificationAdaptor.save(Notification.builder()
-                .userId(event.recipientUserId())
-                .notificationType(event.notificationType())
-                .targetType(event.targetType())
-                .targetId(event.targetId())
-                .parentTargetId(event.parentTargetId())
-                .title(event.title())
-                .content(event.content())
-                .build());
+        Notification saved = notificationAdaptor.save(Notification.from(event));
 
+        return resolvePush(user, event, saved.getId());
+    }
+
+    // 앱 안 알림을 미리 저장한 경로, 커밋 뒤 푸시 대상만 정한다
+    @Transactional(readOnly = true)
+    public DispatchResult dispatchPush(NotificationPushEvent pushEvent) {
+        NotificationEvent event = pushEvent.event();
+        User user = userAdaptor.findUserById(event.recipientUserId());
+        if (user.getAccountState() == AccountState.DELETED) {
+            log.debug(">>> [Notification] push skipped (user deleted) recipientUserId={}", event.recipientUserId());
+            return DispatchResult.skip();
+        }
+        return resolvePush(user, event, pushEvent.notificationId());
+    }
+
+    private DispatchResult resolvePush(User user, NotificationEvent event, Long notificationId) {
         // 3. 정지 유저는 제재/신고 안내 타입만 푸시 허용
         if (user.getAccountState() == AccountState.SUSPENDED
                 && !event.notificationType().deliverableToSuspendedUser()) {
             log.debug(">>> [Notification] push skipped (user suspended) recipientUserId={}, type={}",
                     event.recipientUserId(), event.notificationType());
-            return DispatchResult.inAppOnly(saved.getId());
+            return DispatchResult.inAppOnly(notificationId);
         }
 
         // 4. 푸시 수신 동의 체크
@@ -73,14 +82,14 @@ public class NotificationDispatchService {
         if (!setting.acceptsType(event.notificationType())) {
             log.debug(">>> [Notification] push skipped (type disabled) recipientUserId={}, type={}",
                     event.recipientUserId(), event.notificationType());
-            return DispatchResult.inAppOnly(saved.getId());
+            return DispatchResult.inAppOnly(notificationId);
         }
 
         // 5. 푸시 대상 확정 — 활성 디바이스 토큰 조회 > 없으면 인앱만
         List<String> tokens = pushDeviceAdaptor.findActiveFcmTokensByUserId(event.recipientUserId());
         if (tokens.isEmpty()) {
             log.debug(">>> [Notification] no active device for recipientUserId={}", event.recipientUserId());
-            return DispatchResult.inAppOnly(saved.getId());
+            return DispatchResult.inAppOnly(notificationId);
         }
 
         // 뱃지 표시용 미읽음 총합 — 방금 저장한 알림 포함, 토픽룸 채팅 미읽음까지 합산
@@ -94,6 +103,6 @@ public class NotificationDispatchService {
                 .addKeyValue("badgeChat", chat)
                 .log(">>> [Badge] 배지 개수 산출");
 
-        return DispatchResult.pushTo(saved.getId(), tokens, inbox + chat);
+        return DispatchResult.pushTo(notificationId, tokens, inbox + chat);
     }
 }

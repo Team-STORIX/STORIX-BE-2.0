@@ -1,6 +1,7 @@
 package com.storix.domain.domains.notification.domain;
 
 import com.storix.common.model.BaseTimeEntity;
+import com.storix.domain.domains.notification.event.NotificationEvent;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -66,6 +67,18 @@ public class Notification extends BaseTimeEntity {
         this.isRead = false;
     }
 
+
+    public static Notification from(NotificationEvent event) {
+        return Notification.builder()
+                .userId(event.recipientUserId())
+                .notificationType(event.notificationType())
+                .targetType(event.targetType())
+                .targetId(event.targetId())
+                .parentTargetId(event.parentTargetId())
+                .title(event.title())
+                .content(event.content())
+                .build();
+    }
 
     // 운영자 브로드캐스트용 (이동 X)
     public static Notification ofBroadcast(Long userId, NotificationType notificationType, String title, String content) {

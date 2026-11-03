@@ -2,23 +2,38 @@
 # 어느 색으로 보낼지는 deploy.sh 가 upstream.caddy 에 적고 caddy reload 로 바꾼다.
 {
 	admin localhost:2019
+	# 앱이 응답하지 않을 때 남는 오류 로그에도 요청 주소가 찍혀서 같은 값을 지운다
+	log default {
+		output stderr
+		format filter {
+			request>uri query {
+				delete code
+				delete state
+			}
+		}
+	}
+}
+
+# 접속 로그는 alloy 가 Loki 로 보낸다. 로그인 콜백의 일회용 code · state 는 지운다
+(access_log) {
+	log {
+		output stdout
+		format filter {
+			request>uri query {
+				delete code
+				delete state
+			}
+			resp_headers delete
+		}
+	}
 }
 
 import /etc/caddy/upstream.caddy
 
 {$SITE_DOMAIN} {
+	import access_log
 	reverse_proxy {
 		import app_upstream
-	}
-}
-
-# ALB 를 떼기 전까지 ALB 가 이 포트로 보낸다.
-# RateLimitFilter 가 X-Forwarded-For 맨 뒤 값을 접속 IP 로 쓰므로 ALB 가 붙인 값을 그대로 넘긴다.
-# Let's Encrypt 의 HTTP-01 발급 확인 요청도 ALB 를 거쳐 이 포트로 들어와 처리된다.
-:8080 {
-	reverse_proxy {
-		import app_upstream
-		header_up X-Forwarded-For {header.X-Forwarded-For}
 	}
 }
 

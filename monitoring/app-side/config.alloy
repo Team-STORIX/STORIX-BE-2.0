@@ -8,7 +8,7 @@ discovery.relabel "storix" {
 
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex         = "/(storix-app|storix-app-blue|storix-app-green|storix-batch)"
+    regex         = "/(storix-app-blue|storix-app-green|storix-batch|storix-caddy)"
     action        = "keep"
   }
 
