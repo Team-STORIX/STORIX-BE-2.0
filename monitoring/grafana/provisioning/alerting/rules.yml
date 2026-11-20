@@ -15,7 +15,7 @@ groups:
           severity: critical
         annotations:
           summary: '{{ $labels.application }} 인스턴스가 스크랩되지 않습니다 (다운 또는 네트워크 단절).'
-          runbook: 'EC2 상태 / 보안그룹(9100·9101) / docker ps 확인'
+          runbook: 'EC2 상태 / 보안그룹(9100) / docker ps 확인'
         noDataState: Alerting
         execErrState: Alerting
         data:
