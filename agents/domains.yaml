@@ -1,0 +1,194 @@
+# 도메인 레지스트리. 도메인 하나 = com.storix.domain.domains 바로 아래 패키지 하나
+# dependsOn 은 허용한 도메인 의존 목록이다. 처음 값은 2026-11-20 코드의 의존을 그대로 옮긴 기준선이라 줄이는 방향으로만 고친다
+# 코드 없이 등록만 한 도메인은 기획 중으로 보고 dependsOn 으로 영향 범위를 계산한다
+domains:
+  adultverification:
+    description: 성인 인증 상태와 이력
+    dependsOn:
+      - user
+  appversion:
+    description: 앱 최소 · 최신 버전 관리
+    dependsOn:
+      - pushdevice
+  bannedword:
+    description: 금칙어 관리와 검사
+    dependsOn: []
+  chat:
+    description: 토픽룸 채팅 메시지
+    dependsOn:
+      - topicroom
+      - user
+      - works
+  event:
+    description: 이벤트 · 팝업 · 배너 · 출석 체크 · 당첨자
+    dependsOn:
+      - adultverification
+      - user
+      - works
+  favorite:
+    description: 관심 작품
+    dependsOn:
+      - genrescore
+      - works
+  feed:
+    description: 피드 조회 · 반응 · 댓글 · 신고, 오늘의 피드
+    dependsOn:
+      - adultverification
+      - favorite
+      - library
+      - notification
+      - plus
+      - profile
+      - report
+      - search
+      - topicroom
+      - user
+      - works
+  genrescore:
+    description: 사용자 장르 취향 점수
+    dependsOn:
+      - preference
+      - user
+      - works
+  hashtag:
+    description: 해시태그와 추천
+    dependsOn:
+      - favorite
+      - preference
+      - user
+      - works
+  image:
+    description: 이미지 업로드용 S3 키 관리
+    dependsOn: []
+  library:
+    description: 내 서재
+    dependsOn:
+      - adultverification
+      - feed
+      - plus
+      - works
+  notification:
+    description: 알림 저장 · 푸시 발송
+    dependsOn:
+      - chat
+      - event
+      - pushdevice
+      - topicroom
+      - user
+  onboarding:
+    description: 온보딩 작품 선택
+    dependsOn:
+      - works
+  plus:
+    description: 게시글 · 리뷰 · 별점 작성
+    dependsOn:
+      - adultverification
+      - feed
+      - genrescore
+      - hashtag
+      - image
+      - library
+      - profile
+      - review
+      - search
+      - user
+      - works
+  preference:
+    description: 취향 탐색
+    dependsOn:
+      - adultverification
+      - favorite
+      - hashtag
+      - plus
+      - works
+  profile:
+    description: 내 · 다른 사람 프로필과 활동
+    dependsOn:
+      - adultverification
+      - bannedword
+      - favorite
+      - feed
+      - genrescore
+      - hashtag
+      - image
+      - library
+      - plus
+      - user
+      - works
+  pushdevice:
+    description: 푸시 기기 토큰
+    dependsOn: []
+  report:
+    description: 신고 처리와 제재
+    dependsOn:
+      - chat
+      - feed
+      - library
+      - notification
+      - plus
+      - review
+      - topicroom
+      - user
+      - works
+  review:
+    description: 작품 상세 리뷰 반응 · 신고
+    dependsOn:
+      - library
+      - notification
+      - plus
+      - report
+      - topicroom
+      - user
+      - works
+  search:
+    description: 검색 · 색인 · 검색 기록 · 인기 검색어
+    dependsOn:
+      - adultverification
+      - feed
+      - plus
+      - works
+  topicroom:
+    description: 토픽룸 · 참여자 · 랭킹 · 안 읽은 메시지
+    dependsOn:
+      - adultverification
+      - bannedword
+      - chat
+      - genrescore
+      - notification
+      - pushdevice
+      - report
+      - search
+      - user
+      - works
+  user:
+    description: 회원 · 인증 · 약관 · 차단 · 칭호
+    dependsOn:
+      - adultverification
+      - bannedword
+      - chat
+      - favorite
+      - feed
+      - genrescore
+      - image
+      - library
+      - notification
+      - onboarding
+      - plus
+      - pushdevice
+      - report
+      - review
+      - topicroom
+      - works
+  works:
+    description: 작품 · 별칭 · 적재 · 병합
+    dependsOn:
+      - adultverification
+      - event
+      - favorite
+      - genrescore
+      - hashtag
+      - onboarding
+      - plus
+      - preference
+      - search
+      - topicroom
