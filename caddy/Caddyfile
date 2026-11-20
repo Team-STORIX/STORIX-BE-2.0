@@ -37,9 +37,14 @@ import /etc/caddy/upstream.caddy
 	}
 }
 
-# 모니터링 서버의 Prometheus 가 이 포트를 긁는다
+# 모니터링 서버의 Prometheus 가 이 포트를 긁는다. /batch/* 는 batch 컨테이너 지표로 보낸다
 :9100 {
-	reverse_proxy {
-		import metrics_upstream
+	handle_path /batch/* {
+		reverse_proxy storix-batch:9101
+	}
+	handle {
+		reverse_proxy {
+			import metrics_upstream
+		}
 	}
 }
