@@ -30,6 +30,9 @@ public final class AiSearchMockScript {
         if (question.contains("작품외")) {
             return answer(chatId, "OFF_TOPIC", List.of("저는 작품 찾는 걸 도와드려요. ", "찾고 싶은 작품을 말해 주세요!"), List.of());
         }
+        if (question.contains("없는작품")) {
+            return answer(chatId, "WORK_NOT_FOUND", List.of("아직 스토릭스에 없는 작품이에요. ", "작품 추가를 요청해 주시면 확인해 볼게요!"), List.of());
+        }
         if (question.contains("결과없음")) {
             return answer(chatId, "NO_RESULT", List.of("딱 맞는 작품을 못 찾았어요. ", "장르나 분위기를 조금 더 알려 주시겠어요?"), List.of());
         }
