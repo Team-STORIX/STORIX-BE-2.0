@@ -23,14 +23,15 @@ scrape_configs:
       - target_label: application
         replacement: storix-api
 
+  # batch 는 app 서버 안의 컨테이너라 같은 서버를 Caddy 9100 의 /batch 경로로 긁는다
   - job_name: storix-batch
-    metrics_path: /actuator/prometheus
+    metrics_path: /batch/actuator/prometheus
     ec2_sd_configs:
       - region: ap-northeast-2
-        port: 9101
+        port: 9100
         filters:
           - name: tag:Service
-            values: [storix-batch]
+            values: [storix-api]
           - name: instance-state-name
             values: [running]
     relabel_configs:
