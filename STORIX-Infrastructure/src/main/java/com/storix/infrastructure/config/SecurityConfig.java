@@ -2,6 +2,7 @@ package com.storix.infrastructure.config;
 
 import com.storix.infrastructure.global.ratelimit.RateLimitFilter;
 import com.storix.infrastructure.global.security.*;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -109,6 +110,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         (requests) -> requests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                // SSE 가 끝날 때 다시 들어오는 요청. 처음 요청에서 인증을 이미 거쳤다
+                                .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                                 .requestMatchers("/actuator/health").permitAll()
                                 .requestMatchers("/actuator/prometheus").permitAll()
 
