@@ -46,9 +46,7 @@ public final class AiSearchMockScript {
             events.add(new AiSearchMockEvent("progress", new AiSearchProgressEvent("FOUND", "후보 12개 찾음"), STEP_DELAY_MILLIS));
         }
         tokens.forEach(text -> events.add(new AiSearchMockEvent("token", new AiSearchTokenEvent(text), TOKEN_DELAY_MILLIS)));
-        if (!works.isEmpty()) {
-            events.add(new AiSearchMockEvent("works", new AiSearchWorksEvent(works, PIPELINE_VERSION), TOKEN_DELAY_MILLIS));
-        }
+        events.add(new AiSearchMockEvent("works", new AiSearchWorksEvent(works, PIPELINE_VERSION), TOKEN_DELAY_MILLIS));
         events.add(new AiSearchMockEvent("done", new AiSearchDoneEvent(chatId, MOCK_MESSAGE_ID, status), TOKEN_DELAY_MILLIS));
         return events;
     }
