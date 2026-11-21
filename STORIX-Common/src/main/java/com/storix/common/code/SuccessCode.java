@@ -166,7 +166,10 @@ public enum SuccessCode {
 
     // AI chat
     AI_CHAT_ENTRY_LOAD_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_001", "AI 작품 검색 진입 정보를 조회했습니다."),
-    AI_CHAT_RESET_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_002", "AI 작품 검색 대화 기록과 설정을 지웠습니다.");
+    AI_CHAT_RESET_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_002", "AI 작품 검색 대화 기록과 설정을 지웠습니다."),
+    AI_CHAT_SETTING_LOAD_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_003", "챗봇 설정을 조회했습니다."),
+    AI_CHAT_SETTING_SAVE_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_004", "챗봇 설정을 저장했습니다."),
+    AI_CHAT_MESSAGES_LOAD_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_005", "지난 대화를 조회했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

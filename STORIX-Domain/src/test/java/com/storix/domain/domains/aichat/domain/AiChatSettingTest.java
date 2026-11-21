@@ -28,7 +28,8 @@ class AiChatSettingTest {
     void updateSelectableTypes() {
         AiChatSetting setting = AiChatSetting.defaultOf(1L);
 
-        setting.update(true, Set.of(WorksType.WEBTOON, WorksType.BOOK), 1);
+        setting.update(true, Set.of(WorksType.WEBTOON, WorksType.BOOK));
+        setting.completeOnboarding(1);
 
         assertThat(setting.isAdultEnabled()).isTrue();
         assertThat(setting.getWorksTypes()).containsExactlyInAnyOrder(WorksType.WEBTOON, WorksType.BOOK);
@@ -40,7 +41,7 @@ class AiChatSettingTest {
     void rejectComic() {
         AiChatSetting setting = AiChatSetting.defaultOf(1L);
 
-        assertThatThrownBy(() -> setting.update(false, Set.of(WorksType.COMIC), 1))
+        assertThatThrownBy(() -> setting.update(false, Set.of(WorksType.COMIC)))
                 .isSameAs(AiChatUnsupportedWorksTypeException.EXCEPTION);
         assertThat(setting.getWorksTypes()).isEmpty();
     }
@@ -49,7 +50,7 @@ class AiChatSettingTest {
     @DisplayName("온보딩 버전이 오르면 다시 보여 준다")
     void onboardingVersionBump() {
         AiChatSetting setting = AiChatSetting.defaultOf(1L);
-        setting.update(false, Set.of(), 1);
+        setting.completeOnboarding(1);
 
         assertThat(setting.hasSeenOnboarding(2)).isFalse();
     }
