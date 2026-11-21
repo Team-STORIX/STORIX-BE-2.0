@@ -17,6 +17,7 @@ import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.socket.WebSocketHandler;
@@ -120,8 +121,33 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         });
     }
 
+    // Boot 는 실행기 빈이 하나만 보이면 그걸 STOMP 채널에 붙여서, 다른 용도 풀로 채팅이 처리되지 않게 직접 지정한다
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(stompMdcInterceptor, stompHandler);
+        registration.executor(stompInboundExecutor());
+    }
+
+    @Override
+    public void configureClientOutboundChannel(ChannelRegistration registration) {
+        registration.executor(stompOutboundExecutor());
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor stompInboundExecutor() {
+        return stompChannelExecutor("stomp-in-");
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor stompOutboundExecutor() {
+        return stompChannelExecutor("stomp-out-");
+    }
+
+    private static ThreadPoolTaskExecutor stompChannelExecutor(String threadNamePrefix) {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(Runtime.getRuntime().availableProcessors() * 2);
+        executor.setAllowCoreThreadTimeOut(true);
+        executor.setThreadNamePrefix(threadNamePrefix);
+        return executor;
     }
 }
