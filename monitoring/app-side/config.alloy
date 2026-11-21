@@ -76,6 +76,7 @@ loki.write "grafana_cloud" {
 }
 
 // 백업용 원본. Cloud 는 보관 기간이 짧아서 S3 에 env 별 시간 단위로 쌓는다
+// v1.4.2 는 compression 설정이 exporter 까지 안 넘어가서 압축 없이 저장한다. 1.8 부터 된다
 otelcol.receiver.loki "archive" {
   output {
     logs = [otelcol.processor.batch.archive.input]
@@ -97,7 +98,6 @@ otelcol.exporter.awss3 "archive" {
     s3_bucket           = sys.env("LOG_ARCHIVE_BUCKET")
     s3_prefix           = "logs/" + sys.env("ENV")
     s3_partition        = "hour"
-    compression         = "gzip"
   }
 
   marshaler {
@@ -145,12 +145,12 @@ discovery.relabel "apps" {
     action        = "keep"
   }
 
-  // 이미지가 포트를 노출하지 않아서 storix-net 안의 컨테이너 이름으로 주소를 잡는다
+  // 이미지가 포트를 노출하지 않아서 storix-net 안의 컨테이너 이름으로 주소를 잡는다. app 의 actuator 는 관리 포트 9100
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(storix-app-blue|storix-app-green)"
     target_label  = "__address__"
-    replacement   = "$1:8080"
+    replacement   = "$1:9100"
   }
 
   rule {
