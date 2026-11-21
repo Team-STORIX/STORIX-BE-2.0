@@ -165,7 +165,8 @@ public enum SuccessCode {
     ADULT_VERIFICATION_RESET_SUCCESS(HttpStatus.OK, "ADULT_VERIFICATION_SUCCESS_004", "성인인증 이력 삭제에 성공했습니다."),
 
     // AI chat
-    AI_CHAT_ENTRY_LOAD_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_001", "AI 작품 검색 진입 정보를 조회했습니다.");
+    AI_CHAT_ENTRY_LOAD_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_001", "AI 작품 검색 진입 정보를 조회했습니다."),
+    AI_CHAT_RESET_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_002", "AI 작품 검색 대화 기록과 설정을 지웠습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

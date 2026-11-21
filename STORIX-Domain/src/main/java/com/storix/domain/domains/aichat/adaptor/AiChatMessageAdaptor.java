@@ -14,4 +14,8 @@ public class AiChatMessageAdaptor {
     public AiChatMessage save(AiChatMessage message) {
         return aiChatMessageRepository.save(message);
     }
+
+    public int deleteAllByChatId(Long chatId) {
+        return aiChatMessageRepository.deleteAllByChatId(chatId);
+    }
 }

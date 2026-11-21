@@ -20,4 +20,8 @@ public class AiChatAdaptor {
     public Optional<AiChat> findByUserId(Long userId) {
         return aiChatRepository.findByUserId(userId);
     }
+
+    public int deleteById(Long chatId) {
+        return aiChatRepository.deleteByIdDirectly(chatId);
+    }
 }
