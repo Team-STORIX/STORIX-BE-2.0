@@ -135,6 +135,7 @@ services:
       - run
       - --server.http.listen-addr=127.0.0.1:12345
       - --stability.level=experimental
+      - --storage.path=/var/lib/alloy/data
       - /etc/alloy/config.alloy
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
