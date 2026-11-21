@@ -1,8 +1,8 @@
-package com.storix.api.domain.aisearch.usecase;
+package com.storix.api.domain.aichat.usecase;
 
-import com.storix.api.domain.aisearch.controller.dto.AiSearchMessageRequest;
-import com.storix.api.domain.aisearch.mock.AiSearchMockEvent;
-import com.storix.api.domain.aisearch.mock.AiSearchMockScript;
+import com.storix.api.domain.aichat.controller.dto.AiChatMessageRequest;
+import com.storix.api.domain.aichat.mock.AiChatMockEvent;
+import com.storix.api.domain.aichat.mock.AiChatMockScript;
 import com.storix.common.annotation.UseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,27 +14,27 @@ import java.util.concurrent.Executor;
 
 @Slf4j
 @UseCase
-public class AiSearchMockUseCase {
+public class AiChatMockUseCase {
 
     private static final long EMITTER_TIMEOUT_MILLIS = 30_000L;
 
-    private final Executor aiSearchMockExecutor;
+    private final Executor aiChatMockExecutor;
 
-    public AiSearchMockUseCase(@Qualifier("aiSearchMockExecutor") Executor aiSearchMockExecutor) {
-        this.aiSearchMockExecutor = aiSearchMockExecutor;
+    public AiChatMockUseCase(@Qualifier("aiChatMockExecutor") Executor aiChatMockExecutor) {
+        this.aiChatMockExecutor = aiChatMockExecutor;
     }
 
-    public SseEmitter stream(Long chatId, AiSearchMessageRequest request) {
+    public SseEmitter stream(Long chatId, AiChatMessageRequest request) {
         SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MILLIS);
-        aiSearchMockExecutor.execute(() -> {
+        aiChatMockExecutor.execute(() -> {
             try {
-                for (AiSearchMockEvent event : AiSearchMockScript.of(chatId, request.question())) {
+                for (AiChatMockEvent event : AiChatMockScript.of(chatId, request.question())) {
                     Thread.sleep(event.delayMillis());
                     emitter.send(SseEmitter.event().name(event.name()).data(event.data(), MediaType.APPLICATION_JSON));
                 }
                 emitter.complete();
             } catch (IOException e) {
-                log.info(">>>> [AI 검색 mock] 클라이언트 연결 끊김 chatId={}", chatId);
+                log.info(">>>> [AI 채팅 mock] 클라이언트 연결 끊김 chatId={}", chatId);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 emitter.completeWithError(e);

@@ -6,6 +6,10 @@ domains:
     description: 성인 인증 상태와 이력
     dependsOn:
       - user
+  aichat:
+    description: AI 작품 검색 대화방 · 메시지 · 챗봇 설정
+    dependsOn:
+      - works
   appversion:
     description: 앱 최소 · 최신 버전 관리
     dependsOn:

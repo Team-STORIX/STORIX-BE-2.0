@@ -267,7 +267,10 @@ public enum ErrorCode {
     ADULT_VERIFICATION_BIRTH_DATE_MISSING(HttpStatus.BAD_GATEWAY, "ADULT_VERIFICATION_ERROR_006", "본인인증 응답에 생년월일이 없습니다."),
     ADULT_VERIFICATION_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, "ADULT_VERIFICATION_ERROR_007", "본인인증 기관 연동 중 오류가 발생했습니다."),
     ADULT_VERIFICATION_REQUIRED(HttpStatus.FORBIDDEN, "ADULT_VERIFICATION_ERROR_008", "성인인증이 되지 않은 사용자입니다. 프로필 > 설정에서 성인인증을 완료해주세요."),
-    ADULT_VERIFICATION_ALREADY_VERIFIED(HttpStatus.CONFLICT, "ADULT_VERIFICATION_ERROR_009", "이미 성인인증이 유효한 사용자입니다. 인증창을 띄우지 말고 상태를 다시 조회해주세요.");
+    ADULT_VERIFICATION_ALREADY_VERIFIED(HttpStatus.CONFLICT, "ADULT_VERIFICATION_ERROR_009", "이미 성인인증이 유효한 사용자입니다. 인증창을 띄우지 말고 상태를 다시 조회해주세요."),
+
+    // AI chat error
+    AI_CHAT_UNSUPPORTED_WORKS_TYPE(HttpStatus.BAD_REQUEST, "AI_CHAT_ERROR_001", "AI 작품 검색에서 고를 수 없는 작품 유형입니다. 웹툰 · 웹소설 · 단행본 중에서 골라주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;
