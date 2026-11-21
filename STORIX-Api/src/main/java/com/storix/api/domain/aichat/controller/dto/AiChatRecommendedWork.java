@@ -8,6 +8,7 @@ public record AiChatRecommendedWork(
         String title,
         String thumbnailUrl,
         String platform,
+        String genre,
         String reason,
         List<AiChatMatchedClue> matchedClues
 ) {

@@ -24,17 +24,17 @@ public class AiChatMockUseCase {
         this.aiChatMockExecutor = aiChatMockExecutor;
     }
 
-    public SseEmitter stream(Long chatId, AiChatMessageRequest request) {
+    public SseEmitter stream(AiChatMessageRequest request) {
         SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MILLIS);
         aiChatMockExecutor.execute(() -> {
             try {
-                for (AiChatMockEvent event : AiChatMockScript.of(chatId, request.question())) {
+                for (AiChatMockEvent event : AiChatMockScript.of(request.question())) {
                     Thread.sleep(event.delayMillis());
                     emitter.send(SseEmitter.event().name(event.name()).data(event.data(), MediaType.APPLICATION_JSON));
                 }
                 emitter.complete();
             } catch (IOException e) {
-                log.info(">>>> [AI 채팅 mock] 클라이언트 연결 끊김 chatId={}", chatId);
+                log.info(">>>> [AI 채팅 mock] 클라이언트 연결 끊김");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 emitter.completeWithError(e);

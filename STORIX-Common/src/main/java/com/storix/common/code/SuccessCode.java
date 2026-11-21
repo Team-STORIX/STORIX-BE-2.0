@@ -162,7 +162,10 @@ public enum SuccessCode {
     ADULT_VERIFICATION_READY_SUCCESS(HttpStatus.CREATED, "ADULT_VERIFICATION_SUCCESS_001", "본인인증 요청 발급에 성공했습니다."),
     ADULT_VERIFICATION_CONFIRM_SUCCESS(HttpStatus.OK, "ADULT_VERIFICATION_SUCCESS_002", "성인인증에 성공했습니다."),
     ADULT_VERIFICATION_STATUS_LOAD_SUCCESS(HttpStatus.OK, "ADULT_VERIFICATION_SUCCESS_003", "성인인증 상태 조회에 성공했습니다."),
-    ADULT_VERIFICATION_RESET_SUCCESS(HttpStatus.OK, "ADULT_VERIFICATION_SUCCESS_004", "성인인증 이력 삭제에 성공했습니다.");
+    ADULT_VERIFICATION_RESET_SUCCESS(HttpStatus.OK, "ADULT_VERIFICATION_SUCCESS_004", "성인인증 이력 삭제에 성공했습니다."),
+
+    // AI chat
+    AI_CHAT_ENTRY_LOAD_SUCCESS(HttpStatus.OK, "AI_CHAT_SUCCESS_001", "AI 작품 검색 진입 정보를 조회했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
