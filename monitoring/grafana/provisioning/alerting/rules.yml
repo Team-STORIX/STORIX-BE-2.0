@@ -17,7 +17,7 @@ groups:
           summary: '{{ $labels.application }} 인스턴스가 스크랩되지 않습니다 (다운 또는 네트워크 단절).'
           runbook: 'EC2 상태 / 보안그룹(9100) / docker ps 확인'
         noDataState: Alerting
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 300, to: 0 }
@@ -45,7 +45,7 @@ groups:
           summary: '{{ $labels.name }} 컨테이너가 OOM 으로 종료되었습니다.'
           runbook: 'mem_limit 상향 또는 힙/컨텍스트 축소. docker inspect <name> 로 OOMKilled 확인'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }
@@ -73,7 +73,7 @@ groups:
           summary: '{{ $labels.instance_id }} 호스트가 메모리 고갈로 프로세스를 OOM 종료했습니다.'
           runbook: '박스 메모리 오버서브. dmesg | grep -i oom 확인 후 mem_limit 하향 또는 인스턴스 상향'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }
@@ -100,7 +100,7 @@ groups:
         annotations:
           summary: '힙 사용률이 85%를 넘겼습니다. 메모리 누수 또는 Full GC 로 인한 응답 지연이 임박했습니다.'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }
@@ -130,7 +130,7 @@ groups:
           summary: '전체 시간의 20% 이상을 GC 로 보내고 있습니다. 응답이 사실상 멈춥니다.'
           runbook: '힙 덤프 확보 -> 메모리 누수 의심'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }
@@ -160,7 +160,7 @@ groups:
         annotations:
           summary: 'Full GC 가 분당 1회를 넘습니다. 곧 스레싱으로 번집니다.'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }
@@ -184,13 +184,13 @@ groups:
       - uid: storix-cpu-high
         title: 'CPU 사용률 90% 초과'
         condition: B
-        for: 1m
+        for: 5m
         labels:
           severity: warning
         annotations:
-          summary: 'CPU 가 1분 이상 90%를 넘겼습니다. 순간 피크가 아니라 과부하입니다.'
+          summary: 'CPU 가 5분 이상 90%를 넘겼습니다. 배포 직후 JVM 기동 피크가 아니라 과부하입니다.'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 300, to: 0 }
@@ -218,7 +218,7 @@ groups:
           summary: 'HikariCP 활성 커넥션이 90%를 넘겼습니다. 곧 요청이 커넥션을 기다리며 밀립니다.'
           runbook: '느린 쿼리 / 트랜잭션 누수 / OSIV 확인'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }
@@ -252,7 +252,7 @@ groups:
           summary: '서버 에러율이 1%를 넘겼습니다.'
           runbook: 'Loki: {job="storix"} | json | level="ERROR"'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }
@@ -286,7 +286,7 @@ groups:
           summary: '상위 1% 요청의 응답시간이 1초를 넘습니다.'
           runbook: 'application.yml 에 percentiles-histogram 설정이 있어야 이 지표가 나온다'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 900, to: 0 }
@@ -324,7 +324,7 @@ groups:
           summary: '비동기 큐가 꽉 차 작업이 거부됐습니다. 알림이 실제로 유실됩니다. executor={{ $labels.executor }}'
           runbook: 'AsyncConfig 의 풀/큐 크기 확인. Loki: {job="storix"} | json | level="ERROR"'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }
@@ -352,7 +352,7 @@ groups:
           summary: '발송이 끝나지 않아 배치가 강제 마감했습니다. 정상 운영이면 0이어야 합니다.'
           runbook: 'Loki: {job="storix"} | json | adminNotificationId != ""'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 3600, to: 0 }
@@ -379,7 +379,7 @@ groups:
         annotations:
           summary: 'SENDING 인 알림이 30분 넘게 5건 이상 남아 있습니다. 발송이 안 끝나고 정체 중입니다.'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 1800, to: 0 }
@@ -407,7 +407,7 @@ groups:
           summary: 'FCM 실패가 10분간 50건을 넘었습니다. code={{ $labels.code }}'
           runbook: '토큰 만료(UNREGISTERED/INVALID_ARGUMENT)는 정상이라 제외돼 있다. 그 외 코드면 설정·인증 문제일 수 있다.'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 900, to: 0 }
@@ -445,7 +445,7 @@ groups:
           summary: 'ERROR 로그가 5분간 10건을 넘었습니다.'
           runbook: 'Loki: {job="storix"} | json | level="ERROR"'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             relativeTimeRange: { from: 300, to: 0 }
@@ -473,7 +473,7 @@ groups:
           summary: '{{ $labels.env }} Caddy 가 HTTPS 인증서를 받지 못해 다시 시도하고 있습니다. 갱신은 만료 30일 전부터 시도합니다. 마지막 실패 후 7시간 동안 실패가 없으면 해제됩니다.'
           runbook: 'Loki: {container="storix-caddy"} | json | logger=~"tls.obtain|tls.renew". 보안 그룹 80 · 443, DNS 가 서버를 가리키는지, Let''s Encrypt 발급 한도 확인'
         noDataState: OK
-        execErrState: Alerting
+        execErrState: Error
         data:
           - refId: A
             # 재시도 간격이 최대 6시간까지 늘어서 그보다 길게 본다
