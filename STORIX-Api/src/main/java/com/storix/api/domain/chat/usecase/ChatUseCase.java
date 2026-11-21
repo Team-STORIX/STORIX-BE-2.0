@@ -47,7 +47,7 @@ public class ChatUseCase {
         // 메시지 전송 후 비동기 처리
         chatAsyncService.processAfterMessageSent(saved, nickname);
 
-        log.info(">>>> [ChatService] 처리 완료 - Sender: {}, Content: {}", nickname, chatMessage.getMessage());
+        log.info(">>>> [ChatService] 처리 완료 roomId={} messageId={}", request.roomId(), saved.getId());
     }
 
     public ChatHistoryResponseDto getChatHistory(Long userId, Long roomId, Pageable pageable) {

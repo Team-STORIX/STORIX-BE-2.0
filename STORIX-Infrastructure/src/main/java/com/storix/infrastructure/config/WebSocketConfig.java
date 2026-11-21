@@ -88,10 +88,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     WebSocketHandler wsHandler,
                     Map<String, Object> attributes
             ) {
-                log.info(">>>> [WS_HANDSHAKE] before uri={}, origin={}, remoteAddress={}, userAgent={}",
+                log.info(">>>> [WS_HANDSHAKE] before uri={}, origin={}, userAgent={}",
                         request.getURI(),
                         request.getHeaders().getOrigin(),
-                        request.getRemoteAddress(),
                         request.getHeaders().getFirst("User-Agent"));
                 return true;
             }
