@@ -5,29 +5,30 @@
 
 | 도메인 | 설명 | 의존하는 도메인 | 나를 직접 쓰는 도메인 | 영향 범위(간접 포함) |
 | --- | --- | --- | --- | --- |
-| adultverification | 성인 인증 상태와 이력 | 1 | 10 | 18 |
+| adultverification | 성인 인증 상태와 이력 | 1 | 10 | 19 |
+| aichat | AI 작품 검색 대화방 · 메시지 · 챗봇 설정 | 1 | 0 | 0 |
 | appversion | 앱 최소 · 최신 버전 관리 | 1 | 0 | 0 |
-| bannedword | 금칙어 관리와 검사 | 0 | 3 | 19 |
-| chat | 토픽룸 채팅 메시지 | 3 | 4 | 18 |
-| event | 이벤트 · 팝업 · 배너 · 출석 체크 · 당첨자 | 3 | 2 | 18 |
-| favorite | 관심 작품 | 2 | 6 | 18 |
-| feed | 피드 조회 · 반응 · 댓글 · 신고, 오늘의 피드 | 11 | 6 | 18 |
-| genrescore | 사용자 장르 취향 점수 | 3 | 6 | 18 |
-| hashtag | 해시태그와 추천 | 4 | 4 | 18 |
-| image | 이미지 업로드용 S3 키 관리 | 0 | 3 | 19 |
-| library | 내 서재 | 4 | 6 | 18 |
-| notification | 알림 저장 · 푸시 발송 | 5 | 5 | 18 |
-| onboarding | 온보딩 작품 선택 | 1 | 2 | 18 |
-| plus | 게시글 · 리뷰 · 별점 작성 | 11 | 9 | 18 |
-| preference | 취향 탐색 | 5 | 3 | 18 |
-| profile | 내 · 다른 사람 프로필과 활동 | 11 | 2 | 18 |
-| pushdevice | 푸시 기기 토큰 | 0 | 4 | 20 |
-| report | 신고 처리와 제재 | 9 | 4 | 18 |
-| review | 작품 상세 리뷰 반응 · 신고 | 7 | 3 | 18 |
-| search | 검색 · 색인 · 검색 기록 · 인기 검색어 | 4 | 4 | 18 |
-| topicroom | 토픽룸 · 참여자 · 랭킹 · 안 읽은 메시지 | 10 | 7 | 18 |
-| user | 회원 · 인증 · 약관 · 차단 · 칭호 | 16 | 12 | 18 |
-| works | 작품 · 별칭 · 적재 · 병합 | 10 | 16 | 18 |
+| bannedword | 금칙어 관리와 검사 | 0 | 3 | 20 |
+| chat | 토픽룸 채팅 메시지 | 3 | 4 | 19 |
+| event | 이벤트 · 팝업 · 배너 · 출석 체크 · 당첨자 | 3 | 2 | 19 |
+| favorite | 관심 작품 | 2 | 6 | 19 |
+| feed | 피드 조회 · 반응 · 댓글 · 신고, 오늘의 피드 | 11 | 6 | 19 |
+| genrescore | 사용자 장르 취향 점수 | 3 | 6 | 19 |
+| hashtag | 해시태그와 추천 | 4 | 4 | 19 |
+| image | 이미지 업로드용 S3 키 관리 | 0 | 3 | 20 |
+| library | 내 서재 | 4 | 6 | 19 |
+| notification | 알림 저장 · 푸시 발송 | 5 | 5 | 19 |
+| onboarding | 온보딩 작품 선택 | 1 | 2 | 19 |
+| plus | 게시글 · 리뷰 · 별점 작성 | 11 | 9 | 19 |
+| preference | 취향 탐색 | 5 | 3 | 19 |
+| profile | 내 · 다른 사람 프로필과 활동 | 11 | 2 | 19 |
+| pushdevice | 푸시 기기 토큰 | 0 | 4 | 21 |
+| report | 신고 처리와 제재 | 9 | 4 | 19 |
+| review | 작품 상세 리뷰 반응 · 신고 | 7 | 3 | 19 |
+| search | 검색 · 색인 · 검색 기록 · 인기 검색어 | 4 | 4 | 19 |
+| topicroom | 토픽룸 · 참여자 · 랭킹 · 안 읽은 메시지 | 10 | 7 | 19 |
+| user | 회원 · 인증 · 약관 · 차단 · 칭호 | 16 | 12 | 19 |
+| works | 작품 · 별칭 · 적재 · 병합 | 10 | 17 | 19 |
 
 ## adultverification
 
@@ -35,7 +36,7 @@
 
 - 의존: user
 - 나를 직접 쓰는 도메인: event, feed, library, plus, preference, profile, search, topicroom, user, works
-- 바꾸면 영향 가는 도메인: chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -51,6 +52,14 @@ graph LR
   works --> adultverification
 ```
 
+## aichat
+
+AI 작품 검색 대화방 · 메시지 · 챗봇 설정
+
+- 의존: works
+- 나를 직접 쓰는 도메인: 없음
+- 바꾸면 영향 가는 도메인: 없음
+
 ## appversion
 
 앱 최소 · 최신 버전 관리
@@ -65,7 +74,7 @@ graph LR
 
 - 의존: 없음
 - 나를 직접 쓰는 도메인: profile, topicroom, user
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -80,7 +89,7 @@ graph LR
 
 - 의존: topicroom, user, works
 - 나를 직접 쓰는 도메인: notification, report, topicroom, user
-- 바꾸면 영향 가는 도메인: adultverification, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -96,7 +105,7 @@ graph LR
 
 - 의존: adultverification, user, works
 - 나를 직접 쓰는 도메인: notification, works
-- 바꾸면 영향 가는 도메인: adultverification, chat, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -110,7 +119,7 @@ graph LR
 
 - 의존: genrescore, works
 - 나를 직접 쓰는 도메인: feed, hashtag, preference, profile, user, works
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -128,7 +137,7 @@ graph LR
 
 - 의존: adultverification, favorite, library, notification, plus, profile, report, search, topicroom, user, works
 - 나를 직접 쓰는 도메인: library, plus, profile, report, search, user
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -146,7 +155,7 @@ graph LR
 
 - 의존: preference, user, works
 - 나를 직접 쓰는 도메인: favorite, plus, profile, topicroom, user, works
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -164,7 +173,7 @@ graph LR
 
 - 의존: favorite, preference, user, works
 - 나를 직접 쓰는 도메인: plus, preference, profile, works
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -180,7 +189,7 @@ graph LR
 
 - 의존: 없음
 - 나를 직접 쓰는 도메인: plus, profile, user
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -195,7 +204,7 @@ graph LR
 
 - 의존: adultverification, feed, plus, works
 - 나를 직접 쓰는 도메인: feed, plus, profile, report, review, user
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -213,7 +222,7 @@ graph LR
 
 - 의존: chat, event, pushdevice, topicroom, user
 - 나를 직접 쓰는 도메인: feed, report, review, topicroom, user
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -230,7 +239,7 @@ graph LR
 
 - 의존: works
 - 나를 직접 쓰는 도메인: user, works
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -244,7 +253,7 @@ graph LR
 
 - 의존: adultverification, feed, genrescore, hashtag, image, library, profile, review, search, user, works
 - 나를 직접 쓰는 도메인: feed, library, preference, profile, report, review, search, user, works
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -265,7 +274,7 @@ graph LR
 
 - 의존: adultverification, favorite, hashtag, plus, works
 - 나를 직접 쓰는 도메인: genrescore, hashtag, works
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -280,7 +289,7 @@ graph LR
 
 - 의존: adultverification, bannedword, favorite, feed, genrescore, hashtag, image, library, plus, user, works
 - 나를 직접 쓰는 도메인: feed, plus
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -294,7 +303,7 @@ graph LR
 
 - 의존: 없음
 - 나를 직접 쓰는 도메인: appversion, notification, topicroom, user
-- 바꾸면 영향 가는 도메인: adultverification, appversion, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, appversion, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -310,7 +319,7 @@ graph LR
 
 - 의존: chat, feed, library, notification, plus, review, topicroom, user, works
 - 나를 직접 쓰는 도메인: feed, review, topicroom, user
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, review, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -326,7 +335,7 @@ graph LR
 
 - 의존: library, notification, plus, report, topicroom, user, works
 - 나를 직접 쓰는 도메인: plus, report, user
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, search, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, search, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -341,7 +350,7 @@ graph LR
 
 - 의존: adultverification, feed, plus, works
 - 나를 직접 쓰는 도메인: feed, plus, topicroom, works
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, topicroom, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, topicroom, user, works
 
 ```mermaid
 graph LR
@@ -357,7 +366,7 @@ graph LR
 
 - 의존: adultverification, bannedword, chat, genrescore, notification, pushdevice, report, search, user, works
 - 나를 직접 쓰는 도메인: chat, feed, notification, report, review, user, works
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, user, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, user, works
 
 ```mermaid
 graph LR
@@ -376,7 +385,7 @@ graph LR
 
 - 의존: adultverification, bannedword, chat, favorite, feed, genrescore, image, library, notification, onboarding, plus, pushdevice, report, review, topicroom, works
 - 나를 직접 쓰는 도메인: adultverification, chat, event, feed, genrescore, hashtag, notification, plus, profile, report, review, topicroom
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, works
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, works
 
 ```mermaid
 graph LR
@@ -399,11 +408,12 @@ graph LR
 작품 · 별칭 · 적재 · 병합
 
 - 의존: adultverification, event, favorite, genrescore, hashtag, onboarding, plus, preference, search, topicroom
-- 나를 직접 쓰는 도메인: chat, event, favorite, feed, genrescore, hashtag, library, onboarding, plus, preference, profile, report, review, search, topicroom, user
-- 바꾸면 영향 가는 도메인: adultverification, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user
+- 나를 직접 쓰는 도메인: aichat, chat, event, favorite, feed, genrescore, hashtag, library, onboarding, plus, preference, profile, report, review, search, topicroom, user
+- 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user
 
 ```mermaid
 graph LR
+  aichat --> works
   chat --> works
   event --> works
   favorite --> works

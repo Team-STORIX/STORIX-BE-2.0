@@ -1,14 +1,14 @@
-package com.storix.api.domain.aisearch.controller.dto;
+package com.storix.api.domain.aichat.controller.dto;
 
 import java.util.List;
 
-public record AiSearchRecommendedWork(
+public record AiChatRecommendedWork(
         int rank,
         Long workId,
         String title,
         String thumbnailUrl,
         String platform,
         String reason,
-        List<AiSearchMatchedClue> matchedClues
+        List<AiChatMatchedClue> matchedClues
 ) {
 }
