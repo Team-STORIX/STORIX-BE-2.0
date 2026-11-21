@@ -57,7 +57,52 @@ loki.process "storix" {
     values = { level = "" }
   }
 
-  forward_to = [loki.write.monitoring.receiver]
+  forward_to = [
+    loki.write.monitoring.receiver,
+    loki.write.grafana_cloud.receiver,
+    otelcol.receiver.loki.archive.receiver,
+  ]
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_LOKI_USER")
+      password = sys.env("GRAFANA_CLOUD_TOKEN")
+    }
+  }
+}
+
+// 백업용 원본. Cloud 는 보관 기간이 짧아서 S3 에 env 별 시간 단위로 쌓는다
+otelcol.receiver.loki "archive" {
+  output {
+    logs = [otelcol.processor.batch.archive.input]
+  }
+}
+
+otelcol.processor.batch "archive" {
+  timeout         = "5m"
+  send_batch_size = 10000
+
+  output {
+    logs = [otelcol.exporter.awss3.archive.input]
+  }
+}
+
+otelcol.exporter.awss3 "archive" {
+  s3_uploader {
+    region              = "ap-northeast-2"
+    s3_bucket           = sys.env("LOG_ARCHIVE_BUCKET")
+    s3_prefix           = "logs/" + sys.env("ENV")
+    s3_partition        = "hour"
+    compression         = "gzip"
+  }
+
+  marshaler {
+    type = "otlp_json"
+  }
 }
 
 loki.write "monitoring" {
@@ -84,7 +129,63 @@ prometheus.scrape "infra" {
     prometheus.exporter.unix.storix.targets,
   )
   scrape_interval = "15s"
-  forward_to      = [prometheus.remote_write.monitoring.receiver]
+  forward_to      = [
+    prometheus.remote_write.monitoring.receiver,
+    prometheus.remote_write.grafana_cloud.receiver,
+  ]
+}
+
+// blue / green 중 떠 있는 쪽과 batch 를 서버 안에서 바로 긁는다. Caddy 9100 을 거치지 않는다
+discovery.relabel "apps" {
+  targets = discovery.docker.storix.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(storix-app-blue|storix-app-green|storix-batch)"
+    action        = "keep"
+  }
+
+  // 이미지가 포트를 노출하지 않아서 storix-net 안의 컨테이너 이름으로 주소를 잡는다
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(storix-app-blue|storix-app-green)"
+    target_label  = "__address__"
+    replacement   = "$1:8080"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/storix-batch"
+    target_label  = "__address__"
+    replacement   = "storix-batch:9101"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/storix-app-(blue|green)"
+    target_label  = "application"
+    replacement   = "storix-api"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/storix-batch"
+    target_label  = "application"
+    replacement   = "storix-batch"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/storix-app-(blue|green)"
+    target_label  = "slot"
+  }
+}
+
+prometheus.scrape "apps" {
+  targets         = discovery.relabel.apps.output
+  metrics_path    = "/actuator/prometheus"
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
 }
 
 prometheus.remote_write "monitoring" {
@@ -99,6 +200,22 @@ prometheus.remote_write "monitoring" {
     basic_auth {
       username = sys.env("LOKI_USER")
       password = sys.env("LOKI_PASSWORD")
+    }
+  }
+}
+
+prometheus.remote_write "grafana_cloud" {
+  external_labels = {
+    env         = sys.env("ENV"),
+    instance_id = sys.env("INSTANCE_ID"),
+  }
+
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_PROM_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_PROM_USER")
+      password = sys.env("GRAFANA_CLOUD_TOKEN")
     }
   }
 }

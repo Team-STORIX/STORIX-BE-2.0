@@ -125,9 +125,16 @@ services:
       - INSTANCE_ID=${INSTANCE_ID}
       - LOKI_USER=${LOKI_USER}
       - LOKI_PASSWORD=${LOKI_PASSWORD}
+      - GRAFANA_CLOUD_PROM_URL=${GRAFANA_CLOUD_PROM_URL}
+      - GRAFANA_CLOUD_PROM_USER=${GRAFANA_CLOUD_PROM_USER}
+      - GRAFANA_CLOUD_LOKI_URL=${GRAFANA_CLOUD_LOKI_URL}
+      - GRAFANA_CLOUD_LOKI_USER=${GRAFANA_CLOUD_LOKI_USER}
+      - GRAFANA_CLOUD_TOKEN=${GRAFANA_CLOUD_TOKEN}
+      - LOG_ARCHIVE_BUCKET=${LOG_ARCHIVE_BUCKET}
     command:
       - run
       - --server.http.listen-addr=127.0.0.1:12345
+      - --stability.level=experimental
       - /etc/alloy/config.alloy
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
