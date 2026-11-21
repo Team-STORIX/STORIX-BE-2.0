@@ -91,6 +91,26 @@ services:
     networks:
       - storix-net
 
+  # AI 작품 검색 서버. Spring 만 storix-net 안에서 부르고 포트는 밖에 열지 않는다
+  # 이미지는 STORIX-AI CD 가 올리고 교체한다. 앱 배포는 ai 프로필을 켜지 않아서 건드리지 않는다
+  ai:
+    image: ${ECR_REGISTRY}/storix-ai:${ENV}
+    container_name: storix-ai
+    profiles: [ai]
+    restart: unless-stopped
+    environment:
+      - STORIX_AI_ENV=${ENV}
+      - STORIX_AI_INTERNAL_TOKEN=${STORIX_AI_INTERNAL_TOKEN}
+      - TZ=Asia/Seoul
+    mem_limit: 256m
+    networks:
+      - storix-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
   elasticsearch:
     image: storix-elasticsearch:8.18.8-nori
     build:
