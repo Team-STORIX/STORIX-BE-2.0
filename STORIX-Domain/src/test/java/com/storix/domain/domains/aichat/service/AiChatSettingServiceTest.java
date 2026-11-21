@@ -21,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,9 +56,8 @@ class AiChatSettingServiceTest {
     @Test
     @DisplayName("온보딩을 처음 마치면 말풍선을 순서대로 대화 기록에 남기고 대화방을 만든다")
     void firstOnboardingWritesTranscript() {
-        given(aiChatSettingAdaptor.findByUserId(1L)).willReturn(Optional.empty());
+        given(aiChatSettingAdaptor.findForUpdateOrCreate(1L)).willReturn(AiChatSetting.defaultOf(1L));
         given(aiChatAdaptor.findOrCreate(1L)).willReturn(chat());
-        given(aiChatSettingAdaptor.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
         AiChatSettingInfo saved = aiChatSettingService.save(1L, false, Set.of(WorksType.WEBTOON), 1, LINES);
 
@@ -79,8 +77,7 @@ class AiChatSettingServiceTest {
     void repeatedOnboardingDoesNotDuplicate() {
         AiChatSetting setting = AiChatSetting.defaultOf(1L);
         setting.completeOnboarding(1);
-        given(aiChatSettingAdaptor.findByUserId(1L)).willReturn(Optional.of(setting));
-        given(aiChatSettingAdaptor.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+        given(aiChatSettingAdaptor.findForUpdateOrCreate(1L)).willReturn(setting);
 
         aiChatSettingService.save(1L, true, Set.of(), 1, LINES);
 
@@ -92,8 +89,7 @@ class AiChatSettingServiceTest {
     @Test
     @DisplayName("설정 화면 저장(온보딩 버전 없음)은 기록을 남기지 않는다")
     void settingScreenSaveHasNoTranscript() {
-        given(aiChatSettingAdaptor.findByUserId(1L)).willReturn(Optional.empty());
-        given(aiChatSettingAdaptor.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+        given(aiChatSettingAdaptor.findForUpdateOrCreate(1L)).willReturn(AiChatSetting.defaultOf(1L));
 
         AiChatSettingInfo saved = aiChatSettingService.save(1L, false, Set.of(WorksType.BOOK), null, LINES);
 

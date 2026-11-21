@@ -34,11 +34,11 @@ public class AiChatSettingService {
     }
 
     // onboardingVersion 이 있고 아직 그 버전을 안 봤으면 온보딩 말풍선을 대화 기록에 남긴다
+    // 설정 행을 잠그고 시작해서, "완료" 를 두 번 눌러도 두 번째 요청은 이미 본 버전으로 보고 기록을 다시 남기지 않는다
     @Transactional
     public AiChatSettingInfo save(Long userId, boolean adultEnabled, Set<WorksType> worksTypes,
                                   Integer onboardingVersion, List<AiChatOnboardingLine> onboardingLines) {
-        AiChatSetting setting = aiChatSettingAdaptor.findByUserId(userId)
-                .orElseGet(() -> AiChatSetting.defaultOf(userId));
+        AiChatSetting setting = aiChatSettingAdaptor.findForUpdateOrCreate(userId);
         setting.update(adultEnabled, worksTypes);
 
         if (onboardingVersion != null && !setting.hasSeenOnboarding(onboardingVersion)) {
@@ -48,6 +48,6 @@ public class AiChatSettingService {
                     AiChatMessage.onboarding(chat.getId(), line.role(), line.content())));
             chat.touch(LocalDateTime.now());
         }
-        return AiChatSettingInfo.from(aiChatSettingAdaptor.save(setting));
+        return AiChatSettingInfo.from(setting);
     }
 }

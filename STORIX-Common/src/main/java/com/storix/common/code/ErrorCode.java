@@ -272,7 +272,8 @@ public enum ErrorCode {
     // AI chat error
     AI_CHAT_UNSUPPORTED_WORKS_TYPE(HttpStatus.BAD_REQUEST, "AI_CHAT_ERROR_001", "AI 작품 검색에서 고를 수 없는 작품 유형입니다. 웹툰 · 웹소설 · 단행본 중에서 골라주세요."),
     AI_CHAT_INVALID_ONBOARDING_VERSION(HttpStatus.BAD_REQUEST, "AI_CHAT_ERROR_002", "지금 온보딩 버전과 다릅니다. 진입 API 를 다시 불러 받은 onboarding.version 을 보내주세요."),
-    AI_CHAT_NOT_FOUND(HttpStatus.NOT_FOUND, "AI_CHAT_ERROR_003", "AI 작품 검색 대화방이 없습니다.");
+    AI_CHAT_NOT_FOUND(HttpStatus.NOT_FOUND, "AI_CHAT_ERROR_003", "AI 작품 검색 대화방이 없습니다."),
+    AI_CHAT_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "AI_CHAT_ERROR_004", "챗봇 설정이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
