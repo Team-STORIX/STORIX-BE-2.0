@@ -72,6 +72,8 @@ aws:
 
 internal:
   api-key: ${INTERNAL_API_KEY}
+  # AI 서버와 주고받는 토큰. Spring → AI, AI → Spring 둘 다 이 값
+  ai-token: ${STORIX_AI_INTERNAL_TOKEN}
 
 # false 는 local 프로필에서만 적용
 rate-limit:

@@ -41,6 +41,7 @@ public class SecurityConfig {
     private final OnboardingAuthenticationFilter onboardingFilter;
     private final ErrorHandlingFilter errorHandlingFilter;
     private final InternalApiKeyFilter internalApiKeyFilter;
+    private final AiInternalTokenFilter aiInternalTokenFilter;
     private final RateLimitFilter rateLimitFilter;
 
     private final SecurityEntryPoint securityEntryPoint;
@@ -147,6 +148,9 @@ public class SecurityConfig {
                                 // [TopicRoom]
                                 .requestMatchers("/ws-stomp/**").permitAll()
 
+                                // [Internal] AI 서버 전용 — AI 토큰(X-Internal-Token). 크롤러 키로는 못 부른다
+                                .requestMatchers("/internal/ai/**").hasRole("AI_INTERNAL")
+
                                 // [Internal] 크롤러 등 내부 서비스 — 내부 키(X-Internal-Api-Key) 전용
                                 .requestMatchers("/internal/**").hasRole("INTERNAL")
 
@@ -167,6 +171,7 @@ public class SecurityConfig {
                 .addFilterBefore(onboardingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(aiInternalTokenFilter, InternalApiKeyFilter.class)
                 .addFilterAfter(rateLimitFilter, InternalApiKeyFilter.class)
                 .addFilterBefore(mdcContextFilter, ErrorHandlingFilter.class)
 

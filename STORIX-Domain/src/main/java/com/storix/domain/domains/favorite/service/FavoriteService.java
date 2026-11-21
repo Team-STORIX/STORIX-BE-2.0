@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class FavoriteService {
@@ -16,6 +18,12 @@ public class FavoriteService {
     private final GenreScorePublisher genreScorePublisher;
 
     // [작품] 관심 작품 관련
+    // AI 작품 검색 사용자 맥락용
+    @Transactional(readOnly = true)
+    public List<Long> findFavoriteWorksIds(Long userId) {
+        return favoriteWorksAdaptor.findAllFavoriteWorksIdsByUserId(userId);
+    }
+
     @Transactional(readOnly = true)
     public boolean isFavoriteWorks(Long userId, Long worksId) {
         return favoriteWorksAdaptor.isFavoriteWorksAlreadySelected(userId, worksId);
