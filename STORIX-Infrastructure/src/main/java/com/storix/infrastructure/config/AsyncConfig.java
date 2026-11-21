@@ -105,6 +105,18 @@ public class AsyncConfig {
         return executor;
     }
 
+    @Bean(name = "aiSearchMockExecutor")
+    public Executor aiSearchMockExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("AiSearchMock-");
+        executor.setTaskDecorator(mdcTaskDecorator());
+        executor.initialize();
+        return executor;
+    }
+
     @Bean(name = "s3CleanupExecutor")
     public Executor s3CleanupExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
