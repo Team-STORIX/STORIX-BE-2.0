@@ -57,13 +57,16 @@ public class AiChatSetting extends BaseTimeEntity {
         return new AiChatSetting(userId);
     }
 
-    public void update(boolean adultEnabled, Set<WorksType> worksTypes, Integer onboardingVersion) {
+    public void update(boolean adultEnabled, Set<WorksType> worksTypes) {
         if (!SELECTABLE_WORKS_TYPES.containsAll(worksTypes)) {
             throw AiChatUnsupportedWorksTypeException.EXCEPTION;
         }
         this.adultEnabled = adultEnabled;
         this.worksTypes = worksTypes.isEmpty() ? EnumSet.noneOf(WorksType.class) : EnumSet.copyOf(worksTypes);
-        this.onboardingVersion = onboardingVersion;
+    }
+
+    public void completeOnboarding(int version) {
+        this.onboardingVersion = version;
     }
 
     public boolean hasSeenOnboarding(int currentVersion) {

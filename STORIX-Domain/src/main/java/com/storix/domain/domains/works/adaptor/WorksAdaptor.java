@@ -26,6 +26,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -206,6 +207,12 @@ public class WorksAdaptor {
                         SlicedWorksInfo::worksId,
                         Function.identity()
                 ));
+    }
+
+    public List<Long> findRandomIdsExcluding(List<Long> excludedIds, int needed, boolean excludeAdult) {
+        List<Long> candidateIds = new ArrayList<>(worksRepository.findCandidateIds(excludedIds, excludeAdult));
+        Collections.shuffle(candidateIds);
+        return candidateIds.stream().limit(needed).toList();
     }
 
     public List<Works> findRandomWorksExcluding(List<Long> excludedIds, int needed, boolean excludeAdult) {

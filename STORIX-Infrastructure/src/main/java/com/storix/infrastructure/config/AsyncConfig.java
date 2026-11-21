@@ -105,13 +105,13 @@ public class AsyncConfig {
         return executor;
     }
 
-    @Bean(name = "aiChatMockExecutor")
-    public Executor aiChatMockExecutor() {
+    @Bean(name = "aiChatStreamExecutor")
+    public Executor aiChatStreamExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(2);
         executor.setMaxPoolSize(8);
         executor.setQueueCapacity(50);
-        executor.setThreadNamePrefix("AiChatMock-");
+        executor.setThreadNamePrefix("AiChatStream-");
         executor.setTaskDecorator(mdcTaskDecorator());
         executor.initialize();
         return executor;
