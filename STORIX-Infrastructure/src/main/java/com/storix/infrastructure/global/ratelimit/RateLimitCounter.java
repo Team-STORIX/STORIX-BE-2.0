@@ -32,4 +32,14 @@ public class RateLimitCounter {
             return 0;
         }
     }
+
+    public long current(String key) {
+        try {
+            String value = redisTemplate.opsForValue().get(key);
+            return value == null ? 0 : Long.parseLong(value);
+        } catch (Exception e) {
+            log.warn(">>> [RateLimit] 횟수 조회 실패 key={}", key, e);
+            return 0;
+        }
+    }
 }

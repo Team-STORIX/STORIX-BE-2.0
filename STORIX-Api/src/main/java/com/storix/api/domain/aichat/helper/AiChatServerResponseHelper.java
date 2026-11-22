@@ -47,6 +47,7 @@ public class AiChatServerResponseHelper implements AiChatResponder {
     private final AiChatMessageService aiChatMessageService;
     private final LibraryService libraryService;
     private final AiChatWorksJsonHelper aiChatWorksJsonHelper;
+    private final AiChatMetricsHelper aiChatMetricsHelper;
 
     // done · error 없이 끝나면 AiChatStreamHelper 가 오류로 닫는다
     @Override
@@ -156,6 +157,8 @@ public class AiChatServerResponseHelper implements AiChatResponder {
                             .addKeyValue("cacheReadTokens", usage.cacheReadTokens())
                             .addKeyValue("elapsedMs", done.elapsedMs())
                             .log(">>> [AiChat] AI 답변 사용량");
+                    aiChatMetricsHelper.recordUsage(usage.model(), usage.inputTokens(), usage.outputTokens(),
+                            usage.cacheReadTokens());
                 }
                 done.answerStatus().ifPresentOrElse(sink::done, () -> {
                     log.atError()

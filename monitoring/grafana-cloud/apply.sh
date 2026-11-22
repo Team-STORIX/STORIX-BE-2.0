@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Grafana Cloud 에 STORIX 알림 폴더 · 알림 정책 · 규칙을 그대로 덮어쓴다
+# Grafana Cloud 에 STORIX 폴더 · 알림 정책 · 규칙 · 대시보드를 그대로 덮어쓴다
 #
 #   GRAFANA_CLOUD_URL=https://<스택>.grafana.net GRAFANA_CLOUD_SA_TOKEN=<서비스 계정 토큰> ./apply.sh
 #
 # 연락처 slack-storix 는 Slack 웹후크가 들어 있어 이미 있으면 건드리지 않는다
 # 처음 만들 때만 SLACK_WEBHOOK_URL 을 같이 넘긴다
-# 화면에서 고친 규칙은 덮어써지니, 고친 뒤에는 이 폴더 파일에도 반영한다
+# 화면에서 고친 규칙 · 대시보드는 덮어써지니, 고친 뒤에는 이 폴더 파일에도 반영한다
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -46,13 +46,18 @@ if grep -q '"uid":"slack-storix"' "$RESPONSE"; then
   echo "연락처 slack-storix 는 이미 있어 그대로 둔다"
 else
   : "${SLACK_WEBHOOK_URL:?연락처 slack-storix 가 없다. 처음 만들 때는 SLACK_WEBHOOK_URL 을 넘긴다}"
-  python3 -c 'import json,os,sys; c=json.load(open("contact-point.json")); c["settings"]["url"]=os.environ["SLACK_WEBHOOK_URL"]; json.dump(c,sys.stdout,ensure_ascii=False)' > "$BODY"
+  python3 -c 'import json,os,sys; c=json.load(open("alerting/contact-point.json")); c["settings"]["url"]=os.environ["SLACK_WEBHOOK_URL"]; json.dump(c,sys.stdout,ensure_ascii=False)' > "$BODY"
   check "$(api POST /api/v1/provisioning/contact-points "$BODY")" "연락처 slack-storix"
 fi
 
-check "$(api PUT /api/v1/provisioning/policies policies.json)" "알림 정책"
+check "$(api PUT /api/v1/provisioning/policies alerting/policies.json)" "알림 정책"
 
-for file in rule-groups/*.json; do
+for file in alerting/rule-groups/*.json; do
   group=$(basename "$file" .json)
   check "$(api PUT "/api/v1/provisioning/folder/$FOLDER_UID/rule-groups/$group" "$file")" "규칙 그룹 $group"
+done
+
+for file in dashboards/*.json; do
+  python3 -c 'import json,sys; print(json.dumps({"dashboard": json.load(open(sys.argv[1])), "folderUid": sys.argv[2], "overwrite": True}, ensure_ascii=False))' "$file" "$FOLDER_UID" > "$BODY"
+  check "$(api POST /api/dashboards/db "$BODY")" "대시보드 $(basename "$file" .json)"
 done

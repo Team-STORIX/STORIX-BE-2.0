@@ -25,24 +25,30 @@ public class AiChatStreamHelper {
     private final AiChatMessageService aiChatMessageService;
     private final WorksCardService worksCardService;
     private final AiChatWorksJsonHelper aiChatWorksJson;
+    private final AiChatMetricsHelper aiChatMetricsHelper;
+    private final AiChatUsageLimitHelper aiChatUsageLimitHelper;
 
     public AiChatStreamHelper(@Qualifier("aiChatStreamExecutor") Executor aiChatStreamExecutor,
                           AiChatResponder aiChatResponder,
                           AiChatMessageService aiChatMessageService,
                           WorksCardService worksCardService,
-                          AiChatWorksJsonHelper aiChatWorksJson) {
+                          AiChatWorksJsonHelper aiChatWorksJson,
+                          AiChatMetricsHelper aiChatMetricsHelper,
+                          AiChatUsageLimitHelper aiChatUsageLimitHelper) {
         this.aiChatStreamExecutor = aiChatStreamExecutor;
         this.aiChatResponder = aiChatResponder;
         this.aiChatMessageService = aiChatMessageService;
         this.worksCardService = worksCardService;
         this.aiChatWorksJson = aiChatWorksJson;
+        this.aiChatMetricsHelper = aiChatMetricsHelper;
+        this.aiChatUsageLimitHelper = aiChatUsageLimitHelper;
     }
 
     // 별도 스레드에서 실행. 스트리밍 동안 요청 스레드 · DB 커넥션을 잡지 않음
     public SseEmitter start(AiChatQuestion question) {
         SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MILLIS);
         AiChatStreamSession session = new AiChatStreamSession(question, emitter, aiChatMessageService,
-                worksCardService, aiChatWorksJson);
+                worksCardService, aiChatWorksJson, aiChatMetricsHelper, aiChatUsageLimitHelper);
         try {
             aiChatStreamExecutor.execute(() -> run(question, session));
         } catch (RejectedExecutionException e) {

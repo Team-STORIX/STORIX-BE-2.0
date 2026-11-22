@@ -11,6 +11,7 @@ import com.storix.domain.domains.works.domain.Platform;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.WorksCardInfo;
 import com.storix.domain.domains.works.service.WorksCardService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,13 +49,16 @@ class AiChatStreamSessionTest {
     private AiChatMessageService aiChatMessageService;
     @Mock
     private WorksCardService worksCardService;
+    @Mock
+    private AiChatUsageLimitHelper aiChatUsageLimitHelper;
 
     private AiChatStreamSession session;
+    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     @BeforeEach
     void setUp() {
         session = new AiChatStreamSession(QUESTION, emitter, aiChatMessageService, worksCardService,
-                new AiChatWorksJsonHelper(new ObjectMapper()));
+                new AiChatWorksJsonHelper(new ObjectMapper()), new AiChatMetricsHelper(meterRegistry, "mock"), aiChatUsageLimitHelper);
     }
 
     private static WorksCardInfo card(long id) {
@@ -109,6 +113,42 @@ class AiChatStreamSessionTest {
 
         verify(aiChatMessageService).saveAnswer(10L, "답변", AiChatAnswerStatus.NO_RESULT, null, null);
         verify(emitter, never()).complete();
+    }
+
+    @Test
+    @DisplayName("첫 글자 시간과 답변 결과를 지표로 남긴다")
+    void recordMetrics() {
+        given(worksCardService.findCards(any())).willReturn(Map.of(1L, card(1L)));
+        given(aiChatMessageService.saveAnswer(eq(10L), anyString(), any(), any(), any())).willReturn(200L);
+
+        session.token("첫 ");
+        session.token("글자");
+        session.works(List.of(raw(1, 1L)), "v1");
+        session.done(AiChatAnswerStatus.OK);
+
+        assertThat(meterRegistry.get("ai.chat.first.token").tag("responder", "mock").timer().count()).isEqualTo(1);
+        assertThat(meterRegistry.get("ai.chat.answer").tags("status", "OK", "error", "none").timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("done 으로 저장된 답변만 사용 횟수에 센다")
+    void recordUsageOnlyWhenDone() {
+        given(aiChatMessageService.saveAnswer(eq(10L), anyString(), any(), any(), any())).willReturn(200L);
+
+        session.done(AiChatAnswerStatus.NO_RESULT);
+
+        verify(aiChatUsageLimitHelper).record(1L);
+    }
+
+    @Test
+    @DisplayName("오류는 ERROR 와 오류 코드로 지표에 남기고 사용 횟수에는 넣지 않는다")
+    void recordErrorMetrics() {
+        session.error("TIMEOUT", "잠시 후 다시 시도해 주세요.");
+
+        verify(aiChatUsageLimitHelper, never()).record(any());
+
+        assertThat(meterRegistry.get("ai.chat.answer").tags("status", "ERROR", "error", "TIMEOUT").timer().count()).isEqualTo(1);
+        assertThat(meterRegistry.find("ai.chat.first.token").timer()).isNull();
     }
 
     @Test

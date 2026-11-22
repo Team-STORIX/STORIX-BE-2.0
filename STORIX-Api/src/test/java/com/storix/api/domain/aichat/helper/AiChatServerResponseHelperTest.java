@@ -18,6 +18,7 @@ import com.storix.infrastructure.external.aichat.dto.AiServerChatContext;
 import com.sun.net.httpserver.HttpServer;
 import feign.Feign;
 import feign.Retryer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,7 @@ class AiChatServerResponseHelperTest {
     @Mock
     private LibraryService libraryService;
 
+    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
     private HttpServer server;
     private final AtomicReference<String> receivedToken = new AtomicReference<>();
     private final AtomicReference<String> receivedBody = new AtomicReference<>();
@@ -97,7 +99,7 @@ class AiChatServerResponseHelperTest {
                         "[{\"rank\":1,\"workId\":7,\"reason\":\"이유\",\"matchedClues\":[]}]", null)));
         given(libraryService.findReviewedWorksIds(1L)).willReturn(List.of(3L));
         return new AiChatServerResponseHelper(client, MAPPER, aiChatMessageService, libraryService,
-                new AiChatWorksJsonHelper(MAPPER));
+                new AiChatWorksJsonHelper(MAPPER), new AiChatMetricsHelper(meterRegistry, "server"));
     }
 
     private static AiChatQuestion question() {
@@ -140,6 +142,8 @@ class AiChatServerResponseHelperTest {
                 "token:어때요",
                 "works:v1:[1=5]",
                 "done:OK");
+        assertThat(meterRegistry.get("ai.chat.tokens").tags("model", "claude-sonnet-5-5", "type", "input").counter().count()).isEqualTo(10);
+        assertThat(meterRegistry.get("ai.chat.tokens").tags("model", "claude-sonnet-5-5", "type", "output").counter().count()).isEqualTo(5);
         assertThat(receivedToken.get()).isEqualTo(TOKEN);
 
         JsonNode body = MAPPER.readTree(receivedBody.get());
