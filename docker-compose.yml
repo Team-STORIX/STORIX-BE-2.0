@@ -123,9 +123,13 @@ services:
     restart: unless-stopped
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
       - TZ=Asia/Seoul
+    # SSM 포트포워딩으로만 붙는다. 서버 밖에는 안 열린다
+    ports:
+      - "127.0.0.1:9200:9200"
     volumes:
       - es-data:/usr/share/elasticsearch/data
     mem_limit: 1g
