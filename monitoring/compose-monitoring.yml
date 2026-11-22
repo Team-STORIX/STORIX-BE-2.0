@@ -70,6 +70,20 @@ services:
       - prometheus
       - loki
 
+  # Prometheus 는 15일만 보관해서 매일 전날 지표를 S3 에 쌓는다. 설명은 metrics-backup/backup.py
+  metrics-backup:
+    image: python:3.12-alpine
+    container_name: metrics-backup
+    mem_limit: 256m
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - ./metrics-backup/backup.py:/app/backup.py:ro
+    command: ["sh", "-c", "pip install --no-cache-dir --quiet --root-user-action=ignore boto3 && exec python -u /app/backup.py"]
+    depends_on:
+      - prometheus
+
 volumes:
   prometheus-data:
   grafana-data:
