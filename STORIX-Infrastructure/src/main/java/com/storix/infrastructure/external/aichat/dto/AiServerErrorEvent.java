@@ -15,7 +15,7 @@ public record AiServerErrorEvent(
 
     // 앱에 넘길 코드. INVALID_REQUEST 등은 Spring 쪽 문제라 INTERNAL
     public String appCode() {
-        return APP_CODES.contains(code) ? code : INTERNAL;
+        return code != null && APP_CODES.contains(code) ? code : INTERNAL;
     }
 
     public static String appMessage(String appCode) {
