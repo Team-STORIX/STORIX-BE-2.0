@@ -32,10 +32,12 @@ public class LibraryService {
     private final ReviewAdaptor reviewAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
 
-    // AI 작품 검색 추천 제외용. 서재 = 리뷰한 작품
+    // AI 작품 검색 추천 제외용. 서재 = 지우지 않은 리뷰의 작품
     @Transactional(readOnly = true)
     public List<Long> findReviewedWorksIds(Long userId) {
-        return reviewAdaptor.findAllReviewedWorksIdsByUserId(userId);
+        return reviewAdaptor.findAllWorksIdsByUserId(userId).stream()
+                .map(ReviewedWorksIdAndRatingInfo::worksId)
+                .toList();
     }
 
     // 총 리뷰 개수 정보 조회
