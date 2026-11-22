@@ -25,10 +25,10 @@ public record AiChatMessageResponse(
         LocalDateTime createdAt
 ) {
     public static AiChatMessageResponse of(AiChatMessageInfo message, List<AiChatRawWork> works,
-                                           Map<Long, WorksCardInfo> cards) {
+                                           Map<Long, WorksCardInfo> cards, boolean adultVerified) {
         List<AiChatRecommendedWork> recommended = works.stream()
                 .filter(work -> cards.containsKey(work.workId()))
-                .map(work -> AiChatRecommendedWork.of(work, cards.get(work.workId())))
+                .map(work -> AiChatRecommendedWork.of(work, cards.get(work.workId()), adultVerified))
                 .toList();
         return new AiChatMessageResponse(message.messageId(), message.role(), message.type(), message.content(),
                 message.status(), recommended, message.createdAt());

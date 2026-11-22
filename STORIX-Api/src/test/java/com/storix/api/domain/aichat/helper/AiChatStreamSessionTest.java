@@ -41,7 +41,7 @@ import static org.mockito.Mockito.verify;
 class AiChatStreamSessionTest {
 
     private static final AiChatQuestion QUESTION =
-            new AiChatQuestion(1L, 10L, 100L, "로판 추천", false, Set.of());
+            new AiChatQuestion(1L, 10L, 100L, "로판 추천", false, false, Set.of());
 
     @Mock
     private SseEmitter emitter;
@@ -89,17 +89,19 @@ class AiChatStreamSessionTest {
     }
 
     @Test
-    @DisplayName("19금을 허용하지 않았는데 온 19금 작품은 빼고, 카드가 다 빠지면 결과 없음으로 저장한다")
-    void dropAdultWorksWhenNotAllowed() {
-        WorksCardInfo adult = new WorksCardInfo(5L, "19금", null, WorksType.WEBTOON, Genre.ROFAN, List.of(Platform.KAKAO_PAGE), true);
+    @DisplayName("성인 인증 전이어도 19금 작품은 버리지 않고 저장한다. 표지는 보여 줄 때 가린다")
+    void keepAdultWorksWhenNotVerified() {
+        WorksCardInfo adult = new WorksCardInfo(5L, "19금", "cover.png", WorksType.WEBTOON, Genre.ROFAN, List.of(Platform.KAKAO_PAGE), true);
         given(worksCardService.findCards(any())).willReturn(Map.of(5L, adult));
-        given(aiChatMessageService.saveAnswer(eq(10L), anyString(), any(), isNull(), any())).willReturn(200L);
+        given(aiChatMessageService.saveAnswer(eq(10L), anyString(), any(), any(), any())).willReturn(200L);
 
         session.token("찾았어요");
         session.works(List.of(raw(1, 5L)), "v1");
         session.done(AiChatAnswerStatus.OK);
 
-        verify(aiChatMessageService).saveAnswer(10L, "찾았어요", AiChatAnswerStatus.NO_RESULT, null, "v1");
+        ArgumentCaptor<String> worksJson = ArgumentCaptor.forClass(String.class);
+        verify(aiChatMessageService).saveAnswer(eq(10L), eq("찾았어요"), eq(AiChatAnswerStatus.OK), worksJson.capture(), eq("v1"));
+        assertThat(worksJson.getValue()).contains("\"workId\":5");
     }
 
     @Test

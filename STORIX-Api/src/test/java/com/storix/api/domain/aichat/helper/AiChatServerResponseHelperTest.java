@@ -103,7 +103,7 @@ class AiChatServerResponseHelperTest {
     }
 
     private static AiChatQuestion question() {
-        return new AiChatQuestion(1L, 10L, 100L, "다른 거", true, Set.of(WorksType.WEBTOON));
+        return new AiChatQuestion(1L, 10L, 100L, "다른 거", true, false, Set.of(WorksType.WEBTOON));
     }
 
     @Test
@@ -150,7 +150,8 @@ class AiChatServerResponseHelperTest {
         assertThat(body.get("chatId").asLong()).isEqualTo(10L);
         assertThat(body.get("messageId").asLong()).isEqualTo(100L);
         assertThat(body.get("question").asText()).isEqualTo("다른 거");
-        assertThat(body.get("policy").get("adultAllowed").asBoolean()).isTrue();
+        assertThat(body.get("policy").get("adultDefault").asBoolean()).isTrue();
+        assertThat(body.get("policy").get("adultVerified").asBoolean()).isFalse();
         assertThat(body.get("policy").get("workTypes").get(0).asText()).isEqualTo("WEBTOON");
         assertThat(body.get("policy").get("excludedWorkIds").get(0).asLong()).isEqualTo(3L);
         assertThat(body.get("context").get("turns").get(1).get("role").asText()).isEqualTo("assistant");

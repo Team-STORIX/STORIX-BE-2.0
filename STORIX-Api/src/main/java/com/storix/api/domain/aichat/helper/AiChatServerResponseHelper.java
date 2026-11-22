@@ -61,7 +61,8 @@ public class AiChatServerResponseHelper implements AiChatResponder {
                 question.userId(),
                 question.question(),
                 new AiServerSearchPolicy(
-                        question.adultAllowed(),
+                        question.adultDefault(),
+                        question.adultVerified(),
                         question.worksTypes(),
                         libraryWorkIds
                 ),

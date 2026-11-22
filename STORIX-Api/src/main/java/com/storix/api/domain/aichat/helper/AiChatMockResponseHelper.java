@@ -33,7 +33,7 @@ public class AiChatMockResponseHelper implements AiChatResponder {
             new AiChatMockPick("치즈인더트랩", WorksType.WEBTOON),
             new AiChatMockPick("어두운 바다의 등불이 되어", WorksType.WEBNOVEL),
             new AiChatMockPick("전지적 독자 시점", WorksType.WEBTOON),
-            new AiChatMockPick("블랙 스완", WorksType.WEBTOON)
+            new AiChatMockPick("나쁜 상사", WorksType.WEBTOON)
     );
 
     private final WorksCardService worksCardService;
@@ -62,7 +62,7 @@ public class AiChatMockResponseHelper implements AiChatResponder {
         }
 
         int count = text.contains("1개") ? 1 : MAX_WORKS;
-        List<AiChatRawWork> works = pickWorks(question.adultAllowed(), count);
+        List<AiChatRawWork> works = pickWorks(includeAdult(text, question.adultDefault()), count);
         Thread.sleep(STEP_DELAY_MILLIS);
         sink.progress("FOUND", "후보 20개 찾음");
         List<String> tokens = count == 1
@@ -80,6 +80,13 @@ public class AiChatMockResponseHelper implements AiChatResponder {
         Thread.sleep(TOKEN_DELAY_MILLIS);
         sink.works(works, PIPELINE_VERSION);
         sink.done(status);
+    }
+
+    private boolean includeAdult(String text, boolean adultDefault) {
+        if (text.contains("19금 빼고")) {
+            return false;
+        }
+        return text.contains("19금") || adultDefault;
     }
 
     private List<Long> chooseIds(boolean adultAllowed, int count) {

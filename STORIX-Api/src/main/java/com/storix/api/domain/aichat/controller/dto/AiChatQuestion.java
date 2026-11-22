@@ -11,7 +11,8 @@ public record AiChatQuestion(
         Long chatId,
         Long messageId,
         String question,
-        boolean adultAllowed,
+        boolean adultDefault,
+        boolean adultVerified,
         Set<WorksType> worksTypes
 ) {
     public static AiChatQuestion of(Long userId, AiChatQuestionInfo saved, String question,
@@ -22,6 +23,7 @@ public record AiChatQuestion(
                 saved.messageId(),
                 question,
                 setting.adultEnabled() && adultVerified,
+                adultVerified,
                 setting.worksTypes()
         );
     }
