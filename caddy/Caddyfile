@@ -2,7 +2,7 @@
 # 어느 색으로 보낼지는 deploy.sh 가 upstream.caddy 에 적고 caddy reload 로 바꾼다.
 {
 	admin localhost:2019
-	# 앱이 응답하지 않을 때 남는 오류 로그에도 요청 주소가 찍혀서 같은 값을 지운다
+	# 앱이 응답하지 않을 때 남는 오류 로그에도 요청 주소 · 헤더가 찍혀서 같은 값과 내부 API 토큰을 지운다
 	log default {
 		output stderr
 		format filter {
@@ -10,11 +10,13 @@
 				delete code
 				delete state
 			}
+			request>headers>X-Internal-Token delete
+			request>headers>X-Internal-Api-Key delete
 		}
 	}
 }
 
-# 접속 로그는 alloy 가 Loki 로 보낸다. 로그인 콜백의 일회용 code · state 는 지운다
+# 접속 로그는 alloy 가 Loki 로 보낸다. 로그인 콜백의 일회용 code · state 와 내부 API 토큰은 지운다
 (access_log) {
 	log {
 		output stdout
@@ -23,6 +25,8 @@
 				delete code
 				delete state
 			}
+			request>headers>X-Internal-Token delete
+			request>headers>X-Internal-Api-Key delete
 			resp_headers delete
 		}
 	}
@@ -32,6 +36,20 @@ import /etc/caddy/upstream.caddy
 
 {$SITE_DOMAIN} {
 	import access_log
+	# AI 서버 전용 내부 API 는 밖에서 못 부른다. AI 서버는 아래 :8081 로 들어온다
+	handle /internal/ai/* {
+		respond 404
+	}
+	handle {
+		reverse_proxy {
+			import app_upstream
+		}
+	}
+}
+
+# storix-net 안에서 AI 서버가 Spring 을 부르는 입구. 호스트에 포트를 열지 않는다 (compose ports 에 없음)
+# blue · green 교체를 따라가도록 app 컨테이너 이름 대신 Caddy 를 거친다
+:8081 {
 	reverse_proxy {
 		import app_upstream
 	}
