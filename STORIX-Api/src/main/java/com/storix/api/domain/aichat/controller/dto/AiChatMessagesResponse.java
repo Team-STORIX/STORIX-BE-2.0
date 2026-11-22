@@ -14,10 +14,10 @@ public record AiChatMessagesResponse(
         boolean hasNext
 ) {
     public static AiChatMessagesResponse of(AiChatMessagePage page, Map<Long, List<AiChatRawWork>> worksByMessage,
-                                            Map<Long, WorksCardInfo> cards) {
+                                            Map<Long, WorksCardInfo> cards, boolean adultVerified) {
         List<AiChatMessageResponse> messages = page.messages().stream()
                 .map(message -> AiChatMessageResponse.of(message,
-                        worksByMessage.getOrDefault(message.messageId(), List.of()), cards))
+                        worksByMessage.getOrDefault(message.messageId(), List.of()), cards, adultVerified))
                 .toList();
         return new AiChatMessagesResponse(messages, page.hasNext());
     }

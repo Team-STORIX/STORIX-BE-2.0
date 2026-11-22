@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Set;
 
 public record AiServerSearchPolicy(
-        boolean adultAllowed,
+        boolean adultDefault,
+        boolean adultVerified,
         Set<WorksType> workTypes,
         List<Long> excludedWorkIds
 ) {

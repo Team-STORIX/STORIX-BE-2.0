@@ -78,11 +78,10 @@ public class AiChatStreamSession implements AiChatAnswerSink {
         Map<Long, WorksCardInfo> cards = worksCardService.findCards(AiChatWorksJsonHelper.workIds(List.of(recommended)));
         this.works = recommended.stream()
                 .filter(work -> cards.containsKey(work.workId()))
-                .filter(work -> question.adultAllowed() || !cards.get(work.workId()).adult())
                 .toList();
         this.pipelineVersion = pipelineVersion;
         List<AiChatRecommendedWork> cardsToSend = works.stream()
-                .map(work -> AiChatRecommendedWork.of(work, cards.get(work.workId())))
+                .map(work -> AiChatRecommendedWork.of(work, cards.get(work.workId()), question.adultVerified()))
                 .toList();
         send("works", new AiChatWorksEvent(cardsToSend, pipelineVersion));
     }
