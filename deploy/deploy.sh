@@ -184,6 +184,7 @@ fi
 OTHERS=$(docker compose config --services | grep -vx -e batch -e caddy)
 # shellcheck disable=SC2086
 docker compose up -d --no-deps $OTHERS
+sh es-users.sh
 
 schedule_batch
 

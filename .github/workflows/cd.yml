@@ -146,6 +146,7 @@ jobs:
               "curl -sfL ${RAW}/monitoring/app-side/config.alloy -o alloy/config.alloy",
               "curl -sfL ${RAW}/caddy/Caddyfile -o caddy/Caddyfile",
               "curl -sfL ${RAW}/deploy/deploy.sh -o deploy.sh",
+              "curl -sfL ${RAW}/deploy/es-users.sh -o es-users.sh",
               "curl -sfL ${RAW}/deploy/boot-refresh.sh -o boot-refresh.sh",
               "curl -sfL ${RAW}/deploy/storix-env.service -o /etc/systemd/system/storix-env.service",
               "systemctl daemon-reload",
