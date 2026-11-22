@@ -21,19 +21,23 @@ ES=${ES_URL:-http://127.0.0.1:9200}
 
 log() { echo "[es-users] $*"; }
 
-# 관리자 계정으로 요청한다. 응답 본문은 버리고 상태 코드만 본다
+# 관리자 계정으로 요청한다. 응답 본문은 버리고 상태 코드만 본다.
+# ES 를 막 다시 띄운 직후에는 보안 인덱스가 준비되기 전이라 503 · 연결 실패가 나서 최대 2분 다시 시도한다
 es() {
-  _code=$(curl -s -o /dev/null -w '%{http_code}' -u "elastic:$ELASTIC_PASSWORD" \
-    -H 'Content-Type: application/json' -X "$1" "$ES$2" ${3:+-d "$3"})
-  case $_code in 2*) return 0 ;; *) log "$1 $2 실패 HTTP $_code"; return 1 ;; esac
+  for _ in $(seq 1 60); do
+    _code=$(curl -s -o /dev/null -w '%{http_code}' -u "elastic:$ELASTIC_PASSWORD" \
+      -H 'Content-Type: application/json' -X "$1" "$ES$2" ${3:+-d "$3"})
+    case $_code in
+      2*) return 0 ;;
+      000|503) sleep 2 ;;
+      *) break ;;
+    esac
+  done
+  log "$1 $2 실패 HTTP $_code"
+  return 1
 }
 
-# ES 를 막 다시 띄운 직후라 최대 2분 기다린다
-for _ in $(seq 1 60); do
-  curl -sf -o /dev/null -u "elastic:$ELASTIC_PASSWORD" "$ES/_cluster/health" && break
-  sleep 2
-done
-es GET /_cluster/health || { log "ES 에 관리자로 로그인하지 못했다"; exit 1; }
+es GET '/_cluster/health?wait_for_status=yellow&timeout=60s' || { log "ES 에 관리자로 로그인하지 못했다"; exit 1; }
 
 es PUT /_security/role/storix_app '{
   "cluster": ["monitor"],
