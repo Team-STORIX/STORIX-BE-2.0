@@ -79,6 +79,8 @@ ai:
   chat:
     # 답변 만드는 쪽. mock 또는 server. 검색(AI-07)이 붙기 전까지 mock
     responder: mock
+    # 사용자당 하루 질문 수 상한. 0 이면 끔 (MVP)
+    daily-limit: 0
   server:
     base-url: http://storix-ai:8090
 

@@ -30,20 +30,25 @@ public class AiChatStreamSession implements AiChatAnswerSink {
     private final AiChatMessageService aiChatMessageService;
     private final WorksCardService worksCardService;
     private final AiChatWorksJsonHelper aiChatWorksJson;
+    private final AiChatMetricsHelper aiChatMetricsHelper;
+    private final long startedNanos = System.nanoTime();
 
     private final StringBuilder content = new StringBuilder();
     private List<AiChatRawWork> works = List.of();
     private String pipelineVersion;
     private boolean connected = true;
     private boolean finished;
+    private boolean firstTokenSeen;
 
     public AiChatStreamSession(AiChatQuestion question, SseEmitter emitter, AiChatMessageService aiChatMessageService,
-                               WorksCardService worksCardService, AiChatWorksJsonHelper aiChatWorksJson) {
+                               WorksCardService worksCardService, AiChatWorksJsonHelper aiChatWorksJson,
+                               AiChatMetricsHelper aiChatMetricsHelper) {
         this.question = question;
         this.emitter = emitter;
         this.aiChatMessageService = aiChatMessageService;
         this.worksCardService = worksCardService;
         this.aiChatWorksJson = aiChatWorksJson;
+        this.aiChatMetricsHelper = aiChatMetricsHelper;
     }
 
     public boolean isFinished() {
@@ -57,6 +62,10 @@ public class AiChatStreamSession implements AiChatAnswerSink {
 
     @Override
     public void token(String text) {
+        if (!firstTokenSeen) {
+            firstTokenSeen = true;
+            aiChatMetricsHelper.recordFirstToken(System.nanoTime() - startedNanos);
+        }
         content.append(text);
         send("token", new AiChatTokenEvent(text));
     }
@@ -84,9 +93,11 @@ public class AiChatStreamSession implements AiChatAnswerSink {
             Long answerId = aiChatMessageService.saveAnswer(question.chatId(), content.toString(), status,
                     aiChatWorksJson.write(works), pipelineVersion);
             send("done", new AiChatDoneEvent(answerId, status.name()));
+            aiChatMetricsHelper.recordAnswer(status.name(), AiChatMetricsHelper.NO_ERROR, System.nanoTime() - startedNanos);
         } catch (RuntimeException e) {
             log.error(">>> [AiChat] 답변 저장 실패 messageId={}", question.messageId(), e);
             send("error", new AiChatErrorEvent("INTERNAL", SAVE_FAILED_MESSAGE));
+            aiChatMetricsHelper.recordAnswer(AiChatAnswerStatus.ERROR.name(), "INTERNAL", System.nanoTime() - startedNanos);
         }
         finish();
     }
@@ -99,6 +110,7 @@ public class AiChatStreamSession implements AiChatAnswerSink {
             log.error(">>> [AiChat] 오류 답변 저장 실패 messageId={}", question.messageId(), e);
         }
         send("error", new AiChatErrorEvent(code, message));
+        aiChatMetricsHelper.recordAnswer(AiChatAnswerStatus.ERROR.name(), code, System.nanoTime() - startedNanos);
         finish();
     }
 

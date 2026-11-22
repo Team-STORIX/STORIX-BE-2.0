@@ -24,6 +24,13 @@ public final class RedisKeyStatic {
         }
     }
 
+    public static final class AiChat {
+        public static final String USAGE_PREFIX = "ai-chat:usage:";
+
+        private AiChat() {
+        }
+    }
+
     public static final class Search {
         public static final String TRENDING_PREFIX = "search:trending:";
         public static final String TRENDING_AGGREGATED = "search:trending:aggregated";
