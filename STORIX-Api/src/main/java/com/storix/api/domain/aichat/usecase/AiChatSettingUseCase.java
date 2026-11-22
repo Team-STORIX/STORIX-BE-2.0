@@ -2,7 +2,7 @@ package com.storix.api.domain.aichat.usecase;
 
 import com.storix.api.domain.aichat.controller.dto.AiChatSettingRequest;
 import com.storix.api.domain.aichat.controller.dto.AiChatSettingResponse;
-import com.storix.api.domain.aichat.onboarding.AiChatOnboardingScript;
+import com.storix.api.domain.aichat.helper.AiChatOnboardingHelper;
 import com.storix.common.annotation.UseCase;
 import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
@@ -36,12 +36,12 @@ public class AiChatSettingUseCase {
             throw NotAdultVerifiedException.EXCEPTION;
         }
         if (request.onboardingVersion() != null) {
-            AiChatOnboardingScript.requireCurrentVersion(request.onboardingVersion());
+            AiChatOnboardingHelper.requireCurrentVersion(request.onboardingVersion());
         }
 
         AiChatSettingInfo saved = aiChatSettingService.save(userId, request.adultEnabled(),
                 Set.copyOf(request.worksTypes()), request.onboardingVersion(),
-                AiChatOnboardingScript.transcript(adultVerified, request.adultEnabled(), request.worksTypes()));
+                AiChatOnboardingHelper.transcript(adultVerified, request.adultEnabled(), request.worksTypes()));
 
         return CustomResponse.onSuccess(SuccessCode.AI_CHAT_SETTING_SAVE_SUCCESS,
                 AiChatSettingResponse.of(saved, adultVerified));
