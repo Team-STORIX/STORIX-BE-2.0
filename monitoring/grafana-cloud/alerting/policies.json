@@ -1,0 +1,40 @@
+{
+  "receiver": "empty",
+  "group_by": [
+    "grafana_folder",
+    "alertname"
+  ],
+  "routes": [
+    {
+      "receiver": "slack-storix",
+      "object_matchers": [
+        [
+          "grafana_folder",
+          "=",
+          "STORIX"
+        ]
+      ],
+      "group_by": [
+        "alertname",
+        "env"
+      ],
+      "group_wait": "30s",
+      "group_interval": "5m",
+      "repeat_interval": "12h",
+      "continue": false,
+      "routes": [
+        {
+          "receiver": "slack-storix",
+          "object_matchers": [
+            [
+              "severity",
+              "=",
+              "critical"
+            ]
+          ],
+          "repeat_interval": "1h"
+        }
+      ]
+    }
+  ]
+}

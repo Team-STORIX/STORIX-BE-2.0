@@ -1,0 +1,508 @@
+{
+  "title": "storix-infra",
+  "folderUid": "storix",
+  "interval": 60,
+  "rules": [
+    {
+      "uid": "storix-app-down",
+      "title": "서비스 다운",
+      "condition": "B",
+      "for": "2m",
+      "labels": {
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "{{ $labels.application }} 인스턴스가 스크랩되지 않습니다 (다운 또는 네트워크 단절).",
+        "runbook": "EC2 상태 / 보안그룹(9100) / docker ps 확인"
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 300,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "up{job=\"prometheus.scrape.apps\", env=\"prod\"}"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "lt",
+                  "params": [
+                    1
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-infra",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-container-oom",
+      "title": "컨테이너 OOM 발생",
+      "condition": "B",
+      "for": "0m",
+      "labels": {
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "{{ $labels.name }} 컨테이너가 OOM 으로 종료되었습니다.",
+        "runbook": "mem_limit 상향 또는 힙/컨텍스트 축소. docker inspect <name> 로 OOMKilled 확인"
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "sum by (env, name, instance_id) (increase(container_oom_events_total{name=~\"storix-.*\"}[5m]))"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-infra",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-host-oom",
+      "title": "호스트 OOM 발생",
+      "condition": "B",
+      "for": "0m",
+      "labels": {
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "{{ $labels.instance_id }} 호스트가 메모리 고갈로 프로세스를 OOM 종료했습니다.",
+        "runbook": "박스 메모리 오버서브. dmesg | grep -i oom 확인 후 mem_limit 하향 또는 인스턴스 상향"
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "sum by (env, instance_id) (increase(node_vmstat_oom_kill[5m]))"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-infra",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-jvm-heap",
+      "title": "JVM 힙 사용률 85% 초과",
+      "condition": "B",
+      "for": "5m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "힙 사용률이 85%를 넘겼습니다. 메모리 누수 또는 Full GC 로 인한 응답 지연이 임박했습니다."
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "sum by (env, application, instance_id) (jvm_memory_used_bytes{area=\"heap\"})\n/ sum by (env, application, instance_id) (jvm_memory_max_bytes{area=\"heap\"})\n"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0.85
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-infra",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-gc-thrashing",
+      "title": "GC 스레싱",
+      "condition": "B",
+      "for": "5m",
+      "labels": {
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "전체 시간의 20% 이상을 GC 로 보내고 있습니다. 응답이 사실상 멈춥니다.",
+        "runbook": "힙 덤프 확보 -> 메모리 누수 의심"
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "sum by (env, application, instance_id) (\n  rate(jvm_gc_pause_seconds_sum{job=\"prometheus.scrape.apps\"}[5m])\n)\n"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0.2
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-infra",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-full-gc-frequent",
+      "title": "Full GC 가 분당 1회 넘게 발생",
+      "condition": "B",
+      "for": "2m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "Full GC 가 분당 1회를 넘습니다. 곧 스레싱으로 번집니다."
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "sum by (env, application, instance_id) (\n  rate(jvm_gc_pause_seconds_count{job=\"prometheus.scrape.apps\", action=\"end of major GC\"}[5m])\n) * 60\n"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    1
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-infra",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-host-cpu-high",
+      "title": "서버 CPU 사용률 90% 초과",
+      "condition": "B",
+      "for": "5m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "{{ $labels.instance_id }} 서버 CPU 가 5분 이상 90%를 넘겼습니다. 어느 컨테이너인지 docker stats 로 확인하세요.",
+        "runbook": "docker stats --no-stream / docker inspect -f {{.RestartCount}} 로 재시작 반복 확인"
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 300,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "1 - avg by (env, instance_id) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0.9
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-infra",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-app-cpu-high",
+      "title": "앱 CPU 사용률 90% 초과",
+      "condition": "B",
+      "for": "5m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "{{ $labels.application }} JVM 이 CPU 를 5분 이상 90% 넘게 쓰고 있습니다. 배포 직후 기동 피크가 아니라 과부하입니다."
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 300,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "max by (env, application, instance_id) (process_cpu_usage{job=\"prometheus.scrape.apps\"})"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0.9
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-infra",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-db-pool",
+      "title": "DB 커넥션 풀 90% 초과",
+      "condition": "B",
+      "for": "5m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "HikariCP 활성 커넥션이 90%를 넘겼습니다. 곧 요청이 커넥션을 기다리며 밀립니다.",
+        "runbook": "느린 쿼리 / 트랜잭션 누수 / OSIV 확인"
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "hikaricp_connections_active / hikaricp_connections_max"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0.9
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-infra",
+      "orgID": 1
+    }
+  ]
+}
