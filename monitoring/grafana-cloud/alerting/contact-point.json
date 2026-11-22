@@ -1,0 +1,11 @@
+{
+  "uid": "slack-storix",
+  "name": "slack-storix",
+  "type": "slack",
+  "settings": {
+    "url": "",
+    "title": "{{ if eq .Status \"firing\" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}",
+    "text": "{{ range .Alerts }}\n*{{ .Labels.severity }}* | env=`{{ .Labels.env }}`{{ if .Labels.application }} app=`{{ .Labels.application }}`{{ else if .Labels.instance_id }} host=`{{ .Labels.instance_id }}`{{ end }}\n{{ .Annotations.summary }}\n{{ if .Annotations.runbook }}→ {{ .Annotations.runbook }}{{ end }}\n{{ end }}"
+  },
+  "disableResolveMessage": false
+}

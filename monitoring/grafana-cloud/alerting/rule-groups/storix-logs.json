@@ -1,0 +1,119 @@
+{
+  "title": "storix-logs",
+  "folderUid": "storix",
+  "interval": 60,
+  "rules": [
+    {
+      "uid": "storix-error-log-spike",
+      "title": "ERROR 로그 급증",
+      "condition": "B",
+      "for": "5m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "ERROR 로그가 5분간 10건을 넘었습니다.",
+        "runbook": "Loki: {job=\"storix\"} | json | level=\"ERROR\""
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 300,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-logs",
+          "model": {
+            "refId": "A",
+            "queryType": "instant",
+            "expr": "sum by (env) (count_over_time({job=\"storix\"} | json | level=\"ERROR\" [5m]))"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    10
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-logs",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-cert-renew-failed",
+      "title": "HTTPS 인증서 발급 · 갱신 실패",
+      "condition": "B",
+      "for": "0m",
+      "labels": {
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "{{ $labels.env }} Caddy 가 HTTPS 인증서를 받지 못해 다시 시도하고 있습니다. 갱신은 만료 30일 전부터 시도합니다. 마지막 실패 후 7시간 동안 실패가 없으면 해제됩니다.",
+        "runbook": "Loki: {container=\"storix-caddy\"} | json | logger=~\"tls.obtain|tls.renew\". 보안 그룹 80 · 443, DNS 가 서버를 가리키는지, Let's Encrypt 발급 한도 확인"
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 25200,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-logs",
+          "model": {
+            "refId": "A",
+            "queryType": "instant",
+            "expr": "sum by (env) (count_over_time({container=\"storix-caddy\"} | json logger=\"logger\", msg=\"msg\" | logger=~\"tls\\\\.(obtain|renew)\" | msg=~\"will retry|could not get certificate from issuer\" [7h]))"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-logs",
+      "orgID": 1
+    }
+  ]
+}

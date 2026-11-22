@@ -1,0 +1,119 @@
+{
+  "title": "storix-service",
+  "folderUid": "storix",
+  "interval": 60,
+  "rules": [
+    {
+      "uid": "storix-5xx-rate",
+      "title": "5xx 에러율 1% 초과",
+      "condition": "B",
+      "for": "5m",
+      "labels": {
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "서버 에러율이 1%를 넘겼습니다.",
+        "runbook": "Loki: {job=\"storix\"} | json | level=\"ERROR\""
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "(\n  sum by (env, application) (rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))\n  / sum by (env, application) (rate(http_server_requests_seconds_count[5m]))\n)\nand\n(sum by (env, application) (rate(http_server_requests_seconds_count[5m])) > 0.05)\n"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0.01
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-service",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-latency-p99",
+      "title": "p99 응답시간 1초 초과",
+      "condition": "B",
+      "for": "10m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "상위 1% 요청의 응답시간이 1초를 넘습니다.",
+        "runbook": "application.yml 에 percentiles-histogram 설정이 있어야 이 지표가 나온다"
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 900,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "histogram_quantile(\n  0.99,\n  sum by (le, env, application) (rate(http_server_requests_seconds_bucket[5m]))\n)\n"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    1
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-service",
+      "orgID": 1
+    }
+  ]
+}

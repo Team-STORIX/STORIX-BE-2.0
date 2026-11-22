@@ -1,0 +1,230 @@
+{
+  "title": "storix-notification",
+  "folderUid": "storix",
+  "interval": 60,
+  "rules": [
+    {
+      "uid": "storix-executor-rejected",
+      "title": "알림 작업이 큐에서 버려짐",
+      "condition": "B",
+      "for": "0m",
+      "labels": {
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "비동기 큐가 꽉 차 작업이 거부됐습니다. 알림이 실제로 유실됩니다. executor={{ $labels.executor }}",
+        "runbook": "AsyncConfig 의 풀/큐 크기 확인. Loki: {job=\"storix\"} | json | level=\"ERROR\""
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "sum by (env, executor) (increase(notification_executor_rejected_total[5m]))"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-notification",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-notification-force-finalize",
+      "title": "알림 발송이 정체돼 강제 종료됨",
+      "condition": "B",
+      "for": "0m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "발송이 끝나지 않아 배치가 강제 마감했습니다. 정상 운영이면 0이어야 합니다.",
+        "runbook": "Loki: {job=\"storix\"} | json | adminNotificationId != \"\""
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 3600,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "sum by (env) (increase(admin_notification_force_finalize_total[1h]))"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    0
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-notification",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-notification-sending-stuck",
+      "title": "SENDING 상태 알림이 쌓임",
+      "condition": "B",
+      "for": "30m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "SENDING 인 알림이 30분 넘게 5건 이상 남아 있습니다. 발송이 안 끝나고 정체 중입니다."
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 1800,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "max by (env) (admin_notification_sending_inflight)"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    5
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-notification",
+      "orgID": 1
+    },
+    {
+      "uid": "storix-fcm-failure-spike",
+      "title": "FCM 발송 실패 급증",
+      "condition": "B",
+      "for": "5m",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "FCM 실패가 10분간 50건을 넘었습니다. code={{ $labels.code }}",
+        "runbook": "토큰 만료(UNREGISTERED/INVALID_ARGUMENT)는 정상이라 제외돼 있다. 그 외 코드면 설정·인증 문제일 수 있다."
+      },
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "data": [
+        {
+          "refId": "A",
+          "relativeTimeRange": {
+            "from": 900,
+            "to": 0
+          },
+          "datasourceUid": "grafanacloud-prom",
+          "model": {
+            "refId": "A",
+            "instant": true,
+            "expr": "sum by (env, code) (\n  increase(fcm_send_failure_total{code!~\"UNREGISTERED|INVALID_ARGUMENT\"}[10m])\n)\n"
+          }
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "__expr__",
+          "model": {
+            "refId": "B",
+            "type": "threshold",
+            "expression": "A",
+            "conditions": [
+              {
+                "evaluator": {
+                  "type": "gt",
+                  "params": [
+                    50
+                  ]
+                }
+              }
+            ]
+          },
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          }
+        }
+      ],
+      "folderUID": "storix",
+      "ruleGroup": "storix-notification",
+      "orgID": 1
+    }
+  ]
+}
