@@ -1,6 +1,6 @@
 package com.storix.api.domain.aichat.controller.dto;
 
-import com.storix.api.domain.aichat.onboarding.AiChatOnboardingScript;
+import com.storix.api.domain.aichat.helper.AiChatOnboardingHelper;
 import com.storix.domain.domains.aichat.dto.AiChatSettingInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ class AiChatEntryResponseTest {
         AiChatEntryResponse response = AiChatEntryResponse.of(NEVER_SEEN, false);
 
         assertThat(response.onboarding()).isNotNull();
-        assertThat(response.onboarding().version()).isEqualTo(AiChatOnboardingScript.VERSION);
+        assertThat(response.onboarding().version()).isEqualTo(AiChatOnboardingHelper.VERSION);
         assertThat(response.exampleQuestions()).isNotEmpty();
     }
 
@@ -60,7 +60,7 @@ class AiChatEntryResponseTest {
     @Test
     @DisplayName("지금 버전 온보딩을 봤으면 온보딩 없이 예시 질문만")
     void noOnboardingWhenSeen() {
-        AiChatSettingInfo seen = new AiChatSettingInfo(false, Set.of(), AiChatOnboardingScript.VERSION);
+        AiChatSettingInfo seen = new AiChatSettingInfo(false, Set.of(), AiChatOnboardingHelper.VERSION);
 
         AiChatEntryResponse response = AiChatEntryResponse.of(seen, true);
 

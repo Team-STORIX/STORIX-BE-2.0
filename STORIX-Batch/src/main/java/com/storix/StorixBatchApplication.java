@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import com.storix.infrastructure.config.FeignClientConfig;
 import com.storix.infrastructure.config.SecurityConfig;
 import com.storix.infrastructure.global.ratelimit.RateLimitFilter;
 import com.storix.infrastructure.global.security.AiInternalTokenFilter;
@@ -28,6 +29,7 @@ import java.util.TimeZone;
                         SecurityConfig.class,
                         InternalApiKeyFilter.class,
                         AiInternalTokenFilter.class,
+                        FeignClientConfig.class,
                         RateLimitFilter.class,
                         WebSocketConfig.class,
                         StompHandler.class,

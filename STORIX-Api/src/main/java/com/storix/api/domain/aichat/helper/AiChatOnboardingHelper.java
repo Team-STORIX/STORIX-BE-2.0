@@ -1,4 +1,4 @@
-package com.storix.api.domain.aichat.onboarding;
+package com.storix.api.domain.aichat.helper;
 
 import com.storix.api.domain.aichat.controller.dto.AiChatOnboardingOption;
 import com.storix.api.domain.aichat.controller.dto.AiChatOnboardingStep;
@@ -13,13 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// 온보딩 멘트 · 선택지 · 예시 질문. 서버에 두어 앱 업데이트 없이 바꾼다
-// 멘트를 크게 바꾸면 VERSION 을 올린다. 본 버전이 낮은 사용자에게 온보딩을 다시 보여 준다
-public final class AiChatOnboardingScript {
+public final class AiChatOnboardingHelper {
 
+    // 멘트를 크게 바꾸면 올림. 본 버전이 낮은 사용자에게 온보딩 다시 노출
     public static final int VERSION = 1;
 
-    // 챗봇 이름이 정해지면 바꾼다
     private static final String CHATBOT_NAME = "○○";
 
     public static final List<String> EXAMPLE_QUESTIONS = List.of(
@@ -34,7 +32,7 @@ public final class AiChatOnboardingScript {
             WorksType.BOOK, "단행본"
     );
 
-    private AiChatOnboardingScript() {
+    private AiChatOnboardingHelper() {
     }
 
     public static void requireCurrentVersion(int version) {
@@ -43,7 +41,6 @@ public final class AiChatOnboardingScript {
         }
     }
 
-    // 온보딩을 마칠 때 대화 기록에 남길 말풍선. 챗봇 멘트와 사용자가 고른 답을 순서대로
     public static List<AiChatOnboardingLine> transcript(boolean adultVerified, boolean adultEnabled,
                                                         Collection<WorksType> worksTypes) {
         List<AiChatOnboardingLine> lines = new ArrayList<>();
@@ -63,7 +60,6 @@ public final class AiChatOnboardingScript {
         return lines;
     }
 
-    // 성인 인증이 안 된 사용자는 19금 질문을 건너뛰고 "빼고" 로 고정한다
     public static List<AiChatOnboardingStep> steps(boolean adultVerified) {
         List<AiChatOnboardingStep> steps = new ArrayList<>();
         steps.add(AiChatOnboardingStep.message("GREETING",

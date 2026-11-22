@@ -1,8 +1,10 @@
-package com.storix.api.domain.aichat.stream;
+package com.storix.api.domain.aichat.helper;
 
 import com.storix.api.domain.aichat.controller.dto.AiChatDoneEvent;
 import com.storix.api.domain.aichat.controller.dto.AiChatErrorEvent;
 import com.storix.api.domain.aichat.controller.dto.AiChatProgressEvent;
+import com.storix.api.domain.aichat.controller.dto.AiChatQuestion;
+import com.storix.api.domain.aichat.controller.dto.AiChatRawWork;
 import com.storix.api.domain.aichat.controller.dto.AiChatRecommendedWork;
 import com.storix.api.domain.aichat.controller.dto.AiChatTokenEvent;
 import com.storix.api.domain.aichat.controller.dto.AiChatWorksEvent;
@@ -18,8 +20,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-// 질문 하나의 답변 스트림. 앱으로 흘려보내면서 글자 · 추천 작품을 모아 두고, 끝나면 답변을 저장한다
-// 앱 연결이 끊겨도 답변은 끝까지 받아 저장한다. 다음 진입 때 지난 대화에 보이도록
 @Slf4j
 public class AiChatStreamSession implements AiChatAnswerSink {
 
@@ -29,7 +29,7 @@ public class AiChatStreamSession implements AiChatAnswerSink {
     private final SseEmitter emitter;
     private final AiChatMessageService aiChatMessageService;
     private final WorksCardService worksCardService;
-    private final AiChatWorksJson aiChatWorksJson;
+    private final AiChatWorksJsonHelper aiChatWorksJson;
 
     private final StringBuilder content = new StringBuilder();
     private List<AiChatRawWork> works = List.of();
@@ -38,7 +38,7 @@ public class AiChatStreamSession implements AiChatAnswerSink {
     private boolean finished;
 
     public AiChatStreamSession(AiChatQuestion question, SseEmitter emitter, AiChatMessageService aiChatMessageService,
-                               WorksCardService worksCardService, AiChatWorksJson aiChatWorksJson) {
+                               WorksCardService worksCardService, AiChatWorksJsonHelper aiChatWorksJson) {
         this.question = question;
         this.emitter = emitter;
         this.aiChatMessageService = aiChatMessageService;
@@ -61,12 +61,12 @@ public class AiChatStreamSession implements AiChatAnswerSink {
         send("token", new AiChatTokenEvent(text));
     }
 
-    // DB 에 없는 작품은 버린다. 순위는 AI 가 준 순서를 지킨다
     @Override
     public void works(List<AiChatRawWork> recommended, String pipelineVersion) {
-        Map<Long, WorksCardInfo> cards = worksCardService.findCards(AiChatWorksJson.workIds(List.of(recommended)));
+        Map<Long, WorksCardInfo> cards = worksCardService.findCards(AiChatWorksJsonHelper.workIds(List.of(recommended)));
         this.works = recommended.stream()
                 .filter(work -> cards.containsKey(work.workId()))
+                .filter(work -> question.adultAllowed() || !cards.get(work.workId()).adult())
                 .toList();
         this.pipelineVersion = pipelineVersion;
         List<AiChatRecommendedWork> cardsToSend = works.stream()
@@ -75,9 +75,11 @@ public class AiChatStreamSession implements AiChatAnswerSink {
         send("works", new AiChatWorksEvent(cardsToSend, pipelineVersion));
     }
 
-    // 저장이 실패하면 앱에는 오류로 알린다. 스트림이 열린 채 남지 않게
     @Override
-    public void done(AiChatAnswerStatus status) {
+    public void done(AiChatAnswerStatus answerStatus) {
+        AiChatAnswerStatus status = answerStatus == AiChatAnswerStatus.OK && works.isEmpty()
+                ? AiChatAnswerStatus.NO_RESULT
+                : answerStatus;
         try {
             Long answerId = aiChatMessageService.saveAnswer(question.chatId(), content.toString(), status,
                     aiChatWorksJson.write(works), pipelineVersion);

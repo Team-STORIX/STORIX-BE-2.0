@@ -101,6 +101,7 @@ services:
     environment:
       - STORIX_AI_ENV=${ENV}
       - STORIX_AI_INTERNAL_TOKEN=${STORIX_AI_INTERNAL_TOKEN}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - STORIX_AI_SPRING_BASE_URL=http://storix-caddy:8081
       - TZ=Asia/Seoul
     mem_limit: 256m

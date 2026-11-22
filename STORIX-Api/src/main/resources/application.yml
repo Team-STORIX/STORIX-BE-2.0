@@ -75,6 +75,13 @@ internal:
   # AI 서버와 주고받는 토큰. Spring → AI, AI → Spring 둘 다 이 값
   ai-token: ${STORIX_AI_INTERNAL_TOKEN}
 
+ai:
+  chat:
+    # 답변 만드는 쪽. mock 또는 server. 검색(AI-07)이 붙기 전까지 mock
+    responder: mock
+  server:
+    base-url: http://storix-ai:8090
+
 # false 는 local 프로필에서만 적용
 rate-limit:
   enabled: true

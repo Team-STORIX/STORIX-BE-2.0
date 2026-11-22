@@ -1,6 +1,5 @@
 package com.storix.api.domain.aichat.controller.dto;
 
-import com.storix.api.domain.aichat.stream.AiChatRawWork;
 import com.storix.domain.domains.aichat.dto.AiChatMessagePage;
 import com.storix.domain.domains.works.dto.WorksCardInfo;
 import io.swagger.v3.oas.annotations.media.Schema;

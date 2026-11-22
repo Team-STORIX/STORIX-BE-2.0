@@ -1,5 +1,7 @@
-package com.storix.api.domain.aichat.stream;
+package com.storix.api.domain.aichat.helper;
 
+import com.storix.api.domain.aichat.controller.dto.AiChatQuestion;
+import com.storix.api.domain.aichat.controller.dto.AiChatRawWork;
 import com.storix.domain.domains.aichat.domain.AiChatAnswerStatus;
 import com.storix.domain.domains.works.domain.Genre;
 import com.storix.domain.domains.works.domain.WorksType;
@@ -20,25 +22,25 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("[AI 채팅] mock 답변")
-class AiChatMockResponderTest {
+class AiChatMockResponseHelperTest {
 
     private static final long BLACK_SWAN = 4L;
 
     @Mock
     private WorksCardService worksCardService;
     @InjectMocks
-    private AiChatMockResponder responder;
+    private AiChatMockResponseHelper responder;
 
     private final RecordingSink sink = new RecordingSink();
 

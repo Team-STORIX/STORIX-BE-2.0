@@ -1,6 +1,6 @@
 package com.storix.api.domain.aichat.controller.dto;
 
-import com.storix.api.domain.aichat.onboarding.AiChatOnboardingScript;
+import com.storix.api.domain.aichat.helper.AiChatOnboardingHelper;
 import com.storix.domain.domains.aichat.dto.AiChatSettingInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -13,10 +13,10 @@ public record AiChatEntryResponse(
         List<String> exampleQuestions
 ) {
     public static AiChatEntryResponse of(AiChatSettingInfo setting, boolean adultVerified) {
-        AiChatOnboardingResponse onboarding = setting.hasSeenOnboarding(AiChatOnboardingScript.VERSION)
+        AiChatOnboardingResponse onboarding = setting.hasSeenOnboarding(AiChatOnboardingHelper.VERSION)
                 ? null
-                : new AiChatOnboardingResponse(AiChatOnboardingScript.VERSION,
-                        AiChatOnboardingScript.steps(adultVerified));
-        return new AiChatEntryResponse(onboarding, AiChatOnboardingScript.EXAMPLE_QUESTIONS);
+                : new AiChatOnboardingResponse(AiChatOnboardingHelper.VERSION,
+                        AiChatOnboardingHelper.steps(adultVerified));
+        return new AiChatEntryResponse(onboarding, AiChatOnboardingHelper.EXAMPLE_QUESTIONS);
     }
 }

@@ -1,8 +1,11 @@
-package com.storix.api.domain.aichat.stream;
+package com.storix.api.domain.aichat.helper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.storix.api.domain.aichat.controller.dto.AiChatRawWork;
+import com.storix.common.code.ErrorCode;
+import com.storix.common.exception.STORIXDynamicException;
 import com.storix.domain.domains.aichat.dto.AiChatMessageInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +21,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AiChatWorksJson {
+public class AiChatWorksJsonHelper {
 
     private static final TypeReference<List<AiChatRawWork>> TYPE = new TypeReference<>() {
     };
@@ -32,11 +35,10 @@ public class AiChatWorksJson {
         try {
             return objectMapper.writeValueAsString(works);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("추천 작품 직렬화 실패", e);
+            throw new STORIXDynamicException(ErrorCode.INTERNAL_SERVER_ERROR, "추천 작품 직렬화 실패", e);
         }
     }
 
-    // 읽지 못한 기록은 카드 없이 보여 준다
     public List<AiChatRawWork> read(Long messageId, String json) {
         if (json == null || json.isBlank()) {
             return List.of();
@@ -52,6 +54,13 @@ public class AiChatWorksJson {
     public Map<Long, List<AiChatRawWork>> readAll(Collection<AiChatMessageInfo> messages) {
         Map<Long, List<AiChatRawWork>> result = new LinkedHashMap<>();
         messages.forEach(message -> result.put(message.messageId(), read(message.messageId(), message.worksJson())));
+        return result;
+    }
+
+    public Map<Long, List<Long>> readWorkIds(Collection<AiChatMessageInfo> messages) {
+        Map<Long, List<Long>> result = new LinkedHashMap<>();
+        readAll(messages).forEach((messageId, works) ->
+                result.put(messageId, works.stream().map(AiChatRawWork::workId).toList()));
         return result;
     }
 

@@ -1,5 +1,6 @@
-package com.storix.api.domain.aichat.stream;
+package com.storix.api.domain.aichat.helper;
 
+import com.storix.api.domain.aichat.controller.dto.AiChatQuestion;
 import com.storix.domain.domains.aichat.service.AiChatMessageService;
 import com.storix.domain.domains.works.service.WorksCardService;
 import lombok.extern.slf4j.Slf4j;
@@ -11,11 +12,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
-// 답변 스트림을 별도 스레드에서 돌린다. 요청 스레드 · DB 커넥션을 스트리밍 동안 잡지 않는다
 @Slf4j
 @Component
 @Profile("!prod")
-public class AiChatStreamer {
+public class AiChatStreamHelper {
 
     private static final long EMITTER_TIMEOUT_MILLIS = 120_000L;
     private static final String INTERNAL_ERROR_MESSAGE = "일시적인 오류로 검색하지 못했어요. 잠시 후 다시 시도해 주세요.";
@@ -24,13 +24,13 @@ public class AiChatStreamer {
     private final AiChatResponder aiChatResponder;
     private final AiChatMessageService aiChatMessageService;
     private final WorksCardService worksCardService;
-    private final AiChatWorksJson aiChatWorksJson;
+    private final AiChatWorksJsonHelper aiChatWorksJson;
 
-    public AiChatStreamer(@Qualifier("aiChatStreamExecutor") Executor aiChatStreamExecutor,
+    public AiChatStreamHelper(@Qualifier("aiChatStreamExecutor") Executor aiChatStreamExecutor,
                           AiChatResponder aiChatResponder,
                           AiChatMessageService aiChatMessageService,
                           WorksCardService worksCardService,
-                          AiChatWorksJson aiChatWorksJson) {
+                          AiChatWorksJsonHelper aiChatWorksJson) {
         this.aiChatStreamExecutor = aiChatStreamExecutor;
         this.aiChatResponder = aiChatResponder;
         this.aiChatMessageService = aiChatMessageService;
@@ -38,6 +38,7 @@ public class AiChatStreamer {
         this.aiChatWorksJson = aiChatWorksJson;
     }
 
+    // 별도 스레드에서 실행. 스트리밍 동안 요청 스레드 · DB 커넥션을 잡지 않음
     public SseEmitter start(AiChatQuestion question) {
         SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MILLIS);
         AiChatStreamSession session = new AiChatStreamSession(question, emitter, aiChatMessageService,

@@ -1,4 +1,4 @@
-package com.storix.api.domain.aichat.onboarding;
+package com.storix.api.domain.aichat.helper;
 
 import com.storix.domain.domains.aichat.domain.AiChatMessageRole;
 import com.storix.domain.domains.aichat.dto.AiChatOnboardingLine;
@@ -13,12 +13,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("[AI 채팅] 온보딩 기록")
-class AiChatOnboardingScriptTest {
+class AiChatOnboardingHelperTest {
 
     @Test
     @DisplayName("성인 인증 사용자는 19금 답까지 챗봇 · 사용자 말풍선이 번갈아 남는다")
     void transcriptForAdult() {
-        List<AiChatOnboardingLine> lines = AiChatOnboardingScript.transcript(true, true,
+        List<AiChatOnboardingLine> lines = AiChatOnboardingHelper.transcript(true, true,
                 List.of(WorksType.BOOK, WorksType.WEBTOON));
 
         assertThat(lines).extracting(AiChatOnboardingLine::role).containsExactly(
@@ -31,7 +31,7 @@ class AiChatOnboardingScriptTest {
     @Test
     @DisplayName("인증 전 사용자는 19금 질문이 없고, 유형을 안 고르면 상관없음")
     void transcriptForMinor() {
-        List<AiChatOnboardingLine> lines = AiChatOnboardingScript.transcript(false, false, List.of());
+        List<AiChatOnboardingLine> lines = AiChatOnboardingHelper.transcript(false, false, List.of());
 
         assertThat(lines).hasSize(4);
         assertThat(lines.get(2)).isEqualTo(new AiChatOnboardingLine(AiChatMessageRole.USER, "상관없음"));
@@ -40,7 +40,7 @@ class AiChatOnboardingScriptTest {
     @Test
     @DisplayName("지금 버전이 아니면 거절한다")
     void rejectOldVersion() {
-        assertThatThrownBy(() -> AiChatOnboardingScript.requireCurrentVersion(AiChatOnboardingScript.VERSION + 1))
+        assertThatThrownBy(() -> AiChatOnboardingHelper.requireCurrentVersion(AiChatOnboardingHelper.VERSION + 1))
                 .isSameAs(AiChatInvalidOnboardingVersionException.EXCEPTION);
     }
 }

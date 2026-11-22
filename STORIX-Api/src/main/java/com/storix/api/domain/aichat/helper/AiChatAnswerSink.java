@@ -1,12 +1,13 @@
-package com.storix.api.domain.aichat.stream;
+package com.storix.api.domain.aichat.helper;
 
+import com.storix.api.domain.aichat.controller.dto.AiChatRawWork;
 import com.storix.domain.domains.aichat.domain.AiChatAnswerStatus;
 
 import java.util.List;
 
-// 답변을 만드는 쪽이 이벤트를 순서대로 넘기는 곳. progress → token(여러 번) → works → done, 실패하면 error
 public interface AiChatAnswerSink {
 
+    // 순서: progress → token 여러 번 → works → done. 실패하면 error
     void progress(String step, String message);
 
     void token(String text);

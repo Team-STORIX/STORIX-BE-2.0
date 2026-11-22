@@ -1,11 +1,15 @@
-package com.storix.api.domain.aichat.stream;
+package com.storix.api.domain.aichat.helper;
 
 import com.storix.api.domain.aichat.controller.dto.AiChatMatchedClue;
+import com.storix.api.domain.aichat.controller.dto.AiChatMockPick;
+import com.storix.api.domain.aichat.controller.dto.AiChatQuestion;
+import com.storix.api.domain.aichat.controller.dto.AiChatRawWork;
 import com.storix.domain.domains.aichat.domain.AiChatAnswerStatus;
 import com.storix.domain.domains.works.domain.WorksType;
 import com.storix.domain.domains.works.dto.WorksCardInfo;
 import com.storix.domain.domains.works.service.WorksCardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -14,24 +18,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// AI 서버 대신 정해진 답을 흘려보낸다. 작품은 DB 에 있는 것으로 골라 카드 · 작품 상세까지 실제로 이어진다
-// 질문에 "오류" · "작품외" · "없는작품" · "결과없음" · "1개" 를 넣으면 해당 응답, 그 밖에는 카드 5개
 @Component
 @Profile("!prod")
+@ConditionalOnProperty(name = "ai.chat.responder", havingValue = "mock")
 @RequiredArgsConstructor
-public class AiChatMockResponder implements AiChatResponder {
+public class AiChatMockResponseHelper implements AiChatResponder {
 
     private static final String PIPELINE_VERSION = "mock";
     private static final long STEP_DELAY_MILLIS = 600L;
     private static final long TOKEN_DELAY_MILLIS = 80L;
     private static final int MAX_WORKS = 5;
 
-    // 먼저 보여 줄 작품. 블랙 스완은 19금이라 19금 추천을 켠 성인 인증 사용자에게만 나간다
-    private static final List<Title> PICKS = List.of(
-            new Title("치즈인더트랩", WorksType.WEBTOON),
-            new Title("어두운 바다의 등불이 되어", WorksType.WEBNOVEL),
-            new Title("전지적 독자 시점", WorksType.WEBTOON),
-            new Title("블랙 스완", WorksType.WEBTOON)
+    private static final List<AiChatMockPick> PICKS = List.of(
+            new AiChatMockPick("치즈인더트랩", WorksType.WEBTOON),
+            new AiChatMockPick("어두운 바다의 등불이 되어", WorksType.WEBNOVEL),
+            new AiChatMockPick("전지적 독자 시점", WorksType.WEBTOON),
+            new AiChatMockPick("블랙 스완", WorksType.WEBTOON)
     );
 
     private final WorksCardService worksCardService;
@@ -80,10 +82,9 @@ public class AiChatMockResponder implements AiChatResponder {
         sink.done(status);
     }
 
-    // 정해 둔 작품을 먼저, 모자라면 DB 에서 무작위로 채운다. 19금은 실제와 같은 규칙으로 거른다
     private List<Long> chooseIds(boolean adultAllowed, int count) {
         List<Long> pickIds = PICKS.stream()
-                .map(title -> worksCardService.findIdByTitle(title.name(), title.worksType()))
+                .map(pick -> worksCardService.findIdByTitle(pick.title(), pick.worksType()))
                 .flatMap(Optional::stream)
                 .toList();
         Map<Long, WorksCardInfo> pickCards = worksCardService.findCards(pickIds);
@@ -113,8 +114,5 @@ public class AiChatMockResponder implements AiChatResponder {
             works.add(new AiChatRawWork(works.size() + 1, id, "질문에 적은 조건과 가까운 작품이에요.", clues));
         }
         return works;
-    }
-
-    private record Title(String name, WorksType worksType) {
     }
 }

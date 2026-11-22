@@ -1,6 +1,5 @@
 package com.storix.api.domain.aichat.controller.dto;
 
-import com.storix.api.domain.aichat.stream.AiChatRawWork;
 import com.storix.domain.domains.aichat.domain.AiChatAnswerStatus;
 import com.storix.domain.domains.aichat.domain.AiChatMessageRole;
 import com.storix.domain.domains.aichat.domain.AiChatMessageType;

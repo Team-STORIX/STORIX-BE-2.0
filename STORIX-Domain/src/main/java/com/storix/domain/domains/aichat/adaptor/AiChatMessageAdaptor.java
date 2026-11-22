@@ -1,6 +1,8 @@
 package com.storix.domain.domains.aichat.adaptor;
 
+import com.storix.domain.domains.aichat.domain.AiChatAnswerStatus;
 import com.storix.domain.domains.aichat.domain.AiChatMessage;
+import com.storix.domain.domains.aichat.domain.AiChatMessageType;
 import com.storix.domain.domains.aichat.repository.AiChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
@@ -24,6 +26,12 @@ public class AiChatMessageAdaptor {
             return aiChatMessageRepository.findByChatIdOrderByIdDesc(chatId, Limit.of(limit));
         }
         return aiChatMessageRepository.findByChatIdAndIdLessThanOrderByIdDesc(chatId, beforeId, Limit.of(limit));
+    }
+
+    // AI 서버에 넘길 대화. 온보딩 · 오류 답변은 빼고 최신순
+    public List<AiChatMessage> findContext(Long chatId, Long beforeId, int limit) {
+        return aiChatMessageRepository.findContext(chatId, beforeId, AiChatMessageType.TEXT,
+                AiChatAnswerStatus.ERROR, Limit.of(limit));
     }
 
     public int deleteAllByChatId(Long chatId) {

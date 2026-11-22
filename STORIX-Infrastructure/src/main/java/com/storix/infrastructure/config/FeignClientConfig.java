@@ -1,5 +1,6 @@
 package com.storix.infrastructure.config;
 
+import com.storix.infrastructure.external.aichat.client.AiServerClient;
 import com.storix.infrastructure.external.oauth.client.AppleOAuthClient;
 import com.storix.infrastructure.external.oauth.client.KakaoInfoClient;
 import com.storix.infrastructure.external.oauth.client.KakaoOAuthClient;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 @EnableFeignClients(clients = {
+        // Api 전용. batch 는 BatchFeignClientConfig 에서 쓰는 것만 따로 등록
         KakaoInfoClient.class,
         KakaoOAuthClient.class,
         NaverInfoClient.class,
@@ -26,7 +28,8 @@ import java.util.concurrent.TimeUnit;
         AppleOAuthClient.class,
         XOAuthClient.class,
         XInfoClient.class,
-        PortOneIdentityVerificationClient.class
+        PortOneIdentityVerificationClient.class,
+        AiServerClient.class
 })
 public class FeignClientConfig {
 
