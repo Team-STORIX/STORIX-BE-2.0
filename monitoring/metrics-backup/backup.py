@@ -20,6 +20,8 @@ STEP = 60
 CHUNK = 3600
 BACKFILL_DAYS = 13
 RUN_AT = (4, 30)
+# 조회 사이 쉬는 시간. 빠진 날을 몰아 채울 때 Prometheus(메모리 512MB)가 버거워 운영 지표 수집이 끊기지 않게 한다
+PAUSE_SECONDS = 0.2
 
 
 def log(msg):
@@ -32,6 +34,7 @@ def prom(path, params):
         try:
             with urllib.request.urlopen(f"{PROM}{path}?{query}", timeout=120) as r:
                 body = json.load(r)
+            time.sleep(PAUSE_SECONDS)
             if body.get("status") == "success":
                 return body["data"]
             raise RuntimeError(body.get("error"))
