@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-// 질문은 스트리밍 전에, 답변은 스트리밍이 끝난 뒤 각각 짧은 트랜잭션으로 저장한다
 @Service
 @RequiredArgsConstructor
 public class AiChatMessageService {
@@ -41,6 +40,17 @@ public class AiChatMessageService {
                 AiChatMessage.answer(chatId, content, status, worksJson, pipelineVersion));
         chat.touch(LocalDateTime.now());
         return saved.getId();
+    }
+
+    // 질문 직전까지의 대화를 오래된 순으로
+    @Transactional(readOnly = true)
+    public List<AiChatMessageInfo> findContext(Long chatId, Long beforeMessageId, int limit) {
+        List<AiChatMessageInfo> latest = new ArrayList<>(aiChatMessageAdaptor.findContext(chatId, beforeMessageId, limit)
+                .stream()
+                .map(AiChatMessageInfo::from)
+                .toList());
+        Collections.reverse(latest);
+        return latest;
     }
 
     @Transactional(readOnly = true)

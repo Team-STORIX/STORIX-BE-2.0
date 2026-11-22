@@ -65,7 +65,7 @@ class AiChatMockResponderTest {
     }
 
     private static AiChatQuestion question(String text, boolean adultAllowed) {
-        return new AiChatQuestion(1L, 10L, 100L, text, adultAllowed, Set.of());
+        return new AiChatQuestion(1L, 10L, 100L, text, adultAllowed, Set.of(), List.of(), AiChatContext.of(List.of(), Map.of()));
     }
 
     @Test
