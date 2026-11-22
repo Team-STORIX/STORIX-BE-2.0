@@ -49,6 +49,8 @@ class AiChatStreamSessionTest {
     private AiChatMessageService aiChatMessageService;
     @Mock
     private WorksCardService worksCardService;
+    @Mock
+    private AiChatUsageLimitHelper aiChatUsageLimitHelper;
 
     private AiChatStreamSession session;
     private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
@@ -56,7 +58,7 @@ class AiChatStreamSessionTest {
     @BeforeEach
     void setUp() {
         session = new AiChatStreamSession(QUESTION, emitter, aiChatMessageService, worksCardService,
-                new AiChatWorksJsonHelper(new ObjectMapper()), new AiChatMetricsHelper(meterRegistry, "mock"));
+                new AiChatWorksJsonHelper(new ObjectMapper()), new AiChatMetricsHelper(meterRegistry, "mock"), aiChatUsageLimitHelper);
     }
 
     private static WorksCardInfo card(long id) {
@@ -129,9 +131,21 @@ class AiChatStreamSessionTest {
     }
 
     @Test
-    @DisplayName("오류는 ERROR 와 오류 코드로 지표에 남긴다")
+    @DisplayName("done 으로 저장된 답변만 사용 횟수에 센다")
+    void recordUsageOnlyWhenDone() {
+        given(aiChatMessageService.saveAnswer(eq(10L), anyString(), any(), any(), any())).willReturn(200L);
+
+        session.done(AiChatAnswerStatus.NO_RESULT);
+
+        verify(aiChatUsageLimitHelper).record(1L);
+    }
+
+    @Test
+    @DisplayName("오류는 ERROR 와 오류 코드로 지표에 남기고 사용 횟수에는 넣지 않는다")
     void recordErrorMetrics() {
         session.error("TIMEOUT", "잠시 후 다시 시도해 주세요.");
+
+        verify(aiChatUsageLimitHelper, never()).record(any());
 
         assertThat(meterRegistry.get("ai.chat.answer").tags("status", "ERROR", "error", "TIMEOUT").timer().count()).isEqualTo(1);
         assertThat(meterRegistry.find("ai.chat.first.token").timer()).isNull();

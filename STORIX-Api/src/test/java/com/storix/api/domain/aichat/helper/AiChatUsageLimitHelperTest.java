@@ -14,6 +14,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,24 +30,35 @@ class AiChatUsageLimitHelperTest {
         AiChatUsageLimitHelper helper = new AiChatUsageLimitHelper(rateLimitCounter, 0);
 
         assertThatCode(() -> helper.check(1L)).doesNotThrowAnyException();
+        helper.record(1L);
         verifyNoInteractions(rateLimitCounter);
     }
 
     @Test
-    @DisplayName("켜면 사용자 · 날짜별로 세고, 상한을 넘는 질문부터 막는다")
+    @DisplayName("켜면 오늘 쓴 횟수가 상한에 닿은 뒤부터 막는다")
     void limitExceeded() {
         AiChatUsageLimitHelper helper = new AiChatUsageLimitHelper(rateLimitCounter, 2);
-        given(rateLimitCounter.increment(startsWith("ai-chat:usage:1:"), anyLong())).willReturn(2L, 3L);
+        given(rateLimitCounter.current(startsWith("ai-chat:usage:1:"))).willReturn(1L, 2L);
 
         assertThatCode(() -> helper.check(1L)).doesNotThrowAnyException();
         assertThatThrownBy(() -> helper.check(1L)).isSameAs(AiChatUsageLimitExceededException.EXCEPTION);
     }
 
     @Test
+    @DisplayName("record 는 사용자 · 날짜 키로 1 을 더한다")
+    void record() {
+        AiChatUsageLimitHelper helper = new AiChatUsageLimitHelper(rateLimitCounter, 2);
+
+        helper.record(1L);
+
+        verify(rateLimitCounter).increment(startsWith("ai-chat:usage:1:"), anyLong());
+    }
+
+    @Test
     @DisplayName("Redis 장애로 0 이 오면 통과")
     void passWhenCounterFails() {
         AiChatUsageLimitHelper helper = new AiChatUsageLimitHelper(rateLimitCounter, 2);
-        given(rateLimitCounter.increment(anyString(), anyLong())).willReturn(0L);
+        given(rateLimitCounter.current(anyString())).willReturn(0L);
 
         assertThatCode(() -> helper.check(1L)).doesNotThrowAnyException();
     }

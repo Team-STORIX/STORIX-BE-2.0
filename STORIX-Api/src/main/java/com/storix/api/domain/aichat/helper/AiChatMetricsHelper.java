@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 public class AiChatMetricsHelper {
 
     public static final String NO_ERROR = "none";
+    public static final String UNKNOWN_MODEL = "unknown";
 
     private static final String METRIC_ANSWER = "ai.chat.answer";
     private static final String METRIC_FIRST_TOKEN = "ai.chat.first.token";
@@ -48,8 +49,9 @@ public class AiChatMetricsHelper {
                 .record(elapsedNanos, TimeUnit.NANOSECONDS);
     }
 
-    // 비용은 대시보드에서 모델별 단가를 곱해 계산
+    // 비용은 대시보드에서 모델별 단가를 곱해 계산. 모델 이름이 없어도 답변이 오류로 바뀌지 않게 unknown 으로
     public void recordUsage(String model, int inputTokens, int outputTokens, int cacheReadTokens) {
+        model = model == null || model.isBlank() ? UNKNOWN_MODEL : model;
         meterRegistry.counter(METRIC_TOKENS, "model", model, "type", "input").increment(inputTokens);
         meterRegistry.counter(METRIC_TOKENS, "model", model, "type", "output").increment(outputTokens);
         meterRegistry.counter(METRIC_TOKENS, "model", model, "type", "cache_read").increment(cacheReadTokens);

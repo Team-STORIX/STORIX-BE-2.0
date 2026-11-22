@@ -31,6 +31,7 @@ public class AiChatStreamSession implements AiChatAnswerSink {
     private final WorksCardService worksCardService;
     private final AiChatWorksJsonHelper aiChatWorksJson;
     private final AiChatMetricsHelper aiChatMetricsHelper;
+    private final AiChatUsageLimitHelper aiChatUsageLimitHelper;
     private final long startedNanos = System.nanoTime();
 
     private final StringBuilder content = new StringBuilder();
@@ -42,13 +43,15 @@ public class AiChatStreamSession implements AiChatAnswerSink {
 
     public AiChatStreamSession(AiChatQuestion question, SseEmitter emitter, AiChatMessageService aiChatMessageService,
                                WorksCardService worksCardService, AiChatWorksJsonHelper aiChatWorksJson,
-                               AiChatMetricsHelper aiChatMetricsHelper) {
+                               AiChatMetricsHelper aiChatMetricsHelper,
+                               AiChatUsageLimitHelper aiChatUsageLimitHelper) {
         this.question = question;
         this.emitter = emitter;
         this.aiChatMessageService = aiChatMessageService;
         this.worksCardService = worksCardService;
         this.aiChatWorksJson = aiChatWorksJson;
         this.aiChatMetricsHelper = aiChatMetricsHelper;
+        this.aiChatUsageLimitHelper = aiChatUsageLimitHelper;
     }
 
     public boolean isFinished() {
@@ -94,6 +97,7 @@ public class AiChatStreamSession implements AiChatAnswerSink {
                     aiChatWorksJson.write(works), pipelineVersion);
             send("done", new AiChatDoneEvent(answerId, status.name()));
             aiChatMetricsHelper.recordAnswer(status.name(), AiChatMetricsHelper.NO_ERROR, System.nanoTime() - startedNanos);
+            aiChatUsageLimitHelper.record(question.userId());
         } catch (RuntimeException e) {
             log.error(">>> [AiChat] 답변 저장 실패 messageId={}", question.messageId(), e);
             send("error", new AiChatErrorEvent("INTERNAL", SAVE_FAILED_MESSAGE));

@@ -105,7 +105,7 @@
             "type": "prometheus",
             "uid": "grafanacloud-prom"
           },
-          "expr": "sum(increase(ai_chat_answer_seconds_count{env=\"$env\",status=\"ERROR\"}[$__range])) / sum(increase(ai_chat_answer_seconds_count{env=\"$env\"}[$__range]))",
+          "expr": "(sum(increase(ai_chat_answer_seconds_count{env=\"$env\",status=\"ERROR\"}[$__range])) or vector(0)) / sum(increase(ai_chat_answer_seconds_count{env=\"$env\"}[$__range]))",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -151,7 +151,7 @@
             "type": "prometheus",
             "uid": "grafanacloud-prom"
           },
-          "expr": "sum(increase(ai_chat_answer_seconds_count{env=\"$env\",status=\"OFF_TOPIC\"}[$__range])) / sum(increase(ai_chat_answer_seconds_count{env=\"$env\"}[$__range]))",
+          "expr": "(sum(increase(ai_chat_answer_seconds_count{env=\"$env\",status=\"OFF_TOPIC\"}[$__range])) or vector(0)) / sum(increase(ai_chat_answer_seconds_count{env=\"$env\"}[$__range]))",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -198,7 +198,7 @@
             "type": "prometheus",
             "uid": "grafanacloud-prom"
           },
-          "expr": "sum(increase(ai_chat_answer_seconds_count{env=\"$env\",status=~\"NO_RESULT|WORK_NOT_FOUND\"}[$__range])) / sum(increase(ai_chat_answer_seconds_count{env=\"$env\"}[$__range]))",
+          "expr": "(sum(increase(ai_chat_answer_seconds_count{env=\"$env\",status=~\"NO_RESULT|WORK_NOT_FOUND\"}[$__range])) or vector(0)) / sum(increase(ai_chat_answer_seconds_count{env=\"$env\"}[$__range]))",
           "legendFormat": "",
           "refId": "A",
           "instant": true,

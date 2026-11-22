@@ -24,14 +24,21 @@ public class AiChatUsageLimitHelper {
         this.dailyLimit = dailyLimit;
     }
 
-    // 0 이하면 끔. 켜면 한국 날짜 기준 하루 질문 수를 센다. Redis 장애면 막지 않고 통과
+    // 0 이하면 끔. 한국 날짜 기준 하루 횟수. Redis 장애면 통과
     public void check(Long userId) {
-        if (dailyLimit <= 0) {
-            return;
-        }
-        String key = RedisKeyStatic.AiChat.USAGE_PREFIX + userId + ":" + LocalDate.now(ZONE).format(DateTimeFormatter.BASIC_ISO_DATE);
-        if (rateLimitCounter.increment(key, COUNTER_TTL_SECONDS) > dailyLimit) {
+        if (dailyLimit > 0 && rateLimitCounter.current(key(userId)) >= dailyLimit) {
             throw AiChatUsageLimitExceededException.EXCEPTION;
         }
+    }
+
+    // done 으로 저장된 답변만. 오류로 끝난 질문은 제외
+    public void record(Long userId) {
+        if (dailyLimit > 0) {
+            rateLimitCounter.increment(key(userId), COUNTER_TTL_SECONDS);
+        }
+    }
+
+    private String key(Long userId) {
+        return RedisKeyStatic.AiChat.USAGE_PREFIX + userId + ":" + LocalDate.now(ZONE).format(DateTimeFormatter.BASIC_ISO_DATE);
     }
 }

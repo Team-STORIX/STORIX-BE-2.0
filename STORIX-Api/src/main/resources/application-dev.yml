@@ -1,4 +1,8 @@
 spring:
+  # dev 는 prod 와 같은 RDS 를 써서 커넥션을 적게 잡는다
+  datasource:
+    hikari:
+      maximum-pool-size: 3
   jpa:
     hibernate:
       ddl-auto: validate
