@@ -73,7 +73,7 @@ public class STORIXStatic {
         public static final String API_KEY_HEADER = "X-Internal-Api-Key";
         public static final String SWAGGER_SCHEME = "INTERNAL API KEY";
         // AI 서버 전용. 크롤러 키와 권한을 나눈다
-        public static final String AI_URI_PREFIX = "/internal/ai/";
+        public static final String AI_URI_PREFIX = "/internal/v1/ai/";
         public static final String AI_TOKEN_HEADER = "X-Internal-Token";
     }
 

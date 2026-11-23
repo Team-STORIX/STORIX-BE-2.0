@@ -57,6 +57,11 @@ public class AiChatSetting extends BaseTimeEntity {
         return new AiChatSetting(userId);
     }
 
+    // 챗봇 설정에서 고를 수 있는 작품 유형. AI 서버 카탈로그에도 같은 값을 내려준다
+    public static Set<WorksType> selectableWorksTypes() {
+        return EnumSet.copyOf(SELECTABLE_WORKS_TYPES);
+    }
+
     public void update(boolean adultEnabled, Set<WorksType> worksTypes) {
         if (!SELECTABLE_WORKS_TYPES.containsAll(worksTypes)) {
             throw AiChatUnsupportedWorksTypeException.EXCEPTION;
