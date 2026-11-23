@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
 
-// AI 서버가 부르는 /internal/ai/** 전용. 토큰이 맞으면 AI_INTERNAL 권한만 준다
+// AI 서버가 부르는 /internal/v1/ai/** 전용. 토큰이 맞으면 AI_INTERNAL 권한만 준다
 // 틀리면 인증 없이 넘겨 SecurityEntryPoint 가 401 로 막는다
 @Component
 public class AiInternalTokenFilter extends OncePerRequestFilter {
