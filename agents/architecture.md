@@ -12,7 +12,7 @@ STORIX-Common → STORIX-Domain → STORIX-Infrastructure → STORIX-Api
 | --- | --- |
 | STORIX-Api | 앱 API. `domain/<도메인>/` 에 Controller · UseCase, Flyway 마이그레이션 |
 | STORIX-Internal | 크롤러용 내부 API. 작품 적재 · 병합 · 검수 |
-| STORIX-Batch | 스케줄러. 웹 서버 없이 뜬다 |
+| STORIX-Batch | 스케줄러, 앱 기동 작업(`bootstrap/`). 웹 서버 없이 한 대만 뜬다 |
 | STORIX-Infrastructure | Security · Redis · WebSocket · FCM · 소셜 로그인 · 포트원 · S3 · Slack |
 | STORIX-Domain | `domains/<도메인>/` 에 entity · repository · adaptor · service · dto · exception |
 | STORIX-Common | 공통 응답 · 에러 코드 · 예외 · `@UseCase` 같은 어노테이션 · Redis 키 |
@@ -29,6 +29,14 @@ Controller → UseCase → Service → Adaptor → Repository · Redis · ES
 | Service 는 다른 Service 를 부르지 않는다. 여러 Service 조합은 UseCase 에서 | 트랜잭션 경계가 꼬이지 않게 | `ConventionArchitectureTest` |
 | Adaptor 에 필요한 조회 · 저장이 없으면 Adaptor 에 메서드를 추가한다 | Service 가 Repository 를 우회하지 않게 | 리뷰 |
 | UseCase 는 얇게 둔다. private 메서드를 두지 않고 매핑은 DTO 정적 팩토리로 | UseCase 는 흐름만 보이게 | `ConventionArchitectureTest` |
+
+## 리스너
+
+| 규칙 | 이유 | 강제 |
+| --- | --- | --- |
+| 도메인 이벤트 리스너는 Domain(`domains/<도메인>/listener/`) · Infrastructure 에 둔다 | 이벤트를 낸 도메인 곁에서 처리 | 리뷰 |
+| 앱 기동 작업(`ApplicationReadyEvent`, 예: 검색 재색인)은 Batch `bootstrap/` 에 둔다 | Batch 는 한 대만 떠서 blue/green 중에도 한 번만 돈다. 배포마다 같이 교체된다 | 리뷰 |
+| Api 모듈에는 `@EventListener` · `@TransactionalEventListener` 를 두지 않는다. Controller · UseCase 만 | Api 는 blue/green 두 벌이 떠서 기동 작업이 두 번 돈다 | `ConventionArchitectureTest` |
 
 ## 트랜잭션
 

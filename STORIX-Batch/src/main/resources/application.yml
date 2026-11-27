@@ -20,6 +20,11 @@ spring:
     elasticsearch:
       repositories:
         enabled: false
+  # 기동 시 검색 재색인
+  elasticsearch:
+    uris: http://storix-elasticsearch:9200
+    connection-timeout: 1s
+    socket-timeout: 5s
 
 aws:
   s3:

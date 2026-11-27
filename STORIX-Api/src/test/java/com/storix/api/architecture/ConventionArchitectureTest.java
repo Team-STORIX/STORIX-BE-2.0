@@ -9,9 +9,11 @@ import com.tngtech.archunit.lang.ArchRule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
@@ -112,6 +114,15 @@ class ConventionArchitectureTest {
     void privateMethodIsNotTransactional() {
         ArchRule rule = noMethods().that().arePrivate()
                 .should().beAnnotatedWith(Transactional.class);
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Api 모듈에 이벤트 리스너를 두지 않는다. 도메인 이벤트는 Domain · Infrastructure, 앱 기동 작업은 Batch 에")
+    void apiHasNoEventListener() {
+        ArchRule rule = noMethods().that().areDeclaredInClassesThat().resideInAPackage("com.storix.api..")
+                .should().beAnnotatedWith(EventListener.class)
+                .orShould().beAnnotatedWith(TransactionalEventListener.class);
         rule.check(classes);
     }
 }

@@ -1,4 +1,4 @@
-package com.storix.api.domain.search.listener;
+package com.storix.batch.bootstrap;
 
 import com.storix.domain.domains.search.exception.SearchReindexInProgressException;
 import com.storix.domain.domains.search.service.FeedIndexService;
