@@ -5,6 +5,7 @@ import com.storix.common.code.SuccessCode;
 import com.storix.common.payload.CustomResponse;
 import com.storix.domain.domains.genrescore.service.GenreScoreQueryService;
 import com.storix.domain.domains.library.dto.StandardLibraryWorksInfo;
+import com.storix.domain.domains.library.service.LibraryCountCacheHelper;
 import com.storix.domain.domains.library.service.LibraryService;
 import com.storix.domain.domains.preference.dto.GenreScoreInfo;
 import com.storix.domain.domains.profile.dto.FavoriteHashtagsResponse;
@@ -31,6 +32,7 @@ public class OtherProfileUseCase {
     private final ProfileFavoriteService profileFavoriteService;
     private final GenreScoreQueryService genreScoreQueryService;
     private final LibraryService libraryService;
+    private final LibraryCountCacheHelper libraryCountCacheHelper;
 
     public CustomResponse<OtherUserProfileInfo> getProfile(Long viewerId, Long targetUserId) {
 
@@ -84,7 +86,11 @@ public class OtherProfileUseCase {
                     OtherUserLibraryResponse.ofPrivate(pageable));
         }
 
-        int totalReviewCount = libraryService.getTotalReviewCount(targetUserId);
+        Integer totalReviewCount = libraryCountCacheHelper.findReviewCount(targetUserId);
+        if (totalReviewCount == null) {
+            totalReviewCount = libraryService.getTotalReviewCount(targetUserId);
+            libraryCountCacheHelper.saveReviewCount(targetUserId, totalReviewCount);
+        }
         Slice<StandardLibraryWorksInfo> reviewedWorksInfos =
                 libraryService.getReviewedWorksInfo(targetUserId, viewerId, pageable);
 

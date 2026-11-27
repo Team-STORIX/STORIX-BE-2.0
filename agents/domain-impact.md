@@ -12,11 +12,11 @@
 | chat | 토픽룸 채팅 메시지 | 3 | 4 | 19 |
 | event | 이벤트 · 팝업 · 배너 · 출석 체크 · 당첨자 | 3 | 2 | 19 |
 | favorite | 관심 작품 | 2 | 6 | 19 |
-| feed | 피드 조회 · 반응 · 댓글 · 신고, 오늘의 피드 | 11 | 6 | 19 |
+| feed | 피드 조회 · 반응 · 댓글 · 신고, 오늘의 피드 | 10 | 5 | 19 |
 | genrescore | 사용자 장르 취향 점수 | 3 | 6 | 19 |
 | hashtag | 해시태그와 추천 | 4 | 4 | 19 |
 | image | 이미지 업로드용 S3 키 관리 | 0 | 3 | 20 |
-| library | 내 서재 | 4 | 6 | 19 |
+| library | 내 서재 | 3 | 5 | 19 |
 | notification | 알림 저장 · 푸시 발송 | 5 | 5 | 19 |
 | onboarding | 온보딩 작품 선택 | 1 | 2 | 19 |
 | plus | 게시글 · 리뷰 · 별점 작성 | 11 | 9 | 19 |
@@ -135,13 +135,12 @@ graph LR
 
 피드 조회 · 반응 · 댓글 · 신고, 오늘의 피드
 
-- 의존: adultverification, favorite, library, notification, plus, profile, report, search, topicroom, user, works
-- 나를 직접 쓰는 도메인: library, plus, profile, report, search, user
+- 의존: adultverification, favorite, notification, plus, profile, report, search, topicroom, user, works
+- 나를 직접 쓰는 도메인: plus, profile, report, search, user
 - 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, genrescore, hashtag, library, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
-  library --> feed
   plus --> feed
   profile --> feed
   report --> feed
@@ -202,13 +201,12 @@ graph LR
 
 내 서재
 
-- 의존: adultverification, feed, plus, works
-- 나를 직접 쓰는 도메인: feed, plus, profile, report, review, user
+- 의존: adultverification, plus, works
+- 나를 직접 쓰는 도메인: plus, profile, report, review, user
 - 바꾸면 영향 가는 도메인: adultverification, aichat, chat, event, favorite, feed, genrescore, hashtag, notification, onboarding, plus, preference, profile, report, review, search, topicroom, user, works
 
 ```mermaid
 graph LR
-  feed --> library
   plus --> library
   profile --> library
   report --> library

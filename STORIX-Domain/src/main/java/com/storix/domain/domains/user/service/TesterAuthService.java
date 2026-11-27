@@ -1,7 +1,6 @@
 package com.storix.domain.domains.user.service;
 
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.InternalSignupPendingAdaptor;
@@ -23,7 +22,6 @@ public class TesterAuthService {
 
     private final UserAdaptor userAdaptor;
     private final OnboardingWorksHelper onboardingWorksHelper;
-    private final LibraryAdaptor libraryAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
     private final InternalSignupPendingAdaptor internalSignupPendingAdaptor;
     private final IssuedKeyGenerator issuedKeyGenerator;
@@ -64,7 +62,6 @@ public class TesterAuthService {
         if (pending.getFavoriteWorksIdList() != null && !pending.getFavoriteWorksIdList().isEmpty()) {
             favoriteWorksAdaptor.saveFavoriteWorks(authUserDetails.getUserId(), pending.getFavoriteWorksIdList());
         }
-        libraryAdaptor.initLibrary(authUserDetails.getUserId());
 
         internalSignupPendingAdaptor.deleteTesterPending(pendingId);
         return authUserDetails;

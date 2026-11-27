@@ -1,6 +1,5 @@
 package com.storix.domain.domains.user.service;
 
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.user.adaptor.AuthUserDetails;
 import com.storix.domain.domains.user.adaptor.InternalSignupPendingAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminAuthService {
 
     private final UserAdaptor userAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
     private final InternalSignupPendingAdaptor internalSignupPendingAdaptor;
     private final PasswordEncoder passwordEncoder;
     private final IssuedKeyGenerator issuedKeyGenerator;
@@ -53,7 +51,6 @@ public class AdminAuthService {
 
         AuthUserDetails authUserDetails = userAdaptor.saveAdminUser(cmd);
 
-        libraryAdaptor.initLibrary(authUserDetails.getUserId());
 
         internalSignupPendingAdaptor.deleteAdminPending(pendingId);
         return authUserDetails;

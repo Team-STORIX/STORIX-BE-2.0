@@ -4,7 +4,6 @@ import com.storix.common.utils.STORIXStatic;
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.image.publisher.S3CleanupPublisher;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
 import com.storix.domain.domains.user.adaptor.UserAdaptor;
@@ -27,7 +26,6 @@ public class UserWithdrawalHelper {
 
     private final UserAdaptor userAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
     private final PushDeviceAdaptor pushDeviceAdaptor;
     private final NotificationSettingAdaptor notificationSettingAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
@@ -44,10 +42,9 @@ public class UserWithdrawalHelper {
         user.withdraw();
         s3CleanupPublisher.publish(profileObjectKey);
 
-        // 2. 유저 관련 정보 (관심 작품, 서재) 삭제 + Redis 반영(refreshToken 삭제, blacklist 등록)은 커밋 후 처리
+        // 2. 유저 관련 정보 (관심 작품) 삭제 + Redis 반영(refreshToken 삭제, blacklist 등록)은 커밋 후 처리
         userAccessRevokedPublisher.publishWithdrawn(userId);
         favoriteWorksAdaptor.deleteFavoriteWorks(userId);
-        libraryAdaptor.deleteLibrary(userId);
 
         // 3. 푸시 알림 토큰 물리 삭제
         pushDeviceAdaptor.deleteAllByUserId(userId);
