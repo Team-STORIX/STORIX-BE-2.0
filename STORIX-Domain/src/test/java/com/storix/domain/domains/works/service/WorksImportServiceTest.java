@@ -52,7 +52,7 @@ class WorksImportServiceTest {
 
     private WorksImportService service(String profile) {
         return new WorksImportService(worksAdaptor, hashtagAdaptor, worksSearchAdaptor, worksImportLockHelper,
-                transactionManager, new WorksCreationPolicy(profile));
+                transactionManager, new WorksSyncPolicy(profile));
     }
 
     private static WorksImportItem newItem() {

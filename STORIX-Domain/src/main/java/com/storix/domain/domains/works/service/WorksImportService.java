@@ -36,7 +36,7 @@ public class WorksImportService {
     private final WorksSearchAdaptor worksSearchAdaptor;
     private final WorksImportLockHelper worksImportLockHelper;
     private final PlatformTransactionManager transactionManager;
-    private final WorksCreationPolicy worksCreationPolicy;
+    private final WorksSyncPolicy worksSyncPolicy;
 
     public List<WorksImportResult> importAll(List<WorksImportItem> items) {
         String token = worksImportLockHelper.tryLock().orElseThrow(() -> {
@@ -123,7 +123,7 @@ public class WorksImportService {
         }
 
         // 5. 새 작품 (dev 는 prod 동기화로만)
-        if (worksCreationPolicy.blocked()) return WorksImportOutcome.failed(item, CREATE_BLOCKED);
+        if (worksSyncPolicy.blocksCreation()) return WorksImportOutcome.failed(item, CREATE_BLOCKED);
         Works saved = worksAdaptor.save(command.toNewWorks(hashtagAdaptor.findOrCreateAll(command.hashtagNames())));
         return WorksImportOutcome.created(command, saved.getId());
     }
