@@ -3,6 +3,7 @@ package com.storix.api.domain.search.listener;
 import com.storix.domain.domains.search.exception.SearchReindexInProgressException;
 import com.storix.domain.domains.search.service.FeedIndexService;
 import com.storix.domain.domains.search.service.WorksIndexService;
+import com.storix.domain.domains.works.service.WorksSyncPolicy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -21,15 +22,18 @@ public class SearchIndexBootstrapListener {
 
     private final WorksIndexService worksIndexService;
     private final FeedIndexService feedIndexService;
+    private final WorksSyncPolicy worksSyncPolicy;
 
     // ES 가 앱보다 늦게 뜰 수 있어 몇 분 다시 시도한다. 그동안 앱 기동과 공용 스레드 풀을 막지 않게 따로 돌린다
+    // dev 는 꺼져 있는 동안 prod 동기화로 작품이 바뀌어서 기동마다 다시 색인
     @EventListener(ApplicationReadyEvent.class)
     public void reindexIfMissing() {
+        boolean always = worksSyncPolicy.reindexOnStartup();
         start("works", () -> {
-            if (worksIndexService.isAliasMissing()) worksIndexService.reindexAll();
+            if (always || worksIndexService.isAliasMissing()) worksIndexService.reindexAll();
         });
         start("feeds", () -> {
-            if (feedIndexService.isAliasMissing()) feedIndexService.reindexAll();
+            if (always || feedIndexService.isAliasMissing()) feedIndexService.reindexAll();
         });
     }
 
