@@ -29,12 +29,14 @@ public class WorksImportService {
 
     private static final int BACKFILL_CHUNK_SIZE = 500;
     private static final int SIMILAR_CANDIDATE_SIZE = 20;
+    private static final String CREATE_BLOCKED = "dev 는 새 작품을 만들지 않음. prod 에 적재하면 동기화로 들어옴";
 
     private final WorksAdaptor worksAdaptor;
     private final HashtagAdaptor hashtagAdaptor;
     private final WorksSearchAdaptor worksSearchAdaptor;
     private final WorksImportLockHelper worksImportLockHelper;
     private final PlatformTransactionManager transactionManager;
+    private final WorksCreationPolicy worksCreationPolicy;
 
     public List<WorksImportResult> importAll(List<WorksImportItem> items) {
         String token = worksImportLockHelper.tryLock().orElseThrow(() -> {
@@ -120,7 +122,8 @@ public class WorksImportService {
             if (!suspects.isEmpty()) return WorksImportOutcome.notCreated(command, Status.SUSPECTED_DUPLICATE, suspects);
         }
 
-        // 5. 새 작품
+        // 5. 새 작품 (dev 는 prod 동기화로만)
+        if (worksCreationPolicy.blocked()) return WorksImportOutcome.failed(item, CREATE_BLOCKED);
         Works saved = worksAdaptor.save(command.toNewWorks(hashtagAdaptor.findOrCreateAll(command.hashtagNames())));
         return WorksImportOutcome.created(command, saved.getId());
     }
