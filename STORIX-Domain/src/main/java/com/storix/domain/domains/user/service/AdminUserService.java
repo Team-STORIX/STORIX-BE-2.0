@@ -3,7 +3,7 @@ package com.storix.domain.domains.user.service;
 import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.chat.adaptor.ChatAdaptor;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.library.publisher.LibraryCountPublisher;
 import com.storix.domain.domains.notification.event.NotificationEvent;
 import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
@@ -77,7 +77,7 @@ public class AdminUserService {
     private final ChatAdaptor chatAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final ReviewLikeAdaptor reviewLikeAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
+    private final LibraryCountPublisher libraryCountPublisher;
     private final WorksAdaptor worksAdaptor;
     private final FeedReportAdaptor feedReportAdaptor;
     private final ReviewReportAdaptor reviewReportAdaptor;
@@ -323,10 +323,7 @@ public class AdminUserService {
 
     private void deleteFeedManually(Long userId, Long boardId) {
         validateContentOwner(userId, readerFeedAdaptor.findBoardOwnerUserId(boardId));
-        Long ownerId = boardAdaptor.adminDeleteReaderBoard(boardId);
-        if (ownerId != null) {
-            libraryAdaptor.decrementBoardCount(ownerId);
-        }
+        boardAdaptor.adminDeleteReaderBoard(boardId);
     }
 
     private void deleteFeedReplyManually(Long userId, Long replyId) {
@@ -341,7 +338,7 @@ public class AdminUserService {
         ReviewedWorksIdAndRatingInfo info = reviewAdaptor.getReviewedWorksIdAndRatingInfo(reviewId);
         reviewLikeAdaptor.deleteAllRelatedReviewLike(reviewId);
         worksAdaptor.updateDecrementingReviewInfo(info.worksId(), info.rating().getRatingValue());
-        libraryAdaptor.decrementReviewCount(userId);
+        libraryCountPublisher.publishChanged(userId);
     }
 
     private void deleteChatMessageManually(Long userId, Long messageId) {

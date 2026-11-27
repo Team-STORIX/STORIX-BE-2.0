@@ -3,7 +3,7 @@ package com.storix.domain.domains.plus.service;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.library.publisher.LibraryCountPublisher;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.domain.Review;
 import com.storix.domain.domains.plus.dto.CreateReviewCommand;
@@ -44,7 +44,7 @@ public class ReviewService {
     private final UserBlockAdaptor userBlockAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final ReviewLikeAdaptor reviewLikeAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
+    private final LibraryCountPublisher libraryCountPublisher;
 
 
     private final AdultWorksHelper adultWorksHelper;
@@ -64,8 +64,7 @@ public class ReviewService {
 
         Review review = reviewAdaptor.saveReview(cmd);
 
-        // 서재 도메인 업데이트
-        libraryAdaptor.incrementReviewCount(cmd.libraryUserId());
+        libraryCountPublisher.publishChanged(cmd.libraryUserId());
 
         // 작품 도메인 업데이트
         worksAdaptor.updateIncrementingReviewInfo(cmd.worksId(), cmd.rating().getRatingValue());

@@ -6,7 +6,7 @@ import com.storix.domain.domains.feed.adaptor.FeedReportAdaptor;
 import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.domain.FeedReplyReport;
 import com.storix.domain.domains.feed.domain.FeedReport;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.library.publisher.LibraryCountPublisher;
 import com.storix.domain.domains.notification.event.NotificationEvent;
 import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
@@ -61,7 +61,7 @@ public class AdminReportCommandService {
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final ReviewLikeAdaptor reviewLikeAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
+    private final LibraryCountPublisher libraryCountPublisher;
     private final UserAdaptor userAdaptor;
     private final UserWithdrawalHelper userWithdrawalHelper;
     private final UserAccessRevokedPublisher userAccessRevokedPublisher;
@@ -124,10 +124,7 @@ public class AdminReportCommandService {
         TargetContentType targetType = reportCase.getTargetType();
 
         switch (targetType) {
-            case FEED -> {
-                Long ownerId = boardAdaptor.adminDeleteReaderBoard(targetId);
-                if (ownerId != null) libraryAdaptor.decrementBoardCount(ownerId);
-            }
+            case FEED -> boardAdaptor.adminDeleteReaderBoard(targetId);
             case FEED_REPLY -> readerFeedAdaptor.adminDeleteReaderBoardReply(targetId);
             case REVIEW -> deleteReview(targetId);
             case TOPIC_ROOM -> throw InvalidReportProcessRequestException.EXCEPTION;
@@ -150,7 +147,7 @@ public class AdminReportCommandService {
         ReviewedWorksIdAndRatingInfo info = reviewAdaptor.getReviewedWorksIdAndRatingInfo(reviewId);
         reviewLikeAdaptor.deleteAllRelatedReviewLike(reviewId);
         worksAdaptor.updateDecrementingReviewInfo(info.worksId(), info.rating().getRatingValue());
-        libraryAdaptor.decrementReviewCount(reviewerId);
+        libraryCountPublisher.publishChanged(reviewerId);
     }
 
     private void suspendUser(ReportCase reportCase) {

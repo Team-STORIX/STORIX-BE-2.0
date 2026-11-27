@@ -1,7 +1,7 @@
 package com.storix.domain.domains.review.service;
 
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
+import com.storix.domain.domains.library.publisher.LibraryCountPublisher;
 import com.storix.domain.domains.notification.event.NotificationEvent;
 import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
@@ -31,7 +31,7 @@ public class WorksDetailKebabService {
     private final ReviewLikeAdaptor reviewLikeAdaptor;
     private final ReviewReportAdaptor reviewReportAdaptor;
     private final ReportCaseAdaptor reportCaseAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
+    private final LibraryCountPublisher libraryCountPublisher;
     private final NotificationPublisher notificationPublisher;
 
 
@@ -60,8 +60,7 @@ public class WorksDetailKebabService {
                 reviewAdaptor.getReviewedWorksIdAndRatingInfo(reviewId);
         worksAdaptor.updateDecrementingReviewInfo(dto.worksId(), dto.rating().getRatingValue());
 
-        // 서재 리뷰 작품 개수 반영
-        libraryAdaptor.decrementReviewCount(userId);
+        libraryCountPublisher.publishChanged(userId);
 
         reviewAdaptor.deleteReview(userId, reviewId);
     }

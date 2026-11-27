@@ -3,7 +3,6 @@ package com.storix.domain.domains.plus.service;
 import com.storix.domain.domains.search.publisher.FeedIndexPublisher;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
 import com.storix.domain.domains.plus.adaptor.BoardImageAdaptor;
 import com.storix.domain.domains.plus.domain.ReaderBoard;
@@ -20,7 +19,6 @@ public class BoardService {
 
     private final BoardAdaptor boardAdaptor;
     private final BoardImageAdaptor boardImageAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
 
     private final AdultWorksHelper adultWorksHelper;
 
@@ -45,7 +43,6 @@ public class BoardService {
             boardImageAdaptor.saveReaderBoardImages(readerBoard, cmd.objectKeys());
         }
 
-        libraryAdaptor.incrementBoardCount(cmd.userId());
         feedIndexPublisher.publishSaved(readerBoard.getId());
 
         if (cmd.isWorksSelected() && cmd.worksId() != null) {

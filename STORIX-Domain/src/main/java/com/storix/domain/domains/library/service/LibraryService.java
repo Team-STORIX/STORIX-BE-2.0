@@ -2,7 +2,6 @@ package com.storix.domain.domains.library.service;
 
 import com.storix.domain.domains.adultverification.adaptor.AdultVerificationAdaptor;
 import com.storix.domain.domains.works.adaptor.WorksAdaptor;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.library.dto.StandardLibraryWorksInfo;
 import com.storix.domain.domains.plus.adaptor.ReviewAdaptor;
 import com.storix.domain.domains.plus.dto.ReviewedWorksIdAndRatingInfo;
@@ -28,7 +27,6 @@ import java.util.stream.Collectors;
 public class LibraryService {
 
     private final WorksAdaptor worksAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
     private final ReviewAdaptor reviewAdaptor;
     private final AdultVerificationAdaptor adultVerificationAdaptor;
 
@@ -43,7 +41,7 @@ public class LibraryService {
     // 총 리뷰 개수 정보 조회
     @Transactional(readOnly = true)
     public int getTotalReviewCount(Long userId) {
-        return libraryAdaptor.findReviewCount(userId);
+        return (int) reviewAdaptor.countActiveReviewsByUserId(userId);
     }
 
     // 서재 내 리뷰한 작품 정보 조회

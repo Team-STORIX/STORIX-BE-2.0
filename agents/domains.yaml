@@ -39,7 +39,6 @@ domains:
     dependsOn:
       - adultverification
       - favorite
-      - library
       - notification
       - plus
       - profile
@@ -68,7 +67,6 @@ domains:
     description: 내 서재
     dependsOn:
       - adultverification
-      - feed
       - plus
       - works
   notification:

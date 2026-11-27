@@ -5,7 +5,6 @@ import com.storix.domain.domains.feed.adaptor.ReaderFeedAdaptor;
 import com.storix.domain.domains.feed.dto.CreateFeedReportCommand;
 import com.storix.domain.domains.feed.exception.DuplicateFeedReplyReportException;
 import com.storix.domain.domains.feed.exception.DuplicateFeedReportException;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.notification.event.NotificationEvent;
 import com.storix.domain.domains.notification.publisher.NotificationPublisher;
 import com.storix.domain.domains.plus.adaptor.BoardAdaptor;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class FeedKebabService {
 
     private final BoardAdaptor boardAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
     private final ReaderFeedAdaptor readerFeedAdaptor;
     private final FeedReportAdaptor feedReportAdaptor;
     private final ReportCaseAdaptor reportCaseAdaptor;
@@ -32,7 +30,6 @@ public class FeedKebabService {
     @Transactional
     public void deleteReaderBoard(Long userId, Long readerBoardId) {
         boardAdaptor.deleteSingleReaderBoard(userId, readerBoardId);
-        libraryAdaptor.decrementBoardCount(userId);
     }
 
     // 게시물 신고

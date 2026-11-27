@@ -5,7 +5,6 @@ import com.storix.domain.domains.favorite.adaptor.FavoriteWorksAdaptor;
 import com.storix.domain.domains.genrescore.event.GenreScoreEventType;
 import com.storix.domain.domains.genrescore.publisher.GenreScorePublisher;
 import com.storix.domain.domains.works.domain.Genre;
-import com.storix.domain.domains.library.adaptor.LibraryAdaptor;
 import com.storix.domain.domains.notification.adaptor.NotificationSettingAdaptor;
 import com.storix.domain.domains.onboarding.service.OnboardingWorksHelper;
 import com.storix.domain.domains.pushdevice.adaptor.PushDeviceAdaptor;
@@ -43,7 +42,6 @@ public class AuthService {
 
     private final UserAdaptor userAdaptor;
     private final TokenAdaptor tokenAdaptor;
-    private final LibraryAdaptor libraryAdaptor;
     private final FavoriteWorksAdaptor favoriteWorksAdaptor;
 
     private final PushDeviceAdaptor pushDeviceAdaptor;
@@ -151,7 +149,6 @@ public class AuthService {
                     GenreScoreEventType.FAVORITE_WORKS_ADD);
         }
 
-        libraryAdaptor.initLibrary(authUserDetails.getUserId());
 
         // 알림 설정 기본값 생성 (마케팅만 OFF, 나머지 ON)
         notificationSettingAdaptor.save(authUserDetails.getUserId());
